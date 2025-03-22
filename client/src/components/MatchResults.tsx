@@ -59,10 +59,10 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
           )}
           <div>
             <h3 className="text-lg leading-6 font-medium flex items-center">
-              New Match Alert!
-              {!animate && <Badge className="ml-2 bg-green-500 hover:bg-green-600">Live Update</Badge>}
+              Contested Match Alert!
+              {!animate && <Badge className="ml-2 bg-green-500 hover:bg-green-600">Live Match</Badge>}
             </h3>
-            <p className="mt-1 max-w-2xl text-sm">Based on profile alignment and campaign goals</p>
+            <p className="mt-1 max-w-2xl text-sm">Connecting mid-tier athletes with SMBs that matter</p>
           </div>
         </div>
       </div>

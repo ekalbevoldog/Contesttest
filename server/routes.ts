@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (athletes[0].sessionId) {
               sendWebSocketMessage(athletes[0].sessionId, {
                 type: 'match',
-                message: `New partnership opportunity with ${business.name}! SMB marketing match found.`,
+                message: `Contested Match Alert: New partnership opportunity with ${business.name}!`,
                 matchData: {
                   ...matchData,
                   business: {
