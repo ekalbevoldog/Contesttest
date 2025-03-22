@@ -280,12 +280,18 @@ export default function ChatInterface() {
           {/* Chat header */}
           <div className="px-6 py-4 border-b border-gray-200 bg-white flex justify-between items-center">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">NIL Matchmaking Assistant</h3>
               <div className="flex items-center">
-                <p className="text-sm text-gray-500 mr-2">Connecting athletes and businesses</p>
-                <div className={`h-2 w-2 rounded-full ${connectionStatus === 'open' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-gray-500'}`} 
-                  title={`WebSocket status: ${connectionStatus}`}></div>
+                <h3 className="text-lg font-medium text-gray-900">NIL Matchmaking Assistant</h3>
+                <div className="flex items-center ml-2 bg-gray-100 px-2 py-1 rounded text-xs">
+                  <span className="mr-1">Status:</span>
+                  <div className={`h-3 w-3 rounded-full ${connectionStatus === 'open' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} 
+                    title={`WebSocket status: ${connectionStatus}`}></div>
+                  <span className="ml-1 text-xs">
+                    {connectionStatus === 'open' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting' : 'Disconnected'}
+                  </span>
+                </div>
               </div>
+              <p className="text-sm text-gray-500 mt-1">Connecting athletes and businesses</p>
             </div>
             <div>
               <Button 

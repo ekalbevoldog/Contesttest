@@ -529,5 +529,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return false;
   };
   
+  // Test endpoint to simulate a match notification (for testing WebSocket)
+  app.post("/api/test/simulate-match", async (req: Request, res: Response) => {
+    const { sessionId } = req.body;
+    
+    if (!sessionId) {
+      return res.status(400).json({ error: "Session ID is required" });
+    }
+    
+    // Simple mock match data
+    const mockMatchData = {
+      id: Date.now().toString(),
+      score: 85,
+      brand: "Test Brand",
+      athleteName: "Test Athlete",
+      reason: "This is a test match notification sent through WebSocket",
+      campaign: {
+        title: "Test Campaign",
+        description: "This is a test campaign description",
+        deliverables: ["Social media post", "Brand mention"]
+      },
+      business: {
+        name: "Test Business"
+      },
+      athlete: {
+        name: "Test Athlete"
+      }
+    };
+    
+    // Send WebSocket notification
+    const sent = sendWebSocketMessage(sessionId, {
+      type: "match",
+      message: "New match found! A business is interested in partnering with you.",
+      matchData: mockMatchData
+    });
+    
+    if (sent) {
+      res.json({ success: true, message: "Match notification sent" });
+    } else {
+      res.status(404).json({ 
+        error: "Could not send notification. Client might be disconnected or session not found." 
+      });
+    }
+  });
+  
   return httpServer;
 }
