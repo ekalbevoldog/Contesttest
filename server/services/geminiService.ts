@@ -39,6 +39,7 @@ class GeminiService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || "default_key";
     this.geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+    console.log("Gemini API Key status:", this.apiKey === "default_key" ? "not loaded" : "loaded successfully");
   }
 
   // Helper method to make API calls to Gemini
