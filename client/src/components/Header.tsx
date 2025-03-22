@@ -19,7 +19,7 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/">
-                <img src="/contested-logo.svg" alt="Contested" className="h-8" />
+                <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
               </Link>
             </div>
           </div>
@@ -63,7 +63,7 @@ export default function Header() {
               <SheetContent className="border-l-[#00a3ff]">
                 <div className="pt-6 pb-3 space-y-1">
                   <div className="flex items-center mb-6">
-                    <img src="/contested-logo.svg" alt="Contested" className="h-8" />
+                    <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
                   </div>
                   
                   <Link href="/">
