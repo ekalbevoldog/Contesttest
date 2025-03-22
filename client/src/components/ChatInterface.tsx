@@ -35,6 +35,9 @@ export default function ChatInterface() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
+  // Set up WebSocket connection
+  const { lastMessage, connectionStatus } = useWebSocket(session);
+  
   // Initialize session and welcome message
   useEffect(() => {
     async function initSession() {
@@ -229,6 +232,30 @@ export default function ChatInterface() {
     inputRef.current?.focus();
   }, []);
   
+  // Handle incoming WebSocket messages
+  useEffect(() => {
+    if (lastMessage?.type === 'match') {
+      toast({
+        title: "New Match Found!",
+        description: lastMessage.message,
+      });
+      
+      // Add the match notification as a message
+      if (lastMessage.matchData) {
+        const matchMessage: MessageType = {
+          id: Date.now().toString(),
+          type: 'assistant',
+          content: "Great news! We've found a new match for you!",
+          timestamp: new Date(),
+          showMatchResults: true,
+          matchData: lastMessage.matchData
+        };
+        
+        setMessages(prev => [...prev, matchMessage]);
+      }
+    }
+  }, [lastMessage, toast]);
+  
   return (
     <Card className="bg-white shadow-md overflow-hidden border border-gray-200">
       <div className="md:flex h-full">
@@ -254,7 +281,11 @@ export default function ChatInterface() {
           <div className="px-6 py-4 border-b border-gray-200 bg-white flex justify-between items-center">
             <div>
               <h3 className="text-lg font-medium text-gray-900">NIL Matchmaking Assistant</h3>
-              <p className="text-sm text-gray-500">Connecting athletes and businesses</p>
+              <div className="flex items-center">
+                <p className="text-sm text-gray-500 mr-2">Connecting athletes and businesses</p>
+                <div className={`h-2 w-2 rounded-full ${connectionStatus === 'open' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-gray-500'}`} 
+                  title={`WebSocket status: ${connectionStatus}`}></div>
+              </div>
             </div>
             <div>
               <Button 
