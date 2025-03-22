@@ -43,6 +43,56 @@ class GeminiService {
 
   // Helper method to make API calls to Gemini
   private async callGemini(prompt: string, responseSchema: any, retry: number = this.retryCount) {
+    // Check if we're in development mode or don't have a valid API key
+    if (this.apiKey === "default_key" || process.env.NODE_ENV === "development") {
+      console.log("Using mock response for Gemini API as no valid API key is provided");
+      
+      // Determine what kind of response to mock based on the prompt
+      if (prompt.includes("determine if the user is a college athlete or a business")) {
+        if (prompt.toLowerCase().includes("athlete")) {
+          return responseSchema.parse({
+            userType: "athlete",
+            reply: "Thanks for letting me know you're an athlete! I'd love to help connect you with potential NIL opportunities."
+          });
+        } else {
+          return responseSchema.parse({
+            userType: "business",
+            reply: "Thanks for letting me know you're a business! I'd love to help connect you with student athletes for NIL partnerships."
+          });
+        }
+      } else if (prompt.includes("generate a follow-up question")) {
+        return responseSchema.parse({
+          reply: "Could you tell me more about yourself? This will help us find the best matches for you."
+        });
+      } else if (prompt.includes("should see a form")) {
+        return responseSchema.parse({
+          showForm: true,
+          reason: "User has expressed interest in creating a profile"
+        });
+      } else if (prompt.includes("create a NIL campaign concept")) {
+        return responseSchema.parse({
+          title: "Campus Ambassador Program",
+          description: "A seasonal partnership highlighting authentic student-athlete experiences with our products in daily campus life.",
+          deliverables: [
+            "2 social media posts per month",
+            "1 Instagram/TikTok story per week",
+            "Participation in one promotional event per semester"
+          ]
+        });
+      } else if (prompt.includes("generate a match score")) {
+        return responseSchema.parse({
+          score: 85,
+          reason: "Strong alignment between the athlete's content style and the brand's campaign needs. The demographic overlap between the athlete's followers and the business target audience is significant."
+        });
+      } else {
+        // Generic response
+        return responseSchema.parse({
+          reply: "I'm here to help connect college athletes with businesses for NIL opportunities. How can I assist you today?"
+        });
+      }
+    }
+
+    // If we have a valid API key, make the actual API call
     try {
       const response = await fetch(`${this.geminiEndpoint}?key=${this.apiKey}`, {
         method: "POST",
