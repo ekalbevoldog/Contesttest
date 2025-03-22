@@ -51,6 +51,15 @@
     text-fill-color: transparent;
   }
   
+  .sports-bright-highlight {
+    @apply font-bold;
+    background: linear-gradient(to right, var(--sport-bright), var(--tech-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+  
   .sports-accent {
     color: var(--sport-bright);
   }
@@ -65,5 +74,73 @@
   
   .dark-contrast {
     color: var(--contrast-dark);
+  }
+  
+  .sport-tech-badge {
+    @apply px-2 py-1 rounded-md text-xs font-medium inline-flex items-center;
+    background: linear-gradient(120deg, rgba(0, 163, 255, 0.1), rgba(0, 255, 204, 0.1));
+    border: 1px solid rgba(0, 163, 255, 0.2);
+    color: #003366;
+  }
+  
+  .match-card {
+    @apply relative overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-all duration-300;
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.99));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 
+                0 1px 3px rgba(0, 163, 255, 0.08);
+  }
+  
+  .match-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 
+                0 2px 6px rgba(0, 163, 255, 0.12),
+                0 0 0 1px rgba(0, 255, 204, 0.08);
+    transform: translateY(-2px);
+  }
+  
+  .match-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, var(--sport-bright), var(--tech-blue));
+  }
+  
+  .connection-badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium inline-flex items-center;
+    background: linear-gradient(120deg, rgba(255, 149, 0, 0.15), rgba(255, 149, 0, 0.05));
+    border: 1px solid rgba(255, 149, 0, 0.2);
+    color: #ff7200;
+  }
+  
+  .match-score-ring {
+    @apply relative flex items-center justify-center rounded-full;
+    background: conic-gradient(from 0deg, var(--tech-blue) 0%, var(--tech-blue) var(--percentage, 75%), transparent var(--percentage, 75%), transparent 100%);
+  }
+  
+  .match-score-ring::before {
+    content: '';
+    @apply absolute rounded-full;
+    inset: 3px;
+    background: white;
+  }
+  
+  .notification-dot {
+    @apply absolute h-2 w-2 rounded-full bg-[#ff9500];
+    box-shadow: 0 0 0 2px rgba(255, 149, 0, 0.2);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 6px rgba(255, 149, 0, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 149, 0, 0);
+    }
   }
 }

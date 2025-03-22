@@ -18,16 +18,8 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <div className="relative h-9 w-9 flex items-center justify-center bg-[#003366] rounded-lg">
-                <svg className="h-5 w-5 text-[#00ffcc]" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M16 8v8h-2V8h2zm-4-4v16h-2V4h2zm-4 7v9H6v-9h2zm12-7h-2v16h2V4z"></path>
-                </svg>
-                <Zap className="h-3 w-3 text-[#ff9500] absolute -top-1 -right-1" />
-              </div>
               <Link href="/">
-                <span className="ml-2 text-xl font-bold cursor-pointer">
-                  <span className="sports-highlight">Contested</span>
-                </span>
+                <img src="/contested-logo.svg" alt="Contested" className="h-8" />
               </Link>
             </div>
           </div>
@@ -71,15 +63,7 @@ export default function Header() {
               <SheetContent className="border-l-[#00a3ff]">
                 <div className="pt-6 pb-3 space-y-1">
                   <div className="flex items-center mb-6">
-                    <div className="relative h-9 w-9 flex items-center justify-center bg-[#003366] rounded-lg">
-                      <svg className="h-5 w-5 text-[#00ffcc]" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M16 8v8h-2V8h2zm-4-4v16h-2V4h2zm-4 7v9H6v-9h2zm12-7h-2v16h2V4z"></path>
-                      </svg>
-                      <Zap className="h-3 w-3 text-[#ff9500] absolute -top-1 -right-1" />
-                    </div>
-                    <span className="ml-2 text-xl font-bold">
-                      <span className="sports-highlight">Contested</span>
-                    </span>
+                    <img src="/contested-logo.svg" alt="Contested" className="h-8" />
                   </div>
                   
                   <Link href="/">
