@@ -1,0 +1,603 @@
+Comprehensive Technical Prompt for Building Contested on Replit
+Project Overview
+Create an end-to-end AI-driven SaaS platform called "Contested" that connects small and medium-sized businesses (SMBs) with mid-tier athletes for marketing partnerships. The platform should use sophisticated AI algorithms to match businesses with athletes across multiple categories including NCAA, minor leagues, Olympic sports in non-marquee categories, esports competitors, and athletes from secondary professional leagues.
+Core Platform Architecture
+Tech Stack Requirements
+
+Frontend:
+
+React.js with Next.js framework
+Tailwind CSS for styling
+Redux or Context API for state management
+TypeScript for type safety
+Jest and React Testing Library for testing
+
+
+Backend:
+
+Node.js with Express.js
+TypeScript for API development
+MongoDB for primary database
+Redis for caching
+JWT for authentication
+OpenAI API integration for NLP capabilities
+TensorFlow.js for custom ML models
+
+
+AI Components:
+
+TensorFlow/PyTorch for core matching algorithms
+Scikit-learn for initial rule-based filtering
+FastAPI for machine learning service APIs
+Hugging Face Transformers for NLP tasks
+MLflow for model tracking
+
+
+DevOps:
+
+Docker for containerization
+GitHub Actions for CI/CD
+Jest for testing
+ESLint and Prettier for code quality
+
+
+
+Key System Components
+1. User Authentication and Management
+Implement a multi-tier authentication system with:
+
+Role-based access control (SMBs, Athletes, Admins)
+OAuth integration (Google, LinkedIn)
+Secure password handling with bcrypt
+JWT token management with refresh token strategy
+Session management and security controls
+
+2. AI Matching System
+Create a two-phase AI matching algorithm:
+
+Phase 1 (Quick Match): Implement a lightweight rule-based system that filters athletes based on:
+
+Sport/league
+Geographic location
+Budget range
+Marketing objectives
+Content types
+
+
+Phase 2 (Deep Match): Build an advanced ML-based system that calculates compatibility scores based on:
+
+Brand-athlete personality alignment
+Audience demographic overlap
+Content style compatibility
+Performance prediction
+Historical success patterns
+
+
+
+The matching engine should use a hybrid approach combining:
+
+Collaborative filtering techniques
+Content-based recommendation algorithms
+Multi-objective optimization
+Continuous learning from feedback loops
+
+3. Multi-League Compliance Engine
+Build an NLP-based compliance system that:
+
+Maintains a database of rules for different sports organizations (NCAA, minor leagues, Olympic committees, etc.)
+Automatically analyzes contract terms against applicable regulations
+Flags potential compliance issues
+Generates appropriate disclaimers and required language
+Updates automatically as regulations change
+
+4. Campaign Management System
+Develop a comprehensive campaign workflow system:
+
+AI-driven campaign template generation
+Visual campaign builder with drag-and-drop interface
+Dynamic timeline creation with automated milestone generation
+Budget management and allocation tools
+Brand asset management system
+
+5. Content Creation and Approval System
+Implement a structured content workflow:
+
+Task assignment and tracking
+File upload and management
+Version control for content drafts
+Annotation tools for feedback
+Compliance verification
+Publishing management
+
+6. Analytics and Reporting
+Create a data-driven analytics system with:
+
+Real-time performance dashboards
+Social media API integrations
+Custom UTM parameter tracking
+Conversion attribution
+Predictive performance modeling
+Exportable reports in multiple formats
+
+7. Payment Processing
+Implement a secure payment system with:
+
+Multiple payment gateway integrations (Stripe, PayPal)
+Escrow functionality
+Milestone-based release
+Automated invoicing
+Tax documentation generation
+
+Database Schema Design
+Collections/Tables
+
+Users:
+
+Common fields: email, password, name, role, created_at, updated_at
+SMB-specific: company, industry, size, location
+Athlete-specific: sport, league, team, position, social_accounts
+
+
+Athletes:
+
+Basic info: name, sport, league, team, position
+Performance metrics: followers, engagement_rate, audience_demographics
+Compliance info: verification_status, eligibility_status, restrictions
+Portfolio: content_samples, past_campaigns
+
+
+Campaigns:
+
+Basic info: title, objectives, timeline, budget
+Status tracking: current_stage, progress
+Performance: metrics, ROI, conversion_data
+Associated entities: smb_id, athlete_ids
+
+
+Contracts:
+
+Legal terms: clauses, deliverables, payment_terms
+Status: signatures, approvals, amendments
+Compliance: disclosures, requirements, verification
+
+
+Content:
+
+Media: type, files, captions, metadata
+Status: draft, review, approved, published
+Performance: engagement, impressions, conversions
+Timeline: due_date, review_date, publish_date
+
+
+Payments:
+
+Transaction records: amount, status, fees
+Milestones: triggers, completion_status
+Escrow tracking: holds, releases, disputes
+
+
+Analytics:
+
+Performance metrics: engagement, reach, conversions
+Platform data: user_activity, feature_usage
+Historical data: trend_analysis, benchmarks
+
+
+
+API Endpoints
+Design RESTful API endpoints for all core functionality:
+
+Authentication:
+
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh-token
+POST /api/auth/logout
+
+
+User Management:
+
+GET /api/users/profile
+PUT /api/users/profile
+GET /api/users/notifications
+
+
+Athletes:
+
+GET /api/athletes
+GET /api/athletes/
+POST /api/athletes/verify
+GET /api/athletes/search
+
+
+Matching:
+
+POST /api/match/quick
+POST /api/match/detailed
+GET /api/match/results/
+PUT /api/match/preferences
+
+
+Campaigns:
+
+POST /api/campaigns
+GET /api/campaigns
+GET /api/campaigns/
+PUT /api/campaigns/
+DELETE /api/campaigns/
+
+
+Contracts:
+
+POST /api/contracts
+GET /api/contracts/
+PUT /api/contracts//sign
+GET /api/contracts//status
+
+
+Content:
+
+POST /api/content
+GET /api/content/
+PUT /api/content//review
+PUT /api/content//publish
+
+
+Payments:
+
+POST /api/payments/setup
+POST /api/payments/process
+GET /api/payments/status/
+POST /api/payments/release/
+
+
+Analytics:
+
+GET /api/analytics/campaign/
+GET /api/analytics/content/
+GET /api/analytics/performance
+GET /api/analytics/reports
+
+
+
+Frontend User Interfaces
+Develop the following key UI screens:
+
+Onboarding & Registration Flow:
+
+Landing page with value proposition
+Three-step pre-registration wizard
+Strategic partial reveal of matches
+Streamlined registration form
+Post-registration immediate value display
+
+
+Campaign Creation:
+
+Template selection interface
+Visual deliverable builder
+Dynamic timeline creator
+Brand assets uploader
+Multi-mode editor (guided, express, expert)
+
+
+Athlete Discovery & Selection:
+
+Match results grid with filterable options
+Detailed athlete profile view
+Side-by-side comparison tool
+Selection and offer interface
+Campaign brief preview
+
+
+Content Management:
+
+Task dashboard
+Content submission interface
+Review and annotation tools
+Publication status tracker
+Performance monitoring
+
+
+Analytics & Reporting:
+
+Real-time dashboard
+Custom report builder
+Performance visualizations
+Optimization suggestions
+Export tools
+
+
+
+AI Model Development
+Matching Algorithm
+
+Data Requirements:
+
+Athlete profiles (10,000+ records across multiple sports)
+Brand profiles (1,000+ business examples)
+Historical campaign performance data (synthetic initially)
+Content engagement metrics
+
+
+Feature Engineering:
+
+Text embeddings for brand and athlete descriptions
+Categorical encoding for sports, leagues, and industries
+Normalized metrics for performance data
+Geographic proximity calculations
+
+
+Model Architecture:
+
+Initial rule-based filtering using decision trees
+Deep matching using gradient boosting or neural networks
+Hybrid recommendation system combining collaborative and content-based approaches
+Multi-objective optimization for balancing different matching criteria
+
+
+Training Pipeline:
+
+Feature preprocessing and normalization
+Cross-validation strategy
+Hyperparameter tuning
+Model evaluation metrics (precision, recall, F1)
+
+
+
+Compliance Engine
+
+NLP Components:
+
+Text classification for rule categorization
+Entity recognition for identifying key terms
+Semantic similarity for matching contract language with regulations
+Automated generation of compliant language
+
+
+Training Data:
+
+NCAA regulations and policies
+Minor league rules
+Olympic committee guidelines
+Team-specific restrictions
+Historical compliance issues and resolutions
+
+
+
+External Integrations
+Implement connections with the following third-party services:
+
+Social Media APIs:
+
+Instagram Graph API
+TikTok for Developers
+Twitter API v2
+YouTube Data API
+
+
+Payment Processors:
+
+Stripe Connect
+PayPal Marketplace
+
+
+E-Signature Services:
+
+DocuSign eSignature API
+HelloSign API
+
+
+Email & Notifications:
+
+SendGrid API
+Twilio for SMS
+
+
+Analytics Tools:
+
+Google Analytics API
+Facebook Pixel integration
+Custom UTM parameter handling
+
+
+
+Security Requirements
+Implement comprehensive security measures:
+
+Data Protection:
+
+End-to-end encryption for sensitive data
+PII anonymization where appropriate
+Secure data storage with encryption at rest
+
+
+Authentication Security:
+
+Multi-factor authentication
+Rate limiting on login attempts
+Secure password policies
+
+
+API Security:
+
+Request validation and sanitization
+CORS configuration
+Rate limiting
+CSRF protection
+
+
+Compliance:
+
+GDPR-compliant data handling
+CCPA requirements implementation
+Audit logs for all sensitive operations
+
+
+
+Testing Requirements
+Implement comprehensive testing:
+
+Unit Testing:
+
+Cover all business logic
+Test all API endpoints
+Validate authentication flows
+
+
+Integration Testing:
+
+Test service interactions
+Validate database operations
+Verify third-party integrations
+
+
+AI Model Testing:
+
+Validate matching accuracy
+Test compliance detection
+Measure performance metrics
+
+
+User Interface Testing:
+
+Component testing
+User flow validation
+Responsive design verification
+
+
+
+Deployment Architecture
+Design a scalable deployment architecture:
+
+Service Components:
+
+Frontend application (React/Next.js)
+API service (Node.js/Express)
+Authentication service
+ML prediction service (FastAPI)
+Worker service for background jobs
+Webhook handler service
+
+
+Database Layer:
+
+MongoDB primary database
+Redis for caching and session management
+Vector database for embeddings (if needed)
+
+
+Hosting & Scaling:
+
+Containerization with Docker
+Horizontal scaling for API services
+Memory-optimized instances for ML services
+CDN for static assets
+
+
+
+Development Phases
+Organize development into the following phases:
+Phase 1: Core Platform (2-3 months)
+
+Basic user authentication
+Simple rule-based matching
+Campaign creation fundamentals
+Content submission flow
+Payment processing basics
+
+Phase 2: AI Enhancement (3-4 months)
+
+ML-based deep matching implementation
+Compliance detection system
+Content optimization suggestions
+Performance prediction models
+Advanced analytics dashboard
+
+Phase 3: Scaling & Refinement (4-6 months)
+
+Multi-league support expansion
+Advanced personalization
+Optimization algorithm improvements
+Expanded integrations
+Performance optimization
+
+Additional Technical Specifications
+
+Responsive Design Requirements:
+
+Support for desktop, tablet, and mobile views
+Progressive web app capabilities
+Accessibility compliance (WCAG 2.1 AA)
+
+
+Performance Targets:
+
+Page load time < 2 seconds
+Time to interactive < 3 seconds
+API response time < 500ms
+Matching algorithm execution < 2 seconds
+
+
+Scalability Goals:
+
+Support for 10,000+ concurrent users
+Capacity for 100,000+ athlete profiles
+Ability to process 1,000+ matches per minute
+Storage for millions of content items
+
+
+Internationalization:
+
+UTF-8 encoding throughout
+Language translation framework
+Currency handling for future expansion
+Time zone management
+
+
+Monitoring & Observability:
+
+Application performance monitoring
+Error tracking and reporting
+User behavior analytics
+System health dashboards
+
+
+
+Documentation Requirements
+Create comprehensive documentation including:
+
+API Documentation:
+
+OpenAPI/Swagger specification
+Endpoint descriptions and examples
+Authentication requirements
+Error handling
+
+
+Database Schema Documentation:
+
+ERD diagrams
+Field descriptions
+Relationships
+Indexing strategy
+
+
+AI Model Documentation:
+
+Algorithm descriptions
+Feature importance
+Training methodology
+Performance metrics
+
+
+User Guides:
+
+SMB onboarding guide
+Athlete registration guide
+Campaign creation tutorial
+Analytics interpretation guide
+
+
+
+This comprehensive specification provides all the technical details needed to build the Contested platform on Replit, covering everything from frontend interfaces to AI model development, database design, and security considerations. The development team should follow this blueprint to create a scalable, AI-driven platform that connects SMBs with mid-tier athletes across multiple sports categories.

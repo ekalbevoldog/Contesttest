@@ -54,7 +54,7 @@ export default function ChatInterface() {
           {
             id: "welcome",
             type: "assistant",
-            content: "Welcome to NIL Connect! I'm here to help match college athletes with businesses for NIL (Name, Image, Likeness) opportunities. To get started, could you let me know if you're a college athlete looking for partnerships or a business looking to connect with athletes?",
+            content: "Welcome to Contested! I'm here to help match small and medium-sized businesses with mid-tier athletes across NCAA, minor leagues, Olympic sports, esports, and secondary professional leagues. To get started, could you let me know if you're an athlete looking for marketing partnerships or a business looking to connect with athletes?",
             timestamp: new Date(),
           }
         ]);
@@ -241,7 +241,7 @@ export default function ChatInterface() {
         {
           id: "welcome",
           type: "assistant",
-          content: "Welcome to NIL Connect! I'm here to help match college athletes with businesses for NIL (Name, Image, Likeness) opportunities. To get started, could you let me know if you're a college athlete looking for partnerships or a business looking to connect with athletes?",
+          content: "Welcome to Contested! I'm here to help match small and medium-sized businesses with mid-tier athletes across NCAA, minor leagues, Olympic sports, esports, and secondary professional leagues. To get started, could you let me know if you're an athlete looking for marketing partnerships or a business looking to connect with athletes?",
           timestamp: new Date(),
         }
       ]);
@@ -311,7 +311,7 @@ export default function ChatInterface() {
         <div className="hidden md:block md:w-1/4 bg-gray-50 border-r border-gray-200">
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">Recent Chats</h2>
-          </div>iv>
+          </div>
           <div className="divide-y divide-gray-200">
             <div className="p-4 hover:bg-gray-100 cursor-pointer bg-gray-100 border-l-4 border-primary-600">
               <div className="flex justify-between">
@@ -328,8 +328,8 @@ export default function ChatInterface() {
           {/* Chat header */}
           <div className="px-6 py-4 border-b border-gray-200 bg-white flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">NIL Matchmaking Assistant</h3>
-              <p className="text-sm text-gray-500 mt-1">Connecting athletes and businesses</p>
+              <h3 className="text-lg font-medium text-gray-900">Contested Matchmaking Assistant</h3>
+              <p className="text-sm text-gray-500 mt-1">Connecting SMBs with mid-tier athletes</p>
             </div>
             
             <div className="w-full md:w-auto flex flex-col md:flex-row gap-3 items-start md:items-center">
@@ -427,7 +427,7 @@ export default function ChatInterface() {
                       </div>
                       <div className="ml-3 bg-gray-100 rounded-lg py-3 px-4 max-w-3xl">
                         <div className="text-sm text-gray-900">
-                          <p className="font-medium mb-1">NIL Connect Assistant</p>
+                          <p className="font-medium mb-1">Contested Assistant</p>
                           <p>{message.content}</p>
                           
                           {/* Show athlete form if needed */}
