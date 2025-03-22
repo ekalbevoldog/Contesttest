@@ -284,7 +284,7 @@ export default function ChatInterface() {
         const matchMessage: MessageType = {
           id: Date.now().toString(),
           type: 'assistant',
-          content: "🎉 Great news! We've found a new match for you! This match was just sent to you in real-time.",
+          content: "🎉 Great news! We've found a new partnership match for you! This opportunity was just identified in real-time.",
           timestamp: new Date(),
           showMatchResults: true,
           matchData: {
@@ -318,7 +318,7 @@ export default function ChatInterface() {
                 <p className="text-sm font-medium text-gray-900">New Conversation</p>
                 <span className="text-xs text-gray-500">Just now</span>
               </div>
-              <p className="text-xs text-gray-500 truncate">Getting started with NIL Connect...</p>
+              <p className="text-xs text-gray-500 truncate">Getting started with Contested...</p>
             </div>
           </div>
         </div>

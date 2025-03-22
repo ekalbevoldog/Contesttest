@@ -143,8 +143,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Return the form prompt
             return res.status(200).json({
               reply: userType === "athlete" 
-                ? "Great! Let's create your athlete profile. Please fill out the form below:" 
-                : "Fantastic! Let's set up your business profile. Please complete the following details:",
+                ? "Great! Let's create your mid-tier athlete profile. Please fill out the form below to help us match you with the right SMBs:" 
+                : "Fantastic! Let's set up your SMB profile. Please complete the following details to help us find suitable athletes for your marketing campaigns:",
               isFormPrompt: true,
               showAthleteForm: userType === "athlete",
               showBusinessForm: userType === "business",
@@ -294,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (athletes[0].sessionId) {
               sendWebSocketMessage(athletes[0].sessionId, {
                 type: 'match',
-                message: `New match found with ${business.name}!`,
+                message: `New partnership opportunity with ${business.name}! SMB marketing match found.`,
                 matchData: {
                   ...matchData,
                   business: {
@@ -496,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Send a welcome message
           ws.send(JSON.stringify({
             type: 'system',
-            message: 'Connected to NIL Connect real-time updates'
+            message: 'Connected to Contested real-time updates'
           }));
         }
       } catch (error) {
@@ -541,13 +541,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const mockMatchData = {
       id: Date.now().toString(),
       score: 85,
-      brand: "Test Brand",
-      athleteName: "Test Athlete",
-      reason: "This is a test match notification sent through WebSocket",
+      brand: "Urban Athletics Co.",
+      athleteName: "Jordan Mitchell",
+      reason: "Strong alignment between athlete's content style and brand's marketing goals. Jordan's audience demographics match Urban Athletics' target market perfectly.",
       campaign: {
-        title: "Test Campaign",
-        description: "This is a test campaign description",
-        deliverables: ["Social media post", "Brand mention"]
+        title: "SMB Instagram Partnership",
+        description: "Collaborative marketing campaign targeting Gen Z consumers through authentic athlete endorsements",
+        deliverables: ["Instagram Story Series", "TikTok Video", "Product Unboxing"]
       },
       business: {
         name: "Test Business"
@@ -560,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Send WebSocket notification
     const sent = sendWebSocketMessage(sessionId, {
       type: "match",
-      message: "New match found! A business is interested in partnering with you.",
+      message: "New match found! An SMB is interested in a marketing partnership with you.",
       matchData: mockMatchData
     });
     
