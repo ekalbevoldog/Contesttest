@@ -452,9 +452,13 @@ function AthletePreferencesForm({ onSubmit, isLoading }: { onSubmit: (data: any)
           {partnershipTypeOptions.map(option => (
             <label 
               key={option.id} 
-              className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                formData.partnershipTypes.includes(option.id) ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
-              }`}
+              className={cn(
+                "flex items-center space-x-2 border rounded-md p-4 cursor-pointer transition-all",
+                "hover:bg-accent/10 hover:border-accent",
+                formData.partnershipTypes.includes(option.id) 
+                  ? "border-primary bg-primary/10 shadow-sm" 
+                  : "border-border"
+              )}
             >
               <input 
                 type="checkbox" 

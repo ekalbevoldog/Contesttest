@@ -1,7 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CheckCircle, Bell, Handshake, Star, Zap, Trophy, Bolt, ArrowUpRight } from "lucide-react";
+import { Card } from "@/components/ui/card";
+
+function MatchCard({ match, onAccept }) {
+  return (
+    <Card className="p-6 space-y-4 hover:shadow-lg transition-shadow">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-semibold">{match.brand}</h3>
+        <Badge variant="outline" className="text-lg">
+          {match.score}% Match
+        </Badge>
+      </div>
+      
+      <div className="space-y-2">
+        <p className="text-muted-foreground">{match.reason}</p>
+        <div className="bg-accent/10 p-4 rounded-md">
+          <h4 className="font-medium mb-2">{match.campaign.title}</h4>
+          <p className="text-sm text-muted-foreground">{match.campaign.description}</p>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" size="sm">
+          View Details
+        </Button>
+        <Button onClick={() => onAccept(match)} size="sm">
+          Accept Match
+        </Button>
+      </div>
+    </Card>
+  );
+}
 
 type MatchResultsProps = {
   match: {
