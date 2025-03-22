@@ -316,27 +316,68 @@ export default function ChatInterface() {
         {/* Main chat area */}
         <div className="md:w-3/4 flex flex-col h-full">
           {/* Chat header */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-white flex justify-between items-center">
+          <div className="px-6 py-4 border-b border-gray-200 bg-white flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
             <div>
-              <div className="flex items-center">
-                <h3 className="text-lg font-medium text-gray-900">NIL Matchmaking Assistant</h3>
-                <div className="flex items-center ml-2 bg-gray-100 px-2 py-1 rounded text-xs">
-                  <span className="mr-1">Status:</span>
-                  <div className={`h-3 w-3 rounded-full ${connectionStatus === 'open' ? 'bg-green-500' : connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`} 
-                    title={`WebSocket status: ${connectionStatus}`}></div>
-                  <span className="ml-1 text-xs">
-                    {connectionStatus === 'open' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting' : 'Disconnected'}
-                  </span>
-                </div>
-              </div>
+              <h3 className="text-lg font-medium text-gray-900">NIL Matchmaking Assistant</h3>
               <p className="text-sm text-gray-500 mt-1">Connecting athletes and businesses</p>
             </div>
-            <div>
+            
+            <div className="w-full md:w-auto flex flex-col md:flex-row gap-3 items-start md:items-center">
+              {/* WebSocket connection status */}
+              <div className={`flex items-center px-3 py-2 rounded border ${
+                connectionStatus === 'open' 
+                  ? 'bg-green-50 border-green-200 text-green-700' 
+                  : connectionStatus === 'connecting' 
+                    ? 'bg-yellow-50 border-yellow-200 text-yellow-700' 
+                    : 'bg-red-50 border-red-200 text-red-700'
+              }`}>
+                <div className={`h-4 w-4 rounded-full mr-2 ${
+                  connectionStatus === 'open' 
+                    ? 'bg-green-500' 
+                    : connectionStatus === 'connecting' 
+                      ? 'bg-yellow-500' 
+                      : 'bg-red-500'
+                }`}></div>
+                <span className="font-medium">
+                  {connectionStatus === 'open' 
+                    ? 'Real-time Connected' 
+                    : connectionStatus === 'connecting' 
+                      ? 'Connecting...' 
+                      : 'Disconnected'}
+                </span>
+              </div>
+              
               <div className="flex space-x-2">
+                {/* Test button for WebSocket notifications */}
+                {session && (
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={testMatchNotification}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 2L11 13"></path>
+                      <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+                    </svg>
+                    Simulate Match
+                  </Button>
+                )}
+                
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center gap-1 rounded-full"
+                  className="flex items-center gap-1"
                   onClick={handleResetChat}
                 >
                   <svg
@@ -356,31 +397,6 @@ export default function ChatInterface() {
                   </svg>
                   Reset Chat
                 </Button>
-                {/* Test button for WebSocket notifications */}
-                {session && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-1 rounded-full"
-                    onClick={testMatchNotification}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M22 2L11 13"></path>
-                      <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
-                    </svg>
-                    Test Notification
-                  </Button>
-                )}
               </div>
             </div>
           </div>
