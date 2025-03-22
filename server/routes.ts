@@ -380,19 +380,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           id: match.id,
           score: match.score,
-          athlete: {
+          athlete: athlete ? {
             id: athlete.id,
             name: athlete.name,
-          },
-          business: {
+          } : undefined,
+          business: business ? {
             id: business.id,
             name: business.name,
-          },
-          campaign: {
+          } : undefined,
+          campaign: campaign ? {
             title: campaign.title,
             description: campaign.description,
             deliverables: campaign.deliverables,
-          },
+          } : undefined,
           reason: match.reason,
         };
       }));
@@ -560,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Send WebSocket notification
     const sent = sendWebSocketMessage(sessionId, {
       type: "match",
-      message: "New match found! An SMB is interested in a marketing partnership with you.",
+      message: `Contested Match Alert: The perfect partnership with ${mockMatchData.business.name} has been identified for you!`,
       matchData: mockMatchData
     });
     
