@@ -152,7 +152,7 @@ export default function OnboardingWizard() {
 
   const handleFinish = () => {
     // Navigate to dashboard
-    navigate("/dashboard");
+    setLocation("/dashboard");
   };
 
   // Handle user type selection
@@ -314,7 +314,7 @@ export default function OnboardingWizard() {
             <Button 
               variant="outline" 
               onClick={handleBack}
-              disabled={currentStep === WizardStep.Welcome}
+              disabled={currentStep === 0}
             >
               Back
             </Button>

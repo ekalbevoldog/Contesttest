@@ -409,6 +409,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Handle user preferences submission
+  app.post("/api/preferences", async (req: Request, res: Response) => {
+    try {
+      const { sessionId, userType, ...preferencesData } = req.body;
+      
+      if (userType === "athlete") {
+        // Get the athlete ID from the session
+        const session = await sessionService.getSession(sessionId);
+        if (!session || !session.athleteId) {
+          return res.status(400).json({ success: false, message: "Athlete profile not found" });
+        }
+        
+        // Update the athlete profile with preferences
+        const athlete = await storage.getAthlete(session.athleteId);
+        if (!athlete) {
+          return res.status(404).json({ success: false, message: "Athlete profile not found" });
+        }
+        
+        const updatedAthlete = await storage.storeAthleteProfile({
+          ...athlete,
+          preferences: preferencesData
+        });
+        
+        res.json({ success: true, athlete: updatedAthlete });
+      } else if (userType === "business") {
+        // Get the business ID from the session
+        const session = await sessionService.getSession(sessionId);
+        if (!session || !session.businessId) {
+          return res.status(400).json({ success: false, message: "Business profile not found" });
+        }
+        
+        // Update the business profile with preferences
+        const business = await storage.getBusiness(session.businessId);
+        if (!business) {
+          return res.status(404).json({ success: false, message: "Business profile not found" });
+        }
+        
+        const updatedBusiness = await storage.storeBusinessProfile({
+          ...business,
+          preferences: preferencesData
+        });
+        
+        res.json({ success: true, business: updatedBusiness });
+      } else {
+        res.status(400).json({ success: false, message: "Invalid user type" });
+      }
+    } catch (error) {
+      console.error("Error storing preferences:", error);
+      res.status(500).json({ success: false, message: "Failed to store preferences" });
+    }
+  });
+  
   // Get profile for current session
   app.get("/api/profile", async (req: Request, res: Response) => {
     try {
