@@ -22,25 +22,25 @@ export default function Header() {
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
               </svg>
               <Link href="/">
-                <a className="ml-2 text-xl font-bold text-gray-900">NIL Connect</a>
+                <span className="ml-2 text-xl font-bold text-gray-900 cursor-pointer">NIL Connect</span>
               </Link>
             </div>
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/">
-              <a className={`px-3 py-2 rounded-md text-sm font-medium ${
+              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
                 location === "/" ? "text-primary-600" : "text-gray-600 hover:text-gray-900"
               }`}>
                 Home
-              </a>
+              </span>
             </Link>
             <Link href="/dashboard">
-              <a className={`px-3 py-2 rounded-md text-sm font-medium ${
+              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
                 location === "/dashboard" ? "text-primary-600" : "text-gray-600 hover:text-gray-900"
               }`}>
                 Dashboard
-              </a>
+              </span>
             </Link>
             <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Matches</a>
             <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Analytics</a>
@@ -60,24 +60,24 @@ export default function Header() {
               <SheetContent>
                 <div className="px-2 pt-2 pb-3 space-y-1">
                   <Link href="/">
-                    <a 
-                      className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    <span 
+                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
                         location === "/" ? "bg-primary-50 text-primary-600" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                       onClick={() => setOpen(false)}
                     >
                       Home
-                    </a>
+                    </span>
                   </Link>
                   <Link href="/dashboard">
-                    <a 
-                      className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    <span 
+                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
                         location === "/dashboard" ? "bg-primary-50 text-primary-600" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                       onClick={() => setOpen(false)}
                     >
                       Dashboard
-                    </a>
+                    </span>
                   </Link>
                   <a 
                     href="#" 
