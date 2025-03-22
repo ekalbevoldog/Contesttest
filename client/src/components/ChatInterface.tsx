@@ -164,6 +164,44 @@ export default function ChatInterface() {
     sendMessageMutation.mutate(input.trim());
   };
   
+  // Test WebSocket match notification
+  const testMatchNotification = async () => {
+    if (!session) return;
+    
+    try {
+      const response = await fetch("/api/test/simulate-match", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ sessionId: session }),
+        credentials: "include"
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        toast({
+          title: "Test Failed",
+          description: data.error || "Failed to send test notification",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Test Sent",
+          description: "WebSocket notification test was sent successfully. You should receive a match notification shortly."
+        });
+      }
+    } catch (error) {
+      console.error("Error sending test notification:", error);
+      toast({
+        title: "Test Error",
+        description: "An error occurred when sending the test notification",
+        variant: "destructive"
+      });
+    }
+  };
+  
   // Handle form submission
   const handleFormSubmit = (data: any) => {
     setIsProcessingForm(true);
@@ -294,29 +332,56 @@ export default function ChatInterface() {
               <p className="text-sm text-gray-500 mt-1">Connecting athletes and businesses</p>
             </div>
             <div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center gap-1 rounded-full"
-                onClick={handleResetChat}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1 rounded-full"
+                  onClick={handleResetChat}
                 >
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                </svg>
-                Reset Chat
-              </Button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                  </svg>
+                  Reset Chat
+                </Button>
+                {/* Test button for WebSocket notifications */}
+                {session && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1 rounded-full"
+                    onClick={testMatchNotification}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 2L11 13"></path>
+                      <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+                    </svg>
+                    Test Notification
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
