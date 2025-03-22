@@ -305,13 +305,13 @@ export default function ChatInterface() {
   }, [lastMessage, toast]);
   
   return (
-    <Card className="bg-white shadow-md overflow-hidden border border-gray-200">
-      <div className="md:flex h-full">
+    <Card className="h-[calc(100vh-6rem)] bg-white shadow-md overflow-hidden border border-gray-200">
+      <div className="flex h-full flex-col md:flex-row">
         {/* Left sidebar - for larger screens */}
-        <div className="hidden md:block md:w-1/4 bg-gray-50 border-r border-gray-200 overflow-y-auto">
+        <div className="hidden md:block md:w-1/4 bg-gray-50 border-r border-gray-200">
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">Recent Chats</h2>
-          </div>
+          </div>iv>
           <div className="divide-y divide-gray-200">
             <div className="p-4 hover:bg-gray-100 cursor-pointer bg-gray-100 border-l-4 border-primary-600">
               <div className="flex justify-between">
