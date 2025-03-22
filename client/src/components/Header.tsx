@@ -19,10 +19,12 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <svg className="h-8 w-auto text-primary-600" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                <path d="M16 8v8h-2V8h2zm-4-4v16h-2V4h2zm-4 7v9H6v-9h2zm12-7h-2v16h2V4z"></path>
               </svg>
               <Link href="/">
-                <span className="ml-2 text-xl font-bold text-gray-900 cursor-pointer">NIL Connect</span>
+                <span className="ml-2 text-xl font-bold text-gray-900 cursor-pointer">
+                  <span className="text-primary-600">Contested</span>
+                </span>
               </Link>
             </div>
           </div>

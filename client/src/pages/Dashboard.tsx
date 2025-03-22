@@ -37,8 +37,12 @@ export default function Dashboard() {
       <main className="flex-1 py-6 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-500">View your profile, matches, and analytics</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400">
+                Contested Dashboard
+              </span>
+            </h1>
+            <p className="text-gray-500">Connect, collaborate, and grow your brand partnerships</p>
           </div>
           
           <Tabs defaultValue="matches" value={selectedTab} onValueChange={setSelectedTab}>
@@ -132,7 +136,9 @@ export default function Dashboard() {
                   ) : (
                     <div>
                       <h3 className="text-lg font-medium">{profileData?.name || 'Your Profile'}</h3>
-                      <p className="text-sm text-gray-500 mb-4">Type: {userType === 'athlete' ? 'College Athlete' : 'Business'}</p>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Type: {userType === 'athlete' ? 'Mid-Tier Athlete' : 'Small/Medium Business'}
+                      </p>
                       
                       <div className="space-y-4">
                         {userType === 'athlete' && (

@@ -5,8 +5,10 @@ export default function Footer() {
     <footer className="bg-white">
       <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
         <div className="mt-2 border-t border-gray-100 pt-4 flex flex-col md:flex-row md:items-center md:justify-between">
-          <div className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} NIL Connect. All rights reserved.
+          <div className="flex flex-col md:flex-row space-y-1 md:space-y-0 md:space-x-4 text-sm text-gray-500">
+            <div>&copy; {new Date().getFullYear()} Contested. All rights reserved.</div>
+            <div className="md:border-l md:pl-4">Connecting SMBs with mid-tier athletes</div>
+            <div className="md:border-l md:pl-4">support@contested.io</div>
           </div>
           <div className="flex mt-2 md:mt-0 space-x-6">
             <a href="#" className="text-gray-400 hover:text-gray-500">

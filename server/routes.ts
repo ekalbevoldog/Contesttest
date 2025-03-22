@@ -550,10 +550,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deliverables: ["Instagram Story Series", "TikTok Video", "Product Unboxing"]
       },
       business: {
-        name: "Test Business"
+        name: "Urban Athletics Co."
       },
       athlete: {
-        name: "Test Athlete"
+        name: "Jordan Mitchell"
       }
     };
     
