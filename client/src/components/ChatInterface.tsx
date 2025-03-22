@@ -485,11 +485,11 @@ export default function ChatInterface() {
                       </svg>
                     </div>
                   </div>
-                  <div className="ml-3 bg-gray-100 rounded-lg py-3 px-4">
+                  <div className="ml-3 bg-gradient-to-br from-[#f8f9fa] to-[#edf2f7] rounded-lg py-3 px-4 shadow-sm border border-gray-100">
                     <div className="flex space-x-2">
-                      <div className="h-2 w-2 bg-gray-500 rounded-full animate-bounce"></div>
-                      <div className="h-2 w-2 bg-gray-500 rounded-full animate-bounce delay-75"></div>
-                      <div className="h-2 w-2 bg-gray-500 rounded-full animate-bounce delay-150"></div>
+                      <div className="h-2 w-2 bg-[#0066cc] rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 bg-[#0066cc] rounded-full animate-bounce delay-75"></div>
+                      <div className="h-2 w-2 bg-[#0066cc] rounded-full animate-bounce delay-150"></div>
                     </div>
                   </div>
                 </div>
@@ -500,7 +500,7 @@ export default function ChatInterface() {
           </ScrollArea>
 
           {/* Chat input area */}
-          <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+          <div className="px-4 py-3 bg-gradient-to-r from-[#f5f7fa] to-[#ebedee] border-t border-gray-200">
             <div className="flex space-x-3">
               <div className="flex-grow">
                 <Input
@@ -511,19 +511,20 @@ export default function ChatInterface() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyPress}
                   disabled={isTyping || isProcessingForm}
+                  className="border-[#c0d0e0] focus-visible:ring-[#0066cc]"
                 />
               </div>
               <Button
                 type="button"
                 onClick={handleSendMessage}
                 disabled={!input.trim() || isTyping || isProcessingForm}
-                className="flex items-center"
+                className="flex items-center bg-gradient-to-r from-[#003366] to-[#0066cc] hover:from-[#002b55] hover:to-[#0055aa] text-white"
               >
                 <Send className="h-5 w-5 mr-1" />
                 Send
               </Button>
             </div>
-            <p className="mt-2 text-xs text-gray-500">Your data is securely processed and stored to provide the best matches.</p>
+            <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#0066cc] font-semibold">Contested</span> © 2025</p>
           </div>
         </div>
       </div>
