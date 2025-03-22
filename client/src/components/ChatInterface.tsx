@@ -326,34 +326,34 @@ export default function ChatInterface() {
         {/* Main chat area */}
         <div className="md:w-3/4 flex flex-col h-full">
           {/* Chat header */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-white flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#003366] to-[#001a33] flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">Contested Matchmaking Assistant</h3>
-              <p className="text-sm text-gray-500 mt-1">Connecting SMBs with mid-tier athletes</p>
+              <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-[#00a3ff]">Contested Matchmaking Assistant</h3>
+              <p className="text-sm text-gray-300 mt-1">Connecting SMBs with mid-tier athletes</p>
             </div>
             
             <div className="w-full md:w-auto flex flex-col md:flex-row gap-3 items-start md:items-center">
               {/* WebSocket connection status */}
-              <div className={`flex items-center px-3 py-2 rounded border ${
+              <div className={`flex items-center px-3 py-1.5 rounded-full text-xs ${
                 connectionStatus === 'open' 
-                  ? 'bg-green-50 border-green-200 text-green-700' 
+                  ? 'bg-[rgba(0,255,204,0.15)] border border-[rgba(0,255,204,0.5)] text-white' 
                   : connectionStatus === 'connecting' 
-                    ? 'bg-yellow-50 border-yellow-200 text-yellow-700' 
-                    : 'bg-red-50 border-red-200 text-red-700'
+                    ? 'bg-[rgba(255,149,0,0.15)] border border-[rgba(255,149,0,0.5)] text-white' 
+                    : 'bg-[rgba(255,75,75,0.15)] border border-[rgba(255,75,75,0.5)] text-white'
               }`}>
-                <div className={`h-4 w-4 rounded-full mr-2 ${
+                <div className={`h-3 w-3 rounded-full mr-2 ${
                   connectionStatus === 'open' 
-                    ? 'bg-green-500' 
+                    ? 'bg-[#00ffcc]' 
                     : connectionStatus === 'connecting' 
-                      ? 'bg-yellow-500' 
-                      : 'bg-red-500'
+                      ? 'bg-[#ff9500] animate-pulse' 
+                      : 'bg-[#ff4b4b]'
                 }`}></div>
                 <span className="font-medium">
                   {connectionStatus === 'open' 
-                    ? 'Real-time Connected' 
+                    ? 'Live Updates' 
                     : connectionStatus === 'connecting' 
                       ? 'Connecting...' 
-                      : 'Disconnected'}
+                      : 'Reconnecting...'}
                 </span>
               </div>
               
@@ -361,9 +361,8 @@ export default function ChatInterface() {
                 {/* Test button for WebSocket notifications */}
                 {session && (
                   <Button 
-                    variant="default" 
                     size="sm" 
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 bg-gradient-to-r from-[#ff9500] to-[#ff7200] hover:from-[#ff8a00] hover:to-[#ff6600] text-white"
                     onClick={testMatchNotification}
                   >
                     <svg
@@ -380,14 +379,14 @@ export default function ChatInterface() {
                       <path d="M22 2L11 13"></path>
                       <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
                     </svg>
-                    Simulate Match
+                    Test Match
                   </Button>
                 )}
                 
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 border-[#00a3ff] text-white hover:bg-[rgba(0,163,255,0.2)]"
                   onClick={handleResetChat}
                 >
                   <svg
@@ -425,9 +424,9 @@ export default function ChatInterface() {
                           </svg>
                         </div>
                       </div>
-                      <div className="ml-3 bg-gray-100 rounded-lg py-3 px-4 max-w-3xl">
+                      <div className="ml-3 bg-gradient-to-br from-[#f8f9fa] to-[#edf2f7] rounded-lg py-3 px-4 max-w-3xl shadow-sm border border-gray-100">
                         <div className="text-sm text-gray-900">
-                          <p className="font-medium mb-1">Contested Assistant</p>
+                          <p className="font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#0066cc]">Contested Assistant</p>
                           <p>{message.content}</p>
                           
                           {/* Show athlete form if needed */}
@@ -459,7 +458,7 @@ export default function ChatInterface() {
                     </div>
                   ) : (
                     <div className="flex items-start mb-4 justify-end">
-                      <div className="mr-3 bg-primary-600 text-white rounded-lg py-3 px-4 max-w-3xl">
+                      <div className="mr-3 bg-gradient-to-r from-[#0066cc] to-[#003366] text-white rounded-lg py-3 px-4 max-w-3xl shadow-sm">
                         <div className="text-sm">
                           <p>{message.content}</p>
                         </div>
