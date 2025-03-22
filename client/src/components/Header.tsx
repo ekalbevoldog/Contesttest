@@ -6,24 +6,27 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Menu, Zap, BarChart, Users, Trophy } from "lucide-react";
 
 export default function Header() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-white border-b border-[#e0f2ff] shadow-sm backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <svg className="h-8 w-auto text-primary-600" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 8v8h-2V8h2zm-4-4v16h-2V4h2zm-4 7v9H6v-9h2zm12-7h-2v16h2V4z"></path>
-              </svg>
+              <div className="relative h-9 w-9 flex items-center justify-center bg-[#003366] rounded-lg">
+                <svg className="h-5 w-5 text-[#00ffcc]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 8v8h-2V8h2zm-4-4v16h-2V4h2zm-4 7v9H6v-9h2zm12-7h-2v16h2V4z"></path>
+                </svg>
+                <Zap className="h-3 w-3 text-[#ff9500] absolute -top-1 -right-1" />
+              </div>
               <Link href="/">
-                <span className="ml-2 text-xl font-bold text-gray-900 cursor-pointer">
-                  <span className="text-primary-600">Contested</span>
+                <span className="ml-2 text-xl font-bold cursor-pointer">
+                  <span className="sports-highlight">Contested</span>
                 </span>
               </Link>
             </div>
@@ -31,72 +34,89 @@ export default function Header() {
           
           <div className="hidden md:flex items-center space-x-4">
             <Link href="/">
-              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
-                location === "/" ? "text-primary-600" : "text-gray-600 hover:text-gray-900"
+              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                location === "/" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
               }`}>
+                <Users className="mr-1 h-4 w-4" />
                 Home
               </span>
             </Link>
             <Link href="/dashboard">
-              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
-                location === "/dashboard" ? "text-primary-600" : "text-gray-600 hover:text-gray-900"
+              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                location === "/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
               }`}>
+                <BarChart className="mr-1 h-4 w-4" />
                 Dashboard
               </span>
             </Link>
-            <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Matches</a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Analytics</a>
+            <a href="#" className="text-gray-600 hover:text-[#003366] px-3 py-2 rounded-md text-sm font-medium flex items-center">
+              <Trophy className="mr-1 h-4 w-4" />
+              Matches
+            </a>
             <Link href="/">
-              <Button size="sm">Get Started</Button>
+              <Button size="sm" className="bg-gradient-to-r from-[#0066cc] to-[#00a3ff] hover:from-[#005bb8] hover:to-[#0091e6]">
+                Get Started
+              </Button>
             </Link>
           </div>
           
           <div className="md:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-6 w-6" />
+                <Button variant="outline" size="icon" className="border-[#00a3ff]">
+                  <Menu className="h-6 w-6 text-[#003366]" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent>
-                <div className="px-2 pt-2 pb-3 space-y-1">
+              <SheetContent className="border-l-[#00a3ff]">
+                <div className="pt-6 pb-3 space-y-1">
+                  <div className="flex items-center mb-6">
+                    <div className="relative h-9 w-9 flex items-center justify-center bg-[#003366] rounded-lg">
+                      <svg className="h-5 w-5 text-[#00ffcc]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16 8v8h-2V8h2zm-4-4v16h-2V4h2zm-4 7v9H6v-9h2zm12-7h-2v16h2V4z"></path>
+                      </svg>
+                      <Zap className="h-3 w-3 text-[#ff9500] absolute -top-1 -right-1" />
+                    </div>
+                    <span className="ml-2 text-xl font-bold">
+                      <span className="sports-highlight">Contested</span>
+                    </span>
+                  </div>
+                  
                   <Link href="/">
                     <span 
-                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                        location === "/" ? "bg-primary-50 text-primary-600" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                        location === "/" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
                       }`}
                       onClick={() => setOpen(false)}
                     >
+                      <Users className="mr-2 h-4 w-4" />
                       Home
                     </span>
                   </Link>
                   <Link href="/dashboard">
                     <span 
-                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                        location === "/dashboard" ? "bg-primary-50 text-primary-600" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                        location === "/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
                       }`}
                       onClick={() => setOpen(false)}
                     >
+                      <BarChart className="mr-2 h-4 w-4" />
                       Dashboard
                     </span>
                   </Link>
                   <a 
                     href="#" 
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366] flex items-center"
                     onClick={() => setOpen(false)}
                   >
+                    <Trophy className="mr-2 h-4 w-4" />
                     Matches
                   </a>
-                  <a 
-                    href="#" 
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    onClick={() => setOpen(false)}
-                  >
-                    Analytics
-                  </a>
                   <Link href="/">
-                    <Button className="w-full mt-3" onClick={() => setOpen(false)}>
+                    <Button 
+                      className="w-full mt-6 bg-gradient-to-r from-[#0066cc] to-[#00a3ff] hover:from-[#005bb8] hover:to-[#0091e6]" 
+                      onClick={() => setOpen(false)}
+                    >
                       Get Started
                     </Button>
                   </Link>
