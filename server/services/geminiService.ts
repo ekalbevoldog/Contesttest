@@ -42,7 +42,7 @@ class GeminiService {
   }
 
   // Helper method to make API calls to Gemini
-  private async callGemini(prompt: string, responseSchema: any, retry: number = this.retryCount) {
+  private async callGemini<T>(prompt: string, responseSchema: z.ZodType<T>, retry: number = this.retryCount): Promise<T> {
     // Check if we're in development mode or don't have a valid API key
     if (this.apiKey === "default_key" || process.env.NODE_ENV === "development") {
       console.log("Using mock response for Gemini API as no valid API key is provided");

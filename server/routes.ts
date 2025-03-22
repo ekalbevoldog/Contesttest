@@ -6,6 +6,10 @@ import { bigQueryService } from "./services/bigQueryService";
 import { sessionService } from "./services/sessionService";
 import { z } from "zod";
 import { createHash } from "crypto";
+import { WebSocketServer, WebSocket } from "ws";
+
+// Map to store active WebSocket connections by session ID
+const connectedClients = new Map<string, WebSocket>();
 
 // Schema for session creation
 const sessionCreateSchema = z.object({});
@@ -286,6 +290,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
               reason: bestMatch.reason,
             };
             
+            // Notify the athlete via WebSocket if they're connected
+            if (athletes[0].sessionId) {
+              sendWebSocketMessage(athletes[0].sessionId, {
+                type: 'match',
+                message: `New match found with ${business.name}!`,
+                matchData: {
+                  ...matchData,
+                  business: {
+                    name: business.name
+                  }
+                }
+              });
+            }
+            
             return res.status(200).json({
               message: "Business profile created and match found",
               reply,
@@ -458,5 +476,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   const httpServer = createServer(app);
+  
+  // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('WebSocket client connected');
+    
+    // Handle incoming messages
+    ws.on('message', async (message: string) => {
+      try {
+        const data = JSON.parse(message);
+        
+        // Register the client with their session ID
+        if (data.type === 'register' && data.sessionId) {
+          connectedClients.set(data.sessionId, ws);
+          console.log(`Client registered with session ID: ${data.sessionId}`);
+          
+          // Send a welcome message
+          ws.send(JSON.stringify({
+            type: 'system',
+            message: 'Connected to NIL Connect real-time updates'
+          }));
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+    
+    // Handle disconnection
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+      
+      // Remove the client from the connected clients map
+      for (const [sessionId, client] of connectedClients.entries()) {
+        if (client === ws) {
+          connectedClients.delete(sessionId);
+          console.log(`Removed client with session ID: ${sessionId}`);
+          break;
+        }
+      }
+    });
+  });
+  
+  // Helper function to send a WebSocket message to a client
+  const sendWebSocketMessage = (sessionId: string, data: any) => {
+    const client = connectedClients.get(sessionId);
+    if (client && client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+      return true;
+    }
+    return false;
+  };
+  
   return httpServer;
 }

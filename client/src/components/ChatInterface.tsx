@@ -11,6 +11,7 @@ import AthleteProfileForm from "./AthleteProfileForm";
 import BusinessProfileForm from "./BusinessProfileForm";
 import MatchResults from "./MatchResults";
 import { Send } from "lucide-react";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 type MessageType = {
   id: string;
