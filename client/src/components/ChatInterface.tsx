@@ -276,6 +276,7 @@ export default function ChatInterface() {
       toast({
         title: "New Match Found!",
         description: lastMessage.message,
+        variant: "default",
       });
       
       // Add the match notification as a message
@@ -283,13 +284,22 @@ export default function ChatInterface() {
         const matchMessage: MessageType = {
           id: Date.now().toString(),
           type: 'assistant',
-          content: "Great news! We've found a new match for you!",
+          content: "🎉 Great news! We've found a new match for you! This match was just sent to you in real-time.",
           timestamp: new Date(),
           showMatchResults: true,
-          matchData: lastMessage.matchData
+          matchData: {
+            ...lastMessage.matchData,
+            // Flag to indicate this is a real-time match from WebSocket
+            isNewMatch: true 
+          }
         };
         
         setMessages(prev => [...prev, matchMessage]);
+        
+        // Scroll to the bottom after adding the message
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
       }
     }
   }, [lastMessage, toast]);
@@ -437,7 +447,11 @@ export default function ChatInterface() {
                           {/* Show match results if needed */}
                           {message.showMatchResults && message.matchData && (
                             <div className="mt-4">
-                              <MatchResults match={message.matchData} />
+                              <MatchResults 
+                                match={message.matchData} 
+                                userType={message.matchData.userType}
+                                isNewMatch={message.matchData.isNewMatch}
+                              />
                             </div>
                           )}
                         </div>
