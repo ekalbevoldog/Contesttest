@@ -51,6 +51,39 @@ export default function N8nConfig() {
     },
   });
 
+  async function onConfigSubmit(values: z.infer<typeof webhookSchema>) {
+    setIsConfiguring(true);
+    try {
+      const response = await apiRequest("POST", "/api/n8n/config", values);
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Configuration Saved",
+          description: "N8n webhook URL has been configured successfully.",
+        });
+        
+        // Update the test form URL as well
+        testForm.setValue("webhook_url", values.webhook_url);
+      } else {
+        toast({
+          title: "Configuration Failed",
+          description: data.message || "Failed to save webhook configuration.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Configuration Error",
+        description: "An error occurred while saving the configuration.",
+        variant: "destructive",
+      });
+      console.error("Error saving webhook configuration:", error);
+    } finally {
+      setIsConfiguring(false);
+    }
+  }
+
   // Test webhook form
   const testForm = useForm<z.infer<typeof testWebhookSchema>>({
     resolver: zodResolver(testWebhookSchema),
