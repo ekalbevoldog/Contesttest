@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, jsonb, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, jsonb, timestamp, real, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,6 +8,9 @@ export const sessions = pgTable("sessions", {
   sessionId: text("session_id").notNull().unique(),
   userType: text("user_type"),
   data: jsonb("data"),
+  profileCompleted: boolean("profile_completed").default(false),
+  athleteId: integer("athlete_id"),
+  businessId: integer("business_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -30,6 +33,7 @@ export const athletes = pgTable("athlete_profiles", {
   followerCount: integer("follower_count").notNull(),
   contentStyle: text("content_style").notNull(),
   compensationGoals: text("compensation_goals").notNull(),
+  preferences: jsonb("preferences"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -412,11 +412,11 @@ export default function ChatInterface() {
 
           {/* Chat messages */}
           <ScrollArea className="flex-1 p-6 h-[calc(100vh-16rem)] md:h-[calc(100vh-10rem)]">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {messages.map((message) => (
                 <div key={message.id}>
                   {message.type === 'assistant' ? (
-                    <div className="flex items-start mb-4">
+                    <div className="flex items-start mb-6">
                       <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white">
                           <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -424,28 +424,28 @@ export default function ChatInterface() {
                           </svg>
                         </div>
                       </div>
-                      <div className="ml-3 bg-gradient-to-br from-[#f8f9fa] to-[#edf2f7] rounded-lg py-3 px-4 max-w-3xl shadow-sm border border-gray-100">
+                      <div className="ml-3 bg-gradient-to-br from-[#f8f9fa] to-[#edf2f7] rounded-lg py-3 px-4 max-w-3xl shadow-sm border border-gray-100 overflow-visible">
                         <div className="text-sm text-gray-900">
                           <p className="font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#0066cc]">Contested Assistant</p>
                           <p>{message.content}</p>
                           
                           {/* Show athlete form if needed */}
                           {message.showAthleteForm && (
-                            <div className="mt-4">
+                            <div className="mt-6 mb-4">
                               <AthleteProfileForm onSubmit={handleFormSubmit} isLoading={isProcessingForm} />
                             </div>
                           )}
                           
                           {/* Show business form if needed */}
                           {message.showBusinessForm && (
-                            <div className="mt-4">
+                            <div className="mt-6 mb-4">
                               <BusinessProfileForm onSubmit={handleFormSubmit} isLoading={isProcessingForm} />
                             </div>
                           )}
                           
                           {/* Show match results if needed */}
                           {message.showMatchResults && message.matchData && (
-                            <div className="mt-4">
+                            <div className="mt-6 mb-4">
                               <MatchResults 
                                 match={message.matchData} 
                                 userType={message.matchData.userType}
@@ -457,7 +457,7 @@ export default function ChatInterface() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-start mb-4 justify-end">
+                    <div className="flex items-start mb-6 justify-end">
                       <div className="mr-3 bg-gradient-to-r from-[#0066cc] to-[#003366] text-white rounded-lg py-3 px-4 max-w-3xl shadow-sm">
                         <div className="text-sm">
                           <p>{message.content}</p>
@@ -477,7 +477,7 @@ export default function ChatInterface() {
               
               {/* Show typing indicator while waiting for response */}
               {isTyping && (
-                <div className="flex items-start mb-4">
+                <div className="flex items-start mb-6">
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white">
                       <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
