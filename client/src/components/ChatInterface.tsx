@@ -306,25 +306,9 @@ export default function ChatInterface() {
   
   return (
     <Card className="h-[calc(100vh-6rem)] bg-white shadow-md overflow-hidden border border-gray-200">
-      <div className="flex h-full flex-col md:flex-row">
-        {/* Left sidebar - for larger screens */}
-        <div className="hidden md:block md:w-1/4 bg-gray-50 border-r border-gray-200">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Recent Chats</h2>
-          </div>
-          <div className="divide-y divide-gray-200">
-            <div className="p-4 hover:bg-gray-100 cursor-pointer bg-gray-100 border-l-4 border-primary-600">
-              <div className="flex justify-between">
-                <p className="text-sm font-medium text-gray-900">New Conversation</p>
-                <span className="text-xs text-gray-500">Just now</span>
-              </div>
-              <p className="text-xs text-gray-500 truncate">Getting started with Contested...</p>
-            </div>
-          </div>
-        </div>
-
+      <div className="flex h-full flex-col">
         {/* Main chat area */}
-        <div className="md:w-3/4 flex flex-col h-full">
+        <div className="w-full flex flex-col h-full">
           {/* Chat header */}
           <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#003366] to-[#001a33] flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
             <div>
