@@ -272,7 +272,7 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Basic Plan */}
-            <Card className="bg-white shadow-md hover:shadow-lg transition-shadow relative overflow-hidden">
+            <Card id="basic-plan" className="bg-white shadow-md hover:shadow-lg transition-shadow relative overflow-hidden">
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1">Basic</h3>
                 <p className="text-gray-500 text-sm mb-4">Perfect for getting started</p>
@@ -307,7 +307,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white" asChild>
-                  <Link to="/onboarding">Get Started</Link>
+                  <Link to="/find-athlete-match">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
@@ -357,7 +357,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white" asChild>
-                  <Link to="/onboarding">Get Started</Link>
+                  <Link to="/find-athlete-match">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
@@ -404,7 +404,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white" asChild>
-                  <Link to="/onboarding">Contact Sales</Link>
+                  <Link to="/find-athlete-match">Contact Sales</Link>
                 </Button>
               </div>
             </Card>
