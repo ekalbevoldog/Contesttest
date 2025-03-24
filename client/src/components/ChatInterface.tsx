@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import AthleteProfileForm from "./AthleteProfileForm";
 import BusinessProfileForm from "./BusinessProfileForm";
-import MatchResults from "./MatchResults";
+import CompactMatchResults from "./CompactMatchResults";
 import { Send } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -446,7 +446,7 @@ export default function ChatInterface() {
                           {/* Show match results if needed */}
                           {message.showMatchResults && message.matchData && (
                             <div className="mt-6 mb-4">
-                              <MatchResults 
+                              <CompactMatchResults 
                                 match={message.matchData} 
                                 userType={message.matchData.userType}
                                 isNewMatch={message.matchData.isNewMatch}
