@@ -6,7 +6,22 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, Zap, BarChart, Users, Trophy } from "lucide-react";
+import {
+  Menu,
+  BarChart,
+  Users,
+  Trophy,
+  LogIn,
+  User,
+  UserCircle,
+  Briefcase
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const [location] = useLocation();
@@ -45,7 +60,32 @@ export default function Header() {
               <Trophy className="mr-1 h-4 w-4" />
               Matches
             </a>
-            <Link href="/">
+            
+            {/* Account Sign In Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="ml-2 border-[#00a3ff] text-[#003366]">
+                  <LogIn className="mr-1 h-4 w-4" />
+                  Sign In
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link href="/athlete/login" className="cursor-pointer w-full flex items-center">
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    <span>Sign in as Athlete</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/business/login" className="cursor-pointer w-full flex items-center">
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    <span>Sign in as Business</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Link href="/find-athlete-match">
               <Button size="sm" className="bg-gradient-to-r from-[#0066cc] to-[#00a3ff] hover:from-[#005bb8] hover:to-[#0091e6]">
                 Get Started
               </Button>
@@ -96,7 +136,30 @@ export default function Header() {
                     <Trophy className="mr-2 h-4 w-4" />
                     Matches
                   </a>
-                  <Link href="/">
+                  
+                  <div className="border-t border-gray-200 my-4 pt-4">
+                    <div className="px-3 py-2 text-sm font-medium text-gray-500">Account</div>
+                    <Link href="/athlete/login">
+                      <span
+                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366] flex items-center"
+                        onClick={() => setOpen(false)}
+                      >
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        Sign in as Athlete
+                      </span>
+                    </Link>
+                    <Link href="/business/login">
+                      <span
+                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366] flex items-center"
+                        onClick={() => setOpen(false)}
+                      >
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Sign in as Business
+                      </span>
+                    </Link>
+                  </div>
+                  
+                  <Link href="/find-athlete-match">
                     <Button 
                       className="w-full mt-6 bg-gradient-to-r from-[#0066cc] to-[#00a3ff] hover:from-[#005bb8] hover:to-[#0091e6]" 
                       onClick={() => setOpen(false)}
