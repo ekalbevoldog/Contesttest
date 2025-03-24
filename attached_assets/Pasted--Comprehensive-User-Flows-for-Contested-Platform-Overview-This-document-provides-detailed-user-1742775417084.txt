@@ -1,0 +1,1012 @@
+# Comprehensive User Flows for Contested Platform
+
+## Overview
+
+This document provides detailed user flows for the Contested platform, focusing on the end-to-end journey of SMBs and athletes. Each flow is broken down into specific steps, interactions, UI requirements, and technical implementation details to guide Replit's agent in development and execution.
+
+## SMB User Journey
+
+### 1. Discovery & Pre-Registration Flow
+
+#### 1.1 Landing Page Experience
+- **Initial Entry Point**: User lands on homepage from marketing channel (paid ad, organic search, referral)
+- **Hero Section**:
+  - Headline: "AI-Powered Mid-Tier Athlete Partnerships for Businesses of All Sizes"
+  - Subheading: "Connect with NCAA, minor league, Olympic, and esports athletes at a fraction of the cost"
+  - Primary CTA: "Find Your Perfect Athlete Match" (triggers wizard)
+  - Secondary CTA: "See How It Works" (scrolls to process explanation)
+- **Social Proof Section**:
+  - Display 3-5 logo testimonials from recognizable SMBs
+  - Show key metrics: "2,500+ businesses matched with athletes across 25+ sports"
+  - Feature rotating testimonial carousel with photos and quotes
+- **Value Proposition Section**:
+  - Three-column layout highlighting core benefits:
+    1. "AI-Powered Matching" with relevant icon and 2-3 sentence explanation
+    2. "End-to-End Campaign Management" with relevant icon and 2-3 sentence explanation
+    3. "Measurable Results" with relevant icon and 2-3 sentence explanation
+- **How It Works Section**:
+  - Four-step process with animated illustrations:
+    1. "Tell us your goals and budget"
+    2. "Our AI finds your perfect athlete matches"
+    3. "Create and manage your campaign"
+    4. "Track performance and ROI"
+  - Each step includes brief explanation and visual representation
+- **Featured Athletes Section**:
+  - Grid display of 8-12 diverse athletes across multiple categories
+  - Each athlete card shows:
+    - Professional photo
+    - Name and sport/league
+    - Key metric (e.g., "45K engaged followers")
+    - Tag indicating category (NCAA, Minor League, Olympic, etc.)
+- **Final CTA Section**:
+  - Large button: "Find Your Athlete Match Now"
+  - No-risk messaging: "Free to explore, no commitment required"
+
+#### 1.2 Pre-Registration Wizard
+- **Step A: Marketing Objectives**
+  - **Header**:
+    - Progress indicator: "Step 1 of 3"
+    - Title: "Which of these game-changing results would most transform your business right now?"
+  - **Content**:
+    - Display 5 objective cards in grid layout:
+      1. Brand awareness & recognition (icon: megaphone)
+      2. Direct sales & conversions (icon: shopping cart)
+      3. Content creation for social channels (icon: camera)
+      4. Community engagement & loyalty (icon: people)
+      5. Product launches & promotions (icon: rocket)
+    - Each card is clickable with hover effect
+    - Multi-select enabled with visual indication of selection
+    - Primary/secondary tagging option appears after selection
+  - **Footer**:
+    - Continue button (enabled after at least one selection)
+    - Skip option (small text link)
+  - **Interaction Details**:
+    - On card selection: Show brief success metric underneath (e.g., "Businesses selecting this goal see an average 24% increase in brand mentions")
+    - After selection: Show dynamic count of objectives selected
+    - Between step transition: Subtle animation showing data being processed
+
+- **Step B: Budget & Deliverables**
+  - **Header**:
+    - Progress indicator: "Step 2 of 3"
+    - Title: "Let's find athletes that match your marketing budget and content needs."
+    - Subtitle: "We'll show you options that deliver maximum value within your range"
+  - **Content**:
+    - **Budget Section**:
+      - Interactive slider with markers at key price points ($500, $1000, $2500, $5000+)
+      - Dynamic counter showing: "X athletes available in this range"
+      - Optional toggle between monthly budget and campaign total
+    - **Content Type Section**:
+      - Visual content cards showing 4-6 options:
+        1. Instagram Post/Story
+        2. TikTok Video
+        3. YouTube Content
+        4. Twitter/X Posts
+        5. In-Person Appearances
+        6. Live Streams
+      - Each card shows average engagement metrics
+      - Each card is selectable with clear visual feedback
+    - **Frequency Section**:
+      - Simple selector for Weekly, Bi-Weekly, or Monthly content
+      - Visual calendar preview showing content distribution
+  - **Footer**:
+    - Continue button
+    - Back button (returns to Step 1)
+    - Dynamic value statement: "Your selected plan can reach approximately X potential customers"
+  - **Interaction Details**:
+    - As budget slider moves: Update athlete count and recommended content types
+    - As content types are selected: Update total budget impact and estimated reach
+    - Hover states for all interactive elements with tooltip explanations
+
+- **Step C: Targeting & Preferences**
+  - **Header**:
+    - Progress indicator: "Step 3 of 3"
+    - Title: "Help us match you with the right athletes"
+    - Subtitle: "Fine-tune your preferences for your perfect brand ambassadors"
+  - **Content**:
+    - **Geographic Section**:
+      - Interactive map interface with:
+        - Search bar for location entry
+        - Draggable radius selector (25, 50, 100 miles)
+        - Toggle between local, regional, national options
+      - Dynamic counter: "X athletes have significant following in your area"
+    - **Sports Category Section**:
+      - Visual grid of sports icons across multiple categories:
+        - Team sports (basketball, football, baseball, etc.)
+        - Individual sports (tennis, golf, swimming, etc.)
+        - Olympic sports (gymnastics, track & field, etc.)
+        - Esports options (various game titles)
+      - Multi-select enabled with clear visual feedback
+      - Popular options for user's industry highlighted
+    - **Brand Alignment Section**:
+      - Semantic differential scales for brand personality:
+        - Professional ←→ Casual
+        - Traditional ←→ Innovative
+        - Serious ←→ Playful
+        - Exclusive ←→ Accessible
+      - Tag cloud for brand values (authenticity, sustainability, etc.)
+  - **Footer**:
+    - "Generate Matches" button (primary CTA)
+    - Back button (returns to Step 2)
+    - Trust indicator: "X businesses found their perfect athlete matches"
+  - **Interaction Details**:
+    - When all required fields are complete: Button state changes
+    - After clicking "Generate Matches": Show processing animation
+    - Animation should include progress bar and processing messages:
+      - "AI analyzing 15,000+ athlete profiles..."
+      - "Calculating compatibility scores..."
+      - "Finding personality matches..."
+      - "Identifying optimal partnerships..."
+
+#### 1.3 Results Preview & Registration Trigger
+- **Processing Animation**:
+  - Fullscreen overlay with branded background
+  - Central animation showing AI matching process visualization
+  - Progress bar filling from 0-100%
+  - Dynamic messaging: "Our AI has found X athletes that match your criteria"
+  - Animation duration: 3-5 seconds (perceived processing time)
+
+- **Results Preview Screen**:
+  - **Header**:
+    - Title: "We've Found Your Ideal Athlete Matches"
+    - Subtitle: "Create your free account to see full profiles and connect"
+  - **Content**:
+    - Grid of 6-8 athlete preview cards with:
+      - Full athlete image (high-quality, not blurred)
+      - Sport and affiliation (fully visible)
+      - Match percentage with color coding (e.g., 87% match in green)
+      - Key metrics like follower count and engagement rate
+      - Partial name (e.g., "Jessica W.")
+      - Blurred/obscured detailed information
+    - FOMO-triggering elements:
+      - Counter: "23 more athletes match your criteria"
+      - Urgency statement: "These matches are reserved for you for 24 hours"
+      - Quality indicator: "Top match has 45K followers with 7.2% engagement rate"
+  - **Registration Panel**:
+    - Title: "Create Your Free Account"
+    - Form fields:
+      - Business email (required)
+      - Password with strength indicator (required)
+      - Business name (required)
+      - Full name (required)
+      - Industry dropdown (optional)
+      - Phone number (optional)
+    - Social sign-up options:
+      - "Continue with Google" button
+      - "Continue with LinkedIn" button
+    - Trust elements:
+      - Security badges
+      - "2,500+ businesses joined last month"
+      - "We never share your information"
+      - Simple terms acceptance checkbox
+    - Primary CTA: "Create Account & View Full Profiles"
+    - Secondary message: "Free to explore, no commitment required"
+  - **Interaction Details**:
+    - Hover over athlete card: Subtle animation with "View full profile" message
+    - Click on athlete card: Triggers registration form focus
+    - Form validation: Real-time validation with clear error messages
+    - Successful submission: Show brief loading animation before proceeding
+
+### 2. Post-Registration Onboarding
+
+#### 2.1 Immediate Value Delivery
+- **First Log-in Experience**:
+  - Celebratory animation: "Your matches are ready!"
+  - Immediate display of complete athlete matches (no additional steps required)
+  - Full profiles with all details unlocked
+  - Brief orientation tooltip tour (dismissible)
+
+- **Athlete Results Display**:
+  - **Header**:
+    - Title: "Your AI-Selected Athlete Matches"
+    - Filters: Sport, Match %, Price range, Location
+    - Sort options: Match quality, Price, Engagement rate
+  - **Content**:
+    - Grid view of complete athlete cards:
+      - Professional headshot and action photos
+      - Full name, university/team, sport, position
+      - Match percentage with explanation button
+      - Key metrics with benchmark comparisons
+      - Biography and content style overview
+      - Price range for typical partnerships
+      - Availability indicator
+    - Card interaction:
+      - Click: Expands to full profile view
+      - Hover: Shows quick action menu
+      - Save/favorite option
+    - Comparison tools:
+      - Multi-select capability for side-by-side comparison
+      - Comparison view with detailed metric breakdown
+      - Notes field for tracking decision factors
+
+#### 2.2 Progressive Onboarding
+- **Guided Sidebar**:
+  - Title: "To get the most from Contested's AI"
+  - Progress indicator showing completion status
+  - Steps presented as benefits:
+    1. "Refine your brand profile to improve AI matches"
+    2. "Upload brand assets for AI campaign generation"
+    3. "Set your campaign timeline for AI optimization"
+  - Each step shows estimated time commitment (e.g., "2 min")
+  - "Skip for now" option available on all steps
+
+- **Brand Profile Enhancement**:
+  - Overlay form with:
+    - Industry-specific questions
+    - Brand voice preferences
+    - Target audience details
+    - Sample content upload
+  - Real-time feedback as information is added
+  - Visual indicator of profile completeness
+  - Immediate refresh of matches with enhanced results after submission
+
+- **Brand Assets Upload**:
+  - Drag-and-drop interface for:
+    - Logo (multiple formats)
+    - Brand colors (with color picker)
+    - Image library
+    - Guidelines PDF
+  - Asset categorization system
+  - Usage permission settings
+  - Preview of how assets appear to athletes
+
+- **Timeline Definition**:
+  - Interactive calendar interface
+  - Campaign duration selector
+  - Key date identification (product launches, events)
+  - Seasonal considerations
+  - AI-suggested optimal timing recommendations
+
+#### 2.3 Campaign Creation Pathway
+- **Campaign Initiation Prompt**:
+  - Appears after exploring athlete profiles
+  - Non-intrusive slide-in notification
+  - Message: "Ready to create your first AI-optimized campaign?"
+  - Options:
+    - "Create Campaign" (primary CTA)
+    - "Explore More Athletes" (secondary CTA)
+    - "Learn More" (tertiary CTA with tooltip)
+
+- **Quick-Start Options**:
+  - AI-generated campaign template based on wizard inputs
+  - Single-click campaign creation for fastest path
+  - Template selection alternative
+  - Custom campaign option (de-emphasized)
+
+- **Smart Default Implementation**:
+  - All fields pre-populated based on wizard answers
+  - Visual indicators showing which settings came from AI recommendations
+  - Easy override controls for any field
+  - Intelligent suggestions for modifications
+
+### 3. Campaign Creation & Management
+
+#### 3.1 Campaign Definition Interface
+- **Campaign Template Selection**:
+  - **Header**:
+    - Title: "Let's Create Your First AI-Optimized Athlete Campaign"
+    - Subtitle: "Select a campaign type or let our AI recommend the best option"
+  - **Content**:
+    - Visual carousel of campaign templates:
+      1. "Social Media Spotlight" with example results
+      2. "Brand Ambassador Program" with value metrics
+      3. "Event Activation" with example photos
+      4. "Content Creation Package" with asset examples
+    - Each template card shows:
+      - Visual example of the end result
+      - Average performance metrics
+      - Number of deliverables
+      - Typical duration
+      - Budget range
+    - AI recommendation badge on best-fit templates
+    - Personalized rationale: "Based on your community engagement focus, our AI predicts this format shows 37% higher audience growth"
+  - **Footer**:
+    - "Use This Template" button (primary CTA)
+    - "Customize Template" option (secondary CTA)
+    - "Start from Scratch" option (tertiary CTA)
+  - **Interaction Details**:
+    - Template hover: Shows expanded preview
+    - Template click: Selects and highlights
+    - Info icon: Shows additional details about template
+
+#### 3.2 Deliverables & Requirements Builder
+- **Visual Calendar Interface**:
+  - Interactive timeline view showing weeks/months
+  - Drag-and-drop content type blocks:
+    - Instagram Post/Story blocks
+    - TikTok Video blocks
+    - YouTube Content blocks
+    - Twitter/X Post blocks
+    - In-Person Appearance blocks
+  - Each block shows:
+    - Estimated reach
+    - Engagement prediction
+    - Cost impact on budget
+  - Real-time calendar updating
+  - AI suggestions for optimal posting schedule
+
+- **Deliverable Detail Editor**:
+  - When content block is selected:
+    - Theme/topic selector with AI suggestions
+    - Key messaging points input
+    - Visual requirements checklist
+    - Reference material uploader
+  - AI-suggested optimal posting times
+  - Performance predictions based on content details
+  - Budget impact calculation in real-time
+
+- **Brand Guidelines Interface**:
+  - Two-tab interface:
+    - "Essential" tab (logo, colors, basic rules)
+    - "Advanced" tab (tone, style, examples)
+  - Upload interfaces for each asset type
+  - Brand safety parameters:
+    - Content tone slider
+    - Audience appropriateness settings
+    - Category exclusion checkboxes
+  - AI compliance score updating in real-time
+  - Automated suggestions for improving compliance
+
+#### 3.3 Timeline & Milestone Management
+- **AI-Generated Timeline View**:
+  - Visual Gantt-style chart showing all campaign phases
+  - Automatically generated milestones:
+    - Content concept deadlines
+    - Draft submission deadlines
+    - Review periods
+    - Final approval deadlines
+    - Posting schedules
+    - Performance review points
+  - Color-coding by milestone type
+  - Critical path highlighting
+
+- **Milestone Editor**:
+  - Click-to-edit functionality for any milestone
+  - Drag-and-drop date adjustment
+  - Duration modification controls
+  - Dependency management
+  - AI validation of timeline feasibility
+
+- **Notification Configuration**:
+  - Notification intensity selector:
+    - Essential only
+    - Standard
+    - Comprehensive
+  - Channel selection (email, SMS, in-app)
+  - Team member assignment for specific notifications
+  - Preview of notification examples
+  - AI-suggested reminder patterns
+
+#### 3.4 Campaign Creation Modes
+- **Mode Selector**:
+  - Prominent toggle between:
+    - "AI-Guided" mode (default)
+    - "AI-Express" mode (fastest)
+    - "Expert" mode (most control)
+  - Visual indicator of current mode
+  - Mode switching preserves all entered data
+
+- **AI-Guided Mode Details**:
+  - Step-by-step interface with numbered steps
+  - Limited options per screen
+  - Contextual help and examples
+  - Progress tracking
+  - AI suggestions at each step
+
+- **AI-Express Mode Details**:
+  - Single-page view with all options
+  - Extensive use of AI defaults
+  - Minimal required fields
+  - Quick-submit option
+  - Time-saving shortcuts
+
+- **Expert Mode Details**:
+  - Advanced options exposed
+  - Detailed configuration controls
+  - Custom scheduling capabilities
+  - Advanced budget allocation
+  - Technical performance settings
+
+#### 3.5 Campaign Review & Launch
+- **Campaign Summary View**:
+  - Complete overview of all campaign elements:
+    - Selected athletes
+    - Timeline visualization
+    - Deliverable calendar
+    - Budget breakdown
+    - Expected performance metrics
+  - AI campaign strength score
+  - Improvement recommendations
+  - Edit links for each section
+
+- **Athlete Selection Confirmation**:
+  - Final review of selected athletes
+  - AI-powered compatibility explanations
+  - Alternate suggestions if appropriate
+  - Backup athlete recommendations
+
+- **Budget Confirmation**:
+  - Itemized cost breakdown
+  - Fee structure explanation
+  - Payment schedule
+  - ROI projections
+
+- **Launch Sequence**:
+  - Pre-launch checklist verification
+  - Payment method confirmation
+  - Terms acceptance
+  - "Launch Campaign" button
+  - Success confirmation and next steps
+
+### 4. Athlete Selection & Management
+
+#### 4.1 Athlete Discovery Interface
+- **Search & Filter System**:
+  - **Header**:
+    - Search bar with typeahead functionality
+    - Advanced filter button (expands/collapses filter panel)
+    - View toggle (grid vs. list view)
+    - Sort options dropdown
+  - **Filter Panel**:
+    - Sport/league hierarchical selector
+    - Location radius adjustment
+    - Price range slider
+    - Audience demographics filters
+    - Content type specialization
+    - Availability calendar
+    - Performance metrics thresholds
+  - **AI Enhancement Controls**:
+    - Match priority sliders:
+      - Engagement Rate vs. Follower Count
+      - Brand Alignment vs. Reach
+      - Cost Efficiency vs. Content Quality
+    - "Surprise Me" option for discovering unexpected matches
+    - "Similar To" search for finding athletes like current selections
+
+#### 4.2 Athlete Profile Detailed View
+- **Profile Header**:
+  - Cover photo/banner
+  - Profile photo (professional headshot)
+  - Name, sport, team/institution
+  - Location and primary statistics
+  - Match percentage with explanation
+  - Quick action buttons:
+    - "Select for Campaign"
+    - "Save to Favorites"
+    - "Compare"
+    - "View Similar Athletes"
+
+- **Profile Tabs**:
+  - **Overview Tab**:
+    - Bio and background
+    - Career highlights
+    - Personality traits and interests
+    - Brand alignment visualization
+    - Match quality breakdown
+  - **Performance Tab**:
+    - Social platform presence
+    - Follower demographics
+    - Engagement metrics with benchmarks
+    - Content performance history
+    - Growth trends
+  - **Content Tab**:
+    - Content portfolio gallery
+    - Content style examples
+    - Previous brand partnerships
+    - Content type specialties
+  - **Details Tab**:
+    - Availability calendar
+    - Price guidelines
+    - Partnership preferences
+    - Compliance information
+    - Restrictions or limitations
+
+#### 4.3 Athlete Comparison Tool
+- **Comparison Interface**:
+  - Side-by-side cards for 2-4 athletes
+  - Synchronized scrolling for easy comparison
+  - Highlight differences functionality
+  - Key metrics comparison charts
+  - Match quality breakdown for each
+
+- **Comparison Categories**:
+  - Basic information comparison
+  - Performance metrics comparison
+  - Audience comparison
+  - Content style comparison
+  - Pricing comparison
+  - Availability comparison
+
+- **Decision Support Tools**:
+  - "Best For" badges (best for awareness, conversion, etc.)
+  - Pros and cons generation
+  - Budget efficiency calculation
+  - AI recommendation with explanation
+  - "Select Both/All" option
+
+#### 4.4 Selection & Offer Process
+- **Selection Interface**:
+  - Selected athlete summary cards
+  - Campaign role assignment (primary, secondary)
+  - Delivery expectations per athlete
+  - Budget allocation controls
+  - Timeline alignment check
+
+- **Campaign Brief Customization**:
+  - Brief preview as seen by athletes
+  - Customization options:
+    - Partnership goals
+    - Brand background
+    - Specific requests
+    - Reference examples
+  - AI suggestions for improving brief appeal
+  - Appeal score with optimization tips
+
+- **Offer Generation**:
+  - Compensation package builder:
+    - Fixed fee options
+    - Performance incentives
+    - Product/service exchange
+    - Long-term relationship options
+  - Market rate guidance from AI
+  - Competitive positioning information
+  - Terms and conditions selection
+  - "Submit Offer" workflow
+
+- **Connection Status Tracking**:
+  - Status dashboard for all athlete outreach
+  - Status indicators:
+    - Pending
+    - Reviewing
+    - Accepted
+    - Declined
+    - Countered
+  - Timeline projections for responses
+  - Notification preferences
+  - Follow-up options
+
+### 5. Content Creation & Review Workflow
+
+#### 5.1 Task Management Dashboard
+- **Task Overview**:
+  - Kanban-style board showing:
+    - To Do
+    - In Progress
+    - For Review
+    - Completed
+  - Task cards with:
+    - Task type icon
+    - Due date with countdown
+    - Priority indicator
+    - Assignee
+    - Status
+  - Calendar alternative view
+  - List alternative view
+
+- **Task Detail View**:
+  - Comprehensive task information:
+    - Detailed description
+    - Reference materials
+    - Guidelines and requirements
+    - Timeline context
+    - Related tasks
+  - Comment thread
+  - Version history
+  - Attachment management
+  - Status update controls
+
+#### 5.2 Content Submission System
+- **Submission Interface**:
+  - Drag-and-drop file uploader
+  - Multi-file support
+  - Progress indicators
+  - File type validation
+  - Size limitation warnings
+
+- **Media Processing Features**:
+  - Automatic image optimization
+  - Video encoding and compression
+  - Preview generation
+  - Thumbnail extraction
+  - Metadata preservation
+
+- **Supplementary Information**:
+  - Caption/text entry field
+  - Hashtag suggestions and manager
+  - Platform-specific formatting hints
+  - Character count indicators
+  - Mention tools
+
+- **Pre-Submission Checklist**:
+  - Brand guidelines compliance
+  - Technical requirements verification
+  - Content quality assessment
+  - Platform policy check
+  - Notes or questions field for reviewer
+
+#### 5.3 Review & Feedback Interface
+- **Content Review Dashboard**:
+  - Pending review counter and notifications
+  - Priority sorting capabilities
+  - Deadline indicators
+  - Batch review options for related content
+
+- **Media Review Tools**:
+  - **Image Review**:
+    - Zoom and pan controls
+    - Drawing and annotation tools
+    - Side-by-side comparison with brief/guidelines
+    - Brand element verification overlay
+    - Comment pins for specific areas
+  - **Video Review**:
+    - Playback controls (play, pause, speed)
+    - Frame-by-frame navigation
+    - Timecode-specific comments
+    - Annotation overlays
+    - Comparison with storyboards
+
+- **Feedback Collection**:
+  - Structured feedback categories:
+    - Technical quality
+    - Brand alignment
+    - Message effectiveness
+    - Engagement potential
+  - Comment system with @mentions
+  - Feedback templates for common issues
+  - Visual reference attachment
+  - Revision instructions builder
+
+- **Decision Controls**:
+  - Approval button (with optional notes)
+  - Approval with minor changes
+  - Revision request (with required feedback)
+  - Rejection option (rare, with explanation)
+  - Escalation path for complex issues
+
+#### 5.4 Revision Tracking System
+- **Version Management**:
+  - Clear version numbering
+  - Side-by-side version comparison
+  - Change highlighting between versions
+  - Timeline of all versions
+  - Version notes and comments
+
+- **Revision Request Tracking**:
+  - Status of each revision request
+  - Implementation verification
+  - Outstanding issues list
+  - Resolved issues list
+  - Revision limitation counter
+
+- **Approval Workflow**:
+  - Final approval checklist
+  - Multi-level approval if needed
+  - Approval documentation
+  - Publication preparation
+  - Scheduling interface
+
+#### 5.5 Content Publication & Verification
+- **Publication Preparation**:
+  - Platform-specific optimization
+  - Format verification
+  - Final caption/text review
+  - Hashtag and mention confirmation
+  - Publication checklist
+
+- **Scheduling System**:
+  - Calendar interface for scheduling
+  - Optimal time recommendations
+  - Conflict detection
+  - Buffer time management
+  - Time zone handling
+
+- **Publication Methods**:
+  - API direct posting (where available)
+  - Guided manual posting instructions
+  - Scheduled posting reminders
+  - Third-party tool integration
+  - Backup posting methods
+
+- **Verification Process**:
+  - Published content link submission
+  - Screenshot upload capability
+  - Automated verification where possible
+  - Manual verification workflow
+  - Publication confirmation
+
+### 6. Analytics & Optimization
+
+#### 6.1 Performance Dashboard
+- **Overview Dashboard**:
+  - **Header**:
+    - Campaign name and duration
+    - Overall performance score
+    - Date range selector
+    - Export and share options
+  - **Key Metrics Section**:
+    - Total impressions
+    - Engagement rate
+    - Click-through rate
+    - Conversion count
+    - ROI calculation
+  - **Progress Tracking**:
+    - Campaign completion percentage
+    - Deliverable status
+    - Budget utilization
+    - Timeline adherence
+  - **Performance Trends**:
+    - Daily/weekly metrics chart
+    - Platform comparison
+    - Content type comparison
+    - Athlete performance comparison
+
+#### 6.2 Detailed Analytics Views
+- **Content Performance Analysis**:
+  - Performance breakdown by:
+    - Individual content piece
+    - Content type
+    - Platform
+    - Posting time
+    - Athlete
+  - Engagement quality assessment
+  - Audience response analysis
+  - Comment sentiment analysis
+  - Share and virality metrics
+
+- **Audience Insights**:
+  - Demographic breakdown
+  - Geographic distribution
+  - Interest affinities
+  - Engagement patterns
+  - New audience acquisition
+  - Follower growth attribution
+
+- **Conversion Tracking**:
+  - UTM parameter performance
+  - Promo code usage statistics
+  - Conversion funnel visualization
+  - Attribution modeling
+  - Value per engagement calculation
+
+- **Competitive Benchmarking**:
+  - Industry average comparisons
+  - Similar campaign benchmarks
+  - Historical performance context
+  - Seasonal trend analysis
+  - Platform-specific benchmarks
+
+#### 6.3 Optimization Recommendations
+- **AI Insight Generation**:
+  - Automated performance analysis
+  - Pattern recognition in data
+  - Anomaly detection
+  - Opportunity identification
+  - Risk flagging
+
+- **Actionable Recommendations**:
+  - Content format optimization
+  - Posting time adjustments
+  - Audience targeting refinements
+  - Budget reallocation suggestions
+  - Athlete utilization optimization
+
+- **Implementation Tools**:
+  - One-click optimization acceptance
+  - Modification workflow
+  - A/B testing setup
+  - Performance projection for changes
+  - Implementation tracking
+
+#### 6.4 Reporting System
+- **Automated Report Generation**:
+  - Scheduled report delivery
+  - Report template selection
+  - Customization options
+  - Multiple format support (PDF, PPT, etc.)
+  - White-label capabilities
+
+- **Report Builder**:
+  - Drag-and-drop report components
+  - Chart and graph selection
+  - KPI highlighting tools
+  - Executive summary generation
+  - Data table customization
+
+- **Share & Export**:
+  - Email distribution
+  - Link sharing with permissions
+  - Download options
+  - Integration with business intelligence tools
+  - Presentation mode
+
+### 7. Campaign Conclusion & Renewal
+
+#### 7.1 Campaign Wrap-Up Process
+- **Completion Verification**:
+  - Automatic detection of campaign end
+  - Deliverable fulfillment audit
+  - Final performance data collection
+  - Financial reconciliation
+  - Close-out checklist
+
+- **Final Performance Report**:
+  - Comprehensive performance summary
+  - Goals achievement assessment
+  - Key learning highlights
+  - ROI calculation and justification
+  - Future recommendation preview
+
+#### 7.2 Feedback Collection System
+- **SMB Feedback Interface**:
+  - Campaign satisfaction rating
+  - Athlete performance evaluation
+  - Platform usability assessment
+  - Support quality rating
+  - Open feedback collection
+
+- **Athlete Feedback Collection**:
+  - Brand collaboration evaluation
+  - Brief clarity assessment
+  - Communication quality rating
+  - Payment process feedback
+  - Partnership interest indicator
+
+- **Feedback Processing**:
+  - Sentiment analysis of feedback
+  - Structured categorization
+  - Priority issue identification
+  - Pattern recognition across feedback
+  - Action item generation
+
+#### 7.3 Renewal & Continuation Options
+- **Data-Driven Recommendations**:
+  - Campaign extension options
+  - New campaign suggestions
+  - Athlete relationship continuity
+  - Seasonal opportunity identification
+  - Budget optimization recommendations
+
+- **Quick Renewal Interface**:
+  - One-click campaign extension
+  - Template-based renewal
+  - Modified campaign creation
+  - Streamlined contracting
+  - Expedited launch
+
+- **Relationship Management**:
+  - Long-term partnership planning
+  - Athlete portfolio management
+  - Budget forecasting tools
+  - Performance trending analysis
+  - Strategic planning assistance
+
+## Athlete User Journey
+
+### 1. Athlete Onboarding Flow
+
+#### 1.1 Athlete Registration
+- **Landing Experience**:
+  - Athlete-specific value proposition
+  - Success stories and testimonials
+  - Clear explanation of platform benefits
+  - Registration CTA
+
+- **Basic Registration Form**:
+  - Email (preferably .edu for NCAA)
+  - Password creation
+  - Name and basic info
+  - Sport and team/institution
+  - Social handles
+
+- **Identity Verification**:
+  - Email verification (institutional for NCAA)
+  - Phone verification
+  - Sports affiliation documentation upload
+  - Photo ID matching (when required)
+  - Team/league roster verification
+
+#### 1.2 Profile Creation
+- **Basic Information**:
+  - Comprehensive biographical information
+  - Sports achievements and statistics
+  - Educational background
+  - Location and availability
+  - Languages and skills
+
+- **Social Media Connection**:
+  - Platform connection interface
+  - API authorization process
+  - Analytics access permission
+  - Account verification
+  - Content import options
+
+- **Content Portfolio**:
+  - Media upload interface
+  - Content categorization
+  - Style tagging system
+  - Previous brand work showcase
+  - Content performance highlighting
+
+- **Partnership Preferences**:
+  - Industry preference selection
+  - Content type specialization
+  - Partnership value setting
+  - Availability calendar
+  - Exclusivity preferences
+
+#### 1.3 Compliance Verification
+- **League-Specific Compliance**:
+  - NCAA eligibility confirmation
+  - Institutional policy acknowledgment
+  - Minor league guidelines review
+  - Olympic committee rules verification
+  - Esports league policy confirmation
+
+- **Documentation Collection**:
+  - Institutional verification forms
+  - League authorization documents
+  - Agent relationship disclosure
+  - Existing partnership documentation
+  - Tax information collection
+
+### 2. Opportunity Management
+
+#### 2.1 Opportunity Dashboard
+- **Opportunity Discovery**:
+  - New opportunity notifications
+  - Opportunity cards with key details
+  - Compatibility score explanation
+  - Quick action buttons
+  - Sorting and filtering options
+
+- **Opportunity Detail View**:
+  - Complete brand background
+  - Campaign objectives and scope
+  - Deliverable specifications
+  - Timeline expectations
+  - Compensation details
+  - Acceptance deadline
+
+#### 2.2 Negotiation Interface
+- **Offer Evaluation Tools**:
+  - Market rate comparison
+  - Workload assessment
+  - Timeline feasibility check
+  - Brand compatibility score
+  - Term comparison with previous offers
+
+- **Response Options**:
+  - Accept as proposed
+  - Propose modifications
+  - Request clarification
+  - Decline with reason
+  - Save for later
+
+- **Counterproposal Builder**:
+  - Structured modification requests
+  - Alternative deliverable suggestions
+  - Timeline adjustment requests
+  - Compensation modification
+  - Term change rationale builder
+
+#### 2.3 Contract Review & Signing
+- **Contract Review Interface**:
+  - Clear contract visualization
+  - Highlighted key terms
+  - Compliance verification
+  - Term annotation capability
+  - Question submission system
+
+- **E-Signature Process**:
+  - Identity verification
+  - Document navigation
+  - Initial and signature placement
+  - Signature options (type, draw, upload)
+  - Finalization and confirmation
+
+### 3. Campaign Execution
+
+#### 3.1 Task Management
+- **Athlete Task Dashboard**:
+  - Upcoming deliverable timeline
+  - Priority indicators
+  - Deadline countdowns

@@ -39,7 +39,7 @@ export default function Home() {
                   className="bg-gradient-to-r from-[#ffd60a] to-[#ffc300] text-[#001d3d] font-bold hover:from-[#ffc300] hover:to-[#ffc300] transition-all shadow-md"
                   asChild
                 >
-                  <Link to="/onboarding">Get Started</Link>
+                  <Link to="/find-athlete-match">Find Your Perfect Athlete Match</Link>
                 </Button>
                 <Button 
                   size="lg" 
@@ -172,7 +172,7 @@ export default function Home() {
                   
                   <div className="ml-auto flex items-center">
                     <Button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white" asChild>
-                      <Link to="/onboarding">Create Athlete Profile</Link>
+                      <Link to="/find-athlete-match">Find Your Perfect Match</Link>
                     </Button>
                   </div>
                 </div>
@@ -246,7 +246,7 @@ export default function Home() {
                   
                   <div className="ml-auto flex items-center">
                     <Button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white" asChild>
-                      <Link to="/onboarding">Create Business Profile</Link>
+                      <Link to="/find-athlete-match">Find Your Perfect Match</Link>
                     </Button>
                   </div>
                 </div>
@@ -553,7 +553,7 @@ export default function Home() {
                 className="bg-gradient-to-r from-[#ffd60a] to-[#ffc300] text-[#001d3d] font-bold hover:from-[#ffc300] hover:to-[#ffc300] transition-all shadow-md"
                 asChild
               >
-                <Link to="/onboarding">Get Started Now</Link>
+                <Link to="/find-athlete-match">Find Your Athlete Match Now</Link>
               </Button>
               
               <Button 
