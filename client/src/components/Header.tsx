@@ -14,7 +14,9 @@ import {
   LogIn,
   User,
   UserCircle,
-  Briefcase
+  Briefcase,
+  Settings,
+  Webhook
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -60,6 +62,24 @@ export default function Header() {
               <Trophy className="mr-1 h-4 w-4" />
               Matches
             </a>
+            
+            {/* Admin Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-[#003366]">
+                  <Settings className="mr-1 h-4 w-4" />
+                  Admin
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/n8n-config" className="cursor-pointer w-full flex items-center">
+                    <Webhook className="mr-2 h-4 w-4" />
+                    <span>n8n Webhook Config</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             {/* Account Sign In Dropdown */}
             <DropdownMenu>

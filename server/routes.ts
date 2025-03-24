@@ -374,6 +374,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // No matches or couldn't find a match
         const reply = await geminiService.generateProfileConfirmation("business", profileData.name);
         
+        // Send profile creation event to n8n webhook (non-blocking)
+        if (process.env.N8N_WEBHOOK_URL) {
+          const webhookData = {
+            event_type: "business_profile_created",
+            timestamp: new Date().toISOString(),
+            data: {
+              businessId: business.id,
+              name: profileData.name,
+              productType: profileData.productType,
+              audienceGoals: profileData.audienceGoals,
+              campaign: {
+                title: campaign.title,
+                description: campaign.description
+              }
+            },
+            platform: "Contested"
+          };
+          
+          sendToN8nWebhook(webhookData)
+            .then(success => {
+              if (success) {
+                console.log(`Successfully sent business profile data to n8n webhook`);
+              }
+            })
+            .catch(error => {
+              console.error(`Error sending business profile data to n8n webhook: ${error}`);
+            });
+        }
+        
         return res.status(200).json({
           message: "Business profile created successfully",
           reply,
@@ -581,6 +610,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
     
     const match = await storage.storeMatch(matchData);
+    
+    // Send match creation event to n8n webhook (non-blocking)
+    if (process.env.N8N_WEBHOOK_URL) {
+      try {
+        const webhookData = {
+          event_type: "match_created",
+          timestamp: new Date().toISOString(),
+          data: {
+            matchId: match.id,
+            score: match.score,
+            athleteId: match.athleteId,
+            businessId: match.businessId,
+            campaignId: match.campaignId,
+            reason: match.reason
+          },
+          platform: "Contested"
+        };
+        
+        sendToN8nWebhook(webhookData)
+          .then(success => {
+            if (success) {
+              console.log(`Successfully sent match data to n8n webhook`);
+            }
+          })
+          .catch(error => {
+            console.error(`Error sending match data to n8n webhook: ${error}`);
+          });
+      } catch (error) {
+        // Log but don't fail the match creation if webhook fails
+        console.error("Error preparing match webhook notification:", error);
+      }
+    }
     
     return match;
   }
