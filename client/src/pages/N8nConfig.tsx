@@ -47,7 +47,7 @@ export default function N8nConfig() {
   const configForm = useForm<z.infer<typeof webhookSchema>>({
     resolver: zodResolver(webhookSchema),
     defaultValues: {
-      webhook_url: "",
+      webhook_url: "https://rugby.app.n8n.cloud/webhook-test/athlete-chatbot",
     },
   });
 
