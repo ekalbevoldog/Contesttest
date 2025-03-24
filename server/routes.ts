@@ -160,7 +160,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Store assistant response
-      await storage.storeMessage(sessionId, "assistant", response.reply);
+      const savedMessage = await storage.storeMessage(sessionId, "assistant", response.reply);
+      
+      // Send chat data to n8n webhook
+      const webhookData = {
+        type: "chat_message",
+        sessionId: sessionId,
+        userType: sessionData.userType || "unknown",
+        timestamp: new Date().toISOString(),
+        conversation: {
+          userMessage: {
+            content: message,
+            timestamp: new Date().toISOString()
+          },
+          assistantMessage: {
+            content: response.reply,
+            timestamp: new Date().toISOString(),
+            messageId: savedMessage.id
+          }
+        },
+        profileCompleted: sessionData.profileCompleted || false,
+        n8n_webhook_url: req.body.n8n_webhook_url // Optional custom webhook URL passed in request
+      };
+      
+      // Send to webhook (non-blocking)
+      sendToN8nWebhook(webhookData, req.body.n8n_webhook_url)
+        .then(success => {
+          if (success) {
+            console.log(`Successfully sent chat data to n8n webhook for session ${sessionId}`);
+          }
+        })
+        .catch(error => {
+          console.error(`Error sending chat data to n8n webhook: ${error}`);
+        });
       
       return res.status(200).json(response);
     } catch (error) {
@@ -214,6 +246,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Generate response message
         const reply = await geminiService.generateProfileConfirmation("athlete", profileData.name);
+        
+        // Send profile creation event to n8n webhook (non-blocking)
+        if (process.env.N8N_WEBHOOK_URL) {
+          const webhookData = {
+            event_type: "athlete_profile_created",
+            timestamp: new Date().toISOString(),
+            data: {
+              athleteId: athlete.id,
+              name: profileData.name,
+              sport: profileData.sport,
+              school: profileData.school,
+              followerCount: profileData.followerCount
+            },
+            platform: "Contested"
+          };
+          
+          sendToN8nWebhook(webhookData)
+            .then(success => {
+              if (success) {
+                console.log(`Successfully sent athlete profile data to n8n webhook`);
+              }
+            })
+            .catch(error => {
+              console.error(`Error sending athlete profile data to n8n webhook: ${error}`);
+            });
+        }
         
         return res.status(200).json({
           message: "Athlete profile created successfully",
@@ -581,6 +639,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return false;
   };
   
+  // Helper function to send data to n8n webhook
+  const sendToN8nWebhook = async (data: any, webhookUrl?: string) => {
+    try {
+      // Use the provided webhook URL or a default one
+      const url = webhookUrl || process.env.N8N_WEBHOOK_URL;
+      
+      if (!url) {
+        console.warn('N8N webhook URL not provided and not set in environment variables');
+        return false;
+      }
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error sending data to n8n: ${response.statusText}`);
+      }
+      
+      console.log('Successfully sent data to n8n webhook');
+      return true;
+    } catch (error) {
+      console.error('Failed to send data to n8n webhook:', error);
+      return false;
+    }
+  };
+  
   // Test endpoint to simulate a match notification (for testing WebSocket)
   app.post("/api/test/simulate-match", async (req: Request, res: Response) => {
     const { sessionId } = req.body;
@@ -621,6 +710,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else {
       res.status(404).json({ 
         error: "Could not send notification. Client might be disconnected or session not found." 
+      });
+    }
+  });
+  
+  // n8n webhook integration endpoints
+  app.post("/api/n8n/webhook", async (req: Request, res: Response) => {
+    try {
+      const { webhook_url, event_type, data } = req.body;
+      
+      if (!webhook_url) {
+        return res.status(400).json({ error: "webhook_url is required" });
+      }
+      
+      if (!event_type) {
+        return res.status(400).json({ error: "event_type is required" });
+      }
+      
+      // Send data to n8n webhook
+      const webhookData = {
+        event_type,
+        timestamp: new Date().toISOString(),
+        data: data || {},
+        platform: "Contested"
+      };
+      
+      const success = await sendToN8nWebhook(webhookData, webhook_url);
+      
+      if (success) {
+        return res.status(200).json({ 
+          success: true, 
+          message: `Data for event ${event_type} sent to n8n webhook successfully` 
+        });
+      } else {
+        return res.status(500).json({ 
+          success: false, 
+          message: "Failed to send data to n8n webhook" 
+        });
+      }
+    } catch (error) {
+      console.error("Error sending data to n8n webhook:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error processing webhook request",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // n8n webhook configuration endpoint
+  app.post("/api/n8n/config", async (req: Request, res: Response) => {
+    try {
+      const { webhook_url } = req.body;
+      
+      if (!webhook_url) {
+        return res.status(400).json({ error: "webhook_url is required" });
+      }
+      
+      // Store the webhook URL in environment variable
+      // Note: This is temporary for the current session only
+      process.env.N8N_WEBHOOK_URL = webhook_url;
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: "n8n webhook configuration updated successfully",
+        webhook_url
+      });
+    } catch (error) {
+      console.error("Error updating n8n webhook configuration:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error updating webhook configuration",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });

@@ -10,6 +10,7 @@ import RegistrationWizard from "@/pages/RegistrationWizard";
 import Login from "@/pages/Login";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import BusinessDashboard from "@/pages/BusinessDashboard";
+import N8nConfig from "@/pages/N8nConfig";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -31,6 +32,9 @@ function Router() {
           {/* Dashboard Routes */}
           <Route path="/athlete/dashboard" component={AthleteDashboard} />
           <Route path="/business/dashboard" component={BusinessDashboard} />
+          
+          {/* Admin and Integration Routes */}
+          <Route path="/admin/n8n-config" component={N8nConfig} />
           
           <Route component={NotFound} />
         </Switch>
