@@ -680,13 +680,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('WebSocket client disconnected');
       
       // Remove the client from the connected clients map
-      for (const [sessionId, client] of connectedClients.entries()) {
+      // Use Array.from to avoid the MapIterator issue
+      Array.from(connectedClients.entries()).forEach(([sessionId, client]) => {
         if (client === ws) {
           connectedClients.delete(sessionId);
           console.log(`Removed client with session ID: ${sessionId}`);
-          break;
         }
-      }
+      });
     });
   });
   

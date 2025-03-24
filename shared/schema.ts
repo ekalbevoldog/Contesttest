@@ -55,6 +55,7 @@ export const businesses = pgTable("business_profiles", {
   values: text("values").notNull(),
   targetSchoolsSports: text("target_schools_sports").notNull(),
   budget: text("budget"),
+  preferences: jsonb("preferences"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
