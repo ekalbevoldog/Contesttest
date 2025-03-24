@@ -1,8 +1,6 @@
 
 import { useState } from "react";
 import { Link } from "wouter";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import ChatInterface from "@/components/ChatInterface";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +12,6 @@ export default function Home() {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
-      <Header />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-r from-[#001d3d] to-[#003566] text-white">
@@ -589,7 +586,6 @@ export default function Home() {
         </div>
       )}
       
-      <Footer />
     </div>
   );
 }
