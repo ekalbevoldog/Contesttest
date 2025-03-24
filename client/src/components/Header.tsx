@@ -158,6 +158,19 @@ export default function Header() {
                   </a>
                   
                   <div className="border-t border-gray-200 my-4 pt-4">
+                    <div className="px-3 py-2 text-sm font-medium text-gray-500">Admin</div>
+                    <Link href="/admin/n8n-config">
+                      <span
+                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366] flex items-center"
+                        onClick={() => setOpen(false)}
+                      >
+                        <Webhook className="mr-2 h-4 w-4" />
+                        n8n Webhook Config
+                      </span>
+                    </Link>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 my-4 pt-4">
                     <div className="px-3 py-2 text-sm font-medium text-gray-500">Account</div>
                     <Link href="/athlete/login">
                       <span
