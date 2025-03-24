@@ -24,9 +24,14 @@ interface ProfileData {
 interface MatchData {
   id: string;
   score: number;
-  campaign?: {
+  brand?: string;
+  athleteName?: string;
+  campaign: {
     title: string;
+    description: string;
+    deliverables: string[];
   };
+  reason: string;
   business: {
     name: string;
   };
@@ -50,7 +55,7 @@ export default function Dashboard() {
   });
   
   useEffect(() => {
-    if (profileData) {
+    if (profileData?.userType) {
       setUserType(profileData.userType);
     }
   }, [profileData]);
@@ -128,8 +133,21 @@ export default function Dashboard() {
                         <Skeleton className="h-32 w-full" />
                       </CardContent>
                     </Card>
-                  ) : matchesData?.matches?.length > 0 ? (
-                    <MatchResults match={matchesData.matches[0]} userType={userType} />
+                  ) : matchesData?.matches && matchesData.matches.length > 0 ? (
+                    <MatchResults 
+                      match={{
+                        ...matchesData.matches[0],
+                        // Ensure required campaign object exists
+                        campaign: matchesData.matches[0].campaign || {
+                          title: "Campaign",
+                          description: "Campaign description",
+                          deliverables: []
+                        },
+                        // Ensure reason field exists
+                        reason: matchesData.matches[0].reason || "This match is based on compatibility between your profile and the campaign requirements."
+                      }} 
+                      userType={userType || undefined} 
+                    />
                   ) : (
                     <Card>
                       <CardContent className="pt-6 text-center">
