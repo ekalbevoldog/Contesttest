@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -43,47 +42,6 @@ export default function N8nConfig() {
   const [isTesting, setIsTesting] = useState(false);
   const [activeTab, setActiveTab] = useState("configure");
 
-  // Configure webhook form
-  const configForm = useForm<z.infer<typeof webhookSchema>>({
-    resolver: zodResolver(webhookSchema),
-    defaultValues: {
-      webhook_url: "https://rugby.app.n8n.cloud/webhook-test/athlete-chatbot",
-    },
-  });
-
-  async function onConfigSubmit(values: z.infer<typeof webhookSchema>) {
-    setIsConfiguring(true);
-    try {
-      const response = await apiRequest("POST", "/api/n8n/config", values);
-      const data = await response.json();
-      
-      if (data.success) {
-        toast({
-          title: "Configuration Saved",
-          description: "N8n webhook URL has been configured successfully.",
-        });
-        
-        // Update the test form URL as well
-        testForm.setValue("webhook_url", values.webhook_url);
-      } else {
-        toast({
-          title: "Configuration Failed",
-          description: data.message || "Failed to save webhook configuration.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Configuration Error",
-        description: "An error occurred while saving the configuration.",
-        variant: "destructive",
-      });
-      console.error("Error saving webhook configuration:", error);
-    } finally {
-      setIsConfiguring(false);
-    }
-  }
-
   // Test webhook form
   const testForm = useForm<z.infer<typeof testWebhookSchema>>({
     resolver: zodResolver(testWebhookSchema),
@@ -94,7 +52,16 @@ export default function N8nConfig() {
     },
   });
 
-  async function onConfigSubmit(values: z.infer<typeof webhookSchema>) {
+  // Configure webhook form
+  const configForm = useForm<z.infer<typeof webhookSchema>>({
+    resolver: zodResolver(webhookSchema),
+    defaultValues: {
+      webhook_url: "https://rugby.app.n8n.cloud/webhook-test/athlete-chatbot",
+    },
+  });
+
+  // Function to handle config form submission
+  const onConfigSubmit = async (values: z.infer<typeof webhookSchema>) => {
     setIsConfiguring(true);
     try {
       const response = await apiRequest("POST", "/api/n8n/config", values);
@@ -128,9 +95,10 @@ export default function N8nConfig() {
     } finally {
       setIsConfiguring(false);
     }
-  }
+  };
 
-  async function onTestSubmit(values: z.infer<typeof testWebhookSchema>) {
+  // Function to handle test form submission
+  const onTestSubmit = async (values: z.infer<typeof testWebhookSchema>) => {
     setIsTesting(true);
     try {
       // Parse the data JSON if provided
@@ -180,7 +148,7 @@ export default function N8nConfig() {
     } finally {
       setIsTesting(false);
     }
-  }
+  };
 
   return (
     <div className="container mx-auto py-10">

@@ -711,6 +711,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return false;
       }
       
+      console.log(`Sending data to n8n webhook at URL: ${url}`);
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -720,13 +722,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       if (!response.ok) {
-        throw new Error(`Error sending data to n8n: ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Could not read error response body');
+        console.error(`Error response from n8n webhook: Status ${response.status} ${response.statusText}, Body: ${errorText}`);
+        throw new Error(`Error sending data to n8n: ${response.status} ${response.statusText}`);
       }
       
       console.log('Successfully sent data to n8n webhook');
       return true;
     } catch (error) {
-      console.error('Failed to send data to n8n webhook:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : '';
+      console.error(`Failed to send data to n8n webhook: ${errorMessage}`);
+      console.error(`Error details: ${errorStack}`);
       return false;
     }
   };
