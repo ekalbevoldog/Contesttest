@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -11,17 +9,43 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Define interfaces for our profile and match data
+interface ProfileData {
+  userType: string;
+  name?: string;
+  sport?: string;
+  school?: string;
+  followerCount?: string;
+  productType?: string;
+  audienceGoals?: string;
+  values?: string;
+}
+
+interface MatchData {
+  id: string;
+  score: number;
+  campaign?: {
+    title: string;
+  };
+  business: {
+    name: string;
+  };
+  athlete: {
+    name: string;
+  };
+}
+
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState<string>("matches");
   const [userType, setUserType] = useState<string | null>(null);
   
   // Get profile info 
-  const { data: profileData, isLoading: isLoadingProfile } = useQuery({
+  const { data: profileData, isLoading: isLoadingProfile } = useQuery<ProfileData>({
     queryKey: ['/api/profile'],
   });
   
   // Get matches
-  const { data: matchesData, isLoading: isLoadingMatches } = useQuery({
+  const { data: matchesData, isLoading: isLoadingMatches } = useQuery<{ matches: MatchData[] }>({
     queryKey: ['/api/matches'],
   });
   
@@ -32,8 +56,7 @@ export default function Dashboard() {
   }, [profileData]);
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
+    <div className="flex flex-col">
       <main className="flex-1 py-6 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
@@ -196,7 +219,6 @@ export default function Dashboard() {
           </Tabs>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
