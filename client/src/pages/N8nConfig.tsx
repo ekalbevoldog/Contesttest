@@ -160,6 +160,44 @@ export default function N8nConfig() {
       
       if (data.success) {
         toast({
+          title: "Test Successful",
+          description: "Successfully sent test event to n8n webhook.",
+        });
+      } else {
+        toast({
+          title: "Test Failed",
+          description: data.message || "Failed to send test event. Please verify the webhook URL is accessible.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error testing webhook:", error);
+      toast({
+        title: "Test Failed",
+        description: "Could not reach the webhook URL. Please verify it is accessible and properly configured in n8n.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  }nt: "destructive",
+          });
+          setIsTesting(false);
+          return;
+        }
+      }
+      
+      const payload = {
+        webhook_url: values.webhook_url,
+        event_type: values.event_type,
+        data: parsedData,
+      };
+      
+      const response = await apiRequest("POST", "/api/n8n/webhook", payload);
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
           title: "Webhook Test Successful",
           description: "The test data was sent to the n8n webhook successfully.",
         });
