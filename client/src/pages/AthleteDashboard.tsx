@@ -76,8 +76,22 @@ export default function AthleteDashboard() {
     }
   }, [navigate, toast]);
   
+  // Define profile data type
+  type ProfileData = {
+    name?: string;
+    sport?: string;
+    school?: string;
+    email?: string;
+    phone?: string;
+    socialMedia?: {
+      instagram?: string;
+      twitter?: string;
+      tiktok?: string;
+    };
+  };
+
   // Get dummy profile info - would be replaced with actual API call
-  const { data: profileData, isLoading: isLoadingProfile } = useQuery({
+  const { data: profileData, isLoading: isLoadingProfile } = useQuery<ProfileData>({
     queryKey: ['/api/profile'],
     enabled: !loading,
   });
@@ -240,7 +254,7 @@ export default function AthleteDashboard() {
   const earningsData = getEarningsData(selectedTimeFrame);
   
   // Calculate days remaining for deliverables
-  const calculateDaysRemaining = (deadline) => {
+  const calculateDaysRemaining = (deadline: string) => {
     const today = new Date();
     const dueDate = new Date(deadline);
     const diffTime = dueDate.getTime() - today.getTime();
