@@ -35,29 +35,10 @@ export default function BusinessDashboard() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   
-  // Check if user is authenticated
+  // Set loading state to false - authentication is handled by the protected route
   useEffect(() => {
-    const userType = localStorage.getItem('contestedUserType');
-    const isLoggedIn = localStorage.getItem('contestedUserLoggedIn');
-    
-    if (!isLoggedIn || !userType) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to access the business dashboard",
-      });
-      navigate("/business/login");
-    } else if (userType !== 'business') {
-      toast({
-        variant: "destructive",
-        title: "Access denied",
-        description: "This dashboard is for businesses only. Please use the athlete dashboard.",
-      });
-      navigate("/athlete/dashboard");
-    } else {
-      setLoading(false);
-    }
-  }, [navigate, toast]);
+    setLoading(false);
+  }, []);
   
   // Define profile data type
   type ProfileData = {

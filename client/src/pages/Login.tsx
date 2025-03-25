@@ -77,6 +77,20 @@ export default function Login() {
         localStorage.setItem('contestedSessionId', result.sessionId);
         localStorage.setItem('contestedUserLoggedIn', 'true');
         
+        // Fetch user profile after successful login
+        try {
+          const profileResponse = await fetch(`/api/profile?userType=${userType}`);
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            // Store user profile data
+            localStorage.setItem('contestedUserData', JSON.stringify(profileData));
+          } else {
+            console.error("Failed to fetch user profile");
+          }
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+        }
+        
         // Navigate to the appropriate dashboard based on user type
         if (userType === "athlete") {
           navigate("/athlete/dashboard");

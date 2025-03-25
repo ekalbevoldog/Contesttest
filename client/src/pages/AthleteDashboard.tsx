@@ -61,29 +61,10 @@ export default function AthleteDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedTimeFrame, setSelectedTimeFrame] = useState("thisMonth");
   
-  // Check if user is authenticated
+  // Set loading state to false - authentication is handled by the protected route
   useEffect(() => {
-    const userType = localStorage.getItem('contestedUserType');
-    const isLoggedIn = localStorage.getItem('contestedUserLoggedIn');
-    
-    if (!isLoggedIn || !userType) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to access the athlete dashboard",
-      });
-      navigate("/athlete/login");
-    } else if (userType !== 'athlete') {
-      toast({
-        variant: "destructive",
-        title: "Access denied",
-        description: "This dashboard is for athletes only. Please use the business dashboard.",
-      });
-      navigate("/business/dashboard");
-    } else {
-      setLoading(false);
-    }
-  }, [navigate, toast]);
+    setLoading(false);
+  }, []);
   
   // Define profile data type
   type ProfileData = {
