@@ -1,8 +1,19 @@
 import { 
   InsertSession, InsertAthlete, InsertBusiness, 
-  InsertCampaign, InsertMatch, InsertMessage,
-  Session, Athlete, Business, Campaign, Match, Message
+  InsertCampaign, InsertMatch, InsertMessage, InsertUser,
+  Session, Athlete, Business, Campaign, Match, Message, User,
+  users
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc } from "drizzle-orm";
+import { sessions, athletes, businesses, campaigns, matches, messages } from "../shared/schema";
+import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+import connectPg from "connect-pg-simple";
+import session from "express-session";
+import { neon } from "@neondatabase/serverless";
+
+const scryptAsync = promisify(scrypt);
 
 // Interface for storage operations
 export interface IStorage {
@@ -39,8 +50,219 @@ export interface IStorage {
   // Message operations
   getMessages(sessionId: string): Promise<Message[]>;
   storeMessage(sessionId: string, role: string, content: string): Promise<Message>;
+  
+  // Auth operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(insertUser: InsertUser): Promise<User>;
+  updateStripeCustomerId(userId: number, customerId: string): Promise<User>;
+  updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User>;
+  
+  // Session Store for Express Session
+  sessionStore: session.Store;
 }
 
+// PostgreSQL implementation of IStorage
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+  
+  constructor() {
+    // Create session store for Express sessions
+    const PostgresSessionStore = connectPg(session);
+    this.sessionStore = new PostgresSessionStore({
+      conObject: {
+        connectionString: process.env.DATABASE_URL,
+        ssl: true
+      },
+      createTableIfMissing: true
+    });
+  }
+  
+  // Session operations
+  async getSession(sessionId: string): Promise<Session | undefined> {
+    const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, sessionId));
+    return session;
+  }
+  
+  async createSession(session: InsertSession): Promise<Session> {
+    const [newSession] = await db.insert(sessions).values(session).returning();
+    return newSession;
+  }
+  
+  async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
+    const [updatedSession] = await db
+      .update(sessions)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(sessions.sessionId, sessionId))
+      .returning();
+    
+    if (!updatedSession) {
+      throw new Error(`Session with ID ${sessionId} not found`);
+    }
+    
+    return updatedSession;
+  }
+  
+  async deleteSession(sessionId: string): Promise<void> {
+    await db.delete(sessions).where(eq(sessions.sessionId, sessionId));
+  }
+  
+  // Athlete operations
+  async getAthlete(id: number): Promise<Athlete | undefined> {
+    const [athlete] = await db.select().from(athletes).where(eq(athletes.id, id));
+    return athlete;
+  }
+  
+  async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
+    const [athlete] = await db.select().from(athletes).where(eq(athletes.sessionId, sessionId));
+    return athlete;
+  }
+  
+  async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
+    const [newAthlete] = await db.insert(athletes).values(athlete).returning();
+    return newAthlete;
+  }
+  
+  async getAllAthletes(): Promise<Athlete[]> {
+    return await db.select().from(athletes);
+  }
+  
+  // Business operations
+  async getBusiness(id: number): Promise<Business | undefined> {
+    const [business] = await db.select().from(businesses).where(eq(businesses.id, id));
+    return business;
+  }
+  
+  async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
+    const [business] = await db.select().from(businesses).where(eq(businesses.sessionId, sessionId));
+    return business;
+  }
+  
+  async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
+    const [newBusiness] = await db.insert(businesses).values(business).returning();
+    return newBusiness;
+  }
+  
+  async getAllBusinesses(): Promise<Business[]> {
+    return await db.select().from(businesses);
+  }
+  
+  // Campaign operations
+  async getCampaign(id: number): Promise<Campaign | undefined> {
+    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
+    return campaign;
+  }
+  
+  async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
+    return await db.select().from(campaigns).where(eq(campaigns.businessId, businessId));
+  }
+  
+  async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
+    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
+    return newCampaign;
+  }
+  
+  // Match operations
+  async getMatch(id: number): Promise<Match | undefined> {
+    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    return match;
+  }
+  
+  async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
+    return await db.select().from(matches).where(eq(matches.athleteId, athleteId));
+  }
+  
+  async getMatchesForBusiness(businessId: number): Promise<Match[]> {
+    return await db.select().from(matches).where(eq(matches.businessId, businessId));
+  }
+  
+  async storeMatch(match: InsertMatch): Promise<Match> {
+    const [newMatch] = await db.insert(matches).values(match).returning();
+    return newMatch;
+  }
+  
+  async getAllMatches(): Promise<Match[]> {
+    return await db.select().from(matches);
+  }
+  
+  // Message operations
+  async getMessages(sessionId: string): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.sessionId, sessionId))
+      .orderBy(messages.createdAt);
+  }
+  
+  async storeMessage(sessionId: string, role: string, content: string): Promise<Message> {
+    const [message] = await db
+      .insert(messages)
+      .values({
+        sessionId,
+        role,
+        content
+      })
+      .returning();
+    
+    return message;
+  }
+  
+  // Auth operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        stripeCustomerId: customerId,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    return updatedUser;
+  }
+  
+  async updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        stripeCustomerId: data.customerId,
+        stripeSubscriptionId: data.subscriptionId,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    return updatedUser;
+  }
+}
+
+// For backwards compatibility and fallback
 export class MemStorage implements IStorage {
   private sessions: Map<string, Session>;
   private athletes: Map<number, Athlete>;
@@ -48,12 +270,15 @@ export class MemStorage implements IStorage {
   private campaigns: Map<number, Campaign>;
   private matches: Map<number, Match>;
   private messages: Map<string, Message[]>;
+  private users: Map<number, User>;
   private currentSessionId: number;
   private currentAthleteId: number;
   private currentBusinessId: number;
   private currentCampaignId: number;
   private currentMatchId: number;
   private currentMessageId: number;
+  private currentUserId: number;
+  sessionStore: session.Store;
   
   constructor() {
     this.sessions = new Map();
@@ -62,33 +287,49 @@ export class MemStorage implements IStorage {
     this.campaigns = new Map();
     this.matches = new Map();
     this.messages = new Map();
+    this.users = new Map();
     this.currentSessionId = 1;
     this.currentAthleteId = 1;
     this.currentBusinessId = 1;
     this.currentCampaignId = 1;
     this.currentMatchId = 1;
     this.currentMessageId = 1;
+    this.currentUserId = 1;
+    
+    // Create a memory store for Express sessions
+    const MemoryStore = require('memorystore')(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
   }
   
-  // Session operations
   async getSession(sessionId: string): Promise<Session | undefined> {
     return this.sessions.get(sessionId);
   }
   
   async createSession(session: InsertSession): Promise<Session> {
     const id = this.currentSessionId++;
+    
     const newSession: Session = {
-      ...session,
       id,
+      sessionId: session.sessionId,
+      userType: session.userType || null,
+      data: session.data || null,
+      profileCompleted: session.profileCompleted || false,
+      athleteId: session.athleteId || null,
+      businessId: session.businessId || null,
+      lastLogin: new Date(),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
+    
     this.sessions.set(session.sessionId, newSession);
     return newSession;
   }
   
   async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
     const session = this.sessions.get(sessionId);
+    
     if (!session) {
       throw new Error(`Session with ID ${sessionId} not found`);
     }
@@ -96,7 +337,7 @@ export class MemStorage implements IStorage {
     const updatedSession: Session = {
       ...session,
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     
     this.sessions.set(sessionId, updatedSession);
@@ -107,25 +348,25 @@ export class MemStorage implements IStorage {
     this.sessions.delete(sessionId);
   }
   
-  // Athlete operations
   async getAthlete(id: number): Promise<Athlete | undefined> {
     return this.athletes.get(id);
   }
   
   async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
-    return Array.from(this.athletes.values()).find(
-      (athlete) => athlete.sessionId === sessionId
-    );
+    const athletes = Array.from(this.athletes.values());
+    return athletes.find(athlete => athlete.sessionId === sessionId);
   }
   
   async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
     const id = this.currentAthleteId++;
+    
     const newAthlete: Athlete = {
-      ...athlete,
       id,
+      ...athlete,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
+    
     this.athletes.set(id, newAthlete);
     return newAthlete;
   }
@@ -134,25 +375,25 @@ export class MemStorage implements IStorage {
     return Array.from(this.athletes.values());
   }
   
-  // Business operations
   async getBusiness(id: number): Promise<Business | undefined> {
     return this.businesses.get(id);
   }
   
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
-    return Array.from(this.businesses.values()).find(
-      (business) => business.sessionId === sessionId
-    );
+    const businesses = Array.from(this.businesses.values());
+    return businesses.find(business => business.sessionId === sessionId);
   }
   
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
     const id = this.currentBusinessId++;
+    
     const newBusiness: Business = {
-      ...business,
       id,
+      ...business,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
+    
     this.businesses.set(id, newBusiness);
     return newBusiness;
   }
@@ -161,53 +402,52 @@ export class MemStorage implements IStorage {
     return Array.from(this.businesses.values());
   }
   
-  // Campaign operations
   async getCampaign(id: number): Promise<Campaign | undefined> {
     return this.campaigns.get(id);
   }
   
   async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
-    return Array.from(this.campaigns.values()).filter(
-      (campaign) => campaign.businessId === businessId
-    );
+    return Array.from(this.campaigns.values())
+      .filter(campaign => campaign.businessId === businessId);
   }
   
   async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
     const id = this.currentCampaignId++;
+    
     const newCampaign: Campaign = {
-      ...campaign,
       id,
+      ...campaign,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
+    
     this.campaigns.set(id, newCampaign);
     return newCampaign;
   }
   
-  // Match operations
   async getMatch(id: number): Promise<Match | undefined> {
     return this.matches.get(id);
   }
   
   async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
-    return Array.from(this.matches.values()).filter(
-      (match) => match.athleteId === athleteId
-    );
+    return Array.from(this.matches.values())
+      .filter(match => match.athleteId === athleteId);
   }
   
   async getMatchesForBusiness(businessId: number): Promise<Match[]> {
-    return Array.from(this.matches.values()).filter(
-      (match) => match.businessId === businessId
-    );
+    return Array.from(this.matches.values())
+      .filter(match => match.businessId === businessId);
   }
   
   async storeMatch(match: InsertMatch): Promise<Match> {
     const id = this.currentMatchId++;
+    
     const newMatch: Match = {
-      ...match,
       id,
-      createdAt: new Date()
+      ...match,
+      createdAt: new Date(),
     };
+    
     this.matches.set(id, newMatch);
     return newMatch;
   }
@@ -216,19 +456,19 @@ export class MemStorage implements IStorage {
     return Array.from(this.matches.values());
   }
   
-  // Message operations
   async getMessages(sessionId: string): Promise<Message[]> {
     return this.messages.get(sessionId) || [];
   }
   
   async storeMessage(sessionId: string, role: string, content: string): Promise<Message> {
     const id = this.currentMessageId++;
+    
     const message: Message = {
       id,
       sessionId,
       role,
       content,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     
     const sessionMessages = this.messages.get(sessionId) || [];
@@ -237,7 +477,67 @@ export class MemStorage implements IStorage {
     
     return message;
   }
+  
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.username === username);
+  }
+  
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = this.currentUserId++;
+    
+    const newUser: User = {
+      id,
+      ...insertUser,
+      verified: false,
+      sessionId: null,
+      avatar: null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.users.set(id, newUser);
+    return newUser;
+  }
+  
+  async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    const updatedUser: User = {
+      ...user,
+      stripeCustomerId: customerId,
+      updatedAt: new Date(),
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User> {
+    const user = this.users.get(userId);
+    if (!user) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    const updatedUser: User = {
+      ...user,
+      stripeCustomerId: data.customerId,
+      stripeSubscriptionId: data.subscriptionId,
+      updatedAt: new Date(),
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
 }
 
 // Create and export storage instance
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
