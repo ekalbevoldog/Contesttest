@@ -17,6 +17,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { 
   Select,
   SelectContent,
@@ -60,6 +69,80 @@ export default function AthleteDashboard() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [selectedTimeFrame, setSelectedTimeFrame] = useState("thisMonth");
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  
+  // Mock notifications data
+  const notifications = [
+    {
+      id: "n1",
+      title: "New Partnership Offer",
+      message: "SportTech Inc has sent you a new partnership offer.",
+      time: "2h ago",
+      read: false,
+      type: "offer"
+    },
+    {
+      id: "n2",
+      title: "Deliverable Due Soon",
+      message: "Your 'Training Session Post' for Athletic Wear Co is due in 3 days.",
+      time: "5h ago",
+      read: false,
+      type: "deliverable"
+    },
+    {
+      id: "n3",
+      title: "Payment Received",
+      message: "You've received a payment of $1,250 from Sports Nutrition.",
+      time: "1d ago",
+      read: true,
+      type: "payment"
+    }
+  ];
+  
+  // Mock messages data
+  const messages = [
+    {
+      id: "m1",
+      from: "SportTech Inc",
+      message: "Hi Jordan, just following up on our partnership offer. Let us know if you have any questions!",
+      time: "1h ago",
+      read: false,
+      avatar: ""
+    },
+    {
+      id: "m2",
+      from: "Athletic Wear Co",
+      message: "The photos from your last post look amazing! Could you share the raw files for our design team?",
+      time: "3h ago",
+      read: false,
+      avatar: ""
+    },
+    {
+      id: "m3",
+      from: "Energy Drinks Co",
+      message: "We'd like to discuss increasing the scope of our partnership. Are you available for a call next week?",
+      time: "6h ago",
+      read: false,
+      avatar: ""
+    },
+    {
+      id: "m4",
+      from: "Sports Nutrition",
+      message: "Your payment for the March deliverables has been processed. Thank you for the great content!",
+      time: "1d ago",
+      read: true,
+      avatar: ""
+    },
+    {
+      id: "m5",
+      from: "Fitness App Pro",
+      message: "We've added your suggested features to our app. Would you be interested in being featured in our launch campaign?",
+      time: "2d ago",
+      read: true,
+      avatar: ""
+    }
+  ];
   
   // Set loading state to false - authentication is handled by the protected route
   useEffect(() => {
@@ -294,15 +377,117 @@ export default function AthleteDashboard() {
             <p className="text-gray-700 mt-1">Manage your partnerships, track deliverables, and grow your personal brand</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              <Badge className="bg-blue-700 text-white hover:bg-blue-800">3</Badge>
-            </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <Badge className="bg-blue-700 text-white hover:bg-blue-800">5</Badge>
-            </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <Badge className="bg-blue-700 text-white hover:bg-blue-800">3</Badge>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Notifications</DialogTitle>
+                  <DialogDescription>
+                    Stay updated with your partnerships and deliverables
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-4 mt-2">
+                    {notifications.map(notification => (
+                      <div 
+                        key={notification.id} 
+                        className={`p-3 rounded-lg border ${notification.read ? 'bg-gray-50' : 'bg-blue-50 border-blue-200'}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-1 p-2 rounded-full ${
+                            notification.type === 'offer' 
+                              ? 'bg-blue-100 text-blue-700' 
+                              : notification.type === 'deliverable' 
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-green-100 text-green-700'
+                          }`}>
+                            {notification.type === 'offer' 
+                              ? <Trophy className="h-4 w-4" /> 
+                              : notification.type === 'deliverable' 
+                                ? <Clock className="h-4 w-4" />
+                                : <CreditCard className="h-4 w-4" />
+                            }
+                          </div>
+                          <div>
+                            <div className="font-medium">{notification.title}</div>
+                            <div className="text-sm text-gray-600 mt-1">{notification.message}</div>
+                            <div className="text-xs text-gray-500 mt-1">{notification.time}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <div className="flex justify-end mt-4">
+                  <Button variant="outline" onClick={() => setNotificationOpen(false)}>Close</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <Badge className="bg-blue-700 text-white hover:bg-blue-800">5</Badge>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Messages</DialogTitle>
+                  <DialogDescription>
+                    Communication with your brand partners
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-4 mt-2">
+                    {messages.map(message => (
+                      <div 
+                        key={message.id} 
+                        className={`p-3 rounded-lg border ${message.read ? 'bg-gray-50' : 'bg-blue-50 border-blue-200'}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Avatar>
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {message.from.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{message.from}</div>
+                            <div className="text-sm text-gray-600 mt-1">{message.message}</div>
+                            <div className="text-xs text-gray-500 mt-1">{message.time}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <div className="flex justify-between mt-4">
+                  <Button variant="outline" onClick={() => {
+                    toast({
+                      title: "Messages feature coming soon",
+                      description: "Full messaging functionality will be available in the next update.",
+                    });
+                  }}>View All Messages</Button>
+                  <Button variant="outline" onClick={() => setMessageOpen(false)}>Close</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => {
+              // Navigate to the settings tab
+              document.querySelector('[data-value="account"]')?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true })
+              );
+              toast({
+                title: "Account settings opened",
+                description: "You can now update your profile and settings.",
+              });
+            }}>
               <Settings className="h-4 w-4" />
               Settings
             </Button>
