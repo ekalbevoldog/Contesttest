@@ -6,9 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
+  const [budgetValue, setBudgetValue] = useState([5000]);
+  const [singleCampaign, setSingleCampaign] = useState(true);
   
   // Listen for the custom event to toggle the AI assistant
   useEffect(() => {
@@ -283,32 +288,41 @@ export default function Home() {
           
           <div className="mb-8">
             <label className="block text-zinc-400 text-lg mb-3">Explore Budget Ranges</label>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">$5,000</span>
-              <div className="flex items-center">
-                <span className="text-zinc-400 mr-2">Commitment Type</span>
-                <div className="relative inline-block w-12 h-6 mr-2">
-                  <input 
-                    type="checkbox" 
-                    className="peer opacity-0 w-0 h-0"
-                    defaultChecked
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                ${budgetValue[0]}
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-zinc-400">Commitment Type</span>
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="commitment-type" 
+                    checked={singleCampaign} 
+                    onCheckedChange={setSingleCampaign} 
+                    className="data-[state=checked]:bg-red-500 data-[state=unchecked]:bg-zinc-700"
                   />
-                  <span className="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-zinc-700 rounded-full transition-all duration-300 before:content-[''] before:absolute before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-red-500 before:rounded-full before:transition-all before:duration-300 peer-checked:bg-red-500/20 peer-checked:before:translate-x-6 peer-checked:before:bg-red-500"></span>
+                  <Label htmlFor="commitment-type" className="text-white font-semibold">
+                    Single Campaign
+                  </Label>
                 </div>
-                <span className="text-white font-semibold">Single Campaign</span>
               </div>
             </div>
             
-            <div className="relative pt-6 pb-12">
-              <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-red-500 to-amber-500 w-full rounded-full relative"></div>
-              </div>
-              
-              {/* Slider Handle */}
-              <div className="absolute top-4 right-0 w-8 h-8 bg-white rounded-full border-4 border-red-500 cursor-pointer shadow-lg transform translate-x-1/2"></div>
+            <div className="py-8 px-1">
+              <Slider
+                defaultValue={[5000]}
+                max={5000}
+                min={500}
+                step={100}
+                value={budgetValue}
+                onValueChange={setBudgetValue}
+                className="[&>span:first-child]:h-2 [&>span:first-child]:bg-zinc-800"
+                trackClassName="bg-gradient-to-r from-red-500 to-amber-500"
+                thumbClassName="h-7 w-7 bg-white border-4 border-red-500 shadow-lg hover:border-red-600 focus:ring-red-500/20"
+              />
               
               {/* Tick marks */}
-              <div className="flex justify-between text-zinc-500 text-sm mt-6">
+              <div className="flex justify-between text-zinc-500 text-sm mt-4">
                 <span>$500</span>
                 <span>$1,000</span>
                 <span>$2,500</span>
@@ -316,9 +330,11 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="bg-blue-50/10 p-4 rounded-lg border border-blue-100/20 text-blue-500 flex items-center mb-6">
-              <span className="font-semibold mr-1">1050+</span> 
-              <span className="text-blue-400">potential athlete matches in this range</span>
+            <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20 text-blue-400 flex items-center mb-6">
+              <span className="font-semibold mr-1">
+                {budgetValue[0] <= 1000 ? "350+" : budgetValue[0] <= 2500 ? "750+" : "1050+"}
+              </span> 
+              <span>potential athlete matches in this range</span>
             </div>
             
             {/* Budget insights - educational content for early funnel */}
