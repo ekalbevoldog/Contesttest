@@ -275,25 +275,25 @@ export default function AthleteDashboard() {
   }
   
   return (
-    <div className="container py-8">
+    <div className="container max-w-full py-8 px-4 md:px-8">
       <div className="flex flex-col gap-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-4xl font-bold">
-              <span className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-700 to-indigo-800 bg-clip-text text-transparent">
                 Athlete Dashboard
               </span>
             </h1>
-            <p className="text-gray-500 mt-1">Manage your partnerships, track deliverables, and grow your personal brand</p>
+            <p className="text-gray-700 mt-1">Manage your partnerships, track deliverables, and grow your personal brand</p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              <Badge className="bg-primary hover:bg-primary/90">3</Badge>
+              <Badge className="bg-blue-700 text-white hover:bg-blue-800">3</Badge>
             </Button>
             <Button variant="outline" size="sm" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
-              <Badge className="bg-primary hover:bg-primary/90">5</Badge>
+              <Badge className="bg-blue-700 text-white hover:bg-blue-800">5</Badge>
             </Button>
             <Button variant="outline" size="sm" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -303,54 +303,54 @@ export default function AthleteDashboard() {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="border-primary/20">
+          <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Active Partnerships</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">Active Partnerships</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
                 <div className="text-3xl font-bold">{activePartnerships.length}</div>
-                <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Active</Badge>
+                <Badge className="bg-green-600 text-white hover:bg-green-700">Active</Badge>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-primary/20">
+          <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">New Opportunities</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">New Opportunities</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
                 <div className="text-3xl font-bold">{partnershipOffers.length}</div>
-                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Pending</Badge>
+                <Badge className="bg-blue-700 text-white hover:bg-blue-800">Pending</Badge>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-primary/20">
+          <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Upcoming Deliverables</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">Upcoming Deliverables</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
                 <div className="text-3xl font-bold">5</div>
-                <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Due Soon</Badge>
+                <Badge className="bg-amber-600 text-white hover:bg-amber-700">Due Soon</Badge>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-primary/20">
+          <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Earned This Month</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">Earned This Month</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
                 <div className="text-3xl font-bold">${earningsData.total}</div>
-                <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">{earningsData.change}</Badge>
+                <Badge className="bg-indigo-600 text-white hover:bg-indigo-700">{earningsData.change}</Badge>
               </div>
             </CardContent>
           </Card>
         </div>
         
         <Tabs defaultValue="offers" className="w-full">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 w-full justify-start">
             <TabsTrigger value="offers">Partnership Offers</TabsTrigger>
             <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
             <TabsTrigger value="earnings">Earnings</TabsTrigger>
@@ -361,10 +361,10 @@ export default function AthleteDashboard() {
           
           {/* PARTNERSHIP OFFERS TAB */}
           <TabsContent value="offers" className="space-y-6">
-            <Card className="border-primary/20">
+            <Card className="border-blue-700/20 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-primary" />
+                  <Trophy className="h-5 w-5 text-blue-700" />
                   Current Partnership Offers
                 </CardTitle>
                 <CardDescription>
@@ -389,7 +389,7 @@ export default function AthleteDashboard() {
                                 <CardDescription>{offer.campaign}</CardDescription>
                               </div>
                             </div>
-                            <Badge className="bg-gradient-to-r from-primary to-blue-400">
+                            <Badge className="bg-blue-700 text-white">
                               {offer.matchScore}% Match
                             </Badge>
                           </div>
