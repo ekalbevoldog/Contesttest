@@ -66,13 +66,13 @@ export default function Header() {
   }, []);
   
   return (
-    <header className="bg-white border-b border-[#e0f2ff] shadow-sm backdrop-blur-md">
+    <header className="bg-[#111111] border-b border-zinc-800 shadow-md backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="flex items-center">
-                <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
+                <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto brightness-125 contrast-125" />
               </Link>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function Header() {
                 {userType === 'athlete' ? (
                   <Link href="/athlete/dashboard">
                     <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                      location === "/athlete/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                      location === "/athlete/dashboard" ? "text-[#f03c3c]" : "text-gray-300 hover:text-white"
                     }`}>
                       <BarChart className="mr-1 h-4 w-4" />
                       Athlete Dashboard
@@ -93,7 +93,7 @@ export default function Header() {
                 ) : userType === 'business' ? (
                   <Link href="/business/dashboard">
                     <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                      location === "/business/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                      location === "/business/dashboard" ? "text-[#f03c3c]" : "text-gray-300 hover:text-white"
                     }`}>
                       <BarChart className="mr-1 h-4 w-4" />
                       Business Dashboard
@@ -102,7 +102,7 @@ export default function Header() {
                 ) : (
                   <Link href="/dashboard">
                     <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                      location === "/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                      location === "/dashboard" ? "text-[#f03c3c]" : "text-gray-300 hover:text-white"
                     }`}>
                       <BarChart className="mr-1 h-4 w-4" />
                       Dashboard
@@ -111,7 +111,7 @@ export default function Header() {
                 )}
                 <Link href="/matches">
                   <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                    location === "/matches" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                    location === "/matches" ? "text-[#f03c3c]" : "text-gray-300 hover:text-white"
                   }`}>
                     <Trophy className="mr-1 h-4 w-4" />
                     Matches
@@ -119,7 +119,7 @@ export default function Header() {
                 </Link>
                 <Link href="/messages">
                   <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                    location === "/messages" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                    location === "/messages" ? "text-[#f03c3c]" : "text-gray-300 hover:text-white"
                   }`}>
                     <MessageSquare className="mr-1 h-4 w-4" />
                     Messages
@@ -131,7 +131,7 @@ export default function Header() {
             {/* Admin Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-[#003366]">
+                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
                   <Settings className="mr-1 h-4 w-4" />
                   Admin
                 </Button>
@@ -250,7 +250,7 @@ export default function Header() {
                         <Link href="/athlete/dashboard">
                           <span 
                             className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                              location === "/athlete/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                              location === "/athlete/dashboard" ? "bg-[rgba(0,163,255,0.1)] text-[#f03c3c]" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
                             }`}
                             onClick={() => setOpen(false)}
                           >
@@ -262,7 +262,7 @@ export default function Header() {
                         <Link href="/business/dashboard">
                           <span 
                             className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                              location === "/business/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                              location === "/business/dashboard" ? "bg-[rgba(0,163,255,0.1)] text-[#f03c3c]" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
                             }`}
                             onClick={() => setOpen(false)}
                           >
@@ -274,7 +274,7 @@ export default function Header() {
                         <Link href="/dashboard">
                           <span 
                             className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                              location === "/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                              location === "/dashboard" ? "bg-[rgba(0,163,255,0.1)] text-[#f03c3c]" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
                             }`}
                             onClick={() => setOpen(false)}
                           >
@@ -286,7 +286,7 @@ export default function Header() {
                       <Link href="/matches">
                         <span 
                           className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                            location === "/matches" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                            location === "/matches" ? "bg-[rgba(0,163,255,0.1)] text-[#f03c3c]" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
                           }`}
                           onClick={() => setOpen(false)}
                         >
@@ -297,7 +297,7 @@ export default function Header() {
                       <Link href="/messages">
                         <span 
                           className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                            location === "/messages" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                            location === "/messages" ? "bg-[rgba(0,163,255,0.1)] text-[#f03c3c]" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
                           }`}
                           onClick={() => setOpen(false)}
                         >

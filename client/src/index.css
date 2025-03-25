@@ -4,11 +4,15 @@
 
 @layer base {
   :root {
-    --neon-accent: #00ffcc;
-    --sport-bright: #ff9500;
-    --tech-blue: #00a3ff;
-    --contrast-dark: #111827;
-    --card-highlight: rgba(0, 255, 204, 0.1);
+    --neon-accent: #f03c3c;
+    --sport-bright: #ff4500;
+    --tech-blue: #00c8ff;
+    --contrast-dark: #0f0f0f;
+    --card-highlight: rgba(240, 60, 60, 0.15);
+    --bg-dark: #111111;
+    --bg-darker: #0a0a0a;
+    --accent-green: #36f4a5;
+    --accent-purple: #8c43ff;
   }
 
   * {
@@ -17,19 +21,20 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    background-color: var(--bg-dark);
     background-image: 
-      radial-gradient(circle at top right, rgba(0, 163, 255, 0.05), transparent 400px),
-      radial-gradient(circle at bottom left, rgba(0, 255, 204, 0.05), transparent 400px);
+      radial-gradient(circle at top right, rgba(240, 60, 60, 0.1), transparent 400px),
+      radial-gradient(circle at bottom left, rgba(0, 200, 255, 0.1), transparent 400px);
   }
 }
 
 @layer components {
   .futuristic-card {
-    @apply relative overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm;
-    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.98));
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 
-                0 1px 2px rgba(0, 163, 255, 0.1),
-                0 0 0 1px rgba(0, 0, 0, 0.02);
+    @apply relative overflow-hidden rounded-lg border border-zinc-800 shadow-md;
+    background: linear-gradient(to bottom right, rgba(25, 25, 25, 0.95), rgba(17, 17, 17, 0.98));
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 
+                0 1px 2px rgba(240, 60, 60, 0.1),
+                0 0 0 1px rgba(30, 30, 30, 0.8);
   }
   
   .futuristic-card::before {
@@ -38,8 +43,8 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 4px;
-    background: linear-gradient(to right, var(--tech-blue), var(--neon-accent));
+    height: 3px;
+    background: linear-gradient(to right, var(--neon-accent), var(--tech-blue));
   }
   
   .sports-highlight {
@@ -78,22 +83,22 @@
   
   .sport-tech-badge {
     @apply px-2 py-1 rounded-md text-xs font-medium inline-flex items-center;
-    background: linear-gradient(120deg, rgba(0, 163, 255, 0.1), rgba(0, 255, 204, 0.1));
-    border: 1px solid rgba(0, 163, 255, 0.2);
-    color: #003366;
+    background: linear-gradient(120deg, rgba(240, 60, 60, 0.2), rgba(0, 200, 255, 0.15));
+    border: 1px solid rgba(240, 60, 60, 0.25);
+    color: #ffffff;
   }
   
   .match-card {
-    @apply relative overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition-all duration-300;
-    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.99));
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 
-                0 1px 3px rgba(0, 163, 255, 0.08);
+    @apply relative overflow-hidden rounded-lg border border-zinc-800 shadow-sm transition-all duration-300;
+    background: linear-gradient(to bottom right, rgba(20, 20, 20, 0.95), rgba(15, 15, 15, 0.98));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 
+                0 1px 3px rgba(240, 60, 60, 0.08);
   }
   
   .match-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 
-                0 2px 6px rgba(0, 163, 255, 0.12),
-                0 0 0 1px rgba(0, 255, 204, 0.08);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15), 
+                0 2px 6px rgba(240, 60, 60, 0.15),
+                0 0 0 1px rgba(54, 244, 165, 0.08);
     transform: translateY(-2px);
   }
   
@@ -104,43 +109,74 @@
     left: 0;
     width: 100%;
     height: 3px;
-    background: linear-gradient(to right, var(--sport-bright), var(--tech-blue));
+    background: linear-gradient(to right, var(--neon-accent), var(--accent-green));
   }
   
   .connection-badge {
     @apply px-2 py-1 rounded-full text-xs font-medium inline-flex items-center;
-    background: linear-gradient(120deg, rgba(255, 149, 0, 0.15), rgba(255, 149, 0, 0.05));
-    border: 1px solid rgba(255, 149, 0, 0.2);
-    color: #ff7200;
+    background: linear-gradient(120deg, rgba(240, 60, 60, 0.2), rgba(140, 67, 255, 0.15));
+    border: 1px solid rgba(240, 60, 60, 0.25);
+    color: #ffffff;
   }
   
   .match-score-ring {
     @apply relative flex items-center justify-center rounded-full;
-    background: conic-gradient(from 0deg, var(--tech-blue) 0%, var(--tech-blue) var(--percentage, 75%), transparent var(--percentage, 75%), transparent 100%);
+    background: conic-gradient(from 0deg, var(--neon-accent) 0%, var(--neon-accent) var(--percentage, 75%), rgba(30, 30, 30, 0.5) var(--percentage, 75%), rgba(30, 30, 30, 0.5) 100%);
   }
   
   .match-score-ring::before {
     content: '';
     @apply absolute rounded-full;
     inset: 3px;
-    background: white;
+    background: var(--bg-darker);
   }
   
   .notification-dot {
-    @apply absolute h-2 w-2 rounded-full bg-[#ff9500];
-    box-shadow: 0 0 0 2px rgba(255, 149, 0, 0.2);
+    @apply absolute h-2 w-2 rounded-full bg-[#f03c3c];
+    box-shadow: 0 0 0 2px rgba(240, 60, 60, 0.2);
     animation: pulse 2s infinite;
   }
   
   @keyframes pulse {
     0% {
-      box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.4);
+      box-shadow: 0 0 0 0 rgba(240, 60, 60, 0.4);
     }
     70% {
-      box-shadow: 0 0 0 6px rgba(255, 149, 0, 0);
+      box-shadow: 0 0 0 6px rgba(240, 60, 60, 0);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(255, 149, 0, 0);
+      box-shadow: 0 0 0 0 rgba(240, 60, 60, 0);
     }
+  }
+  
+  /* Nike-inspired button styles */
+  .nike-button {
+    @apply px-4 py-2 font-bold rounded-md transition-all duration-200;
+    background: var(--neon-accent);
+    color: white;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+  
+  .nike-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -10%;
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: width 0.5s;
+    z-index: -1;
+  }
+  
+  .nike-button:hover::after {
+    width: 120%;
+  }
+  
+  /* Dark mode specific styles */
+  .dark-card {
+    @apply rounded-lg border border-zinc-800 bg-[#161616] shadow-md;
   }
 }
