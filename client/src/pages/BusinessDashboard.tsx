@@ -38,19 +38,65 @@ export default function BusinessDashboard() {
   // Check if user is authenticated
   useEffect(() => {
     const userType = localStorage.getItem('contestedUserType');
-    if (userType !== 'business') {
+    const isLoggedIn = localStorage.getItem('contestedUserLoggedIn');
+    
+    if (!isLoggedIn || !userType) {
       toast({
         variant: "destructive",
         title: "Authentication required",
         description: "Please sign in to access the business dashboard",
       });
       navigate("/business/login");
+    } else if (userType !== 'business') {
+      toast({
+        variant: "destructive",
+        title: "Access denied",
+        description: "This dashboard is for businesses only. Please use the athlete dashboard.",
+      });
+      navigate("/athlete/dashboard");
     } else {
       setLoading(false);
     }
   }, [navigate, toast]);
   
-  if (loading) {
+  // Define profile data type
+  type ProfileData = {
+    id?: number;
+    name?: string;
+    productType?: string;
+    audienceGoals?: string;
+    values?: string;
+    email?: string;
+  };
+  
+  // Get profile info from localStorage if available or fallback to API
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  
+  useEffect(() => {
+    if (loading) return;
+    
+    // Try to get profile data from localStorage first
+    const storedUserData = localStorage.getItem('contestedUserData');
+    if (storedUserData) {
+      setProfileData(JSON.parse(storedUserData));
+      setIsLoadingProfile(false);
+    } else {
+      // Fallback to API call if no localStorage data
+      fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => {
+          setProfileData(data);
+          setIsLoadingProfile(false);
+        })
+        .catch(err => {
+          console.error('Error fetching profile:', err);
+          setIsLoadingProfile(false);
+        });
+    }
+  }, [loading]);
+  
+  if (loading || isLoadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0066cc]"></div>
@@ -230,8 +276,8 @@ export default function BusinessDashboard() {
                         <div className="h-16 w-16 rounded bg-gray-200 flex items-center justify-center mb-2">
                           <Building2 className="h-8 w-8 text-gray-400" />
                         </div>
-                        <div className="font-medium">TechGoods Inc.</div>
-                        <div className="text-sm text-gray-500">Sports Equipment</div>
+                        <div className="font-medium">{profileData?.name || "Your Business"}</div>
+                        <div className="text-sm text-gray-500">{profileData?.productType || "Product Category"}</div>
                       </div>
                       
                       <div className="space-y-2">

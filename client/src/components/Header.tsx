@@ -73,14 +73,34 @@ export default function Header() {
             {/* Only show dashboard and matches when logged in */}
             {isLoggedIn && (
               <>
-                <Link href="/dashboard">
-                  <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                    location === "/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
-                  }`}>
-                    <BarChart className="mr-1 h-4 w-4" />
-                    Dashboard
-                  </span>
-                </Link>
+                {userType === 'athlete' ? (
+                  <Link href="/athlete/dashboard">
+                    <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                      location === "/athlete/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                    }`}>
+                      <BarChart className="mr-1 h-4 w-4" />
+                      Athlete Dashboard
+                    </span>
+                  </Link>
+                ) : userType === 'business' ? (
+                  <Link href="/business/dashboard">
+                    <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                      location === "/business/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                    }`}>
+                      <BarChart className="mr-1 h-4 w-4" />
+                      Business Dashboard
+                    </span>
+                  </Link>
+                ) : (
+                  <Link href="/dashboard">
+                    <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                      location === "/dashboard" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                    }`}>
+                      <BarChart className="mr-1 h-4 w-4" />
+                      Dashboard
+                    </span>
+                  </Link>
+                )}
                 <Link href="/matches">
                   <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
                     location === "/matches" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
@@ -199,17 +219,43 @@ export default function Header() {
                   {/* Only show dashboard and matches when logged in */}
                   {isLoggedIn && (
                     <>
-                      <Link href="/dashboard">
-                        <span 
-                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                            location === "/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
-                          }`}
-                          onClick={() => setOpen(false)}
-                        >
-                          <BarChart className="mr-2 h-4 w-4" />
-                          Dashboard
-                        </span>
-                      </Link>
+                      {userType === 'athlete' ? (
+                        <Link href="/athlete/dashboard">
+                          <span 
+                            className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                              location === "/athlete/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                            }`}
+                            onClick={() => setOpen(false)}
+                          >
+                            <BarChart className="mr-2 h-4 w-4" />
+                            Athlete Dashboard
+                          </span>
+                        </Link>
+                      ) : userType === 'business' ? (
+                        <Link href="/business/dashboard">
+                          <span 
+                            className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                              location === "/business/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                            }`}
+                            onClick={() => setOpen(false)}
+                          >
+                            <BarChart className="mr-2 h-4 w-4" />
+                            Business Dashboard
+                          </span>
+                        </Link>
+                      ) : (
+                        <Link href="/dashboard">
+                          <span 
+                            className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                              location === "/dashboard" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                            }`}
+                            onClick={() => setOpen(false)}
+                          >
+                            <BarChart className="mr-2 h-4 w-4" />
+                            Dashboard
+                          </span>
+                        </Link>
+                      )}
                       <Link href="/matches">
                         <span 
                           className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${

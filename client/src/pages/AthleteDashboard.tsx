@@ -63,18 +63,23 @@ export default function AthleteDashboard() {
   
   // Check if user is authenticated
   useEffect(() => {
-    // For demo purposes, we'll set the user type to 'athlete' if it's not set
     const userType = localStorage.getItem('contestedUserType');
-    if (!userType) {
-      localStorage.setItem('contestedUserType', 'athlete');
-      setLoading(false);
-    } else if (userType !== 'athlete') {
+    const isLoggedIn = localStorage.getItem('contestedUserLoggedIn');
+    
+    if (!isLoggedIn || !userType) {
       toast({
         variant: "destructive",
         title: "Authentication required",
         description: "Please sign in to access the athlete dashboard",
       });
-      navigate("/login");
+      navigate("/athlete/login");
+    } else if (userType !== 'athlete') {
+      toast({
+        variant: "destructive",
+        title: "Access denied",
+        description: "This dashboard is for athletes only. Please use the business dashboard.",
+      });
+      navigate("/business/dashboard");
     } else {
       setLoading(false);
     }
@@ -94,11 +99,32 @@ export default function AthleteDashboard() {
     };
   };
 
-  // Get dummy profile info - would be replaced with actual API call
-  const { data: profileData, isLoading: isLoadingProfile } = useQuery<ProfileData>({
-    queryKey: ['/api/profile'],
-    enabled: !loading,
-  });
+  // Get profile info from localStorage if available or fallback to API
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  
+  useEffect(() => {
+    if (loading) return;
+    
+    // Try to get profile data from localStorage first
+    const storedUserData = localStorage.getItem('contestedUserData');
+    if (storedUserData) {
+      setProfileData(JSON.parse(storedUserData));
+      setIsLoadingProfile(false);
+    } else {
+      // Fallback to API call if no localStorage data
+      fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => {
+          setProfileData(data);
+          setIsLoadingProfile(false);
+        })
+        .catch(err => {
+          console.error('Error fetching profile:', err);
+          setIsLoadingProfile(false);
+        });
+    }
+  }, [loading]);
   
   // Mock partnership offers data - would be replaced with actual API call
   const partnershipOffers = [
