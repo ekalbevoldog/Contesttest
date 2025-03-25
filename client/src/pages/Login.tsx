@@ -72,10 +72,26 @@ export default function Login() {
           description: `Welcome back to Contested!`,
         });
         
+        // Check if user is already logged in
+        const isUserLoggedIn = localStorage.getItem('contestedUserLoggedIn') === 'true';
+        if (isUserLoggedIn) {
+          // Clear previous user data
+          localStorage.removeItem('contestedUserLoggedIn');
+          localStorage.removeItem('contestedUserType');
+          localStorage.removeItem('contestedUserData');
+          localStorage.removeItem('contestedSessionId');
+          
+          // Dispatch logout event to update UI
+          window.dispatchEvent(new Event('contestedLogout'));
+        }
+        
         // Store authentication data
         localStorage.setItem('contestedUserType', userType);
         localStorage.setItem('contestedSessionId', result.sessionId);
         localStorage.setItem('contestedUserLoggedIn', 'true');
+        
+        // Dispatch login event to update UI
+        window.dispatchEvent(new Event('contestedLogin'));
         
         // Fetch user profile after successful login
         try {

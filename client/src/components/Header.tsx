@@ -44,15 +44,22 @@ export default function Header() {
     // Check on component mount
     checkLoginStatus();
     
+    // Add a listener for custom login/logout events
+    const handleLoginEvent = () => checkLoginStatus();
+    
     // Also set up event listener for storage changes (in case user logs in/out in another tab)
     const handleStorageChange = () => {
       checkLoginStatus();
     };
     
+    window.addEventListener('contestedLogin', handleLoginEvent);
+    window.addEventListener('contestedLogout', handleLoginEvent);
     window.addEventListener('storage', handleStorageChange);
     
     // Clean up
     return () => {
+      window.removeEventListener('contestedLogin', handleLoginEvent);
+      window.removeEventListener('contestedLogout', handleLoginEvent);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
@@ -161,9 +168,14 @@ export default function Header() {
                         localStorage.removeItem('contestedUserType');
                         localStorage.removeItem('contestedUserData');
                         localStorage.removeItem('contestedSessionId');
+                        
+                        // Dispatch custom event for logout
+                        window.dispatchEvent(new Event('contestedLogout'));
+                        
                         // Update component state
                         setIsLoggedIn(false);
                         setUserType(null);
+                        
                         // Redirect to home page
                         window.location.href = '/';
                       }}
@@ -319,10 +331,15 @@ export default function Header() {
                             localStorage.removeItem('contestedUserType');
                             localStorage.removeItem('contestedUserData');
                             localStorage.removeItem('contestedSessionId');
+                            
+                            // Dispatch custom event for logout
+                            window.dispatchEvent(new Event('contestedLogout'));
+                            
                             // Update component state
                             setIsLoggedIn(false);
                             setUserType(null);
                             setOpen(false);
+                            
                             // Redirect to home page
                             window.location.href = '/';
                           }}
