@@ -210,18 +210,46 @@ export default function PersonalizedWizard() {
     setProgress(currentProgress);
   }, [currentStep]);
 
-  // Profile submission mutation
+  // Profile submission mutation - now connects to the AI-enhanced personalized onboarding endpoint
   const profileMutation = useMutation({
     mutationFn: async (profileData: any) => {
-      return apiRequest("POST", "/api/profile", {
+      return apiRequest("POST", "/api/personalized-onboarding", {
         ...profileData,
         sessionId,
         userType
       });
     },
-    onSuccess: async () => {
-      // Move to final step
-      setCurrentStep(WizardStep.Complete);
+    onSuccess: async (response) => {
+      try {
+        // Parse the response for AI insights and personalized confirmation
+        const data = await response.json();
+        
+        // Store AI insights and recommendations in local storage for dashboard display
+        if (data.aiInsights) {
+          localStorage.setItem('aiInsights', JSON.stringify(data.aiInsights));
+        }
+        
+        if (data.recommendations) {
+          localStorage.setItem('recommendations', JSON.stringify(data.recommendations));
+        }
+        
+        // If there's a campaign generated for a business account, store it
+        if (userType === 'business' && data.campaign) {
+          localStorage.setItem('campaign', JSON.stringify(data.campaign));
+        }
+        
+        // Store the confirmation message to display on completion page
+        if (data.confirmation) {
+          setCompletionMessage(data.confirmation);
+        }
+        
+        // Move to final step
+        setCurrentStep(WizardStep.Complete);
+      } catch (error) {
+        console.error("Error processing profile submission response:", error);
+        // Still advance to completion step even if parsing the response fails
+        setCurrentStep(WizardStep.Complete);
+      }
     },
     onError: (error) => {
       console.error("Error submitting profile:", error);
