@@ -87,28 +87,28 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
     (match.athlete?.name || match.athleteName || 'Athlete');
     
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'from-[#00a3ff] to-[#00ffcc]';
-    if (score >= 60) return 'from-[#ff9500] to-[#00a3ff]';
-    return 'from-[#ff4b4b] to-[#ff9500]';
+    if (score >= 80) return 'from-[#f03c3c] to-[#ff5c5c]';
+    if (score >= 60) return 'from-[#ff5c5c] to-[#ff9966]';
+    return 'from-[#ff9966] to-[#ffcc99]';
   };
 
   return (
     <div className={`match-card ${animate ? 'animate-pulse' : ''}`}>
-      <div className="px-5 py-5 sm:px-6 bg-gradient-to-r from-[#003366] to-[#004080] text-white">
+      <div className="px-5 py-5 sm:px-6 bg-gradient-to-r from-[#000000] to-[#1a1a1a] text-white">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             {isNewMatch && (
               <div className="relative mr-3">
-                <Bell className="h-5 w-5 text-white" />
+                <Bell className="h-5 w-5 text-[#f03c3c]" />
                 <span className="notification-dot -top-1 -right-1"></span>
               </div>
             )}
             <div>
               <h3 className="text-lg leading-6 font-bold flex items-center">
-                <Trophy className="inline-block mr-2 h-5 w-5 text-[#ff9500]" />
+                <Trophy className="inline-block mr-2 h-5 w-5 text-[#f03c3c]" />
                 Match Alert
               </h3>
-              <p className="mt-1 text-sm text-blue-100">Partnership Opportunity</p>
+              <p className="mt-1 text-sm text-gray-300">Partnership Opportunity</p>
             </div>
           </div>
           
@@ -120,23 +120,23 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
               } as React.CSSProperties}
             >
               <div className="relative z-10 flex items-center justify-center h-full w-full">
-                <span className="text-lg font-bold text-[#003366]">{match.score}</span>
+                <span className="text-lg font-bold text-white">{match.score}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
       
-      <div className="px-5 py-3 flex items-center justify-between bg-gradient-to-r from-[rgba(0,163,255,0.05)] to-[rgba(0,255,204,0.02)]">
+      <div className="px-5 py-3 flex items-center justify-between bg-gradient-to-r from-[rgba(240,60,60,0.05)] to-[rgba(255,92,92,0.02)]">
         <div className="flex items-center">
           <span className="connection-badge">
-            <Bolt className="h-3 w-3 mr-1" />
+            <Bolt className="h-3 w-3 mr-1 text-[#f03c3c]" />
             {match.score >= 80 ? 'Perfect Match' : match.score >= 60 ? 'Strong Match' : 'Potential Match'}
           </span>
         </div>
         
         <div className="flex sm:hidden items-center">
-          <div className="text-sm">Score: <span className="sports-bright-highlight">{match.score}</span></div>
+          <div className="text-sm">Score: <span className="text-[#f03c3c] font-medium">{match.score}</span></div>
         </div>
       </div>
       
@@ -144,8 +144,8 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
         <div className="grid grid-cols-1 gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center">
             <div className="mb-2 sm:mb-0 sm:w-1/3">
-              <span className="sport-tech-badge">
-                <Handshake className="mr-1 h-4 w-4" />
+              <span className="bg-[rgba(240,60,60,0.15)] text-white px-2 py-1 rounded-md text-xs font-medium flex items-center w-fit">
+                <Handshake className="mr-1 h-4 w-4 text-[#f03c3c]" />
                 {userType === 'athlete' ? 'Brand Partner' : 'Athlete'}
               </span>
             </div>
@@ -156,8 +156,8 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
           
           <div className="flex flex-col sm:flex-row sm:items-start mt-2">
             <div className="mb-2 sm:mb-0 sm:w-1/3">
-              <span className="sport-tech-badge">
-                <Star className="mr-1 h-4 w-4" />
+              <span className="bg-[rgba(240,60,60,0.15)] text-white px-2 py-1 rounded-md text-xs font-medium flex items-center w-fit">
+                <Star className="mr-1 h-4 w-4 text-[#f03c3c]" />
                 Campaign
               </span>
             </div>
@@ -169,15 +169,15 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
           
           <div className="flex flex-col sm:flex-row sm:items-start mt-2">
             <div className="mb-2 sm:mb-0 sm:w-1/3">
-              <span className="sport-tech-badge">
-                <CheckCircle className="mr-1 h-4 w-4" />
+              <span className="bg-[rgba(240,60,60,0.15)] text-white px-2 py-1 rounded-md text-xs font-medium flex items-center w-fit">
+                <CheckCircle className="mr-1 h-4 w-4 text-[#f03c3c]" />
                 Deliverables
               </span>
             </div>
             <div className="sm:w-2/3">
               <div className="flex flex-wrap gap-2">
                 {match.campaign.deliverables.map((deliverable, index) => (
-                  <Badge key={index} className="bg-[rgba(0,163,255,0.08)] hover:bg-[rgba(0,163,255,0.15)] text-[#003366] border-[#e0f2ff]">
+                  <Badge key={index} className="bg-[rgba(240,60,60,0.08)] hover:bg-[rgba(240,60,60,0.15)] text-white border-[#f03c3c]/20">
                     {deliverable}
                   </Badge>
                 ))}
@@ -187,8 +187,8 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
           
           <div className="flex flex-col sm:flex-row sm:items-start mt-2">
             <div className="mb-2 sm:mb-0 sm:w-1/3">
-              <span className="sport-tech-badge">
-                <Zap className="mr-1 h-4 w-4" />
+              <span className="bg-[rgba(240,60,60,0.15)] text-white px-2 py-1 rounded-md text-xs font-medium flex items-center w-fit">
+                <Zap className="mr-1 h-4 w-4 text-[#f03c3c]" />
                 Why It Works
               </span>
             </div>
@@ -197,13 +197,13 @@ export default function MatchResults({ match, userType, isNewMatch = false }: Ma
             </div>
           </div>
           
-          <div className="mt-6 pt-4 border-t border-[#e0f2ff]">
+          <div className="mt-6 pt-4 border-t border-[#333]">
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button className="bg-gradient-to-r from-[#0066cc] to-[#00a3ff] hover:from-[#005bb8] hover:to-[#0091e6] flex items-center">
+              <Button className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] flex items-center">
                 Express Interest
                 <ArrowUpRight className="ml-1 h-4 w-4" />
               </Button>
-              <Button variant="outline" className="border-[#00a3ff] text-[#003366] hover:bg-[rgba(0,163,255,0.1)]">
+              <Button variant="outline" className="border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)]">
                 View More Matches
               </Button>
             </div>
