@@ -47,7 +47,6 @@ import {
   Instagram,
   Youtube,
   Twitter,
-  TikTok,
   PenTool,
   PieChart,
   Hash,
@@ -497,6 +496,75 @@ export default function PersonalizedWizard() {
   };
 
   // Render content based on the current step
+  // Component for visual preference selection cards with dynamic feedback
+  const VisualPreferenceCard = ({ 
+    id, 
+    title, 
+    description, 
+    icon, 
+    section,
+    field,
+    imageSrc 
+  }: { 
+    id: string; 
+    title: string; 
+    description: string; 
+    icon: React.ReactNode;
+    section: keyof typeof formData;
+    field: string;
+    imageSrc?: string;
+  }) => {
+    const values = (formData[section] as any)[field] as string[];
+    const isSelected = values.includes(id);
+    
+    return (
+      <div 
+        className={`relative rounded-lg overflow-hidden border-2 transition-all cursor-pointer
+        ${isSelected 
+          ? 'border-red-500 shadow-md' 
+          : 'border-zinc-200 hover:border-zinc-300'
+        }`}
+        onClick={() => handleCheckboxChange(section, field, id)}
+      >
+        {imageSrc ? (
+          <div className="h-32 bg-zinc-100 flex items-center justify-center">
+            <div className="text-4xl text-zinc-400">{icon}</div>
+          </div>
+        ) : (
+          <div className="h-24 bg-gradient-to-br from-red-500/10 to-amber-500/10 flex items-center justify-center">
+            <div className="text-4xl text-red-500">{icon}</div>
+          </div>
+        )}
+        
+        <div className="p-4">
+          <div className="flex items-start mb-2">
+            <div className="mr-2 mt-0.5">
+              <Checkbox
+                id={`${field}-${id}`}
+                checked={isSelected}
+                onCheckedChange={() => handleCheckboxChange(section, field, id)}
+                className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+              />
+            </div>
+            <Label 
+              htmlFor={`${field}-${id}`}
+              className="text-base font-medium cursor-pointer"
+            >
+              {title}
+            </Label>
+          </div>
+          <p className="text-sm text-zinc-500 ml-6">{description}</p>
+        </div>
+        
+        {isSelected && (
+          <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-red-500 flex items-center justify-center">
+            <Check className="h-4 w-4 text-white" />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case WizardStep.Welcome:
