@@ -49,6 +49,9 @@ export default function BusinessDashboard() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   
   // Set loading state to false - authentication is handled by the protected route
   useEffect(() => {
@@ -109,18 +112,261 @@ export default function BusinessDashboard() {
             <p className="text-gray-500 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              <Badge className="bg-[#ff3366] hover:bg-[#e62e5c]">2</Badge>
-            </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <Badge className="bg-[#ff3366] hover:bg-[#e62e5c]">3</Badge>
-            </Button>
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </Button>
+            <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <Badge className="bg-[#ff3366] hover:bg-[#e62e5c]">2</Badge>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Notifications</DialogTitle>
+                  <DialogDescription>
+                    Your latest notifications and updates
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="space-y-4 mt-2">
+                    {[
+                      {
+                        title: "Campaign Match",
+                        message: "New athlete match for 'Summer Product Launch' campaign",
+                        time: "10 minutes ago",
+                        unread: true
+                      },
+                      {
+                        title: "Content Approval",
+                        message: "Sarah J. submitted a new content piece for your review",
+                        time: "2 hours ago",
+                        unread: true
+                      },
+                      {
+                        title: "System Update",
+                        message: "Contested platform has been updated with new features",
+                        time: "Yesterday",
+                        unread: false
+                      },
+                      {
+                        title: "Campaign Performance",
+                        message: "Your 'Back-to-School' campaign is performing above average",
+                        time: "2 days ago",
+                        unread: false
+                      }
+                    ].map((notification, idx) => (
+                      <div key={idx} className={`p-3 rounded-lg ${notification.unread ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                        <div className="flex justify-between items-start">
+                          <div className="font-medium">{notification.title}</div>
+                          <div className="text-xs text-gray-500">{notification.time}</div>
+                        </div>
+                        <div className="text-sm mt-1">{notification.message}</div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <div className="flex justify-end mt-4">
+                  <Button variant="outline" size="sm">Mark All Read</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <Badge className="bg-[#ff3366] hover:bg-[#e62e5c]">3</Badge>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Messages</DialogTitle>
+                  <DialogDescription>
+                    Your conversations with athletes and the Contested team
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="space-y-4 mt-2">
+                    {[
+                      {
+                        name: "Sarah J.",
+                        message: "Can you provide more details about the content requirements?",
+                        time: "5 minutes ago",
+                        unread: true,
+                        avatar: "SJ"
+                      },
+                      {
+                        name: "Marcus T.",
+                        message: "Thanks for approving the content! When should I post it?",
+                        time: "30 minutes ago",
+                        unread: true,
+                        avatar: "MT"
+                      },
+                      {
+                        name: "Emily R.",
+                        message: "Just sent over the metrics from our last collaboration",
+                        time: "1 hour ago",
+                        unread: true,
+                        avatar: "ER"
+                      },
+                      {
+                        name: "Contested Support",
+                        message: "Here are some tips to improve your campaign performance",
+                        time: "Yesterday",
+                        unread: false,
+                        avatar: "CS"
+                      }
+                    ].map((message, idx) => (
+                      <div key={idx} className={`p-3 rounded-lg ${message.unread ? 'bg-blue-50' : 'bg-gray-50'}`}>
+                        <div className="flex gap-3">
+                          <Avatar>
+                            <AvatarFallback className="bg-gradient-to-r from-[#0066cc] to-[#00a3ff] text-white">
+                              {message.avatar}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <div className="font-medium">{message.name}</div>
+                              <div className="text-xs text-gray-500">{message.time}</div>
+                            </div>
+                            <div className="text-sm mt-1">{message.message}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <div className="flex justify-end mt-4">
+                  <Button variant="outline" size="sm" className="mr-2">View All</Button>
+                  <Button size="sm" className="bg-gradient-to-r from-[#0066cc] to-[#00a3ff] hover:from-[#005bb8] hover:to-[#0091e6]">New Message</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Account Settings</DialogTitle>
+                  <DialogDescription>
+                    Manage your account preferences and settings
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <Tabs defaultValue="account" className="w-full">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="account">Account</TabsTrigger>
+                      <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                      <TabsTrigger value="billing">Billing</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="account" className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Profile Information</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Business Name</span>
+                            <span className="font-medium">{profileData?.name || "Your Business"}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Email</span>
+                            <span className="font-medium">{profileData?.email || "email@example.com"}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Account Type</span>
+                            <Badge className="bg-[#0066cc]">Business Pro</Badge>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full mt-4">
+                          Edit Profile
+                        </Button>
+                      </div>
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Password & Security</h4>
+                        <Button variant="outline" size="sm" className="w-full">
+                          Change Password
+                        </Button>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="notifications" className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Email Notifications</h4>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">New matches</span>
+                            <Button variant="outline" size="sm">
+                              On
+                            </Button>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Content approval requests</span>
+                            <Button variant="outline" size="sm">
+                              On
+                            </Button>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Campaign updates</span>
+                            <Button variant="outline" size="sm">
+                              On
+                            </Button>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Platform announcements</span>
+                            <Button variant="outline" size="sm">
+                              Off
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="billing" className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Current Plan</h4>
+                        <div className="p-3 rounded-lg bg-blue-50">
+                          <div className="font-medium">Business Pro</div>
+                          <div className="text-sm text-gray-500 mt-1">$199/month, billed annually</div>
+                          <div className="flex items-center mt-3">
+                            <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Active</Badge>
+                            <span className="text-xs text-gray-500 ml-2">Renews on October 15, 2023</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Button variant="outline" size="sm" className="flex-1">
+                            Change Plan
+                          </Button>
+                          <Button variant="outline" size="sm" className="flex-1">
+                            Billing History
+                          </Button>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Payment Method</h4>
+                        <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            <CreditCard className="h-5 w-5 text-gray-400" />
+                            <div>
+                              <div className="font-medium">Visa ending in 4242</div>
+                              <div className="text-xs text-gray-500">Expires 12/25</div>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+                <DialogClose asChild>
+                  <Button variant="outline" className="w-full">Done</Button>
+                </DialogClose>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
         
