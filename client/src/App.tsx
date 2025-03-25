@@ -10,6 +10,7 @@ import RegistrationWizard from "@/pages/RegistrationWizard";
 import Login from "@/pages/Login";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import BusinessDashboard from "@/pages/BusinessDashboard";
+import MessageCenter from "@/pages/MessageCenter";
 import N8nConfig from "@/pages/N8nConfig";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -91,6 +92,11 @@ function Router() {
           </Route>
           <Route path="/business/dashboard">
             {(params) => <ProtectedRoute component={BusinessDashboard} path="/business/dashboard" requiredUserType="business" />}
+          </Route>
+          
+          {/* Message Center - available to all logged in users */}
+          <Route path="/messages">
+            {(params) => <ProtectedRoute component={MessageCenter} path="/messages" />}
           </Route>
           
           {/* Admin and Integration Routes */}

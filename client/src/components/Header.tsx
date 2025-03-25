@@ -16,7 +16,8 @@ import {
   Briefcase,
   Settings,
   Webhook,
-  User
+  User,
+  MessageSquare
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -114,6 +115,14 @@ export default function Header() {
                   }`}>
                     <Trophy className="mr-1 h-4 w-4" />
                     Matches
+                  </span>
+                </Link>
+                <Link href="/messages">
+                  <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                    location === "/messages" ? "tech-text" : "text-gray-600 hover:text-[#003366]"
+                  }`}>
+                    <MessageSquare className="mr-1 h-4 w-4" />
+                    Messages
                   </span>
                 </Link>
               </>
@@ -283,6 +292,17 @@ export default function Header() {
                         >
                           <Trophy className="mr-2 h-4 w-4" />
                           Matches
+                        </span>
+                      </Link>
+                      <Link href="/messages">
+                        <span 
+                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                            location === "/messages" ? "bg-[rgba(0,163,255,0.1)] tech-text" : "text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366]"
+                          }`}
+                          onClick={() => setOpen(false)}
+                        >
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Messages
                         </span>
                       </Link>
                     </>
