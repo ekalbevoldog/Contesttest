@@ -911,160 +911,245 @@ export default function PersonalizedWizard() {
               </p>
             </div>
             
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Preferred Image Types <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-zinc-500">Select the types of images you prefer to create or receive</p>
+            <Tabs defaultValue="imageTypes" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="imageTypes" className="text-sm">Content Types</TabsTrigger>
+                <TabsTrigger value="aesthetics" className="text-sm">Aesthetic Style</TabsTrigger>
+                <TabsTrigger value="colors" className="text-sm">Color Schemes</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="imageTypes" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Preferred Image Types <span className="text-red-500">*</span></h3>
+                    <p className="text-sm text-zinc-500">Select the types of images you prefer to create or receive</p>
+                  </div>
+                  {formData.visualPreferences.preferredImageTypes.length > 0 && (
+                    <Badge variant="outline" className="bg-zinc-100">
+                      {formData.visualPreferences.preferredImageTypes.length} selected
+                    </Badge>
+                  )}
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                  <CheckboxOption 
-                    id="lifestyle" 
-                    label="Lifestyle/Candid" 
-                    section="visualPreferences" 
-                    field="preferredImageTypes"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                  <VisualPreferenceCard
+                    id="lifestyle"
+                    title="Lifestyle/Candid"
                     description="Natural, authentic moments from daily life"
-                    icon={<Camera className="h-5 w-5" />}
-                  />
-                  <CheckboxOption 
-                    id="studio" 
-                    label="Professional/Studio" 
-                    section="visualPreferences" 
+                    icon={<Camera />}
+                    section="visualPreferences"
                     field="preferredImageTypes"
+                  />
+                  <VisualPreferenceCard
+                    id="studio"
+                    title="Professional/Studio"
                     description="High-quality, polished studio shots"
-                    icon={<Image className="h-5 w-5" />}
-                  />
-                  <CheckboxOption 
-                    id="action" 
-                    label="Action/Performance" 
-                    section="visualPreferences" 
+                    icon={<Image />}
+                    section="visualPreferences"
                     field="preferredImageTypes"
+                  />
+                  <VisualPreferenceCard
+                    id="action"
+                    title="Action/Performance"
                     description="Dynamic shots showing skills in action"
-                    icon={<Zap className="h-5 w-5" />}
-                  />
-                  <CheckboxOption 
-                    id="product" 
-                    label="Product Integration" 
-                    section="visualPreferences" 
+                    icon={<Zap />}
+                    section="visualPreferences"
                     field="preferredImageTypes"
+                  />
+                  <VisualPreferenceCard
+                    id="product"
+                    title="Product Integration"
                     description="Content featuring products naturally"
-                    icon={<FileSearch className="h-5 w-5" />}
+                    icon={<FileSearch />}
+                    section="visualPreferences"
+                    field="preferredImageTypes"
                   />
                 </div>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Aesthetic Style <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-zinc-500">What visual aesthetic resonates most with you?</p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                  <CheckboxOption 
-                    id="bold" 
-                    label="Bold & Vibrant" 
-                    section="visualPreferences" 
-                    field="aestheticStyle"
-                    description="High-energy, colorful, attention-grabbing"
-                  />
-                  <CheckboxOption 
-                    id="minimal" 
-                    label="Clean & Minimal" 
-                    section="visualPreferences" 
-                    field="aestheticStyle"
-                    description="Simple, uncluttered, modern aesthetics"
-                  />
-                  <CheckboxOption 
-                    id="authentic" 
-                    label="Raw & Authentic" 
-                    section="visualPreferences" 
-                    field="aestheticStyle"
-                    description="Genuine, unfiltered, documentary style"
-                  />
-                  <CheckboxOption 
-                    id="luxury" 
-                    label="Premium & Polished" 
-                    section="visualPreferences" 
-                    field="aestheticStyle"
-                    description="Sophisticated, high-end, perfectly composed"
-                  />
-                  <CheckboxOption 
-                    id="retro" 
-                    label="Vintage & Retro" 
-                    section="visualPreferences" 
-                    field="aestheticStyle"
-                    description="Nostalgic, throwback vibes, film-inspired"
-                  />
-                  <CheckboxOption 
-                    id="edgy" 
-                    label="Edgy & Urban" 
-                    section="visualPreferences" 
-                    field="aestheticStyle"
-                    description="Street style, bold, trendsetting"
-                  />
+                <div className="py-4">
+                  <h4 className="text-base font-medium mb-2">Do you prefer to include your face in content?</h4>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Show face in content</p>
+                      <p className="text-xs text-zinc-500">This helps set expectations for brand partnerships</p>
+                    </div>
+                    <Switch
+                      checked={formData.visualPreferences.preferredImageTypes.includes('face')}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleCheckboxChange('visualPreferences', 'preferredImageTypes', 'face');
+                        } else {
+                          handleCheckboxChange('visualPreferences', 'preferredImageTypes', 'face');
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
+              </TabsContent>
               
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Color Preferences</h3>
-                <p className="text-sm text-zinc-500">Any specific color palettes you prefer?</p>
+              <TabsContent value="aesthetics" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Aesthetic Style <span className="text-red-500">*</span></h3>
+                    <p className="text-sm text-zinc-500">What visual aesthetic resonates most with you?</p>
+                  </div>
+                  {formData.visualPreferences.aestheticStyle.length > 0 && (
+                    <Badge variant="outline" className="bg-zinc-100">
+                      {formData.visualPreferences.aestheticStyle.length} selected
+                    </Badge>
+                  )}
+                </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                    <VisualPreferenceCard
+                      id="bold"
+                      title="Bold & Vibrant"
+                      description="High-energy, colorful, attention-grabbing"
+                      icon={<Sparkles />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                    <VisualPreferenceCard
+                      id="minimal"
+                      title="Clean & Minimal"
+                      description="Simple, uncluttered, modern aesthetics"
+                      icon={<PenTool />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                    <VisualPreferenceCard
+                      id="authentic"
+                      title="Raw & Authentic"
+                      description="Genuine, unfiltered, documentary style"
+                      icon={<Camera />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                    <VisualPreferenceCard
+                      id="luxury"
+                      title="Premium & Polished"
+                      description="Sophisticated, high-end, perfectly composed"
+                      icon={<Award />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                    <VisualPreferenceCard
+                      id="retro"
+                      title="Vintage & Retro"
+                      description="Nostalgic, throwback vibes, film-inspired"
+                      icon={<Film />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                    <VisualPreferenceCard
+                      id="edgy"
+                      title="Edgy & Urban"
+                      description="Street style, bold, trendsetting"
+                      icon={<Hash />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                    <VisualPreferenceCard
+                      id="sporty"
+                      title="Athletic & Dynamic"
+                      description="Performance-focused, high-energy active style"
+                      icon={<Zap />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                    <VisualPreferenceCard
+                      id="natural"
+                      title="Natural & Organic"
+                      description="Environmentally conscious, earthy aesthetic"
+                      icon={<Globe />}
+                      section="visualPreferences"
+                      field="aestheticStyle"
+                    />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="colors" className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Color Preferences</h3>
+                  <p className="text-sm text-zinc-500">What color schemes would best represent your brand identity?</p>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
                   <div 
-                    className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
-                      ${formData.visualPreferences.colorSchemes.includes('vibrant') ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
+                      ${formData.visualPreferences.colorSchemes.includes('vibrant') ? 'border-red-500' : 'border-zinc-200'}`}
                     onClick={() => handleCheckboxChange('visualPreferences', 'colorSchemes', 'vibrant')}
                   >
-                    <div className="flex space-x-1 mb-2">
-                      <div className="w-4 h-4 rounded-full bg-red-500"></div>
-                      <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
-                      <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-                      <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                    <div className="flex space-x-1 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-red-500"></div>
+                      <div className="w-6 h-6 rounded-full bg-yellow-500"></div>
+                      <div className="w-6 h-6 rounded-full bg-blue-500"></div>
+                      <div className="w-6 h-6 rounded-full bg-green-500"></div>
                     </div>
                     <span className="text-sm font-medium">Vibrant</span>
+                    <p className="text-xs text-zinc-500 text-center mt-1">Energetic, youthful, bold</p>
                   </div>
                   
                   <div 
-                    className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
-                      ${formData.visualPreferences.colorSchemes.includes('monochrome') ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
+                      ${formData.visualPreferences.colorSchemes.includes('monochrome') ? 'border-red-500' : 'border-zinc-200'}`}
                     onClick={() => handleCheckboxChange('visualPreferences', 'colorSchemes', 'monochrome')}
                   >
-                    <div className="flex space-x-1 mb-2">
-                      <div className="w-4 h-4 rounded-full bg-black"></div>
-                      <div className="w-4 h-4 rounded-full bg-zinc-700"></div>
-                      <div className="w-4 h-4 rounded-full bg-zinc-400"></div>
-                      <div className="w-4 h-4 rounded-full bg-white border border-zinc-200"></div>
+                    <div className="flex space-x-1 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-black"></div>
+                      <div className="w-6 h-6 rounded-full bg-zinc-700"></div>
+                      <div className="w-6 h-6 rounded-full bg-zinc-400"></div>
+                      <div className="w-6 h-6 rounded-full bg-white border border-zinc-300"></div>
                     </div>
                     <span className="text-sm font-medium">Monochrome</span>
+                    <p className="text-xs text-zinc-500 text-center mt-1">Timeless, sleek, modern</p>
                   </div>
                   
                   <div 
-                    className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
-                      ${formData.visualPreferences.colorSchemes.includes('earth') ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
+                      ${formData.visualPreferences.colorSchemes.includes('earth') ? 'border-red-500' : 'border-zinc-200'}`}
                     onClick={() => handleCheckboxChange('visualPreferences', 'colorSchemes', 'earth')}
                   >
-                    <div className="flex space-x-1 mb-2">
-                      <div className="w-4 h-4 rounded-full bg-amber-700"></div>
-                      <div className="w-4 h-4 rounded-full bg-green-800"></div>
-                      <div className="w-4 h-4 rounded-full bg-stone-500"></div>
-                      <div className="w-4 h-4 rounded-full bg-amber-200"></div>
+                    <div className="flex space-x-1 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-amber-700"></div>
+                      <div className="w-6 h-6 rounded-full bg-green-800"></div>
+                      <div className="w-6 h-6 rounded-full bg-stone-500"></div>
+                      <div className="w-6 h-6 rounded-full bg-amber-200"></div>
                     </div>
                     <span className="text-sm font-medium">Earth Tones</span>
+                    <p className="text-xs text-zinc-500 text-center mt-1">Natural, warm, authentic</p>
                   </div>
                   
                   <div 
-                    className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
-                      ${formData.visualPreferences.colorSchemes.includes('pastel') ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm flex flex-col items-center
+                      ${formData.visualPreferences.colorSchemes.includes('pastel') ? 'border-red-500' : 'border-zinc-200'}`}
                     onClick={() => handleCheckboxChange('visualPreferences', 'colorSchemes', 'pastel')}
                   >
-                    <div className="flex space-x-1 mb-2">
-                      <div className="w-4 h-4 rounded-full bg-pink-200"></div>
-                      <div className="w-4 h-4 rounded-full bg-blue-200"></div>
-                      <div className="w-4 h-4 rounded-full bg-green-200"></div>
-                      <div className="w-4 h-4 rounded-full bg-yellow-200"></div>
+                    <div className="flex space-x-1 mb-3">
+                      <div className="w-6 h-6 rounded-full bg-pink-200"></div>
+                      <div className="w-6 h-6 rounded-full bg-blue-200"></div>
+                      <div className="w-6 h-6 rounded-full bg-green-200"></div>
+                      <div className="w-6 h-6 rounded-full bg-yellow-200"></div>
                     </div>
                     <span className="text-sm font-medium">Pastels</span>
+                    <p className="text-xs text-zinc-500 text-center mt-1">Soft, friendly, approachable</p>
                   </div>
                 </div>
-              </div>
-            </div>
+                
+                <div className="mt-6 p-4 border rounded-lg bg-zinc-50">
+                  <h4 className="text-base font-medium mb-2 flex items-center">
+                    <Palette className="h-5 w-5 mr-2 text-zinc-500" />
+                    Color Harmony Tip
+                  </h4>
+                  <p className="text-sm text-zinc-600">
+                    Your color preferences help us match you with brands or athletes that share complementary visual styles.
+                    Consistent color schemes increase brand recognition by up to 80% and can make your content more memorable.
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         );
 
@@ -1076,175 +1161,253 @@ export default function PersonalizedWizard() {
               <p className="text-zinc-500 mt-2">Tell us about the types of content you prefer</p>
             </div>
             
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Content Types <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-zinc-500">Select the types of content you're most interested in</p>
+            <Tabs defaultValue="contentTypes" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="contentTypes" className="text-sm">Content Types</TabsTrigger>
+                <TabsTrigger value="contentTone" className="text-sm">Tone & Voice</TabsTrigger>
+                <TabsTrigger value="contentFrequency" className="text-sm">Frequency & Length</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="contentTypes" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Content Types <span className="text-red-500">*</span></h3>
+                    <p className="text-sm text-zinc-500">Select the types of content you're most interested in</p>
+                  </div>
+                  {formData.contentPreferences.contentTypes.length > 0 && (
+                    <Badge variant="outline" className="bg-zinc-100">
+                      {formData.contentPreferences.contentTypes.length} selected
+                    </Badge>
+                  )}
+                </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                  <CheckboxOption 
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                  <VisualPreferenceCard 
                     id="photos" 
-                    label="Photos/Images" 
+                    title="Photos/Images" 
                     section="contentPreferences" 
                     field="contentTypes"
                     description="Still images for social media or websites"
-                    icon={<Image className="h-5 w-5" />}
+                    icon={<Image />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="reels" 
-                    label="Short-form Videos" 
+                    title="Short-form Videos" 
                     section="contentPreferences" 
                     field="contentTypes"
                     description="Brief, engaging video clips (15-60 seconds)"
-                    icon={<Film className="h-5 w-5" />}
+                    icon={<Film />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="longVideos" 
-                    label="Long-form Videos" 
+                    title="Long-form Videos" 
                     section="contentPreferences" 
                     field="contentTypes"
                     description="In-depth video content (1+ minutes)"
-                    icon={<Film className="h-5 w-5" />}
+                    icon={<Film />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="stories" 
-                    label="Stories/Ephemeral" 
+                    title="Stories/Ephemeral" 
                     section="contentPreferences" 
                     field="contentTypes"
                     description="24-hour content for Instagram, Snapchat, etc."
-                    icon={<Sparkles className="h-5 w-5" />}
+                    icon={<Sparkles />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="lives" 
-                    label="Livestreams" 
+                    title="Livestreams" 
                     section="contentPreferences" 
                     field="contentTypes"
                     description="Real-time streaming content"
-                    icon={<Zap className="h-5 w-5" />}
+                    icon={<Zap />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="ugc" 
-                    label="User-Generated Content" 
+                    title="User-Generated Content" 
                     section="contentPreferences" 
                     field="contentTypes"
                     description="Authentic content created in personal style"
-                    icon={<UserCircle className="h-5 w-5" />}
+                    icon={<UserCircle />}
                   />
                 </div>
-              </div>
+              </TabsContent>
               
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Content Length <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-zinc-500">What content length do you prefer working with?</p>
+              <TabsContent value="contentTone" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Content Tone <span className="text-red-500">*</span></h3>
+                    <p className="text-sm text-zinc-500">What tone resonates most with your brand or personal style?</p>
+                  </div>
+                  {formData.contentPreferences.contentTone.length > 0 && (
+                    <Badge variant="outline" className="bg-zinc-100">
+                      {formData.contentPreferences.contentTone.length} selected
+                    </Badge>
+                  )}
+                </div>
                 
-                <RadioGroup 
-                  value={formData.contentPreferences.contentLength}
-                  onValueChange={(value) => updateFormData('contentPreferences', 'contentLength', value)}
-                  className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2"
-                >
-                  <div className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
-                    ${formData.contentPreferences.contentLength === 'short' ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}>
-                    <RadioGroupItem value="short" id="length-short" className="sr-only" />
-                    <Label htmlFor="length-short" className="flex flex-col cursor-pointer">
-                      <span className="font-medium">Micro Content</span>
-                      <span className="text-sm text-zinc-500 mt-1">15-30 seconds or single images</span>
-                    </Label>
-                  </div>
-                  <div className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
-                    ${formData.contentPreferences.contentLength === 'medium' ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}>
-                    <RadioGroupItem value="medium" id="length-medium" className="sr-only" />
-                    <Label htmlFor="length-medium" className="flex flex-col cursor-pointer">
-                      <span className="font-medium">Medium Content</span>
-                      <span className="text-sm text-zinc-500 mt-1">30-90 seconds or carousel posts</span>
-                    </Label>
-                  </div>
-                  <div className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
-                    ${formData.contentPreferences.contentLength === 'long' ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}>
-                    <RadioGroupItem value="long" id="length-long" className="sr-only" />
-                    <Label htmlFor="length-long" className="flex flex-col cursor-pointer">
-                      <span className="font-medium">Long-form Content</span>
-                      <span className="text-sm text-zinc-500 mt-1">1+ minutes or in-depth series</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Content Tone <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-zinc-500">What tone resonates most with your brand or personal style?</p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                  <CheckboxOption 
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                  <VisualPreferenceCard 
                     id="informative" 
-                    label="Informative & Educational" 
+                    title="Informative & Educational" 
                     section="contentPreferences" 
                     field="contentTone"
+                    description="Teaching new skills or sharing knowledge"
+                    icon={<Mic />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="entertaining" 
-                    label="Fun & Entertaining" 
+                    title="Fun & Entertaining" 
                     section="contentPreferences" 
                     field="contentTone"
+                    description="Engaging and enjoyable to consume"
+                    icon={<Sparkles />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="inspirational" 
-                    label="Inspirational & Motivational" 
+                    title="Inspirational & Motivational" 
                     section="contentPreferences" 
                     field="contentTone"
+                    description="Uplifting and encouraging"
+                    icon={<Award />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="authentic" 
-                    label="Authentic & Personal" 
+                    title="Authentic & Personal" 
                     section="contentPreferences" 
                     field="contentTone"
+                    description="Genuine, unfiltered, real-life content"
+                    icon={<Heart />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="professional" 
-                    label="Professional & Polished" 
+                    title="Professional & Polished" 
                     section="contentPreferences" 
                     field="contentTone"
+                    description="Refined, high-quality production"
+                    icon={<Globe />}
                   />
-                  <CheckboxOption 
+                  <VisualPreferenceCard 
                     id="humorous" 
-                    label="Humorous & Light-hearted" 
+                    title="Humorous & Light-hearted" 
                     section="contentPreferences" 
                     field="contentTone"
+                    description="Funny, witty, entertaining content"
+                    icon={<Image />}
                   />
                 </div>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Content Frequency <span className="text-red-500">*</span></h3>
-                <p className="text-sm text-zinc-500">How frequently do you prefer to create or receive content?</p>
                 
-                <RadioGroup 
-                  value={formData.contentPreferences.contentFrequency}
-                  onValueChange={(value) => updateFormData('contentPreferences', 'contentFrequency', value)}
-                  className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-2"
-                >
-                  <div className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
-                    ${formData.contentPreferences.contentFrequency === 'daily' ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}>
-                    <RadioGroupItem value="daily" id="freq-daily" className="sr-only" />
-                    <Label htmlFor="freq-daily" className="cursor-pointer font-medium">Daily</Label>
+                <div className="mt-6 p-4 border rounded-lg bg-zinc-50">
+                  <h4 className="text-base font-medium mb-2 flex items-center">
+                    <PenTool className="h-5 w-5 mr-2 text-zinc-500" />
+                    Tone Matching Insight
+                  </h4>
+                  <p className="text-sm text-zinc-600">
+                    Selecting content tones that align with both your personal style and brand values leads to more authentic partnerships.
+                    Our AI matching system will prioritize partnerships where tone preferences are compatible between athletes and businesses.
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="contentFrequency" className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">Content Length <span className="text-red-500">*</span></h3>
+                    <p className="text-sm text-zinc-500">What content length do you prefer working with?</p>
                   </div>
-                  <div className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
-                    ${formData.contentPreferences.contentFrequency === 'weekly' ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}>
-                    <RadioGroupItem value="weekly" id="freq-weekly" className="sr-only" />
-                    <Label htmlFor="freq-weekly" className="cursor-pointer font-medium">Weekly</Label>
+                  
+                  <RadioGroup 
+                    value={formData.contentPreferences.contentLength}
+                    onValueChange={(value) => updateFormData('contentPreferences', 'contentLength', value)}
+                    className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2"
+                  >
+                    <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
+                      ${formData.contentPreferences.contentLength === 'short' ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}>
+                      <RadioGroupItem value="short" id="length-short" className="sr-only" />
+                      <Label htmlFor="length-short" className="flex flex-col cursor-pointer">
+                        <div className="flex justify-center mb-3">
+                          <Clock className="h-8 w-8 text-red-500 opacity-80" />
+                        </div>
+                        <span className="font-medium text-center">Micro Content</span>
+                        <span className="text-sm text-zinc-500 mt-1 text-center">15-30 seconds or single images</span>
+                      </Label>
+                    </div>
+                    <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
+                      ${formData.contentPreferences.contentLength === 'medium' ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}>
+                      <RadioGroupItem value="medium" id="length-medium" className="sr-only" />
+                      <Label htmlFor="length-medium" className="flex flex-col cursor-pointer">
+                        <div className="flex justify-center mb-3">
+                          <Clock className="h-8 w-8 text-amber-500 opacity-80" />
+                        </div>
+                        <span className="font-medium text-center">Medium Content</span>
+                        <span className="text-sm text-zinc-500 mt-1 text-center">30-90 seconds or carousel posts</span>
+                      </Label>
+                    </div>
+                    <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
+                      ${formData.contentPreferences.contentLength === 'long' ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}>
+                      <RadioGroupItem value="long" id="length-long" className="sr-only" />
+                      <Label htmlFor="length-long" className="flex flex-col cursor-pointer">
+                        <div className="flex justify-center mb-3">
+                          <Clock className="h-8 w-8 text-green-500 opacity-80" />
+                        </div>
+                        <span className="font-medium text-center">Long-form Content</span>
+                        <span className="text-sm text-zinc-500 mt-1 text-center">1+ minutes or in-depth series</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold">Content Frequency <span className="text-red-500">*</span></h3>
+                    <p className="text-sm text-zinc-500">How frequently do you prefer to create or receive content?</p>
                   </div>
-                  <div className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
-                    ${formData.contentPreferences.contentFrequency === 'biweekly' ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}>
-                    <RadioGroupItem value="biweekly" id="freq-biweekly" className="sr-only" />
-                    <Label htmlFor="freq-biweekly" className="cursor-pointer font-medium">Bi-weekly</Label>
+                  
+                  <div className="p-4 border rounded-lg bg-zinc-50 mb-4">
+                    <p className="text-sm text-zinc-600">
+                      This helps set expectations for partnership deliverables. Select what best fits your schedule or campaign needs.
+                    </p>
                   </div>
-                  <div className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
-                    ${formData.contentPreferences.contentFrequency === 'monthly' ? 'border-primary bg-primary/5' : 'border-zinc-200'}`}>
-                    <RadioGroupItem value="monthly" id="freq-monthly" className="sr-only" />
-                    <Label htmlFor="freq-monthly" className="cursor-pointer font-medium">Monthly</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
+                  
+                  <RadioGroup 
+                    value={formData.contentPreferences.contentFrequency}
+                    onValueChange={(value) => updateFormData('contentPreferences', 'contentFrequency', value)}
+                    className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2"
+                  >
+                    <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
+                      ${formData.contentPreferences.contentFrequency === 'daily' ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}>
+                      <RadioGroupItem value="daily" id="freq-daily" className="sr-only" />
+                      <Label htmlFor="freq-daily" className="cursor-pointer font-medium flex flex-col items-center">
+                        <Calendar className="h-6 w-6 mb-2 text-zinc-700" />
+                        <span>Daily</span>
+                      </Label>
+                    </div>
+                    <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
+                      ${formData.contentPreferences.contentFrequency === 'weekly' ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}>
+                      <RadioGroupItem value="weekly" id="freq-weekly" className="sr-only" />
+                      <Label htmlFor="freq-weekly" className="cursor-pointer font-medium flex flex-col items-center">
+                        <Calendar className="h-6 w-6 mb-2 text-zinc-700" />
+                        <span>Weekly</span>
+                      </Label>
+                    </div>
+                    <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
+                      ${formData.contentPreferences.contentFrequency === 'biweekly' ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}>
+                      <RadioGroupItem value="biweekly" id="freq-biweekly" className="sr-only" />
+                      <Label htmlFor="freq-biweekly" className="cursor-pointer font-medium flex flex-col items-center">
+                        <Calendar className="h-6 w-6 mb-2 text-zinc-700" />
+                        <span>Bi-weekly</span>
+                      </Label>
+                    </div>
+                    <div className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-sm
+                      ${formData.contentPreferences.contentFrequency === 'monthly' ? 'border-red-500 bg-red-50' : 'border-zinc-200'}`}>
+                      <RadioGroupItem value="monthly" id="freq-monthly" className="sr-only" />
+                      <Label htmlFor="freq-monthly" className="cursor-pointer font-medium flex flex-col items-center">
+                        <Calendar className="h-6 w-6 mb-2 text-zinc-700" />
+                        <span>Monthly</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         );
 
