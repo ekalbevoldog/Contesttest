@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { FlipCounter } from "@/components/ui/flip-counter";
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
@@ -73,8 +74,13 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <p className="text-zinc-400 text-sm">
-                  <span className="font-bold text-red-500">500+</span> successful partnerships created this year
+                <p className="text-zinc-400 text-sm flex items-center">
+                  <FlipCounter 
+                    targetNumber={500} 
+                    suffix="+" 
+                    className="mr-2 font-bold" 
+                  />
+                  successful partnerships created this year
                 </p>
               </div>
             </div>
@@ -170,7 +176,13 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
-                    <div className="text-3xl font-bold text-red-500">$2,500</div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <FlipCounter 
+                        targetNumber={2500} 
+                        prefix="$" 
+                        duration={1500}
+                      />
+                    </div>
                     <p className="text-xs text-zinc-500">per campaign</p>
                   </div>
                   
