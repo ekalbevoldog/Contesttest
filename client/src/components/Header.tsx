@@ -156,9 +156,15 @@ export default function Header() {
                     <button 
                       className="cursor-pointer w-full flex items-center text-left" 
                       onClick={() => {
-                        // Handle logout logic here
+                        // Handle logout - clear all user data from localStorage
+                        localStorage.removeItem('contestedUserLoggedIn');
+                        localStorage.removeItem('contestedUserType');
+                        localStorage.removeItem('contestedUserData');
+                        localStorage.removeItem('contestedSessionId');
+                        // Update component state
                         setIsLoggedIn(false);
                         setUserType(null);
+                        // Redirect to home page
                         window.location.href = '/';
                       }}
                     >
@@ -308,10 +314,16 @@ export default function Header() {
                         <button
                           className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:bg-[rgba(0,163,255,0.05)] hover:text-[#003366] flex items-center"
                           onClick={() => {
-                            // Handle logout logic here
+                            // Handle logout - clear all user data from localStorage
+                            localStorage.removeItem('contestedUserLoggedIn');
+                            localStorage.removeItem('contestedUserType');
+                            localStorage.removeItem('contestedUserData');
+                            localStorage.removeItem('contestedSessionId');
+                            // Update component state
                             setIsLoggedIn(false);
                             setUserType(null);
                             setOpen(false);
+                            // Redirect to home page
                             window.location.href = '/';
                           }}
                         >
