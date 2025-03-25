@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
-  const [budgetValue, setBudgetValue] = useState([5000]);
+  const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
   
   // Listen for the custom event to toggle the AI assistant
@@ -311,7 +311,7 @@ export default function Home() {
             <div className="py-8 px-1">
               <Slider
                 defaultValue={[5000]}
-                max={5000}
+                max={30000}
                 min={500}
                 step={100}
                 value={budgetValue}
@@ -322,9 +322,9 @@ export default function Home() {
               {/* Tick marks */}
               <div className="flex justify-between text-zinc-500 text-sm mt-4">
                 <span>$500</span>
-                <span>$1,000</span>
-                <span>$2,500</span>
-                <span>$5,000+</span>
+                <span>$10,000</span>
+                <span>$20,000</span>
+                <span>$30,000+</span>
               </div>
             </div>
             

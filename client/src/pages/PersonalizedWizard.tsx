@@ -194,7 +194,7 @@ export default function PersonalizedWizard() {
     },
     // Budget and values
     budgetValues: {
-      budgetRange: { min: 1000, max: 5000 },
+      budgetRange: { min: 1000, max: 30000 },
       campaignDuration: "",
       valueAlignment: [] as string[],
     },
@@ -1626,7 +1626,7 @@ export default function PersonalizedWizard() {
                       <p className="text-sm text-zinc-600 mb-2">Minimum Budget: ${formData.budgetValues.budgetRange.min}</p>
                       <Slider
                         defaultValue={[formData.budgetValues.budgetRange.min]}
-                        max={25000}
+                        max={30000}
                         min={500}
                         step={500}
                         className="w-full"
@@ -1643,7 +1643,7 @@ export default function PersonalizedWizard() {
                       <p className="text-sm text-zinc-600 mb-2">Maximum Budget: ${formData.budgetValues.budgetRange.max}</p>
                       <Slider
                         defaultValue={[formData.budgetValues.budgetRange.max]}
-                        max={25000}
+                        max={30000}
                         min={500}
                         step={500}
                         className="w-full"
@@ -1659,9 +1659,9 @@ export default function PersonalizedWizard() {
                   
                   <div className="flex justify-between text-sm text-zinc-500">
                     <span>$500</span>
-                    <span>$5,000</span>
                     <span>$10,000</span>
-                    <span>$25,000+</span>
+                    <span>$20,000</span>
+                    <span>$30,000+</span>
                   </div>
                 </div>
               </div>
