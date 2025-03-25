@@ -65,12 +65,12 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
                 <video 
                   className="w-full h-full object-cover rounded-lg"
-                  controls
                   autoPlay
                   muted
                   loop
+                  playsInline
                 >
-                  <source src="/your-video.mp4" type="video/mp4" />
+                  <source src="/videos/landing-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
@@ -119,29 +119,29 @@ export default function Home() {
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow border-none">
+                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[rgba(240,60,60,0.15)] text-[#f03c3c] flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
-                    <p className="text-gray-300">
+                    <p className="text-zinc-400">
                       Access quality partnership opportunities specifically matched to your sport, values, content style, and audience.
                     </p>
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow border-none">
+                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[rgba(240,60,60,0.15)] text-[#f03c3c] flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Career Growth</h3>
-                    <p className="text-gray-300">
+                    <p className="text-zinc-400">
                       Build a portfolio of professional collaborations that can lead to bigger opportunities throughout your career.
                     </p>
                   </CardContent>
@@ -179,43 +179,43 @@ export default function Home() {
             
             <TabsContent value="businesses" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow border-none">
+                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[rgba(240,60,60,0.15)] text-[#f03c3c] flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Authentic Influencers</h3>
-                    <p className="text-gray-300">
+                    <p className="text-zinc-400">
                       Connect with college athletes who genuinely align with your brand values and can authentically represent your products.
                     </p>
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow border-none">
+                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[rgba(240,60,60,0.15)] text-[#f03c3c] flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Measurable Results</h3>
-                    <p className="text-gray-300">
+                    <p className="text-zinc-400">
                       Get detailed analytics on campaign performance and engagement to track your return on investment.
                     </p>
                   </CardContent>
                 </Card>
                 
-                <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow border-none">
+                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[rgba(240,60,60,0.15)] text-[#f03c3c] flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Cost-Effective</h3>
-                    <p className="text-gray-300">
+                    <p className="text-zinc-400">
                       Access quality influencer marketing at a fraction of the cost of traditional celebrity endorsements.
                     </p>
                   </CardContent>
