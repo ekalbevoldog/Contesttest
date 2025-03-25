@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { RangeSlider } from "@/components/ui/range-slider";
+// We'll use regular Slider instead of RangeSlider
+// import { RangeSlider } from "@/components/ui/range-slider";
 import { 
   Select,
   SelectContent,
@@ -1325,16 +1326,42 @@ export default function PersonalizedWizard() {
                     <span className="text-lg font-medium">${formData.budgetValues.budgetRange.max}</span>
                   </div>
                   
-                  <Slider
-                    defaultValue={[formData.budgetValues.budgetRange.min, formData.budgetValues.budgetRange.max]}
-                    max={25000}
-                    min={500}
-                    step={500}
-                    className="w-full"
-                    onValueChange={([min, max]) => 
-                      updateFormData('budgetValues', 'budgetRange', { min, max })
-                    }
-                  />
+                  {/* Use two separate sliders for min and max budget */}
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm text-zinc-600 mb-2">Minimum Budget: ${formData.budgetValues.budgetRange.min}</p>
+                      <Slider
+                        defaultValue={[formData.budgetValues.budgetRange.min]}
+                        max={25000}
+                        min={500}
+                        step={500}
+                        className="w-full"
+                        onValueChange={([value]) => 
+                          updateFormData('budgetValues', 'budgetRange', { 
+                            min: value, 
+                            max: Math.max(value, formData.budgetValues.budgetRange.max) 
+                          })
+                        }
+                      />
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-zinc-600 mb-2">Maximum Budget: ${formData.budgetValues.budgetRange.max}</p>
+                      <Slider
+                        defaultValue={[formData.budgetValues.budgetRange.max]}
+                        max={25000}
+                        min={500}
+                        step={500}
+                        className="w-full"
+                        onValueChange={([value]) => 
+                          updateFormData('budgetValues', 'budgetRange', { 
+                            min: Math.min(formData.budgetValues.budgetRange.min, value),
+                            max: value 
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
                   
                   <div className="flex justify-between text-sm text-zinc-500">
                     <span>$500</span>
