@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { geminiService } from "./services/geminiService";
@@ -7,6 +7,7 @@ import { sessionService } from "./services/sessionService";
 import { z } from "zod";
 import { createHash } from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
+import { setupAuth } from "./auth";
 
 // Map to store active WebSocket connections by session ID
 const connectedClients = new Map<string, WebSocket>();
@@ -59,6 +60,8 @@ const profileSchema = z.object({
 );
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
   // Create a new session
   app.post("/api/chat/session", async (req: Request, res: Response) => {
     try {

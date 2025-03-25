@@ -46,7 +46,7 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy(async (username: string, password: string, done: (error: Error | null, user?: Express.User | false, options?: { message: string }) => void) => {
       try {
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
@@ -55,7 +55,7 @@ export function setupAuth(app: Express) {
           return done(null, user);
         }
       } catch (error) {
-        return done(error);
+        return done(error as Error);
       }
     }),
   );
@@ -98,7 +98,7 @@ export function setupAuth(app: Express) {
 
   // Login an existing user
   app.post("/api/auth/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) {
         return next(err);
       }
@@ -107,7 +107,7 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ error: info?.message || "Authentication failed" });
       }
       
-      req.login(user, (err) => {
+      req.login(user, (err: Error | null) => {
         if (err) {
           return next(err);
         }
