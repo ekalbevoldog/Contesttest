@@ -117,6 +117,7 @@ export default function PersonalizedWizard() {
   const [userType, setUserType] = useState<UserType>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [completionMessage, setCompletionMessage] = useState<string>("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
@@ -1619,12 +1620,20 @@ export default function PersonalizedWizard() {
             </div>
             <h2 className="text-3xl font-bold text-zinc-900">Setup Complete!</h2>
             <div className="max-w-lg mx-auto">
-              <p className="text-lg text-zinc-600 mb-4">
-                Your personalized profile has been created successfully. We'll use your preferences to find the perfect matches for you.
-              </p>
-              <p className="text-zinc-500 mb-8">
-                Our AI-powered matching algorithm is already working to connect you with {userType === "athlete" ? "brands" : "athletes"} that align with your preferences and values.
-              </p>
+              {completionMessage ? (
+                <div className="text-lg text-zinc-600 mb-4 p-6 border rounded-lg bg-zinc-50">
+                  {completionMessage}
+                </div>
+              ) : (
+                <>
+                  <p className="text-lg text-zinc-600 mb-4">
+                    Your personalized profile has been created successfully. We'll use your preferences to find the perfect matches for you.
+                  </p>
+                  <p className="text-zinc-500 mb-8">
+                    Our AI-powered matching algorithm is already working to connect you with {userType === "athlete" ? "brands" : "athletes"} that align with your preferences and values.
+                  </p>
+                </>
+              )}
             </div>
             <Button 
               className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-8 py-6 text-lg shadow-md"
