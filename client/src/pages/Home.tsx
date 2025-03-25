@@ -11,29 +11,29 @@ export default function Home() {
   const [showChat, setShowChat] = useState(false);
   
   return (
-    <div className="min-h-screen bg-[#121212] text-white">
+    <div className="min-h-screen bg-black text-white">
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#121212]">
+      <section className="relative overflow-hidden bg-black">
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <Badge className="bg-[rgba(240,60,60,0.15)] text-[#f03c3c] hover:bg-[rgba(240,60,60,0.25)] px-3 py-1 rounded-full text-sm font-medium border-none">New Platform</Badge>
+              <Badge className="bg-red-500/20 text-red-500 hover:bg-red-500/30 px-3 py-1 rounded-full text-sm font-medium border-none">New Platform</Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                   Connecting Athletes & Brands
                 </span>
                 <br /> 
                 For Authentic Partnerships
               </h1>
-              <p className="text-xl text-gray-300 max-w-xl">
+              <p className="text-xl text-zinc-400 max-w-xl">
                 Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
               </p>
               <div className="flex flex-wrap gap-4 pt-2">
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white font-bold hover:from-[#d42e2e] hover:to-[#e34c4c] transition-all shadow-md"
+                  className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                   asChild
                 >
                   <Link to="/find-athlete-match">Find Your Perfect Athlete Match</Link>
@@ -41,7 +41,7 @@ export default function Home() {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)]"
+                  className="border-red-500 text-white hover:bg-red-500/10"
                   onClick={() => setShowChat(true)}
                 >
                   Chat with AI Assistant
@@ -50,65 +50,70 @@ export default function Home() {
               <div className="flex items-center gap-4 pt-4">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-10 w-10 rounded-full bg-[rgba(240,60,60,0.15)] border-2 border-[#121212] flex items-center justify-center text-xs font-bold text-[#f03c3c]">
+                    <div key={i} className="h-10 w-10 rounded-full bg-red-500/20 border-2 border-black flex items-center justify-center text-xs font-bold text-red-500">
                       {i}
                     </div>
                   ))}
                 </div>
-                <p className="text-gray-300 text-sm">
-                  <span className="font-bold text-[#f03c3c]">500+</span> successful partnerships created this year
+                <p className="text-zinc-400 text-sm">
+                  <span className="font-bold text-red-500">500+</span> successful partnerships created this year
                 </p>
               </div>
             </div>
             <div className="relative h-72 md:h-96 hidden lg:block">
-              <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-[rgba(240,60,60,0.05)] to-[rgba(255,92,92,0.02)] rounded-lg transform rotate-3"></div>
+              <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
-                <img 
-                  src="/Contested+logo+black.png" 
-                  alt="Contested" 
-                  className="w-48 h-48 object-contain"
-                />
+                <video 
+                  className="w-full h-full object-cover rounded-lg"
+                  controls
+                  autoPlay
+                  muted
+                  loop
+                >
+                  <source src="/your-video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
               </div>
             </div>
           </div>
         </div>
         
         {/* Divider */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] opacity-70"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
       </section>
       
       {/* Benefits Section */}
-      <section className="py-20 bg-[#1E1E1E]">
+      <section className="py-20 bg-[#111]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 The Contested Advantage
               </span>
             </h2>
-            <p className="text-gray-300 max-w-2xl mx-auto">
+            <p className="text-zinc-400 max-w-2xl mx-auto">
               Our AI-powered platform creates perfect matches between athletes and businesses, 
               delivering authentic partnerships that drive real results.
             </p>
           </div>
           
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-[#2A2A2A]">
-              <TabsTrigger value="athletes" className="text-lg py-3 data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">For Athletes</TabsTrigger>
-              <TabsTrigger value="businesses" className="text-lg py-3 data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">For Businesses</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
+              <TabsTrigger value="athletes" className="text-lg py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Athletes</TabsTrigger>
+              <TabsTrigger value="businesses" className="text-lg py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Businesses</TabsTrigger>
             </TabsList>
             
             <TabsContent value="athletes" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow border-none">
+                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[rgba(240,60,60,0.15)] text-[#f03c3c] flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
-                    <p className="text-gray-300">
+                    <p className="text-zinc-400">
                       Turn your social media presence and athletic achievements into income with partnerships that respect your personal brand.
                     </p>
                   </CardContent>
@@ -143,28 +148,28 @@ export default function Home() {
                 </Card>
               </div>
               
-              <div className="bg-[#2A2A2A] p-6 rounded-lg border border-[#333] shadow-lg">
+              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                  <div className="bg-[#1E1E1E] p-4 rounded-lg shadow-md">
+                  <div className="bg-black p-4 rounded-lg shadow-md">
                     <h4 className="text-lg font-bold text-white mb-2">Average Compensation</h4>
-                    <div className="text-3xl font-bold text-[#f03c3c]">$2,500</div>
-                    <p className="text-sm text-gray-400">per campaign</p>
+                    <div className="text-3xl font-bold text-red-500">$2,500</div>
+                    <p className="text-sm text-zinc-400">per campaign</p>
                   </div>
                   
-                  <div className="bg-[#1E1E1E] p-4 rounded-lg shadow-md">
+                  <div className="bg-black p-4 rounded-lg shadow-md">
                     <h4 className="text-lg font-bold text-white mb-2">Match Rate</h4>
-                    <div className="text-3xl font-bold text-[#f03c3c]">92%</div>
-                    <p className="text-sm text-gray-400">of athletes find matches</p>
+                    <div className="text-3xl font-bold text-red-500">92%</div>
+                    <p className="text-sm text-zinc-400">of athletes find matches</p>
                   </div>
                   
-                  <div className="bg-[#1E1E1E] p-4 rounded-lg shadow-md">
+                  <div className="bg-black p-4 rounded-lg shadow-md">
                     <h4 className="text-lg font-bold text-white mb-2">Time to First Match</h4>
-                    <div className="text-3xl font-bold text-[#f03c3c]">48 hrs</div>
-                    <p className="text-sm text-gray-400">average timeframe</p>
+                    <div className="text-3xl font-bold text-red-500">48 hrs</div>
+                    <p className="text-sm text-zinc-400">average timeframe</p>
                   </div>
                   
                   <div className="ml-auto flex items-center">
-                    <Button className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white hover:from-[#d42e2e] hover:to-[#e34c4c]" asChild>
+                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
                       <Link to="/find-athlete-match">Find Your Perfect Match</Link>
                     </Button>
                   </div>
