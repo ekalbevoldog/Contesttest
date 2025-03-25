@@ -387,6 +387,57 @@ const PreRegistrationWizard = () => {
     });
   };
   
+  // Handler for form submission
+  const handleFormSubmit = async () => {
+    try {
+      // Validate form data
+      if (!formData.email || !formData.password || !formData.businessName || !formData.fullName || !formData.acceptTerms) {
+        alert("Please fill in all required fields and accept the terms");
+        return;
+      }
+      
+      // Collect all data from the wizard steps
+      const registrationData = {
+        email: formData.email,
+        password: formData.password,
+        businessName: formData.businessName,
+        fullName: formData.fullName,
+        industry: formData.industry || "",
+        phone: formData.phone || "",
+        userType: "business", // From pre-registration wizard it's always business
+        
+        // Marketing objectives
+        objectives: marketingObjectives.filter(obj => obj.selected).map(obj => ({ 
+          name: obj.name, 
+          isPrimary: obj.isPrimary 
+        })),
+        
+        // Budget & content types
+        budget: budget,
+        isMonthlyBudget: isMonthlyBudget,
+        contentTypes: contentTypes.filter(ct => ct.selected).map(ct => ct.name),
+        
+        // Targeting preferences
+        sportCategories: sportCategories.filter(sc => sc.selected).map(sc => sc.name),
+        brandPersonality: brandPersonality,
+        brandValues: brandValues
+      };
+      
+      // Store data in localStorage for demo purposes
+      localStorage.setItem('contestedUserData', JSON.stringify(registrationData));
+      localStorage.setItem('contestedUserType', 'business');
+      localStorage.setItem('contestedUserLoggedIn', 'true');
+      
+      // In a real application, this would be sent to the backend
+      // For now, just redirect to the business dashboard
+      window.location.href = '/business/dashboard';
+      
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("There was an error creating your account. Please try again.");
+    }
+  };
+  
   // Navigation handlers
   const handleNextStep = () => {
     if (currentStep < 3) {
@@ -1112,7 +1163,11 @@ const PreRegistrationWizard = () => {
                 </div>
                 
                 <div className="mt-6 space-y-4">
-                  <Button className="w-full bg-gradient-to-r from-primary-600 to-primary-500">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-primary-600 to-primary-500"
+                    onClick={handleFormSubmit}
+                    disabled={!formData.acceptTerms || !formData.email || !formData.password || !formData.businessName || !formData.fullName}
+                  >
                     Create Account & View Full Profiles
                   </Button>
                   
