@@ -10,6 +10,7 @@ import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Onboarding from "@/pages/Onboarding";
 import RegistrationWizard from "@/pages/RegistrationWizard";
+import PersonalizedWizard from "@/pages/PersonalizedWizard";
 import AuthPage from "@/pages/auth-page";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import BusinessDashboard from "@/pages/BusinessDashboard";
@@ -32,6 +33,7 @@ function Router() {
           <Route path="/auth" component={AuthPage} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/find-athlete-match" component={RegistrationWizard} />
+          <Route path="/personalized-onboarding" component={PersonalizedWizard} />
           
           {/* Marketing Pages */}
           <Route path="/solutions" component={Solutions} />
