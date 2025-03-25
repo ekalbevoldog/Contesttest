@@ -1,3 +1,19 @@
+@font-face {
+  font-family: 'BNCringeScript';
+  src: url('/fonts/BNCringeScript.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.special-callout {
+  font-family: 'BNCringeScript', cursive;
+  font-size: 1.5em;
+  background: linear-gradient(to right, #f03c3c, #ff5c5c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
