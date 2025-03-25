@@ -31,26 +31,30 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userType, setUserType] = useState<string | null>(null);
   
-  // Check if user is logged in based on profile API
+  // Check if user is logged in based on localStorage
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const response = await fetch('/api/profile');
-        if (response.ok) {
-          const data = await response.json();
-          setIsLoggedIn(true);
-          setUserType(data.userType);
-        } else {
-          setIsLoggedIn(false);
-          setUserType(null);
-        }
-      } catch (error) {
-        setIsLoggedIn(false);
-        setUserType(null);
-      }
+    const checkLoginStatus = () => {
+      const isUserLoggedIn = localStorage.getItem('contestedUserLoggedIn') === 'true';
+      const storedUserType = localStorage.getItem('contestedUserType');
+      
+      setIsLoggedIn(isUserLoggedIn);
+      setUserType(isUserLoggedIn ? storedUserType : null);
     };
     
+    // Check on component mount
     checkLoginStatus();
+    
+    // Also set up event listener for storage changes (in case user logs in/out in another tab)
+    const handleStorageChange = () => {
+      checkLoginStatus();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
   
   return (

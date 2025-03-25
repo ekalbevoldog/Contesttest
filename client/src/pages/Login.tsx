@@ -47,35 +47,60 @@ export default function Login() {
     },
   });
 
-  function onSubmit(data: LoginFormValues) {
+  async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     
-    // Mock authentication - would connect to a proper backend authentication endpoint
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          userType: userType
+        }),
+      });
       
-      // In a real app, this would verify credentials against the backend
-      if (data.email && data.password) {
-        // Successful login - redirect to appropriate dashboard
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Successful login
         toast({
           title: "Login successful",
           description: `Welcome back to Contested!`,
         });
         
-        // Store user type in localStorage to maintain session state
+        // Store authentication data
         localStorage.setItem('contestedUserType', userType);
+        localStorage.setItem('contestedSessionId', result.sessionId);
+        localStorage.setItem('contestedUserLoggedIn', 'true');
         
-        // Navigate to the appropriate dashboard
-        navigate(dashboardPath);
+        // Navigate to the appropriate dashboard based on user type
+        if (userType === "athlete") {
+          navigate("/athlete/dashboard");
+        } else {
+          navigate("/business/dashboard");
+        }
       } else {
         // Failed login
         toast({
           variant: "destructive",
           title: "Login failed",
-          description: "Invalid email or password. Please try again.",
+          description: result.message || "Invalid email or password. Please try again.",
         });
       }
-    }, 1500);
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: "An error occurred during login. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

@@ -678,6 +678,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return match;
   }
 
+  // User registration endpoint
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
+    try {
+      const { email, password, fullName, userType } = req.body;
+      
+      if (!email || !password || !fullName || !userType) {
+        return res.status(400).json({
+          message: "Missing required fields",
+        });
+      }
+      
+      // In a real application, you would:
+      // 1. Hash the password
+      // 2. Check for existing user with the same email
+      // 3. Create user in database
+      
+      // For now, we'll simulate a successful registration
+      const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
+      
+      // Create a session for the new user
+      await sessionService.createSession(sessionId);
+      await sessionService.updateSession(sessionId, {
+        userType,
+        profileCompleted: true,
+      });
+      
+      return res.status(201).json({
+        message: "User registered successfully",
+        sessionId,
+        userType,
+      });
+    } catch (error) {
+      console.error("Error registering user:", error);
+      return res.status(500).json({
+        message: "Failed to register user",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+  
+  // User login endpoint
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { email, password, userType } = req.body;
+      
+      if (!email || !password || !userType) {
+        return res.status(400).json({
+          message: "Missing required fields",
+        });
+      }
+      
+      // In a real application, you would:
+      // 1. Verify credentials against database
+      // 2. Handle login failures
+      
+      // For now, simulate a successful login
+      const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
+      
+      // Create a session for the logged-in user
+      await sessionService.createSession(sessionId);
+      await sessionService.updateSession(sessionId, {
+        userType,
+        profileCompleted: true,
+      });
+      
+      return res.status(200).json({
+        message: "Login successful",
+        sessionId,
+        userType,
+      });
+    } catch (error) {
+      console.error("Error logging in:", error);
+      return res.status(500).json({
+        message: "Failed to log in",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
