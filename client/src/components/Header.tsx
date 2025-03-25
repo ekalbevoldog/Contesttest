@@ -277,6 +277,40 @@ export default function Header() {
                     </Link>
                   </div>
                   
+                  {/* Main Navigation Links */}
+                  <Link href="/solutions">
+                    <span 
+                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                        location === "/solutions" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                      }`}
+                      onClick={() => setOpen(false)}
+                    >
+                      Solutions
+                    </span>
+                  </Link>
+                  
+                  <Link href="/pricing">
+                    <span 
+                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                        location === "/pricing" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                      }`}
+                      onClick={() => setOpen(false)}
+                    >
+                      Pricing
+                    </span>
+                  </Link>
+                  
+                  <Link href="/case-studies">
+                    <span 
+                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                        location === "/case-studies" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                      }`}
+                      onClick={() => setOpen(false)}
+                    >
+                      Case Studies
+                    </span>
+                  </Link>
+                  
                   {/* Only show dashboard and matches when logged in */}
                   {isLoggedIn && (
                     <>
