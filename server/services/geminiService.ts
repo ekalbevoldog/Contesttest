@@ -31,6 +31,28 @@ const matchScoreSchema = z.object({
   reason: z.string()
 });
 
+// New schema for processing and storing onboarding profile data
+const onboardingProfileSchema = z.object({
+  enrichedData: z.object({
+    profileStrengths: z.array(z.string()),
+    idealPartnerTraits: z.array(z.string()),
+    contentSuggestions: z.array(z.string()),
+    audienceInsights: z.object({
+      primaryDemographics: z.array(z.string()),
+      engagementFactors: z.array(z.string()),
+      reachEstimate: z.string()
+    }),
+    brandCompatibility: z.array(z.object({
+      category: z.string(),
+      compatibilityScore: z.number().min(0).max(100),
+      reason: z.string()
+    }))
+  }),
+  recommendations: z.array(z.string()),
+  accountType: z.enum(["athlete", "business"]),
+  storedPreferences: z.record(z.any())
+});
+
 class GeminiService {
   private apiKey: string;
   private geminiEndpoint: string;
@@ -419,6 +441,105 @@ class GeminiService {
       console.error("Error generating match announcement:", error);
       // Fallback announcement
       return `Great news! We've found a potential match with a compatibility score of ${score}%. Check out the details below to see why we think this partnership could work well for you.`;
+    }
+  }
+
+  // Process and store personalized onboarding profile data
+  async processOnboardingProfile(profileData: any) {
+    const prompt = `
+      You are an AI assistant for Contested, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
+      
+      Analyze the following detailed onboarding profile data and extract valuable insights to enhance our matching system.
+      The data was collected through our personalized onboarding wizard.
+      
+      USER PROFILE DATA:
+      ${JSON.stringify(profileData, null, 2)}
+      
+      Based on this information:
+      1. Identify the user's core profile strengths (3-5 points)
+      2. Define what makes an ideal partner for this user (3-5 traits)
+      3. Suggest content ideas that would work well for this profile (3-5 ideas)
+      4. Provide audience insights including primary demographics, engagement factors, and estimated reach
+      5. Identify 3-5 brand/industry categories this profile would be compatible with and assign a compatibility score (0-100)
+      6. Provide 2-3 recommendations for the user to improve their partnership potential
+      
+      Return your analysis in the following JSON format:
+      {
+        "enrichedData": {
+          "profileStrengths": ["strength1", "strength2", "strength3"],
+          "idealPartnerTraits": ["trait1", "trait2", "trait3"],
+          "contentSuggestions": ["suggestion1", "suggestion2", "suggestion3"],
+          "audienceInsights": {
+            "primaryDemographics": ["demo1", "demo2"],
+            "engagementFactors": ["factor1", "factor2"],
+            "reachEstimate": "Descriptive estimate"
+          },
+          "brandCompatibility": [
+            {
+              "category": "Industry/Brand Category",
+              "compatibilityScore": number between 0-100,
+              "reason": "Brief explanation"
+            }
+          ]
+        },
+        "recommendations": ["recommendation1", "recommendation2"],
+        "accountType": "athlete" or "business",
+        "storedPreferences": The complete profile data for storage
+      }
+    `;
+    
+    try {
+      return await this.callGemini(prompt, onboardingProfileSchema);
+    } catch (error) {
+      console.error("Error processing onboarding profile:", error);
+      // Fallback profile processing
+      return {
+        enrichedData: {
+          profileStrengths: [
+            "Strong personal brand identity",
+            "Clear content preferences and style",
+            "Well-defined audience targeting"
+          ],
+          idealPartnerTraits: [
+            "Value alignment with user's core principles",
+            "Budget compatible with user's expectations",
+            "Content style that matches user preferences"
+          ],
+          contentSuggestions: [
+            "Authentic day-in-the-life content",
+            "Product integration into normal routines",
+            "Behind-the-scenes partnership content"
+          ],
+          audienceInsights: {
+            primaryDemographics: ["18-24 year olds", "College students", "Sports enthusiasts"],
+            engagementFactors: ["Authenticity", "Relatability", "Consistent posting"],
+            reachEstimate: "Medium reach potential with high engagement in niche communities"
+          },
+          brandCompatibility: [
+            {
+              category: "Sports Apparel",
+              compatibilityScore: 85,
+              reason: "Strong alignment with user's athletic profile and content style"
+            },
+            {
+              category: "Nutrition/Supplements",
+              compatibilityScore: 75,
+              reason: "Relevant to user's lifestyle and audience demographics"
+            },
+            {
+              category: "Tech/Electronics",
+              compatibilityScore: 65,
+              reason: "Potential for lifestyle integration in content"
+            }
+          ]
+        },
+        recommendations: [
+          "Consider expanding content variety to attract diverse partnership opportunities",
+          "Highlight specific achievements to increase brand value perception"
+        ],
+        accountType: profileData.userType || "athlete",
+        storedPreferences: profileData
+      };
     }
   }
 }
