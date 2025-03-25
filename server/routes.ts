@@ -499,6 +499,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Process personalized onboarding data
+  app.post("/api/personalized-onboarding", async (req: Request, res: Response) => {
+    try {
+      // Extract profile data from request
+      const profileData = req.body;
+      
+      if (!profileData.sessionId) {
+        return res.status(400).json({ 
+          message: "Missing session ID" 
+        });
+      }
+      
+      // Get current session
+      const sessionData = await sessionService.getSession(profileData.sessionId);
+      if (!sessionData) {
+        return res.status(404).json({
+          message: "Session not found",
+        });
+      }
+      
+      console.log("Processing personalized onboarding data for session:", profileData.sessionId);
+      
+      // Process the profile data through Gemini AI to extract insights
+      const processedProfile = await geminiService.processOnboardingProfile(profileData);
+      
+      // Store the appropriate profile based on user type with enhanced AI insights
+      if (profileData.userType === "athlete") {
+        // Extract key information from the AI-processed data
+        const aiInsights = processedProfile.enrichedData;
+        const contentPreferences = aiInsights.contentSuggestions || [];
+        const audienceInsights = aiInsights.audienceInsights || {};
+        
+        // Build follower count from form data if available
+        const followerCount = parseInt(
+          profileData.basicInfo?.followerCount || 
+          (profileData.visualPreferences?.audienceSize === "large" ? "10000" : 
+           profileData.visualPreferences?.audienceSize === "medium" ? "5000" : "1000"), 
+          10
+        );
+        
+        const athleteData = {
+          sessionId: profileData.sessionId,
+          name: profileData.basicInfo?.name || "",
+          sport: profileData.basicInfo?.sport || "",
+          division: profileData.basicInfo?.division || "Division I",
+          school: profileData.basicInfo?.school || "",
+          followerCount: followerCount,
+          contentStyle: contentPreferences.join(", "),
+          compensationGoals: `$${profileData.budgetValues?.budgetRange?.min || "1000"}-$${profileData.budgetValues?.budgetRange?.max || "5000"}`,
+          email: profileData.basicInfo?.email || null,
+          phone: profileData.basicInfo?.phone || null,
+          socialHandles: JSON.stringify(profileData.basicInfo?.socialHandles) || "",
+          // Store the complete wizard data and AI insights in preferences
+          preferences: JSON.stringify({
+            aiInsights: processedProfile.enrichedData,
+            recommendations: processedProfile.recommendations,
+            brandCompatibility: processedProfile.enrichedData.brandCompatibility,
+            wizardData: profileData
+          })
+        };
+        
+        // Store in local storage
+        const athlete = await storage.storeAthleteProfile(athleteData);
+        
+        // Store in BigQuery (if available)
+        try {
+          await bigQueryService.insertAthleteProfile(athleteData);
+        } catch (bigQueryError) {
+          console.warn("BigQuery storage failed, but continuing process:", bigQueryError);
+        }
+        
+        // Update session
+        await sessionService.updateSession(profileData.sessionId, {
+          profileCompleted: true,
+          athleteId: athlete.id
+        });
+        
+        // Generate confirmation message
+        const confirmationMessage = await geminiService.generateProfileConfirmation("athlete", athleteData.name);
+        
+        // Store message in chat history
+        await storage.storeMessage(profileData.sessionId, "assistant", confirmationMessage);
+        
+        return res.status(201).json({
+          message: "Athlete profile created successfully with AI insights",
+          profile: athlete,
+          aiInsights: processedProfile.enrichedData,
+          recommendations: processedProfile.recommendations,
+          confirmation: confirmationMessage
+        });
+      } else if (profileData.userType === "business") {
+        // Extract key information from the AI-processed data
+        const aiInsights = processedProfile.enrichedData;
+        
+        const businessData = {
+          sessionId: profileData.sessionId,
+          name: profileData.basicInfo?.name || profileData.basicInfo?.companyName || "",
+          values: profileData.budgetValues?.valueAlignment?.join(", ") || "Quality, Innovation",
+          productType: profileData.basicInfo?.industry || "Retail",
+          audienceGoals: profileData.targetAudience?.demographics?.join(", ") || "College students",
+          campaignVibe: profileData.stylePreferences?.communicationStyle || "Authentic",
+          targetSchoolsSports: profileData.targetAudience?.geographicReach?.join(", ") || "All",
+          email: profileData.basicInfo?.email || null,
+          phone: profileData.basicInfo?.phone || null,
+          website: profileData.basicInfo?.website || null,
+          // Store the complete wizard data and AI insights in preferences
+          preferences: JSON.stringify({
+            aiInsights: processedProfile.enrichedData,
+            recommendations: processedProfile.recommendations,
+            idealAthleteTraits: processedProfile.enrichedData.idealPartnerTraits,
+            wizardData: profileData
+          })
+        };
+        
+        // Store in local storage
+        const business = await storage.storeBusinessProfile(businessData);
+        
+        // Store in BigQuery (if available)
+        try {
+          await bigQueryService.insertBusinessProfile(businessData);
+        } catch (bigQueryError) {
+          console.warn("BigQuery storage failed, but continuing process:", bigQueryError);
+        }
+        
+        // Generate a campaign based on AI insights and business profile
+        const enhancedBusinessProfile = {
+          ...business,
+          aiInsights: processedProfile.enrichedData
+        };
+        
+        // Create a default campaign for the business
+        const campaign = await geminiService.generateCampaign(enhancedBusinessProfile);
+        
+        // Prepare campaign data
+        const campaignData = {
+          businessId: business.id,
+          title: campaign.title,
+          description: campaign.description,
+          deliverables: campaign.deliverables,
+          status: "active",
+          budget: `$${profileData.budgetValues?.budgetRange?.min || "1000"}-$${profileData.budgetValues?.budgetRange?.max || "5000"}`,
+          duration: profileData.budgetValues?.campaignDuration || "Short-term",
+          requirements: aiInsights.contentSuggestions?.join(", ") || "Authentic content creation",
+          goals: profileData.goalsExpectations?.primaryGoals?.join(", ") || "Brand awareness",
+          targetDemographics: profileData.targetAudience?.demographics?.join(", ") || "College students"
+        };
+        
+        // Store campaign
+        const storedCampaign = await storage.storeCampaign(campaignData);
+        
+        // Store in BigQuery (if available)
+        try {
+          await bigQueryService.insertCampaign(campaignData);
+        } catch (bigQueryError) {
+          console.warn("BigQuery campaign storage failed, but continuing process:", bigQueryError);
+        }
+        
+        // Update session
+        await sessionService.updateSession(profileData.sessionId, {
+          profileCompleted: true,
+          businessId: business.id,
+          campaignId: storedCampaign.id
+        });
+        
+        // Generate confirmation message
+        const confirmationMessage = await geminiService.generateProfileConfirmation("business", businessData.name);
+        
+        // Store message in chat history
+        await storage.storeMessage(profileData.sessionId, "assistant", confirmationMessage);
+        
+        return res.status(201).json({
+          message: "Business profile created successfully with AI insights",
+          profile: business,
+          campaign: storedCampaign,
+          aiInsights: processedProfile.enrichedData,
+          recommendations: processedProfile.recommendations,
+          confirmation: confirmationMessage
+        });
+      } else {
+        return res.status(400).json({
+          message: "Invalid user type"
+        });
+      }
+    } catch (error) {
+      console.error("Error processing personalized profile:", error);
+      return res.status(500).json({
+        message: "Failed to process personalized profile",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Handle user preferences submission
   app.post("/api/preferences", async (req: Request, res: Response) => {
     try {
