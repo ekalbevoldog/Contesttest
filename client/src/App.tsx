@@ -12,6 +12,8 @@ import AthleteDashboard from "@/pages/AthleteDashboard";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import MessageCenter from "@/pages/MessageCenter";
 import N8nConfig from "@/pages/N8nConfig";
+import ComplianceLogin from "@/pages/ComplianceLogin";
+import ComplianceDashboard from "@/pages/ComplianceDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useEffect } from "react";
@@ -39,6 +41,8 @@ function ProtectedRoute({ component: Component, requiredUserType = null, ...rest
         navigate("/athlete/login");
       } else if (requiredUserType === 'business') {
         navigate("/business/login");
+      } else if (requiredUserType === 'compliance') {
+        navigate("/compliance/login");
       } else {
         navigate("/");
       }
@@ -54,6 +58,8 @@ function ProtectedRoute({ component: Component, requiredUserType = null, ...rest
         navigate("/athlete/dashboard");
       } else if (userType === 'business') {
         navigate("/business/dashboard");
+      } else if (userType === 'compliance') {
+        navigate("/compliance/dashboard");
       } else {
         navigate("/");
       }
@@ -82,6 +88,7 @@ function Router() {
           {/* Authentication Routes */}
           <Route path="/athlete/login" component={Login} />
           <Route path="/business/login" component={Login} />
+          <Route path="/compliance/login" component={ComplianceLogin} />
           
           {/* Protected Dashboard Routes */}
           <Route path="/dashboard">
@@ -92,6 +99,9 @@ function Router() {
           </Route>
           <Route path="/business/dashboard">
             {(params) => <ProtectedRoute component={BusinessDashboard} path="/business/dashboard" requiredUserType="business" />}
+          </Route>
+          <Route path="/compliance/dashboard">
+            {(params) => <ProtectedRoute component={ComplianceDashboard} path="/compliance/dashboard" requiredUserType="compliance" />}
           </Route>
           
           {/* Message Center - available to all logged in users */}
