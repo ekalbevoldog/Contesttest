@@ -14,6 +14,9 @@ import MessageCenter from "@/pages/MessageCenter";
 import N8nConfig from "@/pages/N8nConfig";
 import ComplianceLogin from "@/pages/ComplianceLogin";
 import ComplianceDashboard from "@/pages/ComplianceDashboard";
+import Solutions from "@/pages/Solutions";
+import Pricing from "@/pages/Pricing";
+import CaseStudies from "@/pages/CaseStudies";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useEffect } from "react";
@@ -84,6 +87,11 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/find-athlete-match" component={RegistrationWizard} />
+          
+          {/* Marketing Pages */}
+          <Route path="/solutions" component={Solutions} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/case-studies" component={CaseStudies} />
           
           {/* Authentication Routes */}
           <Route path="/athlete/login" component={Login} />

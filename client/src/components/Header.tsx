@@ -79,6 +79,31 @@ export default function Header() {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
+            {/* Main Navigation Links */}
+            <Link href="/solutions">
+              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                location === "/solutions" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+              }`}>
+                Solutions
+              </span>
+            </Link>
+            
+            <Link href="/pricing">
+              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                location === "/pricing" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+              }`}>
+                Pricing
+              </span>
+            </Link>
+            
+            <Link href="/case-studies">
+              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                location === "/case-studies" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+              }`}>
+                Case Studies
+              </span>
+            </Link>
+            
             {/* Only show dashboard and matches when logged in */}
             {isLoggedIn && (
               <>
