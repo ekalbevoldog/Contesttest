@@ -5,7 +5,21 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CheckCircle, Bell, Handshake, Star, Zap, Trophy, Bolt, ArrowUpRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-function MatchCard({ match, onAccept }) {
+type MatchCardProps = {
+  match: {
+    id?: string;
+    score: number;
+    brand?: string;
+    campaign: {
+      title: string;
+      description: string;
+    };
+    reason: string;
+  };
+  onAccept: (match: any) => void;
+};
+
+function MatchCard({ match, onAccept }: MatchCardProps) {
   return (
     <Card className="p-6 space-y-4 hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-between">

@@ -17,7 +17,8 @@ import {
   Settings,
   Webhook,
   User,
-  MessageSquare
+  MessageSquare,
+  Shield
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -99,6 +100,15 @@ export default function Header() {
                       Business Dashboard
                     </span>
                   </Link>
+                ) : userType === 'compliance' ? (
+                  <Link href="/compliance/dashboard">
+                    <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                      location === "/compliance/dashboard" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+                    }`}>
+                      <BarChart className="mr-1 h-4 w-4 text-[#f03c3c]" />
+                      Compliance Dashboard
+                    </span>
+                  </Link>
                 ) : (
                   <Link href="/dashboard">
                     <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
@@ -109,14 +119,7 @@ export default function Header() {
                     </span>
                   </Link>
                 )}
-                <Link href="/matches">
-                  <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                    location === "/matches" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
-                  }`}>
-                    <Trophy className="mr-1 h-4 w-4 text-[#f03c3c]" />
-                    Matches
-                  </span>
-                </Link>
+
                 <Link href="/messages">
                   <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
                     location === "/messages" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
@@ -216,6 +219,12 @@ export default function Header() {
                       <span>Sign in as Business</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/compliance/login" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                      <Shield className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                      <span>Sign in as Compliance Officer</span>
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -270,6 +279,18 @@ export default function Header() {
                             Business Dashboard
                           </span>
                         </Link>
+                      ) : userType === 'compliance' ? (
+                        <Link href="/compliance/dashboard">
+                          <span 
+                            className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                              location === "/compliance/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                            }`}
+                            onClick={() => setOpen(false)}
+                          >
+                            <BarChart className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                            Compliance Dashboard
+                          </span>
+                        </Link>
                       ) : (
                         <Link href="/dashboard">
                           <span 
@@ -283,17 +304,7 @@ export default function Header() {
                           </span>
                         </Link>
                       )}
-                      <Link href="/matches">
-                        <span 
-                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                            location === "/matches" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
-                          }`}
-                          onClick={() => setOpen(false)}
-                        >
-                          <Trophy className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                          Matches
-                        </span>
-                      </Link>
+
                       <Link href="/messages">
                         <span 
                           className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
@@ -386,6 +397,15 @@ export default function Header() {
                           >
                             <Briefcase className="mr-2 h-4 w-4 text-[#f03c3c]" />
                             Sign in as Business
+                          </span>
+                        </Link>
+                        <Link href="/compliance/login">
+                          <span
+                            className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
+                            onClick={() => setOpen(false)}
+                          >
+                            <Shield className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                            Sign in as Compliance Officer
                           </span>
                         </Link>
                       </>
