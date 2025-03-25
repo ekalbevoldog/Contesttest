@@ -63,8 +63,12 @@ export default function AthleteDashboard() {
   
   // Check if user is authenticated
   useEffect(() => {
+    // For demo purposes, we'll set the user type to 'athlete' if it's not set
     const userType = localStorage.getItem('contestedUserType');
-    if (userType !== 'athlete') {
+    if (!userType) {
+      localStorage.setItem('contestedUserType', 'athlete');
+      setLoading(false);
+    } else if (userType !== 'athlete') {
       toast({
         variant: "destructive",
         title: "Authentication required",

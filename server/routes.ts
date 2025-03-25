@@ -551,34 +551,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get profile for current session
   app.get("/api/profile", async (req: Request, res: Response) => {
     try {
-      // This would normally use authentication, but for the demo
-      // we'll just return a sample profile based on stored profiles
+      const userType = req.query.userType || 'athlete';
       
-      // Check for athletes first
-      const athletes = await storage.getAllAthletes();
-      if (athletes.length > 0) {
+      // If there's an actual stored profile, use that
+      if (userType === 'athlete') {
+        const athletes = await storage.getAllAthletes();
+        if (athletes.length > 0) {
+          return res.status(200).json({
+            id: athletes[0].id,
+            name: athletes[0].name,
+            userType: "athlete",
+            sport: athletes[0].sport,
+            school: athletes[0].school,
+            division: athletes[0].division,
+            followerCount: athletes[0].followerCount,
+            contentStyle: athletes[0].contentStyle,
+          });
+        }
+        
+        // No stored athlete profile, return mock data for demonstration
         return res.status(200).json({
-          id: athletes[0].id,
-          name: athletes[0].name,
+          id: 1,
+          name: "Jordan Mitchell",
           userType: "athlete",
-          sport: athletes[0].sport,
-          school: athletes[0].school,
-          division: athletes[0].division,
-          followerCount: athletes[0].followerCount,
-          contentStyle: athletes[0].contentStyle,
+          sport: "Basketball",
+          school: "State University",
+          division: "Division I",
+          followerCount: "15.2K",
+          contentStyle: "Athletic lifestyle",
+          email: "jordan.mitchell@example.com",
+          phone: "555-123-4567",
+          socialMedia: {
+            instagram: "@jordanmitchell",
+            twitter: "@jmitch_hoops", 
+            tiktok: "@jordanmitchell"
+          }
         });
       }
       
-      // Check businesses
-      const businesses = await storage.getAllBusinesses();
-      if (businesses.length > 0) {
+      // If it's a business profile
+      if (userType === 'business') {
+        const businesses = await storage.getAllBusinesses();
+        if (businesses.length > 0) {
+          return res.status(200).json({
+            id: businesses[0].id,
+            name: businesses[0].name,
+            userType: "business",
+            productType: businesses[0].productType,
+            audienceGoals: businesses[0].audienceGoals,
+            values: businesses[0].values
+          });
+        }
+        
+        // No stored business profile, return mock data
         return res.status(200).json({
-          id: businesses[0].id,
-          name: businesses[0].name,
+          id: 1,
+          name: "Urban Athletics Co.",
           userType: "business",
-          productType: businesses[0].productType,
-          audienceGoals: businesses[0].audienceGoals,
-          values: businesses[0].values,
+          productType: "Athletic Apparel",
+          audienceGoals: "Young adults interested in fitness and sports",
+          values: "Sustainability, Quality, Innovation"
         });
       }
       
