@@ -392,14 +392,20 @@ export default function Header() {
                     )}
                   </div>
                   
-                  <Link href="/find-athlete-match">
-                    <Button 
-                      className="w-full mt-6 bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] text-white font-medium" 
-                      onClick={() => setOpen(false)}
-                    >
-                      Get Started
-                    </Button>
-                  </Link>
+                  <Button 
+                    className="w-full mt-6 bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] text-white font-medium" 
+                    onClick={() => {
+                      setOpen(false);
+                      window.dispatchEvent(new CustomEvent('toggle-ai-assistant'));
+                    }}
+                  >
+                    <span className="flex items-center justify-center">
+                      <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                      </svg>
+                      Chat with AI Assistant
+                    </span>
+                  </Button>
                 </div>
               </SheetContent>
             </Sheet>

@@ -49,12 +49,12 @@ export default function ChatInterface() {
         const data = await response.json();
         setSession(data.sessionId);
         
-        // Add welcome message
+        // Add welcome message with enhanced content
         setMessages([
           {
             id: "welcome",
             type: "assistant",
-            content: "Welcome to Contested! I'm here to help match small and medium-sized businesses with mid-tier athletes across NCAA, minor leagues, Olympic sports, esports, and secondary professional leagues. To get started, could you let me know if you're an athlete looking for marketing partnerships or a business looking to connect with athletes?",
+            content: "👋 Welcome to the Contested AI Assistant! I'm your dedicated partner in creating meaningful athlete-brand connections. \n\nI specialize in matching businesses with athletes across NCAA, minor leagues, Olympic sports, esports, and secondary professional leagues. I've been trained specifically on Contested's platform features, partnership success patterns, and NIL compliance requirements.\n\nHow can I help you today? Are you:\n• An athlete looking for marketing partnerships?\n• A business searching for authentic athlete connections?\n• Just exploring what Contested has to offer?",
             timestamp: new Date(),
           }
         ]);
@@ -236,12 +236,12 @@ export default function ChatInterface() {
       const data = await response.json();
       setSession(data.sessionId);
       
-      // Reset messages with welcome message
+      // Reset messages with enhanced welcome message
       setMessages([
         {
           id: "welcome",
           type: "assistant",
-          content: "Welcome to Contested! I'm here to help match small and medium-sized businesses with mid-tier athletes across NCAA, minor leagues, Olympic sports, esports, and secondary professional leagues. To get started, could you let me know if you're an athlete looking for marketing partnerships or a business looking to connect with athletes?",
+          content: "👋 Welcome to the Contested AI Assistant! I'm your dedicated partner in creating meaningful athlete-brand connections. \n\nI specialize in matching businesses with athletes across NCAA, minor leagues, Olympic sports, esports, and secondary professional leagues. I've been trained specifically on Contested's platform features, partnership success patterns, and NIL compliance requirements.\n\nHow can I help you today? Are you:\n• An athlete looking for marketing partnerships?\n• A business searching for authentic athlete connections?\n• Just exploring what Contested has to offer?",
           timestamp: new Date(),
         }
       ]);

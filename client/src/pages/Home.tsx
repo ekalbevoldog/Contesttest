@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import ChatInterface from "@/components/ChatInterface";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,19 @@ import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
+  
+  // Listen for the custom event to toggle the AI assistant
+  useEffect(() => {
+    const handleToggleAssistant = () => {
+      setShowChat(prev => !prev);
+    };
+    
+    window.addEventListener('toggle-ai-assistant', handleToggleAssistant);
+    
+    return () => {
+      window.removeEventListener('toggle-ai-assistant', handleToggleAssistant);
+    };
+  }, []);
   
   return (
     <div className="min-h-screen bg-black text-white">
