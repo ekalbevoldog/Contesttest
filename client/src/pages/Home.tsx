@@ -293,7 +293,7 @@ export default function Home() {
                 ${budgetValue[0]}
               </span>
               <div className="flex items-center gap-3">
-                <span className="text-zinc-400">Commitment Type</span>
+                <span className="text-zinc-400">Budget Type</span>
                 <div className="flex items-center space-x-2">
                   <Switch 
                     id="commitment-type" 
@@ -316,9 +316,7 @@ export default function Home() {
                 step={100}
                 value={budgetValue}
                 onValueChange={setBudgetValue}
-                className="[&>span:first-child]:h-2 [&>span:first-child]:bg-zinc-800"
-                trackClassName="bg-gradient-to-r from-red-500 to-amber-500"
-                thumbClassName="h-7 w-7 bg-white border-4 border-red-500 shadow-lg hover:border-red-600 focus:ring-red-500/20"
+                className="[&>span:first-child]:h-2 [&>span:first-child]:bg-zinc-800 [&>span:first-child>span]:bg-gradient-to-r [&>span:first-child>span]:from-red-500 [&>span:first-child>span]:to-amber-500 [&>span:last-child]:h-7 [&>span:last-child]:w-7 [&>span:last-child]:bg-white [&>span:last-child]:border-4 [&>span:last-child]:border-red-500 [&>span:last-child]:shadow-lg"
               />
               
               {/* Tick marks */}
