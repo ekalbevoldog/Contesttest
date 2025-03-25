@@ -254,6 +254,63 @@ export default function Home() {
         </div>
       </section>
       
+      {/* Budget Slider Section */}
+      <section className="py-24 bg-[#0a0a0a]">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                Let's find athletes that match your marketing budget and content needs.
+              </span>
+            </h2>
+            <p className="text-zinc-400 text-lg">
+              We'll show you options that deliver maximum value within your range
+            </p>
+          </div>
+          
+          <div className="mb-8">
+            <label className="block text-zinc-400 text-lg mb-3">Marketing Budget</label>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">$5,000</span>
+              <div className="flex items-center">
+                <span className="text-zinc-400 mr-2">Monthly</span>
+                <div className="relative inline-block w-12 h-6 mr-2">
+                  <input 
+                    type="checkbox" 
+                    className="peer opacity-0 w-0 h-0"
+                    defaultChecked
+                  />
+                  <span className="absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-zinc-700 rounded-full transition-all duration-300 before:content-[''] before:absolute before:h-4 before:w-4 before:left-1 before:bottom-1 before:bg-red-500 before:rounded-full before:transition-all before:duration-300 peer-checked:bg-red-500/20 peer-checked:before:translate-x-6 peer-checked:before:bg-red-500"></span>
+                </div>
+                <span className="text-white font-semibold">Campaign Total</span>
+              </div>
+            </div>
+            
+            <div className="relative pt-6 pb-12">
+              <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-red-500 to-amber-500 w-full rounded-full relative"></div>
+              </div>
+              
+              {/* Slider Handle */}
+              <div className="absolute top-4 right-0 w-8 h-8 bg-white rounded-full border-4 border-red-500 cursor-pointer shadow-lg transform translate-x-1/2"></div>
+              
+              {/* Tick marks */}
+              <div className="flex justify-between text-zinc-500 text-sm mt-6">
+                <span>$500</span>
+                <span>$1,000</span>
+                <span>$2,500</span>
+                <span>$5,000+</span>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50/10 p-4 rounded-lg border border-blue-100/20 text-blue-500 flex items-center mb-10">
+              <span className="font-semibold mr-1">1050</span> 
+              <span className="text-blue-400">athletes available in this budget range</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      
       {/* Pricing Section */}
       <section className="py-20 bg-[#121212]">
         <div className="container mx-auto px-4">
