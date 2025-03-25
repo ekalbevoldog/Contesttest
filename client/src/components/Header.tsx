@@ -72,7 +72,7 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="flex items-center">
-                <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto brightness-125 contrast-125" />
+                <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
               </Link>
             </div>
           </div>
