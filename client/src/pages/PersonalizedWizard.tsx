@@ -16,8 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-// We'll use regular Slider instead of RangeSlider
-// import { RangeSlider } from "@/components/ui/range-slider";
+import { Switch } from "@/components/ui/switch";
 import { 
   Select,
   SelectContent,
@@ -26,9 +25,44 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Icons
-import { ArrowLeft, ArrowRight, Check, ChevronRight, UserCircle, Building2, Camera, Image, Film, Megaphone, Sparkles, Zap, ArrowDown, FileSearch } from "lucide-react";
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Check, 
+  ChevronRight, 
+  UserCircle, 
+  Building2, 
+  Camera, 
+  Image, 
+  Film, 
+  Megaphone, 
+  Sparkles, 
+  Zap, 
+  ArrowDown, 
+  FileSearch,
+  Instagram,
+  Youtube,
+  Twitter,
+  TikTok,
+  PenTool,
+  PieChart,
+  Hash,
+  BarChart,
+  Users,
+  Globe,
+  Heart,
+  DollarSign,
+  Calendar,
+  Palette,
+  Mic,
+  Award,
+  Target,
+  Clock
+} from "lucide-react";
 
 // Define the wizard steps - more granular for a better personalized experience
 enum WizardStep {
