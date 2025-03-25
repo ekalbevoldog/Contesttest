@@ -99,8 +99,8 @@ export default function Home() {
           
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
-              <TabsTrigger value="athletes" className="text-lg py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Athletes</TabsTrigger>
-              <TabsTrigger value="businesses" className="text-lg py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Businesses</TabsTrigger>
+              <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Athletes</TabsTrigger>
+              <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Businesses</TabsTrigger>
             </TabsList>
             
             <TabsContent value="athletes" className="space-y-8">
