@@ -148,28 +148,28 @@ export default function Home() {
                 </Card>
               </div>
               
-              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                  <div className="bg-black p-4 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-white mb-2">Average Compensation</h4>
+              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-black p-5 rounded-lg shadow-md">
+                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
                     <div className="text-3xl font-bold text-red-500">$2,500</div>
-                    <p className="text-sm text-zinc-400">per campaign</p>
+                    <p className="text-xs text-zinc-500">per campaign</p>
                   </div>
                   
-                  <div className="bg-black p-4 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-white mb-2">Match Rate</h4>
+                  <div className="bg-black p-5 rounded-lg shadow-md">
+                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
                     <div className="text-3xl font-bold text-red-500">92%</div>
-                    <p className="text-sm text-zinc-400">of athletes find matches</p>
+                    <p className="text-xs text-zinc-500">of athletes find matches</p>
                   </div>
                   
-                  <div className="bg-black p-4 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-white mb-2">Time to First Match</h4>
+                  <div className="bg-black p-5 rounded-lg shadow-md">
+                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
                     <div className="text-3xl font-bold text-red-500">48 hrs</div>
-                    <p className="text-sm text-zinc-400">average timeframe</p>
+                    <p className="text-xs text-zinc-500">average timeframe</p>
                   </div>
                   
-                  <div className="ml-auto flex items-center">
-                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
+                  <div className="flex items-center justify-center">
+                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
                       <Link to="/find-athlete-match">Find Your Perfect Match</Link>
                     </Button>
                   </div>
@@ -222,28 +222,28 @@ export default function Home() {
                 </Card>
               </div>
               
-              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                  <div className="bg-black p-4 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-white mb-2">Average ROI</h4>
+              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-black p-5 rounded-lg shadow-md">
+                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Average ROI</h4>
                     <div className="text-3xl font-bold text-red-500">3.7x</div>
-                    <p className="text-sm text-zinc-400">return on investment</p>
+                    <p className="text-xs text-zinc-500">return on investment</p>
                   </div>
                   
-                  <div className="bg-black p-4 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-white mb-2">Engagement Rate</h4>
+                  <div className="bg-black p-5 rounded-lg shadow-md">
+                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Engagement Rate</h4>
                     <div className="text-3xl font-bold text-red-500">5.2%</div>
-                    <p className="text-sm text-zinc-400">avg. across platforms</p>
+                    <p className="text-xs text-zinc-500">avg. across platforms</p>
                   </div>
                   
-                  <div className="bg-black p-4 rounded-lg shadow-md">
-                    <h4 className="text-lg font-bold text-white mb-2">Audience Reached</h4>
+                  <div className="bg-black p-5 rounded-lg shadow-md">
+                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Audience Reached</h4>
                     <div className="text-3xl font-bold text-red-500">1.2M+</div>
-                    <p className="text-sm text-zinc-400">monthly impressions</p>
+                    <p className="text-xs text-zinc-500">monthly impressions</p>
                   </div>
                   
-                  <div className="ml-auto flex items-center">
-                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
+                  <div className="flex items-center justify-center">
+                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
                       <Link to="/find-athlete-match">Find Your Perfect Match</Link>
                     </Button>
                   </div>
@@ -259,7 +259,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Simple, Transparent Pricing
               </span>
             </h2>
