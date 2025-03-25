@@ -199,11 +199,18 @@ export default function Header() {
               </DropdownMenu>
             )}
             
-            <Link href="/find-athlete-match">
-              <Button size="sm" className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] text-white font-medium">
-                Get Started
-              </Button>
-            </Link>
+            <Button 
+              size="sm" 
+              className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] text-white font-medium"
+              onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant'))}
+            >
+              <span className="flex items-center">
+                <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                AI Assistant
+              </span>
+            </Button>
           </div>
           
           <div className="md:hidden">
