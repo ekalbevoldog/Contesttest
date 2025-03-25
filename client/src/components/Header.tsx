@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,45 +26,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Header() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null);
+  const { user, logoutMutation } = useAuth();
   
-  // Check if user is logged in based on localStorage
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const isUserLoggedIn = localStorage.getItem('contestedUserLoggedIn') === 'true';
-      const storedUserType = localStorage.getItem('contestedUserType');
-      
-      setIsLoggedIn(isUserLoggedIn);
-      setUserType(isUserLoggedIn ? storedUserType : null);
-    };
-    
-    // Check on component mount
-    checkLoginStatus();
-    
-    // Add a listener for custom login/logout events
-    const handleLoginEvent = () => checkLoginStatus();
-    
-    // Also set up event listener for storage changes (in case user logs in/out in another tab)
-    const handleStorageChange = () => {
-      checkLoginStatus();
-    };
-    
-    window.addEventListener('contestedLogin', handleLoginEvent);
-    window.addEventListener('contestedLogout', handleLoginEvent);
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Clean up
-    return () => {
-      window.removeEventListener('contestedLogin', handleLoginEvent);
-      window.removeEventListener('contestedLogout', handleLoginEvent);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+  // Extract user type from user object if available
+  const userType = user?.userType || null;
   
   return (
     <header className="bg-[#111111] border-b border-zinc-800 shadow-md backdrop-blur-md">
@@ -105,7 +75,7 @@ export default function Header() {
             </Link>
             
             {/* Only show dashboard and matches when logged in */}
-            {isLoggedIn && (
+            {user && (
               <>
                 {userType === 'athlete' ? (
                   <Link href="/athlete/dashboard">
@@ -175,7 +145,7 @@ export default function Header() {
             </DropdownMenu>
             
             {/* Sign In Dropdown or Profile Button */}
-            {isLoggedIn ? (
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="ml-2 border-[#f03c3c] text-white bg-transparent">
@@ -200,21 +170,8 @@ export default function Header() {
                     <button 
                       className="cursor-pointer w-full flex items-center text-left hover:bg-[rgba(240,60,60,0.15)]" 
                       onClick={() => {
-                        // Handle logout - clear all user data from localStorage
-                        localStorage.removeItem('contestedUserLoggedIn');
-                        localStorage.removeItem('contestedUserType');
-                        localStorage.removeItem('contestedUserData');
-                        localStorage.removeItem('contestedSessionId');
-                        
-                        // Dispatch custom event for logout
-                        window.dispatchEvent(new Event('contestedLogout'));
-                        
-                        // Update component state
-                        setIsLoggedIn(false);
-                        setUserType(null);
-                        
-                        // Redirect to home page
-                        window.location.href = '/';
+                        // Execute our logout mutation
+                        logoutMutation.mutate();
                       }}
                     >
                       <LogOut className="mr-2 h-4 w-4 text-[#f03c3c]" />
@@ -233,21 +190,9 @@ export default function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-[#f03c3c]/50 text-white">
                   <DropdownMenuItem asChild>
-                    <Link href="/athlete/login" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                    <Link href="/auth" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
                       <UserCircle className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                      <span>Sign in as Athlete</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/business/login" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
-                      <Briefcase className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                      <span>Sign in as Business</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/compliance/login" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
-                      <Shield className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                      <span>Sign in as Compliance Officer</span>
+                      <span>Sign in or Register</span>
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -312,7 +257,7 @@ export default function Header() {
                   </Link>
                   
                   {/* Only show dashboard and matches when logged in */}
-                  {isLoggedIn && (
+                  {user && (
                     <>
                       {userType === 'athlete' ? (
                         <Link href="/athlete/dashboard">
@@ -393,7 +338,7 @@ export default function Header() {
                   
                   <div className="border-t border-gray-700 my-4 pt-4">
                     <div className="px-3 py-2 text-sm font-medium text-gray-300">Account</div>
-                    {isLoggedIn ? (
+                    {user ? (
                       <>
                         <Link href="/profile">
                           <span
@@ -416,22 +361,9 @@ export default function Header() {
                         <button
                           className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
                           onClick={() => {
-                            // Handle logout - clear all user data from localStorage
-                            localStorage.removeItem('contestedUserLoggedIn');
-                            localStorage.removeItem('contestedUserType');
-                            localStorage.removeItem('contestedUserData');
-                            localStorage.removeItem('contestedSessionId');
-                            
-                            // Dispatch custom event for logout
-                            window.dispatchEvent(new Event('contestedLogout'));
-                            
-                            // Update component state
-                            setIsLoggedIn(false);
-                            setUserType(null);
+                            // Execute logout mutation and close mobile menu
+                            logoutMutation.mutate();
                             setOpen(false);
-                            
-                            // Redirect to home page
-                            window.location.href = '/';
                           }}
                         >
                           <LogOut className="mr-2 h-4 w-4 text-[#f03c3c]" />
@@ -440,31 +372,13 @@ export default function Header() {
                       </>
                     ) : (
                       <>
-                        <Link href="/athlete/login">
+                        <Link href="/auth">
                           <span
                             className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
                             onClick={() => setOpen(false)}
                           >
                             <UserCircle className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                            Sign in as Athlete
-                          </span>
-                        </Link>
-                        <Link href="/business/login">
-                          <span
-                            className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
-                            onClick={() => setOpen(false)}
-                          >
-                            <Briefcase className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                            Sign in as Business
-                          </span>
-                        </Link>
-                        <Link href="/compliance/login">
-                          <span
-                            className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
-                            onClick={() => setOpen(false)}
-                          >
-                            <Shield className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                            Sign in as Compliance Officer
+                            Sign in or Register
                           </span>
                         </Link>
                       </>
