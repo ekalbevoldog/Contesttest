@@ -222,28 +222,28 @@ export default function Home() {
                 </Card>
               </div>
               
-              <div className="bg-[#2A2A2A] p-6 rounded-lg border border-[#333] shadow-lg">
+              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                  <div className="bg-[#1E1E1E] p-4 rounded-lg shadow-md">
+                  <div className="bg-black p-4 rounded-lg shadow-md">
                     <h4 className="text-lg font-bold text-white mb-2">Average ROI</h4>
-                    <div className="text-3xl font-bold text-[#f03c3c]">3.7x</div>
-                    <p className="text-sm text-gray-400">return on investment</p>
+                    <div className="text-3xl font-bold text-red-500">3.7x</div>
+                    <p className="text-sm text-zinc-400">return on investment</p>
                   </div>
                   
-                  <div className="bg-[#1E1E1E] p-4 rounded-lg shadow-md">
+                  <div className="bg-black p-4 rounded-lg shadow-md">
                     <h4 className="text-lg font-bold text-white mb-2">Engagement Rate</h4>
-                    <div className="text-3xl font-bold text-[#f03c3c]">5.2%</div>
-                    <p className="text-sm text-gray-400">avg. across platforms</p>
+                    <div className="text-3xl font-bold text-red-500">5.2%</div>
+                    <p className="text-sm text-zinc-400">avg. across platforms</p>
                   </div>
                   
-                  <div className="bg-[#1E1E1E] p-4 rounded-lg shadow-md">
+                  <div className="bg-black p-4 rounded-lg shadow-md">
                     <h4 className="text-lg font-bold text-white mb-2">Audience Reached</h4>
-                    <div className="text-3xl font-bold text-[#f03c3c]">1.2M+</div>
-                    <p className="text-sm text-gray-400">monthly impressions</p>
+                    <div className="text-3xl font-bold text-red-500">1.2M+</div>
+                    <p className="text-sm text-zinc-400">monthly impressions</p>
                   </div>
                   
                   <div className="ml-auto flex items-center">
-                    <Button className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white hover:from-[#d42e2e] hover:to-[#e34c4c]" asChild>
+                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
                       <Link to="/find-athlete-match">Find Your Perfect Match</Link>
                     </Button>
                   </div>
@@ -270,138 +270,138 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Basic Plan */}
-            <Card id="basic-plan" className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
+            <Card id="basic-plan" className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1 text-white">Basic</h3>
-                <p className="text-gray-400 text-sm mb-4">Perfect for getting started</p>
+                <p className="text-zinc-400 text-sm mb-4">Perfect for getting started</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">$99</span>
-                  <span className="text-gray-400">/month</span>
+                  <span className="text-zinc-400">/month</span>
                 </div>
-                <ul className="space-y-3 mb-8 text-gray-300">
+                <ul className="space-y-3 mb-8 text-zinc-400">
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Up to 3 active campaigns</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>10 athlete matches per month</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Basic analytics</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Email support</span>
                   </li>
                 </ul>
-                <Button className="w-full bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white hover:from-[#d42e2e] hover:to-[#e34c4c]" asChild>
+                <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
                   <Link to="/find-athlete-match">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
             
             {/* Pro Plan */}
-            <Card className="bg-[#2A2A2A] shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden border-[#f03c3c] border-2">
-              <div className="absolute -right-12 top-8 bg-[#f03c3c] text-white py-1 px-12 transform rotate-45">
+            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden border-red-500 border-2">
+              <div className="absolute -right-12 top-8 bg-red-500 text-white py-1 px-12 transform rotate-45">
                 <span className="text-xs font-bold">POPULAR</span>
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1 text-white">Professional</h3>
-                <p className="text-gray-400 text-sm mb-4">For growing businesses</p>
+                <p className="text-zinc-400 text-sm mb-4">For growing businesses</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">$249</span>
-                  <span className="text-gray-400">/month</span>
+                  <span className="text-zinc-400">/month</span>
                 </div>
-                <ul className="space-y-3 mb-8 text-gray-300">
+                <ul className="space-y-3 mb-8 text-zinc-400">
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Up to 10 active campaigns</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Unlimited athlete matches</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Advanced analytics dashboard</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Priority matching algorithm</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Priority support</span>
                   </li>
                 </ul>
-                <Button className="w-full bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white hover:from-[#d42e2e] hover:to-[#e34c4c]" asChild>
+                <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
                   <Link to="/find-athlete-match">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
             
             {/* Enterprise Plan */}
-            <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
+            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1 text-white">Enterprise</h3>
-                <p className="text-gray-400 text-sm mb-4">For larger organizations</p>
+                <p className="text-zinc-400 text-sm mb-4">For larger organizations</p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">$749</span>
-                  <span className="text-gray-400">/month</span>
+                  <span className="text-zinc-400">/month</span>
                 </div>
-                <ul className="space-y-3 mb-8 text-gray-300">
+                <ul className="space-y-3 mb-8 text-zinc-400">
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Unlimited campaigns</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Unlimited athlete matches</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Custom reporting & API access</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Dedicated account manager</span>
                   </li>
                   <li className="flex items-center">
-                    <svg className="h-5 w-5 text-[#f03c3c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Strategic campaign consulting</span>
                   </li>
                 </ul>
-                <Button className="w-full bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white hover:from-[#d42e2e] hover:to-[#e34c4c]" asChild>
+                <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
                   <Link to="/find-athlete-match">Contact Sales</Link>
                 </Button>
               </div>
@@ -415,23 +415,23 @@ export default function Home() {
       </section>
       
       {/* Testimonials / Success Stories */}
-      <section className="py-20 bg-[#1E1E1E]">
+      <section className="py-20 bg-black">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Success Stories
               </span>
             </h2>
-            <p className="text-gray-300 max-w-2xl mx-auto">
+            <p className="text-zinc-400 max-w-2xl mx-auto">
               See how athletes and businesses are creating winning partnerships with Contested.
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
+            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
               <div className="flex flex-col h-full">
-                <div className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] p-6 text-white">
+                <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-xl font-bold">Sarah Johnson</h3>
@@ -467,20 +467,20 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="p-6 flex-grow">
-                  <p className="text-gray-300 italic mb-4">
+                  <p className="text-zinc-400 italic mb-4">
                     "Contested has completely changed how I approach NIL opportunities. Within my first month, I secured partnerships with three local businesses that perfectly aligned with my personal values. The AI matching technology is incredible!"
                   </p>
                   <div className="flex items-center">
-                    <div className="text-[#f03c3c] font-bold">Results:</div>
-                    <div className="ml-2 text-gray-300">3 partnerships, $3,500 in revenue</div>
+                    <div className="text-red-500 font-bold">Results:</div>
+                    <div className="ml-2 text-zinc-400">3 partnerships, $3,500 in revenue</div>
                   </div>
                 </div>
               </div>
             </Card>
             
-            <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
+            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
               <div className="flex flex-col h-full">
-                <div className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] p-6 text-white">
+                <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-xl font-bold">Mountain Outfitters</h3>
@@ -516,12 +516,12 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="p-6 flex-grow">
-                  <p className="text-gray-300 italic mb-4">
+                  <p className="text-zinc-400 italic mb-4">
                     "As a growing outdoor brand, we wanted to connect with authentic voices who love nature and adventure. Contested matched us with hikers, climbers, and trail runners who genuinely use and love our products. The ROI has been incredible."
                   </p>
                   <div className="flex items-center">
-                    <div className="text-[#f03c3c] font-bold">Results:</div>
-                    <div className="ml-2 text-gray-300">4.2x ROI, 230% increase in social engagement</div>
+                    <div className="text-red-500 font-bold">Results:</div>
+                    <div className="ml-2 text-zinc-400">4.2x ROI, 230% increase in social engagement</div>
                   </div>
                 </div>
               </div>
@@ -529,7 +529,7 @@ export default function Home() {
           </div>
           
           <div className="mt-12 text-center">
-            <Button variant="outline" className="border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)]">
+            <Button variant="outline" className="border-red-500 text-white hover:bg-red-500/10">
               View More Success Stories
             </Button>
           </div>
@@ -537,18 +537,18 @@ export default function Home() {
       </section>
       
       {/* CTA Section */}
-      <section className="py-20 bg-[#121212] text-white relative overflow-hidden border-t border-[#333]">
+      <section className="py-20 bg-zinc-950 text-white relative overflow-hidden border-t border-zinc-800">
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to create winning partnerships?</h2>
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="text-xl text-zinc-400 mb-8">
               Whether you're an athlete looking to monetize your influence or a business seeking authentic brand ambassadors, Contested makes it easy to find your perfect match.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white font-bold hover:from-[#d42e2e] hover:to-[#e34c4c] transition-all shadow-md"
+                className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                 asChild
               >
                 <Link to="/find-athlete-match">Find Your Athlete Match Now</Link>
@@ -557,7 +557,7 @@ export default function Home() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)]"
+                className="border-red-500 text-white hover:bg-red-500/10"
                 onClick={() => setShowChat(true)}
               >
                 Chat with AI Assistant
@@ -570,7 +570,7 @@ export default function Home() {
       {/* Chat Interface */}
       {showChat && (
         <div className="fixed bottom-8 right-8 z-50 max-w-md w-full shadow-2xl rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white p-4 flex justify-between items-center">
+          <div className="bg-gradient-to-r from-red-500 to-amber-500 text-white p-4 flex justify-between items-center">
             <h3 className="text-lg font-semibold">Contested Assistant</h3>
             <button 
               onClick={() => setShowChat(false)}
@@ -581,7 +581,7 @@ export default function Home() {
               </svg>
             </button>
           </div>
-          <div className="bg-[#121212] p-2">
+          <div className="bg-zinc-950 p-2">
             <ChatInterface />
           </div>
         </div>
