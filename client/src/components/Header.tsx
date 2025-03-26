@@ -136,6 +136,15 @@ export default function Header() {
                     Messages
                   </span>
                 </Link>
+                
+                <Link href="/feedback">
+                  <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                    location === "/feedback" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+                  }`}>
+                    <MessageSquare className="mr-1 h-4 w-4 text-[#f03c3c]" />
+                    Feedback
+                  </span>
+                </Link>
               </>
             )}
             
@@ -279,6 +288,18 @@ export default function Header() {
                           Case Studies
                         </span>
                       </Link>
+                      
+                      <Link href="/feedback">
+                        <span 
+                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                            location === "/feedback" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                          }`}
+                          onClick={() => setOpen(false)}
+                        >
+                          <MessageSquare className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                          Feedback
+                        </span>
+                      </Link>
                     </>
                   )}
                   
@@ -344,6 +365,18 @@ export default function Header() {
                         >
                           <MessageSquare className="mr-2 h-4 w-4 text-[#f03c3c]" />
                           Messages
+                        </span>
+                      </Link>
+                      
+                      <Link href="/feedback">
+                        <span 
+                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                            location === "/feedback" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                          }`}
+                          onClick={() => setOpen(false)}
+                        >
+                          <MessageSquare className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                          Feedback
                         </span>
                       </Link>
                     </>
