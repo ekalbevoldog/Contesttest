@@ -349,3 +349,33 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export type ComplianceOfficer = typeof complianceOfficers.$inferSelect;
 export type InsertComplianceOfficer = z.infer<typeof insertComplianceOfficerSchema>;
+
+// Feedback system
+export const feedbacks = pgTable("feedbacks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  userType: text("user_type").notNull(), // athlete, business, compliance
+  feedbackType: text("feedback_type").notNull(), // general, match, feature, bug, other
+  matchId: integer("match_id").references(() => matches.id),
+  rating: integer("rating"), // 1-5 star rating
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  sentiment: text("sentiment"), // positive, negative, neutral (can be generated via AI)
+  status: text("status").default("pending").notNull(), // pending, reviewed, implemented, rejected
+  isPublic: boolean("is_public").default(false), // whether this feedback can be shown publicly
+  adminResponse: text("admin_response"), // response from admin to the feedback
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFeedbackSchema = createInsertSchema(feedbacks).omit({
+  id: true,
+  sentiment: true,
+  status: true,
+  adminResponse: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Feedback = typeof feedbacks.$inferSelect;
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;

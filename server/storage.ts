@@ -58,6 +58,16 @@ export interface IStorage {
   updateStripeCustomerId(userId: number, customerId: string): Promise<User>;
   updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User>;
   
+  // Feedback operations
+  getFeedback(id: number): Promise<Feedback | undefined>;
+  getFeedbackByUser(userId: number): Promise<Feedback[]>;
+  getFeedbackByMatch(matchId: number): Promise<Feedback[]>;
+  getFeedbackByType(feedbackType: string): Promise<Feedback[]>;
+  getPublicFeedback(): Promise<Feedback[]>;
+  storeFeedback(feedback: InsertFeedback): Promise<Feedback>;
+  updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback>;
+  addAdminResponse(feedbackId: number, response: string): Promise<Feedback>;
+  
   // Session Store for Express Session
   sessionStore: session.Store;
 }
@@ -264,6 +274,67 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedUser;
+  }
+
+  // Feedback operations
+  async getFeedback(id: number): Promise<Feedback | undefined> {
+    const [feedback] = await db.select().from(feedbacks).where(eq(feedbacks.id, id));
+    return feedback;
+  }
+
+  async getFeedbackByUser(userId: number): Promise<Feedback[]> {
+    return await db.select().from(feedbacks).where(eq(feedbacks.userId, userId));
+  }
+
+  async getFeedbackByMatch(matchId: number): Promise<Feedback[]> {
+    return await db.select().from(feedbacks).where(eq(feedbacks.matchId, matchId));
+  }
+
+  async getFeedbackByType(feedbackType: string): Promise<Feedback[]> {
+    return await db.select().from(feedbacks).where(eq(feedbacks.feedbackType, feedbackType));
+  }
+
+  async getPublicFeedback(): Promise<Feedback[]> {
+    return await db.select().from(feedbacks).where(eq(feedbacks.isPublic, true));
+  }
+
+  async storeFeedback(feedback: InsertFeedback): Promise<Feedback> {
+    const [newFeedback] = await db.insert(feedbacks).values(feedback).returning();
+    return newFeedback;
+  }
+
+  async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> {
+    const [updatedFeedback] = await db
+      .update(feedbacks)
+      .set({
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(feedbacks.id, feedbackId))
+      .returning();
+    
+    if (!updatedFeedback) {
+      throw new Error(`Feedback with ID ${feedbackId} not found`);
+    }
+    
+    return updatedFeedback;
+  }
+
+  async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> {
+    const [updatedFeedback] = await db
+      .update(feedbacks)
+      .set({
+        adminResponse: response,
+        updatedAt: new Date()
+      })
+      .where(eq(feedbacks.id, feedbackId))
+      .returning();
+    
+    if (!updatedFeedback) {
+      throw new Error(`Feedback with ID ${feedbackId} not found`);
+    }
+    
+    return updatedFeedback;
   }
 }
 
