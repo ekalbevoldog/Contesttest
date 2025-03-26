@@ -302,10 +302,8 @@ export class MemStorage implements IStorage {
     this.currentUserId = 1;
     
     // Create a memory store for Express sessions
-    const MemoryStore = require('memorystore')(session);
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    });
+    // Initialize with basic memory store until the import completes
+    this.sessionStore = new session.MemoryStore();
   }
   
   async getSession(sessionId: string): Promise<Session | undefined> {
@@ -368,6 +366,7 @@ export class MemStorage implements IStorage {
     const newAthlete: Athlete = {
       id,
       ...athlete,
+      userId: null, // Add missing required field
       createdAt: new Date(),
       updatedAt: new Date(),
     };
