@@ -176,36 +176,37 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <FlipCounter 
-                        targetNumber={2500} 
-                        prefix="$" 
-                        duration={1500}
-                      />
+                    <div className="text-3xl font-bold text-white flex items-center">
+                      <span className="flex">
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">$</span>
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">2</span>
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">5</span>
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">0</span>
+                      </span>
                     </div>
                     <p className="text-xs text-zinc-500">per campaign</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <FlipCounter 
-                        targetNumber={92} 
-                        suffix="%" 
-                        duration={1800} 
-                      />
+                    <div className="text-3xl font-bold text-white flex items-center">
+                      <span className="flex">
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">9</span>
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">2</span>
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">%</span>
+                      </span>
                     </div>
                     <p className="text-xs text-zinc-500">of athletes find matches</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <FlipCounter 
-                        targetNumber={48} 
-                        suffix=" hrs" 
-                        duration={2000}
-                      />
+                    <div className="text-3xl font-bold text-white flex items-center">
+                      <span className="flex">
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">4</span>
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">8</span>
+                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">hrs</span>
+                      </span>
                     </div>
                     <p className="text-xs text-zinc-500">average timeframe</p>
                   </div>
