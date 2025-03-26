@@ -176,37 +176,57 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
-                    <div className="text-3xl font-bold text-white flex items-center">
-                      <span className="flex">
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">$</span>
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">2</span>
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">5</span>
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">0</span>
-                      </span>
+                    <div className="flex items-center">
+                      <div className="flex">
+                        <div className="flex flex-col mr-1">
+                          <span className="text-5xl font-bold text-white">$</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-5xl font-bold text-white">2</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-5xl font-bold text-white">5</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-5xl font-bold text-white">0</span>
+                        </div>
+                      </div>
                     </div>
                     <p className="text-xs text-zinc-500">per campaign</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
-                    <div className="text-3xl font-bold text-white flex items-center">
-                      <span className="flex">
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">9</span>
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">2</span>
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">%</span>
-                      </span>
+                    <div className="flex items-center">
+                      <div className="flex">
+                        <div className="flex flex-col">
+                          <span className="text-5xl font-bold text-white">9</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-5xl font-bold text-white">2</span>
+                        </div>
+                        <div className="flex flex-col ml-1">
+                          <span className="text-5xl font-bold text-white">%</span>
+                        </div>
+                      </div>
                     </div>
                     <p className="text-xs text-zinc-500">of athletes find matches</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
-                    <div className="text-3xl font-bold text-white flex items-center">
-                      <span className="flex">
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">4</span>
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">8</span>
-                        <span className="mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded flex items-center justify-center text-white text-4xl font-bold">hrs</span>
-                      </span>
+                    <div className="flex items-center">
+                      <div className="flex">
+                        <div className="flex flex-col">
+                          <span className="text-5xl font-bold text-white">4</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-5xl font-bold text-white">8</span>
+                        </div>
+                        <div className="flex flex-col ml-1">
+                          <span className="text-5xl font-bold text-white">hrs</span>
+                        </div>
+                      </div>
                     </div>
                     <p className="text-xs text-zinc-500">average timeframe</p>
                   </div>
