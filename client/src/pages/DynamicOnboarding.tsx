@@ -49,7 +49,7 @@ export default function DynamicOnboarding() {
     }
     
     // If there's a generated campaign for a business account, store it
-    if (data.userType === 'business' && data.campaign) {
+    if (user?.userType === 'business' && data.campaign) {
       localStorage.setItem('campaign', JSON.stringify(data.campaign));
     }
 
@@ -59,12 +59,14 @@ export default function DynamicOnboarding() {
       description: "Your personalized profile has been created successfully!",
     });
 
-    // Navigate to the dashboard based on user type
+    // Navigate to the dashboard based on user type from auth context
     setTimeout(() => {
-      if (data.userType === 'athlete') {
+      if (user?.userType === 'athlete') {
         navigate("/athlete/dashboard");
-      } else if (data.userType === 'business') {
+      } else if (user?.userType === 'business') {
         navigate("/business/dashboard");
+      } else if (user?.userType === 'compliance') {
+        navigate("/compliance/dashboard");
       } else {
         navigate("/dashboard");
       }
