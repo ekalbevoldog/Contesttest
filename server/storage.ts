@@ -67,15 +67,20 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
   
   constructor() {
-    // Create session store for Express sessions
-    const PostgresSessionStore = connectPg(session);
-    this.sessionStore = new PostgresSessionStore({
-      conObject: {
-        connectionString: process.env.DATABASE_URL,
-        ssl: true
-      },
-      createTableIfMissing: true
+    // Create session store for Express sessions using memorystore for now due to Neon compatibility issues
+    import('memorystore').then(memorystore => {
+      const MemoryStore = memorystore.default(session);
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      });
+    }).catch(err => {
+      console.error("Failed to initialize session store:", err);
+      // Fallback to in-memory session
+      this.sessionStore = new session.MemoryStore();
     });
+    
+    // Initialize with basic memory store until the import completes
+    this.sessionStore = new session.MemoryStore();
   }
   
   // Session operations
