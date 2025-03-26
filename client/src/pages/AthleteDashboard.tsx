@@ -545,6 +545,7 @@ export default function AthleteDashboard() {
           <TabsList className="mb-6 w-full justify-start">
             <TabsTrigger value="offers">Partnership Offers</TabsTrigger>
             <TabsTrigger value="deliverables">Deliverables</TabsTrigger>
+            <TabsTrigger value="performance">Performance Metrics</TabsTrigger>
             <TabsTrigger value="earnings">Earnings</TabsTrigger>
             <TabsTrigger value="education">Education Center</TabsTrigger>
             <TabsTrigger value="documents">Contracts & Forms</TabsTrigger>
@@ -872,6 +873,141 @@ export default function AthleteDashboard() {
                       <Button variant="outline">View Pending Tasks</Button>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* PERFORMANCE METRICS TAB */}
+          <TabsContent value="performance" className="space-y-6">
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LineChart className="h-5 w-5 text-primary" />
+                  Performance Metrics
+                </CardTitle>
+                <CardDescription>
+                  Key performance indicators across all your partnerships
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-gray-50 rounded-md">
+                    <div className="text-gray-500 text-sm">Total Followers</div>
+                    <div className="text-2xl font-bold">125.7K</div>
+                    <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+8.3%</Badge>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-md">
+                    <div className="text-gray-500 text-sm">Avg. Engagement</div>
+                    <div className="text-2xl font-bold">5.52%</div>
+                    <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+0.9%</Badge>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-md">
+                    <div className="text-gray-500 text-sm">Audience Reached</div>
+                    <div className="text-2xl font-bold">1.12M+</div>
+                    <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+12.5%</Badge>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-md">
+                    <div className="text-gray-500 text-sm">Content Deliverables</div>
+                    <div className="text-2xl font-bold">42</div>
+                    <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+5 this month</Badge>
+                  </div>
+                </div>
+                
+                <div className="mt-8">
+                  <h3 className="text-lg font-medium mb-4">Platform Breakdown</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="bg-muted/50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium">Instagram</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Followers</span>
+                            <span className="font-medium">78.5K</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Engagement Rate</span>
+                            <span className="font-medium">6.2%</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Avg. Reach per Post</span>
+                            <span className="font-medium">35.4K</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-muted/50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium">TikTok</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Followers</span>
+                            <span className="font-medium">42.3K</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Engagement Rate</span>
+                            <span className="font-medium">8.7%</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Avg. Views per Video</span>
+                            <span className="font-medium">56K</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-muted/50">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base font-medium">Twitter</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Followers</span>
+                            <span className="font-medium">15.9K</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Engagement Rate</span>
+                            <span className="font-medium">3.8%</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Avg. Impressions</span>
+                            <span className="font-medium">21.2K</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+                
+                <div className="mt-8">
+                  <h3 className="text-lg font-medium mb-4">Campaign Impact</h3>
+                  <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md mb-6">
+                    <BarChart3 className="h-16 w-16 text-gray-300" />
+                    <span className="ml-2 text-gray-400">Campaign performance visualization</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-md">
+                      <div className="text-gray-500 text-sm">Top Performing</div>
+                      <div className="mt-1 font-medium">Athletic Wear Co</div>
+                      <div className="text-sm text-gray-500">87K impressions</div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-md">
+                      <div className="text-gray-500 text-sm">Most Engaging</div>
+                      <div className="mt-1 font-medium">Energy Drinks Co</div>
+                      <div className="text-sm text-gray-500">9.2% engagement</div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-md">
+                      <div className="text-gray-500 text-sm">Audience Growth</div>
+                      <div className="mt-1 font-medium">+12.5K followers</div>
+                      <div className="text-sm text-gray-500">Since first campaign</div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
