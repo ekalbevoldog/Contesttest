@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { FlipCounter } from "@/components/ui/flip-counter";
+
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
@@ -38,7 +38,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <Badge className="bg-red-500/20 text-red-500 hover:bg-red-500/30 px-3 py-1 rounded-full text-sm font-medium border-none">New Platform</Badge>
+
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                   Connecting Athletes & Brands
@@ -67,19 +67,8 @@ export default function Home() {
                 </Button>
               </div>
               <div className="flex items-center gap-4 pt-4">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="h-10 w-10 rounded-full bg-red-500/20 border-2 border-black flex items-center justify-center text-xs font-bold text-red-500">
-                      {i}
-                    </div>
-                  ))}
-                </div>
                 <div className="text-zinc-400 text-sm flex items-center">
-                  <FlipCounter 
-                    targetNumber={500} 
-                    suffix="+" 
-                    className="mr-2 font-bold" 
-                  />
+                  <span className="text-xl font-bold text-red-500 mr-2">500+</span>
                   <span>successful partnerships created this year</span>
                 </div>
               </div>
@@ -290,12 +279,7 @@ export default function Home() {
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Average ROI</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <FlipCounter
-                        targetNumber={37}
-                        suffix="x"
-                        prefix="3."
-                        duration={1600}
-                      />
+                      <span>3.37x</span>
                     </div>
                     <p className="text-xs text-zinc-500">return on investment</p>
                   </div>
@@ -303,12 +287,7 @@ export default function Home() {
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Engagement Rate</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <FlipCounter
-                        targetNumber={52}
-                        suffix="%"
-                        prefix="5."
-                        duration={1700}
-                      />
+                      <span>5.52%</span>
                     </div>
                     <p className="text-xs text-zinc-500">avg. across platforms</p>
                   </div>
@@ -316,12 +295,7 @@ export default function Home() {
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Audience Reached</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <FlipCounter
-                        targetNumber={12}
-                        suffix="M+"
-                        prefix="1."
-                        duration={1900}
-                      />
+                      <span>1.12M+</span>
                     </div>
                     <p className="text-xs text-zinc-500">monthly impressions</p>
                   </div>
