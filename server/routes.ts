@@ -1160,6 +1160,241 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Feedback API endpoints
+  
+  // Create new feedback
+  app.post("/api/feedback", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // Validate feedback data
+      const feedbackSchema = insertFeedbackSchema.extend({
+        // Optional sentiment analysis prompt for Gemini to analyze
+        sentimentPrompt: z.string().optional()
+      });
+      
+      const feedbackData = feedbackSchema.parse(req.body);
+      
+      // Add user ID from authenticated session
+      const userId = req.user.id;
+      
+      // Process sentiment if sentiment prompt is provided
+      let sentiment = null;
+      if (feedbackData.sentimentPrompt) {
+        try {
+          // Simple analysis - in a real app, call Gemini AI to analyze sentiment
+          const text = feedbackData.content.toLowerCase();
+          if (text.includes('great') || text.includes('excellent') || text.includes('amazing')) {
+            sentiment = 'positive';
+          } else if (text.includes('bad') || text.includes('terrible') || text.includes('awful')) {
+            sentiment = 'negative';
+          } else {
+            sentiment = 'neutral';
+          }
+        } catch (error) {
+          console.error("Error analyzing sentiment:", error);
+          // Continue without sentiment if analysis fails
+        }
+      }
+      
+      // Store feedback
+      const feedback = await storage.storeFeedback({
+        userId,
+        userType: req.user.userType,
+        feedbackType: feedbackData.feedbackType,
+        matchId: feedbackData.matchId || null,
+        rating: feedbackData.rating || null,
+        title: feedbackData.title,
+        content: feedbackData.content,
+        isPublic: feedbackData.isPublic || false,
+      });
+      
+      // Notify administrators via WebSocket if a compliance officer is connected
+      const complianceUser = Array.from(connectedClients.entries())
+        .find(([_, socket]) => {
+          if (socket.readyState === WebSocket.OPEN) {
+            return socket['userData'] && socket['userData'].userType === 'compliance';
+          }
+          return false;
+        });
+      
+      if (complianceUser) {
+        const [sessionId, socket] = complianceUser;
+        sendWebSocketMessage(sessionId, {
+          type: 'new_feedback',
+          message: `New feedback received: ${feedbackData.title}`,
+          data: feedback
+        });
+      }
+      
+      return res.status(201).json({
+        message: "Feedback submitted successfully",
+        feedback
+      });
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      return res.status(500).json({
+        message: "Failed to submit feedback",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Get feedback by user
+  app.get("/api/feedback/user", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = req.user.id;
+      const feedbacks = await storage.getFeedbackByUser(userId);
+      
+      return res.status(200).json({ feedbacks });
+    } catch (error) {
+      console.error("Error retrieving user feedback:", error);
+      return res.status(500).json({
+        message: "Failed to retrieve user feedback",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Get feedback by match
+  app.get("/api/feedback/match/:matchId", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const matchId = parseInt(req.params.matchId);
+      if (isNaN(matchId)) {
+        return res.status(400).json({ message: "Invalid match ID" });
+      }
+      
+      const feedbacks = await storage.getFeedbackByMatch(matchId);
+      
+      return res.status(200).json({ feedbacks });
+    } catch (error) {
+      console.error("Error retrieving match feedback:", error);
+      return res.status(500).json({
+        message: "Failed to retrieve match feedback",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Get public feedback
+  app.get("/api/feedback/public", async (req: Request, res: Response) => {
+    try {
+      const feedbacks = await storage.getPublicFeedback();
+      return res.status(200).json({ feedbacks });
+    } catch (error) {
+      console.error("Error retrieving public feedback:", error);
+      return res.status(500).json({
+        message: "Failed to retrieve public feedback",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Update feedback status (admin/compliance only)
+  app.patch("/api/feedback/:feedbackId/status", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated and has admin/compliance role
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      if (req.user.userType !== 'compliance') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const feedbackId = parseInt(req.params.feedbackId);
+      if (isNaN(feedbackId)) {
+        return res.status(400).json({ message: "Invalid feedback ID" });
+      }
+      
+      const { status } = z.object({
+        status: z.enum(['pending', 'reviewed', 'implemented', 'rejected'])
+      }).parse(req.body);
+      
+      const feedback = await storage.updateFeedbackStatus(feedbackId, status);
+      
+      return res.status(200).json({
+        message: "Feedback status updated successfully",
+        feedback
+      });
+    } catch (error) {
+      console.error("Error updating feedback status:", error);
+      return res.status(500).json({
+        message: "Failed to update feedback status",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Add admin response to feedback
+  app.patch("/api/feedback/:feedbackId/response", async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated and has admin/compliance role
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      if (req.user.userType !== 'compliance') {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const feedbackId = parseInt(req.params.feedbackId);
+      if (isNaN(feedbackId)) {
+        return res.status(400).json({ message: "Invalid feedback ID" });
+      }
+      
+      const { response } = z.object({
+        response: z.string().min(1, "Response is required")
+      }).parse(req.body);
+      
+      const feedback = await storage.addAdminResponse(feedbackId, response);
+      
+      // Notify the user if they are connected
+      const originalFeedback = await storage.getFeedback(feedbackId);
+      if (originalFeedback) {
+        const user = await storage.getUser(originalFeedback.userId);
+        if (user && user.sessionId) {
+          const clientSocket = connectedClients.get(user.sessionId);
+          if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
+            sendWebSocketMessage(user.sessionId, {
+              type: 'feedback_response',
+              message: 'Your feedback has received a response',
+              data: {
+                feedbackId,
+                feedbackTitle: originalFeedback.title,
+                response
+              }
+            });
+          }
+        }
+      }
+      
+      return res.status(200).json({
+        message: "Admin response added successfully",
+        feedback
+      });
+    } catch (error) {
+      console.error("Error adding admin response:", error);
+      return res.status(500).json({
+        message: "Failed to add admin response",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
   
   return httpServer;
 }

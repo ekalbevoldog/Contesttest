@@ -21,6 +21,7 @@ import ComplianceDashboard from "@/pages/ComplianceDashboard";
 import Solutions from "@/pages/Solutions";
 import Pricing from "@/pages/Pricing";
 import CaseStudies from "@/pages/CaseStudies";
+import Feedback from "@/pages/Feedback";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -41,6 +42,7 @@ function Router() {
           <Route path="/solutions" component={Solutions} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/case-studies" component={CaseStudies} />
+          <Route path="/feedback" component={Feedback} />
           
           {/* Protected Dashboard Routes */}
           <ProtectedRoute path="/dashboard" component={Dashboard} />
