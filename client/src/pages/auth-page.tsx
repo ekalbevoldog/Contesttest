@@ -123,6 +123,9 @@ export default function AuthPage() {
                 <CardHeader>
                   <CardTitle>Login to Contested</CardTitle>
                   <CardDescription>Enter your credentials to access your account</CardDescription>
+                  <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-md text-xs text-amber-600 dark:text-amber-400">
+                    <strong>Demo Accounts:</strong> Use username "athlete1", "business1", or "compliance1" with password "password123"
+                  </div>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
                   <CardContent className="space-y-4">

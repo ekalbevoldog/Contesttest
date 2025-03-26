@@ -1394,10 +1394,10 @@ export default function DynamicOnboardingForm({
                       
                       {/* Basic Profile section */}
                       {Object.entries(formData.basicProfile).map(([key, value]) => (
-                        <Fragment key={key}>
+                        <React.Fragment key={key}>
                           <div className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</div>
                           <div className="font-medium">{value || '-'}</div>
-                        </Fragment>
+                        </React.Fragment>
                       ))}
                     </div>
                   </div>
@@ -1417,7 +1417,7 @@ export default function DynamicOnboardingForm({
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           {Object.entries(sectionData).map(([key, value]) => (
-                            <Fragment key={key}>
+                            <React.Fragment key={key}>
                               <div className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</div>
                               <div className="font-medium">
                                 {Array.isArray(value) 
@@ -1426,7 +1426,7 @@ export default function DynamicOnboardingForm({
                                     ? JSON.stringify(value)
                                     : value || '-'}
                               </div>
-                            </Fragment>
+                            </React.Fragment>
                           ))}
                         </div>
                       </div>
