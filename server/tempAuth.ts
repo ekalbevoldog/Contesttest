@@ -47,6 +47,7 @@ const createTestUser = (username: string, userType: string): User => {
 createTestUser("athlete1", "athlete");
 createTestUser("business1", "business");
 createTestUser("compliance1", "compliance");
+createTestUser("blake", "business");
 
 // Simple auth implementation with in-memory test users
 export function setupAuth(app: Express) {
@@ -112,8 +113,21 @@ export function setupAuth(app: Express) {
       const usersList = Array.from(testUsers.keys());
       console.log("Available users:", usersList);
       
-      // Find user (from our in-memory store)
-      const user = testUsers.get(username);
+      // Find user by username or email
+      let user = testUsers.get(username);
+      
+      // If not found by username, check if it's an email
+      if (!user) {
+        // Check all users to find one with matching email
+        const allUsers = Array.from(testUsers.values());
+        for (const userObj of allUsers) {
+          if (userObj.email.toLowerCase() === username.toLowerCase()) {
+            user = userObj;
+            break;
+          }
+        }
+      }
+      
       console.log("Found user:", user ? `${user.id} (${user.username})` : "None");
       
       if (!user) {

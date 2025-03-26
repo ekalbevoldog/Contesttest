@@ -151,13 +151,13 @@ export default function AuthPage() {
                 <form onSubmit={handleLogin}>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-username">Username</Label>
+                      <Label htmlFor="login-username">Username or Email</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
                           id="login-username"
                           type="text"
-                          placeholder="Your username"
+                          placeholder="Your username or email"
                           className="pl-10"
                           value={loginUsername}
                           onChange={(e) => setLoginUsername(e.target.value)}
