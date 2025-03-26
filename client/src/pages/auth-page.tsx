@@ -30,18 +30,35 @@ export default function AuthPage() {
       navigate("/dynamic-onboarding");
     };
 
-    // Handle login - redirect to dashboard
+    // Handle login - redirect to appropriate dashboard based on user type
     const handleLogin = (event: CustomEvent) => {
-      navigate("/dashboard");
+      const userData = event.detail as { userType: string };
+      if (userData.userType === 'athlete') {
+        navigate("/athlete/dashboard");
+      } else if (userData.userType === 'business') {
+        navigate("/business/dashboard");
+      } else if (userData.userType === 'compliance') {
+        navigate("/compliance/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     };
 
     // Add event listeners for both events
     window.addEventListener("contestedRegistration", handleRegistration as EventListener);
     window.addEventListener("contestedLogin", handleLogin as EventListener);
 
-    // If user is already logged in (from a previous session), redirect to dashboard
+    // If user is already logged in (from a previous session), redirect to appropriate dashboard
     if (user) {
-      navigate("/dashboard");
+      if (user.userType === 'athlete') {
+        navigate("/athlete/dashboard");
+      } else if (user.userType === 'business') {
+        navigate("/business/dashboard");
+      } else if (user.userType === 'compliance') {
+        navigate("/compliance/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     }
 
     // Clean up event listeners

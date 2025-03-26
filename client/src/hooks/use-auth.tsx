@@ -67,8 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: `Welcome back, ${user.username}!`,
       });
       
-      // Dispatch custom login event
-      const loginEvent = new CustomEvent("contestedLogin", { detail: user });
+      // Dispatch custom login event with user details including userType
+      const loginEvent = new CustomEvent("contestedLogin", { 
+        detail: { 
+          id: user.id,
+          username: user.username, 
+          userType: user.userType 
+        } 
+      });
       window.dispatchEvent(loginEvent);
     },
     onError: (error: Error) => {
@@ -98,7 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       // Dispatch custom registration event (separate from login)
-      const registrationEvent = new CustomEvent("contestedRegistration", { detail: user });
+      const registrationEvent = new CustomEvent("contestedRegistration", { 
+        detail: { 
+          id: user.id,
+          username: user.username, 
+          userType: user.userType 
+        } 
+      });
       window.dispatchEvent(registrationEvent);
     },
     onError: (error: Error) => {
