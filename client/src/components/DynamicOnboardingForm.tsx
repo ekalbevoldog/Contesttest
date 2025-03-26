@@ -570,17 +570,9 @@ export default function DynamicOnboardingForm({
               },
               {
                 id: 'avoidIndustries',
-                type: 'checkbox',
+                type: 'textarea',
                 label: 'Industries to Avoid',
-                description: 'Select any industries you would prefer NOT to work with',
-                options: [
-                  { id: 'alcohol', label: 'Alcohol' },
-                  { id: 'tobacco', label: 'Tobacco/Nicotine' },
-                  { id: 'gambling', label: 'Gambling' },
-                  { id: 'political', label: 'Political Organizations' },
-                  { id: 'fast-food', label: 'Fast Food' },
-                  { id: 'none', label: 'No restrictions' }
-                ]
+                description: 'Please list any industries you would prefer NOT to work with (separate with commas)'
               }
             ]
           }];
