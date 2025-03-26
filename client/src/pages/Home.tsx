@@ -112,8 +112,8 @@ export default function Home() {
           
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
-              <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Athletes</TabsTrigger>
-              <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">For Businesses</TabsTrigger>
+              <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Athletes</TabsTrigger>
+              <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Businesses</TabsTrigger>
             </TabsList>
             
             <TabsContent value="athletes" className="space-y-8">
@@ -167,17 +167,8 @@ export default function Home() {
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
                     <div className="flex items-center">
                       <div className="flex">
-                        <div className="flex flex-col mr-1">
-                          <span className="text-5xl font-bold text-white">$</span>
-                        </div>
                         <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">2</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">5</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">0</span>
+                          <span className="text-5xl font-bold text-white">$250</span>
                         </div>
                       </div>
                     </div>
@@ -189,13 +180,7 @@ export default function Home() {
                     <div className="flex items-center">
                       <div className="flex">
                         <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">9</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">2</span>
-                        </div>
-                        <div className="flex flex-col ml-1">
-                          <span className="text-5xl font-bold text-white">%</span>
+                          <span className="text-5xl font-bold text-white">92%</span>
                         </div>
                       </div>
                     </div>
@@ -207,13 +192,7 @@ export default function Home() {
                     <div className="flex items-center">
                       <div className="flex">
                         <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">4</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">8</span>
-                        </div>
-                        <div className="flex flex-col ml-1">
-                          <span className="text-5xl font-bold text-white">hrs</span>
+                          <span className="text-5xl font-bold text-white">48hrs</span>
                         </div>
                       </div>
                     </div>
