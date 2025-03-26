@@ -112,20 +112,20 @@ export function FlipCounter({
             <div 
               key={index} 
               className={cn(
-                "relative mx-[1px] w-7 h-11 bg-black rounded-sm overflow-hidden shadow-inner border-t border-zinc-800",
+                "relative mx-[2px] w-[40px] h-[60px] bg-zinc-900 rounded overflow-hidden shadow-inner",
                 isFlippingDigit && "perspective-[800px]"
               )}
             >
               {/* Top half (static) */}
-              <div className="absolute inset-x-0 top-0 h-1/2 bg-zinc-900 border-b border-zinc-800 flex items-end justify-center overflow-hidden">
-                <span className="text-xl font-bold text-white translate-y-1/4">
+              <div className="absolute inset-x-0 top-0 h-1/2 bg-zinc-900 border-b border-zinc-800/50 flex items-end justify-center overflow-hidden">
+                <span className="text-2xl font-bold text-white translate-y-1/4">
                   {digit}
                 </span>
               </div>
               
               {/* Bottom half (static) */}
               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-zinc-900 flex items-start justify-center overflow-hidden">
-                <span className="text-xl font-bold text-white -translate-y-1/4">
+                <span className="text-2xl font-bold text-white -translate-y-1/4">
                   {digit}
                 </span>
               </div>
@@ -134,9 +134,9 @@ export function FlipCounter({
               {isFlippingDigit && (
                 <>
                   <div 
-                    className="absolute inset-x-0 top-0 h-1/2 bg-zinc-900 border-b border-zinc-800 flex items-end justify-center overflow-hidden transform-gpu origin-bottom animate-flip-down z-10"
+                    className="absolute inset-x-0 top-0 h-1/2 bg-zinc-900 border-b border-zinc-800/50 flex items-end justify-center overflow-hidden transform-gpu origin-bottom animate-flip-down z-10"
                   >
-                    <span className="text-xl font-bold text-white translate-y-1/4">
+                    <span className="text-2xl font-bold text-white translate-y-1/4">
                       {prevDigit}
                     </span>
                   </div>
@@ -145,7 +145,7 @@ export function FlipCounter({
                   <div 
                     className="absolute inset-x-0 bottom-0 h-1/2 bg-zinc-900 flex items-start justify-center overflow-hidden transform-gpu origin-top animate-flip-up z-10"
                   >
-                    <span className="text-xl font-bold text-white -translate-y-1/4">
+                    <span className="text-2xl font-bold text-white -translate-y-1/4">
                       {digit}
                     </span>
                   </div>
