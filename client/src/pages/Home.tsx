@@ -329,7 +329,6 @@ export default function Home() {
                 step={100}
                 value={budgetValue}
                 onValueChange={setBudgetValue}
-                className="[&>span:first-child]:h-2 [&>span:first-child]:bg-zinc-800 [&>span:first-child>span]:bg-gradient-to-r [&>span:first-child>span]:from-red-500 [&>span:first-child>span]:to-amber-500 [&>span:last-child]:h-6 [&>span:last-child]:w-6 [&>span:last-child]:bg-white [&>span:last-child]:-mt-1 [&>span:last-child]:border-2 [&>span:last-child]:border-red-500 [&>span:last-child]:shadow-md [&>span:last-child]:outline [&>span:last-child]:outline-1 [&>span:last-child]:outline-white"
               />
               
               {/* Tick marks */}
