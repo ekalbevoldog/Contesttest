@@ -62,9 +62,9 @@ export default function DynamicOnboarding() {
     // Navigate to the dashboard based on user type
     setTimeout(() => {
       if (data.userType === 'athlete') {
-        navigate("/athlete-dashboard");
+        navigate("/athlete/dashboard");
       } else if (data.userType === 'business') {
-        navigate("/business-dashboard");
+        navigate("/business/dashboard");
       } else {
         navigate("/dashboard");
       }

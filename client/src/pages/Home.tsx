@@ -61,6 +61,14 @@ export default function Home() {
                   size="lg" 
                   variant="outline" 
                   className="border-red-500 text-white hover:bg-red-500/10"
+                  asChild
+                >
+                  <Link to="/dynamic-onboarding">Personalized Onboarding</Link>
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-amber-500 text-white hover:bg-amber-500/10"
                   onClick={() => setShowChat(true)}
                 >
                   Chat with AI Assistant
