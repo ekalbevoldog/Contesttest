@@ -7,7 +7,7 @@ import { sessionService } from "./services/sessionService";
 import { z } from "zod";
 import { createHash } from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
-import { setupAuth } from "./auth";
+import { setupAuth } from "./tempAuth";
 
 // Map to store active WebSocket connections by session ID
 const connectedClients = new Map<string, WebSocket>();
