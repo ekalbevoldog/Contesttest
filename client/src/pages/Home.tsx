@@ -294,7 +294,14 @@ export default function Home() {
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Audience Reached</h4>
-                    <div className="text-3xl font-bold text-red-500">1.2M+</div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <FlipCounter
+                        targetNumber={12}
+                        suffix="M+"
+                        prefix="1."
+                        duration={1900}
+                      />
+                    </div>
                     <p className="text-xs text-zinc-500">monthly impressions</p>
                   </div>
                   
