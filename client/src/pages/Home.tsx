@@ -333,27 +333,13 @@ export default function Home() {
           
           <div className="mb-8">
             <label className="block text-zinc-400 text-lg mb-3">Explore Budget Ranges</label>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center mb-4">
               <span className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 ${budgetValue[0]}
               </span>
-              <div className="flex items-center gap-3">
-                <span className="text-zinc-400">Budget Type</span>
-                <div className="flex items-center space-x-2">
-                  <Switch 
-                    id="commitment-type" 
-                    checked={singleCampaign} 
-                    onCheckedChange={setSingleCampaign} 
-                    className="data-[state=checked]:bg-red-500 data-[state=unchecked]:bg-zinc-700"
-                  />
-                  <Label htmlFor="commitment-type" className="text-white font-semibold">
-                    Single Campaign
-                  </Label>
-                </div>
-              </div>
             </div>
             
-            <div className="py-8 px-1">
+            <div className="py-6">
               <Slider
                 defaultValue={[30000]}
                 max={30000}
@@ -373,42 +359,23 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20 text-blue-400 flex items-center mb-6">
-              <span className="font-semibold mr-1">
-                {budgetValue[0] <= 1000 ? "350+" : budgetValue[0] <= 2500 ? "750+" : "1050+"}
-              </span> 
-              <span>potential athlete matches in this range</span>
-            </div>
-            
-            {/* Budget insights - educational content for early funnel */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 mb-10 text-zinc-400">
-              <div className="bg-zinc-900/50 p-4 rounded-lg">
-                <h4 className="font-semibold text-white mb-2 flex items-center">
-                  <svg className="h-5 w-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z" clipRule="evenodd" />
-                  </svg>
-                  Quick Start ($500-3,000)
-                </h4>
-                <p className="text-sm">Perfect for testing the waters with micro-influencers who have highly engaged niche followers. Ideal for product seeding and social media mentions.</p>
+            <div className="bg-gradient-to-r from-blue-900/20 to-blue-500/10 p-6 rounded-lg border border-blue-500/20 text-white mb-10">
+              <div className="flex items-center mb-2">
+                <span className="text-2xl font-bold text-blue-300 mr-2">
+                  {budgetValue[0] <= 1000 ? "350+" : 
+                   budgetValue[0] <= 3000 ? "750+" : 
+                   budgetValue[0] <= 10000 ? "1050+" : 
+                   budgetValue[0] <= 20000 ? "1500+" : "2000+"}
+                </span>
+                <span className="text-lg">potential athlete matches in this range</span>
               </div>
-              <div className="bg-zinc-900/50 p-4 rounded-lg">
-                <h4 className="font-semibold text-white mb-2 flex items-center">
-                  <svg className="h-5 w-5 text-amber-500 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0 1 16.5 15Z" clipRule="evenodd" />
-                  </svg>
-                  Growth Play ($3,000-10,000)
-                </h4>
-                <p className="text-sm">Expand your reach with medium-influence athletes who can create dedicated content and engage directly with your target audience across multiple platforms.</p>
-              </div>
-              <div className="bg-zinc-900/50 p-4 rounded-lg">
-                <h4 className="font-semibold text-white mb-2 flex items-center">
-                  <svg className="h-5 w-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
-                  </svg>
-                  Brand Impact ($10,000+)
-                </h4>
-                <p className="text-sm">For comprehensive campaigns with high-profile athletes featuring multiple deliverables, exclusive content, and long-term brand ambassadorship opportunities.</p>
-              </div>
+              <p className="text-blue-200/80 text-sm">
+                {budgetValue[0] <= 3000 ? 
+                  "Perfect for testing the waters with micro-influencers who have highly engaged niche followers." : 
+                  budgetValue[0] <= 10000 ? 
+                  "Great for medium-influence athletes who can create dedicated content across multiple platforms." : 
+                  "Ideal for high-profile athletes featuring multiple deliverables and long-term partnerships."}
+              </p>
             </div>
             
             <div className="flex justify-center mt-8">
