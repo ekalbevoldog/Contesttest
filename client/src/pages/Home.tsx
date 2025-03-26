@@ -353,9 +353,9 @@ export default function Home() {
           </div>
           
           <div className="mb-8">
-            <label className="block text-zinc-400 text-lg mb-3">Explore Budget Ranges</label>
+            <label className="block text-zinc-400 text-lg mb-2">Explore Budget Ranges</label>
             <div className="flex items-center mb-4">
-              <span className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+              <span className="text-4xl md:text-5xl font-bold text-red-500">
                 ${budgetValue[0]}
               </span>
             </div>
@@ -368,7 +368,7 @@ export default function Home() {
                 step={100}
                 value={budgetValue}
                 onValueChange={setBudgetValue}
-                className="[&>span:first-child]:h-2 [&>span:first-child]:bg-zinc-800 [&>span:first-child>span]:bg-gradient-to-r [&>span:first-child>span]:from-red-500 [&>span:first-child>span]:to-amber-500 [&>span:last-child]:h-7 [&>span:last-child]:w-7 [&>span:last-child]:bg-white [&>span:last-child]:border-4 [&>span:last-child]:border-red-500 [&>span:last-child]:shadow-lg"
+                className="[&>span:first-child]:h-2 [&>span:first-child]:bg-zinc-800 [&>span:first-child>span]:bg-gradient-to-r [&>span:first-child>span]:from-red-500 [&>span:first-child>span]:to-amber-500 [&>span:last-child]:h-6 [&>span:last-child]:w-6 [&>span:last-child]:bg-white [&>span:last-child]:-mt-1 [&>span:last-child]:border-2 [&>span:last-child]:border-red-500 [&>span:last-child]:shadow-md [&>span:last-child]:outline [&>span:last-child]:outline-1 [&>span:last-child]:outline-white"
               />
               
               {/* Tick marks */}
@@ -380,17 +380,17 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="bg-gradient-to-r from-blue-900/20 to-blue-500/10 p-6 rounded-lg border border-blue-500/20 text-white mb-10">
-              <div className="flex items-center mb-2">
-                <span className="text-2xl font-bold text-blue-300 mr-2">
+            <div className="bg-gradient-to-r from-blue-950 to-blue-900 p-6 rounded-lg border border-blue-800/40 text-white mb-10">
+              <div className="flex items-start mb-2">
+                <span className="text-3xl font-bold text-blue-300 mr-2">
                   {budgetValue[0] <= 1000 ? "350+" : 
                    budgetValue[0] <= 3000 ? "750+" : 
                    budgetValue[0] <= 10000 ? "1050+" : 
                    budgetValue[0] <= 20000 ? "1500+" : "2000+"}
                 </span>
-                <span className="text-lg">potential athlete matches in this range</span>
+                <span className="text-lg mt-1">potential athlete matches in this range</span>
               </div>
-              <p className="text-blue-200/80 text-sm">
+              <p className="text-blue-200/90 text-sm">
                 {budgetValue[0] <= 3000 ? 
                   "Perfect for testing the waters with micro-influencers who have highly engaged niche followers." : 
                   budgetValue[0] <= 10000 ? 
