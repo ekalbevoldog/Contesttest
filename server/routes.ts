@@ -8,6 +8,7 @@ import { z } from "zod";
 import { createHash } from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./tempAuth";
+import { insertFeedbackSchema, Feedback } from "@shared/schema";
 
 // Map to store active WebSocket connections by session ID
 const connectedClients = new Map<string, WebSocket>();

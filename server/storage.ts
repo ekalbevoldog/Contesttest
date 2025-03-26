@@ -1,12 +1,12 @@
 import { 
   InsertSession, InsertAthlete, InsertBusiness, 
-  InsertCampaign, InsertMatch, InsertMessage, InsertUser,
-  Session, Athlete, Business, Campaign, Match, Message, User,
+  InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback,
+  Session, Athlete, Business, Campaign, Match, Message, User, Feedback,
   users
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
-import { sessions, athletes, businesses, campaigns, matches, messages } from "../shared/schema";
+import { sessions, athletes, businesses, campaigns, matches, messages, feedbacks } from "../shared/schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import connectPg from "connect-pg-simple";
@@ -347,6 +347,7 @@ export class MemStorage implements IStorage {
   private matches: Map<number, Match>;
   private messages: Map<string, Message[]>;
   private users: Map<number, User>;
+  private feedbacks: Map<number, Feedback>;
   private currentSessionId: number;
   private currentAthleteId: number;
   private currentBusinessId: number;
@@ -354,6 +355,7 @@ export class MemStorage implements IStorage {
   private currentMatchId: number;
   private currentMessageId: number;
   private currentUserId: number;
+  private currentFeedbackId: number;
   sessionStore: session.Store;
   
   constructor() {
@@ -364,6 +366,7 @@ export class MemStorage implements IStorage {
     this.matches = new Map();
     this.messages = new Map();
     this.users = new Map();
+    this.feedbacks = new Map();
     this.currentSessionId = 1;
     this.currentAthleteId = 1;
     this.currentBusinessId = 1;
@@ -371,6 +374,7 @@ export class MemStorage implements IStorage {
     this.currentMatchId = 1;
     this.currentMessageId = 1;
     this.currentUserId = 1;
+    this.currentFeedbackId = 1;
     
     // Create a memory store for Express sessions
     // Initialize with basic memory store until the import completes
@@ -708,6 +712,80 @@ export class MemStorage implements IStorage {
     
     this.users.set(userId, updatedUser);
     return updatedUser;
+  }
+
+  // Feedback operations
+  async getFeedback(id: number): Promise<Feedback | undefined> {
+    return this.feedbacks.get(id);
+  }
+
+  async getFeedbackByUser(userId: number): Promise<Feedback[]> {
+    return Array.from(this.feedbacks.values())
+      .filter(feedback => feedback.userId === userId);
+  }
+
+  async getFeedbackByMatch(matchId: number): Promise<Feedback[]> {
+    return Array.from(this.feedbacks.values())
+      .filter(feedback => feedback.matchId === matchId);
+  }
+
+  async getFeedbackByType(feedbackType: string): Promise<Feedback[]> {
+    return Array.from(this.feedbacks.values())
+      .filter(feedback => feedback.feedbackType === feedbackType);
+  }
+
+  async getPublicFeedback(): Promise<Feedback[]> {
+    return Array.from(this.feedbacks.values())
+      .filter(feedback => feedback.isPublic);
+  }
+
+  async storeFeedback(feedback: InsertFeedback): Promise<Feedback> {
+    const id = this.currentFeedbackId++;
+    
+    const newFeedback: Feedback = {
+      id,
+      ...feedback,
+      sentiment: null,
+      status: 'pending',
+      adminResponse: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.feedbacks.set(id, newFeedback);
+    return newFeedback;
+  }
+
+  async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> {
+    const feedback = this.feedbacks.get(feedbackId);
+    if (!feedback) {
+      throw new Error(`Feedback with ID ${feedbackId} not found`);
+    }
+    
+    const updatedFeedback: Feedback = {
+      ...feedback,
+      status,
+      updatedAt: new Date(),
+    };
+    
+    this.feedbacks.set(feedbackId, updatedFeedback);
+    return updatedFeedback;
+  }
+
+  async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> {
+    const feedback = this.feedbacks.get(feedbackId);
+    if (!feedback) {
+      throw new Error(`Feedback with ID ${feedbackId} not found`);
+    }
+    
+    const updatedFeedback: Feedback = {
+      ...feedback,
+      adminResponse: response,
+      updatedAt: new Date(),
+    };
+    
+    this.feedbacks.set(feedbackId, updatedFeedback);
+    return updatedFeedback;
   }
 }
 
