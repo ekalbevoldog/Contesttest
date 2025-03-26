@@ -97,9 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: `Welcome to Contested, ${user.username}!`,
       });
       
-      // Dispatch custom login event
-      const loginEvent = new CustomEvent("contestedLogin", { detail: user });
-      window.dispatchEvent(loginEvent);
+      // Dispatch custom registration event (separate from login)
+      const registrationEvent = new CustomEvent("contestedRegistration", { detail: user });
+      window.dispatchEvent(registrationEvent);
     },
     onError: (error: Error) => {
       toast({

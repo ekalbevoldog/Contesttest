@@ -23,11 +23,32 @@ export default function AuthPage() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerUserType, setRegisterUserType] = useState<"athlete" | "business" | "compliance" | "">("");
   
-  // If user is logged in, redirect to dashboard
+  // Set up event listeners for redirection
   useEffect(() => {
+    // Handle registration - redirect to onboarding
+    const handleRegistration = (event: CustomEvent) => {
+      navigate("/dynamic-onboarding");
+    };
+
+    // Handle login - redirect to dashboard
+    const handleLogin = (event: CustomEvent) => {
+      navigate("/dashboard");
+    };
+
+    // Add event listeners for both events
+    window.addEventListener("contestedRegistration", handleRegistration as EventListener);
+    window.addEventListener("contestedLogin", handleLogin as EventListener);
+
+    // If user is already logged in (from a previous session), redirect to dashboard
     if (user) {
       navigate("/dashboard");
     }
+
+    // Clean up event listeners
+    return () => {
+      window.removeEventListener("contestedRegistration", handleRegistration as EventListener);
+      window.removeEventListener("contestedLogin", handleLogin as EventListener);
+    };
   }, [user, navigate]);
   
   const handleLogin = (e: React.FormEvent) => {
