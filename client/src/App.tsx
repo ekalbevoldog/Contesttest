@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Onboarding from "@/pages/Onboarding";
 import RegistrationWizard from "@/pages/RegistrationWizard";
 import PersonalizedWizard from "@/pages/PersonalizedWizard";
+import DynamicOnboarding from "@/pages/DynamicOnboarding";
 import AuthPage from "@/pages/auth-page";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import BusinessDashboard from "@/pages/BusinessDashboard";
