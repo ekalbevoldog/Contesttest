@@ -49,32 +49,36 @@ export default function Header() {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            {/* Main Navigation Links */}
-            <Link href="/solutions">
-              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                location === "/solutions" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
-              }`}>
-                Solutions
-              </span>
-            </Link>
+            {/* Marketing Navigation Links - Only show when not logged in */}
+            {!user && (
+              <>
+                <Link href="/solutions">
+                  <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                    location === "/solutions" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+                  }`}>
+                    Solutions
+                  </span>
+                </Link>
+                
+                <Link href="/pricing">
+                  <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                    location === "/pricing" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+                  }`}>
+                    Pricing
+                  </span>
+                </Link>
+                
+                <Link href="/case-studies">
+                  <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                    location === "/case-studies" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+                  }`}>
+                    Case Studies
+                  </span>
+                </Link>
+              </>
+            )}
             
-            <Link href="/pricing">
-              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                location === "/pricing" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
-              }`}>
-                Pricing
-              </span>
-            </Link>
-            
-            <Link href="/case-studies">
-              <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                location === "/case-studies" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
-              }`}>
-                Case Studies
-              </span>
-            </Link>
-            
-            {/* Only show dashboard and matches when logged in */}
+            {/* App Navigation - Only show when logged in */}
             {user && (
               <>
                 {userType === 'athlete' ? (
@@ -126,23 +130,25 @@ export default function Header() {
               </>
             )}
             
-            {/* Admin Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.15)]">
-                  <Settings className="mr-1 h-4 w-4 text-[#f03c3c]" />
-                  Admin
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-[#f03c3c]/50 text-white">
-                <DropdownMenuItem asChild>
-                  <Link href="/admin/n8n-config" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
-                    <Webhook className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                    <span>n8n Webhook Config</span>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Admin Dropdown - Only shown for admins */}
+            {user && (user.userType === 'admin' || user.username === 'admin') && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.15)]">
+                    <Settings className="mr-1 h-4 w-4 text-[#f03c3c]" />
+                    Admin
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-gray-900 border-[#f03c3c]/50 text-white">
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/n8n-config" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                      <Webhook className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                      <span>n8n Webhook Config</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             
             {/* Sign In Dropdown or Profile Button */}
             {user ? (
@@ -229,41 +235,45 @@ export default function Header() {
                     </Link>
                   </div>
                   
-                  {/* Main Navigation Links */}
-                  <Link href="/solutions">
-                    <span 
-                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                        location === "/solutions" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
-                      }`}
-                      onClick={() => setOpen(false)}
-                    >
-                      Solutions
-                    </span>
-                  </Link>
+                  {/* Marketing Navigation Links - Only for non-logged in users */}
+                  {!user && (
+                    <>
+                      <Link href="/solutions">
+                        <span 
+                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                            location === "/solutions" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                          }`}
+                          onClick={() => setOpen(false)}
+                        >
+                          Solutions
+                        </span>
+                      </Link>
+                      
+                      <Link href="/pricing">
+                        <span 
+                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                            location === "/pricing" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                          }`}
+                          onClick={() => setOpen(false)}
+                        >
+                          Pricing
+                        </span>
+                      </Link>
+                      
+                      <Link href="/case-studies">
+                        <span 
+                          className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                            location === "/case-studies" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                          }`}
+                          onClick={() => setOpen(false)}
+                        >
+                          Case Studies
+                        </span>
+                      </Link>
+                    </>
+                  )}
                   
-                  <Link href="/pricing">
-                    <span 
-                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                        location === "/pricing" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
-                      }`}
-                      onClick={() => setOpen(false)}
-                    >
-                      Pricing
-                    </span>
-                  </Link>
-                  
-                  <Link href="/case-studies">
-                    <span 
-                      className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                        location === "/case-studies" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
-                      }`}
-                      onClick={() => setOpen(false)}
-                    >
-                      Case Studies
-                    </span>
-                  </Link>
-                  
-                  {/* Only show dashboard and matches when logged in */}
+                  {/* App Navigation - Only for logged in users */}
                   {user && (
                     <>
                       {userType === 'athlete' ? (
@@ -330,18 +340,21 @@ export default function Header() {
                     </>
                   )}
                   
-                  <div className="border-t border-gray-700 my-4 pt-4">
-                    <div className="px-3 py-2 text-sm font-medium text-gray-300">Admin</div>
-                    <Link href="/admin/n8n-config">
-                      <span
-                        className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
-                        onClick={() => setOpen(false)}
-                      >
-                        <Webhook className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                        n8n Webhook Config
-                      </span>
-                    </Link>
-                  </div>
+                  {/* Admin section - Only for admin users */}
+                  {user && (user.userType === 'admin' || user.username === 'admin') && (
+                    <div className="border-t border-gray-700 my-4 pt-4">
+                      <div className="px-3 py-2 text-sm font-medium text-gray-300">Admin</div>
+                      <Link href="/admin/n8n-config">
+                        <span
+                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
+                          onClick={() => setOpen(false)}
+                        >
+                          <Webhook className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                          n8n Webhook Config
+                        </span>
+                      </Link>
+                    </div>
+                  )}
                   
                   <div className="border-t border-gray-700 my-4 pt-4">
                     <div className="px-3 py-2 text-sm font-medium text-gray-300">Account</div>
