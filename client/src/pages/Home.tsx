@@ -74,14 +74,14 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-                <p className="text-zinc-400 text-sm flex items-center">
+                <div className="text-zinc-400 text-sm flex items-center">
                   <FlipCounter 
                     targetNumber={500} 
                     suffix="+" 
                     className="mr-2 font-bold" 
                   />
-                  successful partnerships created this year
-                </p>
+                  <span>successful partnerships created this year</span>
+                </div>
               </div>
             </div>
             <div className="relative h-72 md:h-96 hidden lg:block">
@@ -188,13 +188,25 @@ export default function Home() {
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
-                    <div className="text-3xl font-bold text-red-500">92%</div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <FlipCounter 
+                        targetNumber={92} 
+                        suffix="%" 
+                        duration={1800} 
+                      />
+                    </div>
                     <p className="text-xs text-zinc-500">of athletes find matches</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
-                    <div className="text-3xl font-bold text-red-500">48 hrs</div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <FlipCounter 
+                        targetNumber={48} 
+                        suffix=" hrs" 
+                        duration={2000}
+                      />
+                    </div>
                     <p className="text-xs text-zinc-500">average timeframe</p>
                   </div>
                   
@@ -256,13 +268,27 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Average ROI</h4>
-                    <div className="text-3xl font-bold text-red-500">3.7x</div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <FlipCounter
+                        targetNumber={37}
+                        suffix="x"
+                        prefix="3."
+                        duration={1600}
+                      />
+                    </div>
                     <p className="text-xs text-zinc-500">return on investment</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Engagement Rate</h4>
-                    <div className="text-3xl font-bold text-red-500">5.2%</div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <FlipCounter
+                        targetNumber={52}
+                        suffix="%"
+                        prefix="5."
+                        duration={1700}
+                      />
+                    </div>
                     <p className="text-xs text-zinc-500">avg. across platforms</p>
                   </div>
                   

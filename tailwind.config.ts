@@ -87,11 +87,33 @@ export default {
             opacity: "1",
           },
         },
+        "flip-down": {
+          "0%": {
+            transform: "rotateX(0deg)",
+            opacity: "1",
+          },
+          "100%": {
+            transform: "rotateX(-90deg)",
+            opacity: "0",
+          },
+        },
+        "flip-up": {
+          "0%": {
+            transform: "rotateX(90deg)",
+            opacity: "0",
+          },
+          "100%": {
+            transform: "rotateX(0deg)",
+            opacity: "1",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "flip-pulse": "flip-pulse 0.75s ease-in-out infinite",
+        "flip-down": "flip-down 0.3s ease-in forwards",
+        "flip-up": "flip-up 0.3s ease-out forwards 0.3s",
       },
     },
   },
