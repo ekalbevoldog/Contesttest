@@ -976,13 +976,16 @@ export default function DynamicOnboardingForm({
 
   // Handle input changes
   const handleInputChange = (section: keyof FormData, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }));
+    setFormData(prev => {
+      const currentSection = prev[section] as Record<string, any> || {};
+      return {
+        ...prev,
+        [section]: {
+          ...currentSection,
+          [field]: value
+        }
+      };
+    });
   };
 
   // Handle checkbox changes
@@ -1008,13 +1011,16 @@ export default function DynamicOnboardingForm({
 
   // Handle slider changes
   const handleSliderChange = (section: keyof FormData, field: string, value: number) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }));
+    setFormData(prev => {
+      const currentSection = prev[section] as Record<string, any> || {};
+      return {
+        ...prev,
+        [section]: {
+          ...currentSection,
+          [field]: value
+        }
+      };
+    });
   };
 
   // Submit form data
@@ -1082,10 +1088,12 @@ export default function DynamicOnboardingForm({
 
   const handleUserTypeSelect = (type: 'athlete' | 'business') => {
     setUserType(type);
-    setFormData(prev => ({
-      ...prev,
-      userType: type
-    }));
+    setFormData(prev => {
+      return {
+        ...prev, 
+        userType: type
+      };
+    });
     handleNext();
   };
 
