@@ -32,7 +32,80 @@ export default function Footer() {
           </div>
         </div>
         
-        <div className="mt-4 pt-4 border-t border-[#333] flex flex-col md:flex-row md:items-center md:justify-between">
+        {/* Site Map */}
+        <div className="mt-6 pt-6 border-t border-[#333] grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-4">Platform</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link>
+              </li>
+              <li>
+                <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Dashboard</Link>
+              </li>
+              <li>
+                <Link href="/messages" className="text-gray-400 hover:text-white transition-colors">Messages</Link>
+              </li>
+              <li>
+                <Link href="/feedback" className="text-gray-400 hover:text-white transition-colors">Feedback Center</Link>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-4">For Athletes</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/athlete/dashboard" className="text-gray-400 hover:text-white transition-colors">Athlete Dashboard</Link>
+              </li>
+              <li>
+                <Link href="/find-athlete-match" className="text-gray-400 hover:text-white transition-colors">Find Brand Matches</Link>
+              </li>
+              <li>
+                <Link href="/dynamic-onboarding" className="text-gray-400 hover:text-white transition-colors">Create Profile</Link>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-4">For Businesses</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/business/dashboard" className="text-gray-400 hover:text-white transition-colors">Business Dashboard</Link>
+              </li>
+              <li>
+                <Link href="/solutions" className="text-gray-400 hover:text-white transition-colors">Solutions</Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link>
+              </li>
+              <li>
+                <Link href="/case-studies" className="text-gray-400 hover:text-white transition-colors">Case Studies</Link>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-4">Company</h3>
+            <ul className="space-y-2">
+              <li>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">About Us</a>
+              </li>
+              <li>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a>
+              </li>
+              <li>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a>
+              </li>
+              <li>
+                <Link href="/compliance/login" className="text-gray-400 hover:text-white transition-colors">NIL Compliance</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        {/* Copyright and Social */}
+        <div className="mt-6 pt-6 border-t border-[#333] flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="text-sm text-gray-400">
             &copy; {new Date().getFullYear()} Contested. All rights reserved.
           </div>
