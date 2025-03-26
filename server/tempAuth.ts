@@ -1,9 +1,8 @@
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import { storage } from "./storage";
+import { randomBytes } from "crypto";
 import { User } from "@shared/schema";
-import { createHash, randomBytes } from "crypto";
 
 // Extend express-session types to include our custom fields
 declare module 'express-session' {
@@ -18,10 +17,38 @@ const sessionStore = new MemoryStore({
   checkPeriod: 86400000 // Prune expired entries every 24h
 });
 
-// Store active user sessions
+// In-memory user storage for testing (completely standalone)
+const testUsers = new Map<string, User>();
 const activeSessions: Map<string, User> = new Map();
 
-// Simple auth implementation until database connection is fixed
+// Create some test users
+const createTestUser = (username: string, userType: string): User => {
+  const id = testUsers.size + 1;
+  const user: User = {
+    id,
+    username,
+    password: "password123", // Plain text for testing
+    email: `${username}@example.com`,
+    userType,
+    sessionId: null,
+    verified: false,
+    avatar: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+  };
+  testUsers.set(username, user);
+  console.log(`Created test user: ${username} (${userType})`);
+  return user;
+};
+
+// Initialize test users
+createTestUser("athlete1", "athlete");
+createTestUser("business1", "business");
+createTestUser("compliance1", "compliance");
+
+// Simple auth implementation with in-memory test users
 export function setupAuth(app: Express) {
   // Setup session middleware
   app.use(session({
@@ -53,19 +80,12 @@ export function setupAuth(app: Express) {
       }
       
       // Check if username already exists
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser) {
+      if (testUsers.has(username)) {
         return res.status(400).json({ error: "Username already exists" });
       }
       
       // Create new user
-      const hashedPassword = createHash("sha256").update(password).digest("hex");
-      const user = await storage.createUser({
-        username,
-        password: hashedPassword,
-        email,
-        userType,
-      });
+      const user = createTestUser(username, userType);
       
       // Set session
       const sessionId = randomBytes(16).toString("hex");
@@ -89,23 +109,18 @@ export function setupAuth(app: Express) {
       }
       
       console.log(`Login attempt for user: ${username}`);
+      const usersList = Array.from(testUsers.keys());
+      console.log("Available users:", usersList);
       
-      // For debugging - check all users in storage
-      const allUsers = await Promise.all(
-        Array.from({ length: 10 }, (_, i) => storage.getUser(i + 1))
-      );
-      console.log("Available users:", allUsers.filter(Boolean).map(u => u.username));
-      
-      // Find user and verify credentials
-      const user = await storage.getUserByUsername(username);
+      // Find user (from our in-memory store)
+      const user = testUsers.get(username);
       console.log("Found user:", user ? `${user.id} (${user.username})` : "None");
       
       if (!user) {
         return res.status(401).json({ error: "Invalid username or password" });
       }
       
-      // For debugging - temporarily accept any password
-      // Set session
+      // Accept any password for testing
       const sessionId = randomBytes(16).toString("hex");
       req.session.userId = sessionId;
       activeSessions.set(sessionId, user);
