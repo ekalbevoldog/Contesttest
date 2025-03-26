@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode, Fragment } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -71,7 +71,7 @@ interface SectionConfig {
   id: string;
   title: string;
   subtitle: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
 // Form field types
@@ -87,7 +87,7 @@ interface FormField {
     id: string;
     label: string;
     description?: string;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
     imageSrc?: string;
   }>;
   condition?: {
@@ -1394,10 +1394,10 @@ export default function DynamicOnboardingForm({
                       
                       {/* Basic Profile section */}
                       {Object.entries(formData.basicProfile).map(([key, value]) => (
-                        <React.Fragment key={key}>
+                        <Fragment key={key}>
                           <div className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</div>
                           <div className="font-medium">{value || '-'}</div>
-                        </React.Fragment>
+                        </Fragment>
                       ))}
                     </div>
                   </div>
@@ -1417,7 +1417,7 @@ export default function DynamicOnboardingForm({
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                           {Object.entries(sectionData).map(([key, value]) => (
-                            <React.Fragment key={key}>
+                            <Fragment key={key}>
                               <div className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</div>
                               <div className="font-medium">
                                 {Array.isArray(value) 
@@ -1426,7 +1426,7 @@ export default function DynamicOnboardingForm({
                                     ? JSON.stringify(value)
                                     : value || '-'}
                               </div>
-                            </React.Fragment>
+                            </Fragment>
                           ))}
                         </div>
                       </div>

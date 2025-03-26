@@ -35,6 +35,7 @@ function Router() {
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/find-athlete-match" component={RegistrationWizard} />
           <Route path="/personalized-onboarding" component={PersonalizedWizard} />
+          <Route path="/dynamic-onboarding" component={DynamicOnboarding} />
           
           {/* Marketing Pages */}
           <Route path="/solutions" component={Solutions} />
