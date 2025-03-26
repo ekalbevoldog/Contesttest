@@ -27,11 +27,11 @@ export function FlipCounter({
         {numberString.split('').map((digit, index) => (
           <div 
             key={index} 
-            className="relative mx-[2px] w-[76px] h-[90px] bg-zinc-950 rounded overflow-hidden shadow-md"
+            className="relative mx-[1px] w-[55px] h-[80px] bg-zinc-950 rounded overflow-hidden shadow-md"
           >
-            {/* Display the digit */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-4xl font-bold text-white">
+            {/* Static digit display */}
+            <div className="absolute inset-0 flex items-center justify-center text-center">
+              <span className="text-3xl font-bold text-white">
                 {digit}
               </span>
             </div>
