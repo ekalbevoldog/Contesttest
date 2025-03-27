@@ -76,7 +76,7 @@ export default function AthleteDashboard() {
   const [selectedTimeFrame, setSelectedTimeFrame] = useState("thisMonth");
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
-  
+
   // Mock notifications data
   const notifications = [
     {
@@ -104,7 +104,7 @@ export default function AthleteDashboard() {
       type: "payment"
     }
   ];
-  
+
   // Mock messages data
   const messages = [
     {
@@ -148,12 +148,12 @@ export default function AthleteDashboard() {
       avatar: ""
     }
   ];
-  
+
   // Set loading state to false - authentication is handled by the protected route
   useEffect(() => {
     setLoading(false);
   }, []);
-  
+
   // Define profile data type
   type ProfileData = {
     name?: string;
@@ -171,10 +171,10 @@ export default function AthleteDashboard() {
   // Get profile info from localStorage if available or fallback to API
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  
+
   useEffect(() => {
     if (loading) return;
-    
+
     // Try to get profile data from localStorage first
     const storedUserData = localStorage.getItem('contestedUserData');
     if (storedUserData) {
@@ -194,7 +194,7 @@ export default function AthleteDashboard() {
         });
     }
   }, [loading]);
-  
+
   // Mock partnership offers data - would be replaced with actual API call
   // Fetch all businesses
   const { data: businesses = [] } = useQuery({
@@ -248,14 +248,14 @@ export default function AthleteDashboard() {
     },
     enabled: !!athleteProfile?.id,
   });
-  
+
   // Format the partnership offers for display with business and campaign info
   const partnershipOffers = partnershipOffersData.map((offer: any) => {
     // Find the matching business and campaign
     const matchingBusiness = businesses.find((b: any) => b.id === offer.businessId);
     const matchingCampaign = campaigns.find((c: any) => c.id === offer.campaignId);
     const matchingMatch = matches.find((m: any) => m.id === offer.matchId);
-    
+
     return {
       id: offer.id,
       brand: matchingBusiness?.name || 'Unknown Business',
@@ -276,8 +276,8 @@ export default function AthleteDashboard() {
       paymentSchedule: offer.paymentSchedule,
       exclusivity: offer.exclusivity
     };
-  }) : [];
-  
+  }) || [];
+
   // Mock active partnerships data - would be replaced with actual API call
   const activePartnerships = [
     {
@@ -309,7 +309,7 @@ export default function AthleteDashboard() {
       totalValue: 1850
     }
   ];
-  
+
   // Mock educational resources
   const educationalResources = [
     {
@@ -349,7 +349,7 @@ export default function AthleteDashboard() {
       description: "Important tax information for managing your partnership income"
     }
   ];
-  
+
   // Mock earnings data
   const getEarningsData = (timeFrame: string) => {
     switch(timeFrame) {
@@ -395,9 +395,9 @@ export default function AthleteDashboard() {
         };
     }
   };
-  
+
   const earningsData = getEarningsData(selectedTimeFrame);
-  
+
   // Calculate days remaining for deliverables
   const calculateDaysRemaining = (deadline: string) => {
     const today = new Date();
@@ -406,7 +406,7 @@ export default function AthleteDashboard() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
-  
+
   if (loading || isLoadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
@@ -414,7 +414,7 @@ export default function AthleteDashboard() {
       </div>
     );
   }
-  
+
   return (
     <div className="container max-w-full py-8 px-4 md:px-8">
       <div className="flex flex-col gap-8">
@@ -479,7 +479,7 @@ export default function AthleteDashboard() {
                 </div>
               </DialogContent>
             </Dialog>
-            
+
             <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
@@ -528,7 +528,7 @@ export default function AthleteDashboard() {
                 </div>
               </DialogContent>
             </Dialog>
-            
+
             <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => {
               // Navigate to the settings tab
               document.querySelector('[data-value="account"]')?.dispatchEvent(
@@ -544,7 +544,7 @@ export default function AthleteDashboard() {
             </Button>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
@@ -591,7 +591,7 @@ export default function AthleteDashboard() {
             </CardContent>
           </Card>
         </div>
-        
+
         <Tabs defaultValue="offers" className="w-full">
           <TabsList className="mb-6 w-full justify-start">
             <TabsTrigger value="offers">Partnership Offers</TabsTrigger>
@@ -602,7 +602,7 @@ export default function AthleteDashboard() {
             <TabsTrigger value="documents">Contracts & Forms</TabsTrigger>
             <TabsTrigger value="account">Account Settings</TabsTrigger>
           </TabsList>
-          
+
           {/* PARTNERSHIP OFFERS TAB */}
           <TabsContent value="offers" className="space-y-6">
             <Card className="border-blue-700/20 shadow-sm">
@@ -682,7 +682,7 @@ export default function AthleteDashboard() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -729,7 +729,7 @@ export default function AthleteDashboard() {
                               <span className="font-semibold">${partnership.totalValue}</span>
                             </div>
                           </div>
-                          
+
                           <span className="text-sm text-gray-500 block mb-2">Deliverable Progress:</span>
                           <div className="space-y-3">
                             {partnership.deliverables.map((deliverable, idx) => (
@@ -780,7 +780,7 @@ export default function AthleteDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* DELIVERABLES TAB */}
           <TabsContent value="deliverables" className="space-y-6">
             <Card className="border-primary/20">
@@ -801,7 +801,7 @@ export default function AthleteDashboard() {
                       .map((deliverable, idx) => {
                         const daysRemaining = calculateDaysRemaining(deliverable.deadline);
                         const isUrgent = daysRemaining <= 3;
-                        
+
                         return (
                           <Card key={`${partnership.id}-${idx}`} className="bg-muted/50">
                             <CardHeader className="pb-2">
@@ -829,8 +829,8 @@ export default function AthleteDashboard() {
                                 )}
                               </div>
                             </CardHeader>
-                            <CardContent>
-                              <div className="flex flex-col gap-4">
+                            <CardContent```javascript
+                            <div className="flex flex-col gap-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="flex flex-col gap-1">
                                     <span className="text-sm text-gray-500">Due Date</span>
@@ -867,7 +867,7 @@ export default function AthleteDashboard() {
                         );
                       })
                   )}
-                  
+
                   {activePartnerships.flatMap(p => p.deliverables).filter(d => d.status === "pending").length === 0 && (
                     <div className="text-center py-10">
                       <div className="text-gray-400 mb-2">No pending deliverables</div>
@@ -880,7 +880,7 @@ export default function AthleteDashboard() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -914,7 +914,7 @@ export default function AthleteDashboard() {
                         </div>
                       ))
                   )}
-                  
+
                   {activePartnerships.flatMap(p => p.deliverables).filter(d => d.status === "completed").length === 0 && (
                     <div className="text-center py-10">
                       <div className="text-gray-400 mb-2">No completed deliverables yet</div>
@@ -928,7 +928,7 @@ export default function AthleteDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* PERFORMANCE METRICS TAB */}
           <TabsContent value="performance" className="space-y-6">
             <Card className="border-primary/20">
@@ -964,7 +964,7 @@ export default function AthleteDashboard() {
                     <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+5 this month</Badge>
                   </div>
                 </div>
-                
+
                 <div className="mt-8">
                   <h3 className="text-lg font-medium mb-4">Platform Breakdown</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -989,7 +989,7 @@ export default function AthleteDashboard() {
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="bg-muted/50">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium">TikTok</CardTitle>
@@ -1011,7 +1011,7 @@ export default function AthleteDashboard() {
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     <Card className="bg-muted/50">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-base font-medium">Twitter</CardTitle>
@@ -1035,7 +1035,7 @@ export default function AthleteDashboard() {
                     </Card>
                   </div>
                 </div>
-                
+
                 <div className="mt-8">
                   <h3 className="text-lg font-medium mb-4">Campaign Impact</h3>
                   <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md mb-6">
@@ -1063,7 +1063,7 @@ export default function AthleteDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* EARNINGS TAB */}
           <TabsContent value="earnings" className="space-y-6">
             <Card className="border-primary/20">
@@ -1141,7 +1141,7 @@ export default function AthleteDashboard() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1215,7 +1215,7 @@ export default function AthleteDashboard() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           {/* EDUCATION CENTER TAB */}
           <TabsContent value="education" className="space-y-6">
             <Card className="border-primary/20">
@@ -1275,7 +1275,7 @@ export default function AthleteDashboard() {
                 </Button>
               </CardFooter>
             </Card>
-            
+
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1312,7 +1312,7 @@ export default function AthleteDashboard() {
                       </li>
                     </ul>
                   </div>
-                  
+
                   <div className="bg-muted/50 rounded-lg p-5">
                     <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
                       <Heart className="h-5 w-5 text-primary" />
@@ -1341,7 +1341,7 @@ export default function AthleteDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* DOCUMENTS TAB */}
           <TabsContent value="documents" className="space-y-6">
             <Card className="border-primary/20">
@@ -1374,7 +1374,7 @@ export default function AthleteDashboard() {
                       </div>
                     </div>
                   ))}
-                  
+
                   {activePartnerships.length === 0 && (
                     <div className="text-center py-10">
                       <div className="text-gray-400 mb-2">No contracts available</div>
@@ -1386,7 +1386,7 @@ export default function AthleteDashboard() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1424,7 +1424,7 @@ export default function AthleteDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* ACCOUNT SETTINGS TAB */}
           <TabsContent value="account" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1489,7 +1489,7 @@ export default function AthleteDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1532,7 +1532,7 @@ export default function AthleteDashboard() {
                 </CardContent>
               </Card>
             </div>
-            
+
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1572,7 +1572,7 @@ export default function AthleteDashboard() {
                 <Button>Save Preferences</Button>
               </CardFooter>
             </Card>
-            
+
             {/* Shareable Profile Link */}
             <Card className="border-primary/20">
               <CardHeader>
