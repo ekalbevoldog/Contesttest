@@ -7,40 +7,40 @@ import { Badge } from "@/components/ui/badge";
 
 export default function CaseStudies() {
   return (
-    <div className="bg-[#121212] text-white min-h-screen">
+    <div className="bg-black text-white min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#121212] pt-20 pb-16">
+      <section className="relative overflow-hidden bg-black pt-20 pb-16">
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Success Stories
               </span>
             </h1>
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-zinc-400 mb-8 max-w-3xl mx-auto">
               Discover how athletes and businesses create meaningful partnerships and achieve exceptional results with Contested.
             </p>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] opacity-70"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
       </section>
 
       {/* Filter Tabs */}
-      <section className="py-12 bg-[#1E1E1E]">
+      <section className="py-12 bg-zinc-950">
         <div className="container mx-auto px-4">
           <Tabs defaultValue="all" className="max-w-4xl mx-auto">
-            <TabsList className="w-full grid grid-cols-4 mb-8 bg-[#2A2A2A]">
-              <TabsTrigger value="all" className="data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">
+            <TabsList className="w-full grid grid-cols-4 mb-8 bg-zinc-900">
+              <TabsTrigger value="all" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">
                 All Stories
               </TabsTrigger>
-              <TabsTrigger value="athletes" className="data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">
+              <TabsTrigger value="athletes" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">
                 Athletes
               </TabsTrigger>
-              <TabsTrigger value="businesses" className="data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">
+              <TabsTrigger value="businesses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">
                 Businesses
               </TabsTrigger>
-              <TabsTrigger value="campaigns" className="data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">
+              <TabsTrigger value="campaigns" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">
                 Campaigns
               </TabsTrigger>
             </TabsList>
@@ -185,35 +185,35 @@ export default function CaseStudies() {
       </section>
 
       {/* Featured Case Study */}
-      <section className="py-20 bg-[#121212]">
+      <section className="py-20 bg-black">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="bg-[#2A2A2A] rounded-xl overflow-hidden">
+            <div className="bg-zinc-900 rounded-xl overflow-hidden">
               <div className="grid grid-cols-1 lg:grid-cols-2">
                 <div className="p-8 lg:p-12 flex flex-col justify-center">
-                  <Badge className="bg-[rgba(240,60,60,0.15)] text-[#f03c3c] mb-4 self-start">Featured Success Story</Badge>
+                  <Badge className="bg-[rgba(239,68,68,0.15)] text-red-500 mb-4 self-start">Featured Success Story</Badge>
                   <h2 className="text-3xl font-bold mb-4 text-white">Coastal Brewery & Volleyball Team: A Community Partnership</h2>
-                  <p className="text-gray-300 mb-6">
+                  <p className="text-zinc-400 mb-6">
                     When Coastal Brewery wanted to strengthen their ties to the local community, they turned to Contested to connect with the university's volleyball team. What started as a simple sponsorship evolved into a comprehensive partnership program.
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-[rgba(255,255,255,0.05)] p-4 rounded-lg">
-                      <div className="text-[#f03c3c] text-3xl font-bold">32%</div>
-                      <div className="text-gray-400">Increase in local sales</div>
+                      <div className="text-red-500 text-3xl font-bold">32%</div>
+                      <div className="text-zinc-400">Increase in local sales</div>
                     </div>
                     <div className="bg-[rgba(255,255,255,0.05)] p-4 rounded-lg">
-                      <div className="text-[#f03c3c] text-3xl font-bold">12</div>
-                      <div className="text-gray-400">Athletes partnered</div>
+                      <div className="text-red-500 text-3xl font-bold">12</div>
+                      <div className="text-zinc-400">Athletes partnered</div>
                     </div>
                     <div className="bg-[rgba(255,255,255,0.05)] p-4 rounded-lg">
-                      <div className="text-[#f03c3c] text-3xl font-bold">5.4x</div>
-                      <div className="text-gray-400">Marketing ROI</div>
+                      <div className="text-red-500 text-3xl font-bold">5.4x</div>
+                      <div className="text-zinc-400">Marketing ROI</div>
                     </div>
                   </div>
                   
                   <Button 
-                    className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white hover:from-[#d42e2e] hover:to-[#e34c4c] self-start"
+                    className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 self-start"
                   >
                     Read Full Case Study
                   </Button>
@@ -226,20 +226,20 @@ export default function CaseStudies() {
       </section>
 
       {/* Testimonial Section */}
-      <section className="py-20 bg-[#1E1E1E]">
+      <section className="py-20 bg-zinc-950">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto mb-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 What Our Customers Say
               </span>
             </h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
+            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
               <div className="flex flex-col h-full">
-                <div className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] p-6 text-white">
+                <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-xl font-bold">Sarah Johnson</h3>
@@ -275,20 +275,20 @@ export default function CaseStudies() {
                   </div>
                 </div>
                 <div className="p-6 flex-grow">
-                  <p className="text-gray-300 italic mb-4">
+                  <p className="text-zinc-400 italic mb-4">
                     "Contested has completely changed how I approach NIL opportunities. Within my first month, I secured partnerships with three local businesses that perfectly aligned with my personal values. The AI matching technology is incredible!"
                   </p>
                   <div className="flex items-center">
-                    <div className="text-[#f03c3c] font-bold">Results:</div>
-                    <div className="ml-2 text-gray-300">3 partnerships, $3,500 in revenue</div>
+                    <div className="text-red-500 font-bold">Results:</div>
+                    <div className="ml-2 text-zinc-400">3 partnerships, $3,500 in revenue</div>
                   </div>
                 </div>
               </div>
             </Card>
             
-            <Card className="bg-[#2A2A2A] shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
+            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
               <div className="flex flex-col h-full">
-                <div className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] p-6 text-white">
+                <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-xl font-bold">Mountain Outfitters</h3>
@@ -324,12 +324,12 @@ export default function CaseStudies() {
                   </div>
                 </div>
                 <div className="p-6 flex-grow">
-                  <p className="text-gray-300 italic mb-4">
+                  <p className="text-zinc-400 italic mb-4">
                     "As a growing outdoor brand, we wanted to connect with authentic voices who love nature and adventure. Contested matched us with hikers, climbers, and trail runners who genuinely use and love our products. The ROI has been incredible."
                   </p>
                   <div className="flex items-center">
-                    <div className="text-[#f03c3c] font-bold">Results:</div>
-                    <div className="ml-2 text-gray-300">4.2x ROI, 230% increase in social engagement</div>
+                    <div className="text-red-500 font-bold">Results:</div>
+                    <div className="ml-2 text-zinc-400">4.2x ROI, 230% increase in social engagement</div>
                   </div>
                 </div>
               </div>
@@ -339,26 +339,26 @@ export default function CaseStudies() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-[#121212] text-white relative">
+      <section className="py-20 bg-black text-white relative">
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to create your own success story?</h2>
-            <p className="text-xl text-gray-300 mb-8">
+            <p className="text-xl text-zinc-400 mb-8">
               Join Contested today and discover the perfect partnerships for your brand or athletic career.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white font-bold hover:from-[#d42e2e] hover:to-[#e34c4c] transition-all shadow-md"
+                className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                 asChild
               >
-                <Link to="/find-athlete-match">Get Started Now</Link>
+                <Link to="/dynamic-onboarding">Get Started Now</Link>
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)]"
+                className="border-red-500 text-white hover:bg-red-500/10"
                 asChild
               >
                 <Link to="/pricing">View Pricing</Link>
@@ -385,22 +385,22 @@ function CaseStudyCard({
   image: string 
 }) {
   return (
-    <Card className="bg-[#2A2A2A] shadow-md hover:shadow-xl transition-all border-none overflow-hidden hover:translate-y-[-4px]">
-      <div className="h-48 bg-[#333] bg-opacity-50 relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#2A2A2A] to-transparent opacity-60"></div>
-        <Badge className="absolute top-4 left-4 bg-[rgba(240,60,60,0.8)] text-white border-none">
+    <Card className="bg-zinc-900 shadow-md hover:shadow-xl transition-all border-none overflow-hidden hover:translate-y-[-4px]">
+      <div className="h-48 bg-zinc-800 bg-opacity-50 relative">
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent opacity-60"></div>
+        <Badge className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-amber-500 text-white border-none">
           {category}
         </Badge>
       </div>
       <CardContent className="p-6">
         <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
-        <p className="text-gray-300 mb-4">{description}</p>
-        <div className="border-t border-[#444] pt-4 mt-4">
-          <p className="text-[#f03c3c] font-medium mb-2">Key Results:</p>
+        <p className="text-zinc-400 mb-4">{description}</p>
+        <div className="border-t border-zinc-800 pt-4 mt-4">
+          <p className="text-red-500 font-medium mb-2">Key Results:</p>
           <ul className="space-y-1">
             {metrics.map((metric, index) => (
-              <li key={index} className="text-gray-300 text-sm flex items-center">
-                <div className="h-1.5 w-1.5 rounded-full bg-[#f03c3c] mr-2"></div>
+              <li key={index} className="text-zinc-400 text-sm flex items-center">
+                <div className="h-1.5 w-1.5 rounded-full bg-red-500 mr-2"></div>
                 {metric}
               </li>
             ))}
@@ -410,7 +410,7 @@ function CaseStudyCard({
           <Button 
             variant="outline" 
             size="sm"
-            className="w-full border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)]"
+            className="w-full border-red-500 text-white hover:bg-red-500/10"
           >
             Read Full Case Study
           </Button>
