@@ -317,6 +317,15 @@ class GeminiService {
 
   // Determine if a form should be shown based on the conversation
   async shouldShowForm(message: string, userType: string) {
+    // Check for common keywords that might indicate the user wants to proceed
+    const affirmativeKeywords = ['yes', 'sure', 'proceed', 'ok', 'okay', 'go ahead', 'submit', 'profile', 'form', 'register', 'signup', 'sign up', 'sign me up', 'continue', 'next'];
+    
+    // Simple keyword matching instead of relying on the AI for this determination
+    if (affirmativeKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+      return true;
+    }
+    
+    // For longer or more complex messages, use AI-based determination
     const prompt = `
       You are an AI assistant for NIL Connect, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
       
@@ -333,26 +342,79 @@ class GeminiService {
     `;
     
     try {
-      const result = await this.callGemini(prompt, formPromptSchema);
-      return result.showForm;
+      // First, try using the formPromptSchema
+      try {
+        const result = await this.callGemini(prompt, formPromptSchema);
+        return result.showForm;
+      } catch (formError) {
+        console.log("Error with form prompt schema, trying fallback method");
+        
+        // Fallback to a simpler check using conversationResponseSchema
+        const conversationResult = await this.callGemini(prompt, conversationResponseSchema);
+        
+        // If we got any response, assume the user is not ready for a form
+        if (conversationResult && conversationResult.reply) {
+          return conversationResult.reply.toLowerCase().includes('yes') || 
+                 conversationResult.reply.toLowerCase().includes('profile') ||
+                 conversationResult.reply.toLowerCase().includes('form');
+        }
+      }
+      
+      // If we reached here, default to false
+      return false;
     } catch (error) {
       console.error("Error determining if form should be shown:", error);
-      // Default behavior - don't show form if there's an error
-      return false;
+      // Check if the original message directly indicates readiness
+      return message.toLowerCase() === 'yes' || 
+             message.toLowerCase() === 'yes please' || 
+             message.toLowerCase().includes('proceed');
     }
   }
 
   // Continue the conversation based on session data
   async continueConversation(message: string, sessionData: any, messageHistory: any[] = []) {
-    // Format the message history for the prompt
-    const formattedHistory = messageHistory.map(msg => 
+    // Check if we have enough message history (at least 2 messages)
+    if (messageHistory.length < 2) {
+      console.log("Not enough message history, using simplified response");
+      
+      // If the user just said "yes" or similar to our profile setup question, 
+      // let's respond appropriately
+      const affirmativeKeywords = ['yes', 'sure', 'ok', 'okay', 'proceed', 'go ahead', 'sign me up'];
+      if (affirmativeKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+        return {
+          reply: "Great! Let me guide you through setting up your profile. First, tell me whether you're an athlete looking for partnerships or a business seeking athlete connections.",
+          isFormPrompt: false
+        };
+      }
+      
+      // Default new conversation response
+      return {
+        reply: `Thanks for reaching out to Contested! I'm here to help ${sessionData.userType === 'athlete' ? 'athletes find brand partnerships' : 'businesses connect with college athletes'}. What specific aspects of NIL partnerships are you interested in?`,
+        isFormPrompt: false
+      };
+    }
+    
+    // Format the message history for the prompt, but only use the last 5 exchanges to keep context manageable
+    const recentMessages = messageHistory.slice(-10); // Keep last 10 messages max
+    
+    const formattedHistory = recentMessages.map(msg => 
       `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
     ).join('\n\n');
+    
+    console.log(`Processing conversation with ${recentMessages.length} recent messages`);
+    
+    const userInfo = sessionData.userType ? 
+      `${sessionData.userType}${sessionData.name ? ` named ${sessionData.name}` : ''}` : 
+      'user whose type is still unknown';
+    
+    const profileStatus = sessionData.profileCompleted ? 
+      "They've already completed their profile." : 
+      "They haven't completed their profile yet.";
     
     const prompt = `
       You are an AI assistant for Contested, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
       
-      You're talking to a ${sessionData.userType}.
+      You're talking to a ${userInfo}. ${profileStatus}
       
       Here's what you know about this user:
       ${JSON.stringify(sessionData)}
@@ -362,12 +424,19 @@ class GeminiService {
       
       Their latest message is: "${message}"
       
-      Respond in a helpful, conversational way. If they seem ready to create a profile, suggest they complete a profile form.
-      If they've already completed their profile, discuss potential matches and next steps.
+      Respond in a helpful, conversational way, making sure your response is relevant to their latest message and doesn't repeat previous responses.
+      
+      If they have not completed their profile yet and seem interested:
+      - Ask specific questions to gather their information, like sport/school (for athletes) or product/audience (for businesses)
+      - Eventually suggest they complete a full profile form when appropriate
+      
+      If they've already completed their profile:
+      - Discuss potential matches and next steps based on their profile information
+      - Offer insights about effective NIL partnerships
       
       Return your answer in the following JSON format:
       {
-        "reply": "Your friendly, conversational response",
+        "reply": "Your friendly, conversational response that addresses their specific question or message",
         "isFormPrompt": boolean (true if they should see a form),
         "showAthleteForm": boolean (true if they should see athlete form),
         "showBusinessForm": boolean (true if they should see business form)
@@ -378,10 +447,25 @@ class GeminiService {
       return await this.callGemini(prompt, conversationResponseSchema);
     } catch (error) {
       console.error("Error continuing conversation:", error);
-      // Fallback response
-      return {
-        reply: "I'm here to help you find the right NIL partnerships. Could you tell me more about what you're looking for?"
-      };
+      
+      // Fallback response - check if the message history has a pattern we can use
+      // Look for a recent assistant message to avoid repeating
+      const lastAssistantMsg = messageHistory
+        .filter(msg => msg.role === 'assistant')
+        .pop();
+      
+      // Provide a varied response based on last message to avoid repetition
+      if (lastAssistantMsg && lastAssistantMsg.content.includes("profile")) {
+        return {
+          reply: "Thanks for your interest! To find the best matches for you on Contested, we need to know a bit more about you. What specific goals are you hoping to achieve with NIL partnerships?",
+          isFormPrompt: false
+        };
+      } else {
+        return {
+          reply: "I'm here to help you navigate NIL partnerships on Contested. Could you tell me more about what you're looking for specifically?",
+          isFormPrompt: false
+        };
+      }
     }
   }
 
