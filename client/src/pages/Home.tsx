@@ -63,10 +63,11 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
                 <video 
                   className="w-full h-full object-cover rounded-lg"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
+                  autoPlay={true}
+                  muted={true}
+                  loop={true}
+                  playsInline={true}
+                  preload="auto"
                 >
                   <source src="/videos/landing-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
