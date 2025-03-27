@@ -281,6 +281,10 @@ export const matches = pgTable("match_scores", {
   brandValueAlignmentScore: real("brand_value_alignment_score"),
   engagementPotentialScore: real("engagement_potential_score"),
   compensationFitScore: real("compensation_fit_score"),
+  academicAlignmentScore: real("academic_alignment_score"),
+  geographicFitScore: real("geographic_fit_score"),
+  timingCompatibilityScore: real("timing_compatibility_score"),
+  platformSpecializationScore: real("platform_specialization_score"),
   
   // Status
   status: text("status").default("pending"), // pending, accepted, declined, completed

@@ -437,6 +437,10 @@ class GeminiService {
         "brandValueAlignmentScore": number between 0-100,
         "engagementPotentialScore": number between 0-100,
         "compensationFitScore": number between 0-100,
+        "academicAlignmentScore": number between 0-100,
+        "geographicFitScore": number between 0-100,
+        "timingCompatibilityScore": number between 0-100,
+        "platformSpecializationScore": number between 0-100,
         "strengthAreas": ["strength1", "strength2", "strength3", "strength4"],
         "weaknessAreas": ["weakness1", "weakness2", "weakness3"],
         "improvementSuggestions": ["suggestion1", "suggestion2", "suggestion3"]
