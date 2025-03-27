@@ -276,7 +276,7 @@ export default function AthleteDashboard() {
       paymentSchedule: offer.paymentSchedule,
       exclusivity: offer.exclusivity
     };
-  }); : [];
+  }) : [];
   
   // Mock active partnerships data - would be replaced with actual API call
   const activePartnerships = [
