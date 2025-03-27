@@ -136,6 +136,35 @@ class GeminiService {
             "Explore ways to highlight athlete's unique strengths in campaign execution"
           ]
         });
+      } else if (prompt.includes("Previous conversation history:")) {
+        // This is a conversation with message history
+        
+        // Try to extract the latest message from the prompt
+        const latestMessageMatch = prompt.match(/Their latest message is: "([^"]+)"/);
+        const latestMessage = latestMessageMatch ? latestMessageMatch[1] : "No message found";
+        
+        // Mock different responses based on the content of the latest message
+        if (latestMessage.toLowerCase().includes("profile") || latestMessage.toLowerCase().includes("sign up")) {
+          return responseSchema.parse({
+            reply: "I'd be happy to help you set up your profile! Just tell me whether you're an athlete looking for partnerships or a business seeking athlete connections, and we'll get started.",
+            isFormPrompt: false
+          });
+        } else if (latestMessage.toLowerCase().includes("match") || latestMessage.toLowerCase().includes("partnership")) {
+          return responseSchema.parse({
+            reply: "Finding the right match is what we do best! Our AI-powered algorithm analyzes multiple dimensions including audience fit, content style, brand values, engagement potential, and compensation alignment to find your ideal partnerships.",
+            isFormPrompt: false
+          });
+        } else if (latestMessage.toLowerCase().includes("price") || latestMessage.toLowerCase().includes("cost")) {
+          return responseSchema.parse({
+            reply: "Our pricing depends on your needs. We offer flexible plans for both athletes and businesses. Athletes can join free and pay only when they accept partnerships, while businesses can choose from several subscription tiers based on campaign volume.",
+            isFormPrompt: false
+          });
+        } else {
+          return responseSchema.parse({
+            reply: "Thanks for your message! I'm here to help you navigate the Contested platform. Would you like to learn more about how our matching algorithm works, or are you ready to create a profile?",
+            isFormPrompt: false
+          });
+        }
       } else {
         // Generic response
         return responseSchema.parse({
