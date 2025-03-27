@@ -13,69 +13,9 @@ import { Label } from "@/components/ui/label";
 export default function Home() {
   const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // Removed video ref
   
-  const [playButtonVisible, setPlayButtonVisible] = useState(true);
-  
-  useEffect(() => {
-    // Simple setup approach
-    if (!videoRef.current) {
-      console.error('Video element not found');
-      return;
-    }
-      
-    // Setup video element with best practices for autoplay
-    const video = videoRef.current;
-    video.muted = true;
-    video.playsInline = true;
-    video.volume = 0;
-    
-    // Pre-load the video
-    video.load();
-    
-    // Listen for loaded data event
-    const handleDataLoaded = () => {
-      console.log('Video data loaded, attempting to play');
-      
-      // Try to play the video
-      video.play()
-        .then(() => {
-          console.log('Video is playing!');
-          setPlayButtonVisible(false); // Hide the play button when video is playing
-        })
-        .catch(err => {
-          console.error('Autoplay failed:', err);
-          setPlayButtonVisible(true); // Keep the play button visible for user interaction
-        });
-    };
-    
-    // Listen for canplaythrough event
-    video.addEventListener('canplaythrough', handleDataLoaded, { once: true });
-    
-    // Manual play function for button click
-    const manualPlay = () => {
-      console.log('Manual play triggered');
-      video.play()
-        .then(() => {
-          setPlayButtonVisible(false);
-          console.log('Manual play successful');
-        })
-        .catch(error => console.error('Manual play failed:', error));
-    };
-    
-    // Add click handler to play button container
-    const playButtonContainer = document.querySelector('.video-play-button');
-    if (playButtonContainer) {
-      playButtonContainer.addEventListener('click', manualPlay);
-    }
-    
-    return () => {
-      video.removeEventListener('canplaythrough', handleDataLoaded);
-      if (playButtonContainer) {
-        playButtonContainer.removeEventListener('click', manualPlay);
-      }
-    };
-  }, []);
+  // Removed video-related state and effects
   
   return (
     <div className="min-h-screen bg-black text-white">
@@ -125,52 +65,28 @@ export default function Home() {
               {/* Background styling */}
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
               
-              {/* Video container with forced visibility */}
+              {/* Visual content area */}
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center bg-zinc-900 z-10">
-                {/* Embedded video using iframe as fallback method */}
-                <video 
-                  ref={videoRef}
-                  className="w-full h-full object-cover rounded-lg"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  controls={false}
-                  src="/videos/landing-video.mp4"
-                  style={{ display: 'block', visibility: 'visible', opacity: 1 }}
-                />
-                
-                {/* Fallback play button for manual interaction */}
-                {playButtonVisible && (
-                  <div 
-                    className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer video-play-button"
-                    onClick={() => {
-                      if (videoRef.current) {
-                        videoRef.current.play()
-                          .then(() => setPlayButtonVisible(false))
-                          .catch(err => console.error('Play failed on click:', err));
-                      }
-                    }}
-                  >
-                    <div className="bg-red-500 rounded-full p-4 shadow-lg animate-pulse">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        width="24" 
-                        height="24" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                        className="text-white"
-                      >
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                    </div>
+                {/* Static image placeholder with gradient overlay */}
+                <div className="relative w-full h-full bg-gradient-to-tr from-red-600/30 to-amber-400/20 flex items-center justify-center">
+                  {/* Center content */}
+                  <div className="text-center px-6 py-8 rounded-xl bg-black/40 backdrop-blur-sm">
+                    <h3 className="text-xl md:text-2xl font-bold mb-3 text-white">
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-amber-300">
+                        Discover Your Perfect Match
+                      </span>
+                    </h3>
+                    <p className="text-zinc-300 mb-4">
+                      Join 500+ successful partnerships on our platform
+                    </p>
+                    <Button 
+                      className="bg-red-500 hover:bg-red-600 text-white"
+                      asChild
+                    >
+                      <Link to="/dynamic-onboarding">Start Today</Link>
+                    </Button>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
