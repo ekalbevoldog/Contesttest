@@ -196,41 +196,87 @@ export default function AthleteDashboard() {
   }, [loading]);
   
   // Mock partnership offers data - would be replaced with actual API call
-  const partnershipOffers = [
-    {
-      id: "po1",
-      brand: "SportTech Inc",
-      logoUrl: "",
-      campaign: "Summer Athletic Wear",
-      matchScore: 95,
-      offerAmount: 1800,
-      deadline: "2025-04-10",
-      deliverables: ["Instagram Post", "TikTok Video", "Story Series"],
-      status: "pending"
-    },
-    {
-      id: "po2",
-      brand: "Energy Drinks Co",
-      logoUrl: "",
-      campaign: "Pre-Game Boost Campaign",
-      matchScore: 92,
-      offerAmount: 1200,
-      deadline: "2025-04-15",
-      deliverables: ["Instagram Reel", "Product Review", "Training Video"],
-      status: "pending"
-    },
-    {
-      id: "po3",
-      brand: "Fitness App Pro",
-      logoUrl: "",
-      campaign: "Workout Challenge",
-      matchScore: 89,
-      offerAmount: 950,
-      deadline: "2025-04-20",
-      deliverables: ["App Demo", "Workout Series", "Results Post"],
-      status: "pending"
+  // Fetch all businesses
+  const { data: businesses = [] } = useQuery({
+    queryKey: ['/api/businesses'],
+    queryFn: async () => {
+      const response = await fetch('/api/businesses');
+      if (!response.ok) {
+        throw new Error('Failed to fetch businesses');
+      }
+      const data = await response.json();
+      return data.businesses || [];
     }
-  ];
+  });
+
+  // Fetch all campaigns
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ['/api/campaigns'],
+    queryFn: async () => {
+      const response = await fetch('/api/campaigns');
+      if (!response.ok) {
+        throw new Error('Failed to fetch campaigns');
+      }
+      const data = await response.json();
+      return data.campaigns || [];
+    }
+  });
+
+  // Fetch all matches
+  const { data: matches = [] } = useQuery({
+    queryKey: ['/api/matches'],
+    queryFn: async () => {
+      const response = await fetch('/api/matches');
+      if (!response.ok) {
+        throw new Error('Failed to fetch matches');
+      }
+      const data = await response.json();
+      return data.matches || [];
+    }
+  });
+
+  // Fetch partnership offers for the athlete
+  const { data: partnershipOffersData = [] } = useQuery({
+    queryKey: ['/api/partnership-offers/athlete', athleteProfile?.id],
+    queryFn: async () => {
+      if (!athleteProfile?.id) return [];
+      const response = await fetch(`/api/partnership-offers/athlete/${athleteProfile.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch partnership offers');
+      }
+      return response.json();
+    },
+    enabled: !!athleteProfile?.id,
+  });
+  
+  // Format the partnership offers for display with business and campaign info
+  const partnershipOffers = partnershipOffersData.map((offer: any) => {
+    // Find the matching business and campaign
+    const matchingBusiness = businesses.find((b: any) => b.id === offer.businessId);
+    const matchingCampaign = campaigns.find((c: any) => c.id === offer.campaignId);
+    const matchingMatch = matches.find((m: any) => m.id === offer.matchId);
+    
+    return {
+      id: offer.id,
+      brand: matchingBusiness?.name || 'Unknown Business',
+      logoUrl: '',
+      campaign: matchingCampaign?.title || 'Unknown Campaign',
+      matchScore: matchingMatch?.score || 0,
+      offerAmount: offer.offerAmount,
+      deadline: offer.expiresAt || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // Default 14 days
+      deliverables: Array.isArray(offer.deliverables) 
+        ? offer.deliverables 
+        : typeof offer.deliverables === 'string' 
+          ? offer.deliverables.split(',').map((d: string) => d.trim()) 
+          : [],
+      status: offer.status || 'pending',
+      compensationType: offer.compensationType,
+      usageRights: offer.usageRights,
+      term: offer.term,
+      paymentSchedule: offer.paymentSchedule,
+      exclusivity: offer.exclusivity
+    };
+  }) : [];
   
   // Mock active partnerships data - would be replaced with actual API call
   const activePartnerships = [

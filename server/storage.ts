@@ -1,12 +1,12 @@
 import { 
   InsertSession, InsertAthlete, InsertBusiness, 
-  InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback,
-  Session, Athlete, Business, Campaign, Match, Message, User, Feedback,
+  InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
+  Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer,
   users
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
-import { sessions, athletes, businesses, campaigns, matches, messages, feedbacks } from "../shared/schema";
+import { sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers } from "../shared/schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import connectPg from "connect-pg-simple";
@@ -46,6 +46,16 @@ export interface IStorage {
   getMatchesForBusiness(businessId: number): Promise<Match[]>;
   storeMatch(match: InsertMatch): Promise<Match>;
   getAllMatches(): Promise<Match[]>;
+  
+  // Partnership Offer operations
+  getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined>;
+  getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]>;
+  getPartnershipOffersByBusiness(businessId: number): Promise<PartnershipOffer[]>;
+  getPartnershipOffersByMatch(matchId: number): Promise<PartnershipOffer | undefined>;
+  createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer>;
+  updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer>;
+  markPartnershipOfferViewed(id: number): Promise<PartnershipOffer>;
+  updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer>;
   
   // Message operations
   getMessages(sessionId: string): Promise<Message[]>;
@@ -341,6 +351,87 @@ export class DatabaseStorage implements IStorage {
     
     return updatedFeedback;
   }
+
+  // Partnership Offer operations
+  async getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined> {
+    const [offer] = await db.select().from(partnershipOffers).where(eq(partnershipOffers.id, id));
+    return offer;
+  }
+
+  async getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]> {
+    return await db.select().from(partnershipOffers).where(eq(partnershipOffers.athleteId, athleteId));
+  }
+
+  async getPartnershipOffersByBusiness(businessId: number): Promise<PartnershipOffer[]> {
+    return await db.select().from(partnershipOffers).where(eq(partnershipOffers.businessId, businessId));
+  }
+
+  async getPartnershipOffersByMatch(matchId: number): Promise<PartnershipOffer | undefined> {
+    const [offer] = await db.select().from(partnershipOffers).where(eq(partnershipOffers.matchId, matchId));
+    return offer;
+  }
+
+  async createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer> {
+    const [newOffer] = await db.insert(partnershipOffers).values(offer).returning();
+    return newOffer;
+  }
+
+  async updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer> {
+    const now = new Date();
+    const [updatedOffer] = await db
+      .update(partnershipOffers)
+      .set({
+        status,
+        athleteRespondedAt: status !== "pending" ? now : undefined,
+        updatedAt: now
+      })
+      .where(eq(partnershipOffers.id, id))
+      .returning();
+    
+    if (!updatedOffer) {
+      throw new Error(`Partnership offer with ID ${id} not found`);
+    }
+    
+    return updatedOffer;
+  }
+
+  async markPartnershipOfferViewed(id: number): Promise<PartnershipOffer> {
+    const now = new Date();
+    const [updatedOffer] = await db
+      .update(partnershipOffers)
+      .set({
+        athleteViewedAt: now,
+        updatedAt: now
+      })
+      .where(eq(partnershipOffers.id, id))
+      .returning();
+    
+    if (!updatedOffer) {
+      throw new Error(`Partnership offer with ID ${id} not found`);
+    }
+    
+    return updatedOffer;
+  }
+
+  async updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer> {
+    const now = new Date();
+    const [updatedOffer] = await db
+      .update(partnershipOffers)
+      .set({
+        complianceStatus: status,
+        complianceNotes: notes,
+        complianceReviewedAt: now,
+        updatedAt: now
+      })
+      .where(eq(partnershipOffers.id, id))
+      .returning();
+    
+    if (!updatedOffer) {
+      throw new Error(`Partnership offer with ID ${id} not found`);
+    }
+    
+    return updatedOffer;
+  }
 }
 
 // For backwards compatibility and fallback
@@ -350,6 +441,7 @@ export class MemStorage implements IStorage {
   private businesses: Map<number, Business>;
   private campaigns: Map<number, Campaign>;
   private matches: Map<number, Match>;
+  private partnershipOffers: Map<number, PartnershipOffer>;
   private messages: Map<string, Message[]>;
   private users: Map<number, User>;
   private feedbacks: Map<number, Feedback>;
@@ -358,6 +450,7 @@ export class MemStorage implements IStorage {
   private currentBusinessId: number;
   private currentCampaignId: number;
   private currentMatchId: number;
+  private currentPartnershipOfferId: number;
   private currentMessageId: number;
   private currentUserId: number;
   private currentFeedbackId: number;
@@ -369,6 +462,7 @@ export class MemStorage implements IStorage {
     this.businesses = new Map();
     this.campaigns = new Map();
     this.matches = new Map();
+    this.partnershipOffers = new Map();
     this.messages = new Map();
     this.users = new Map();
     this.feedbacks = new Map();
@@ -377,6 +471,7 @@ export class MemStorage implements IStorage {
     this.currentBusinessId = 1;
     this.currentCampaignId = 1;
     this.currentMatchId = 1;
+    this.currentPartnershipOfferId = 1;
     this.currentMessageId = 1;
     this.currentUserId = 1;
     this.currentFeedbackId = 1;
@@ -795,6 +890,99 @@ export class MemStorage implements IStorage {
     
     this.feedbacks.set(feedbackId, updatedFeedback);
     return updatedFeedback;
+  }
+
+  // Partnership Offer operations
+  async getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined> {
+    return this.partnershipOffers.get(id);
+  }
+
+  async getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]> {
+    return Array.from(this.partnershipOffers.values())
+      .filter(offer => offer.athleteId === athleteId);
+  }
+
+  async getPartnershipOffersByBusiness(businessId: number): Promise<PartnershipOffer[]> {
+    return Array.from(this.partnershipOffers.values())
+      .filter(offer => offer.businessId === businessId);
+  }
+
+  async getPartnershipOffersByMatch(matchId: number): Promise<PartnershipOffer | undefined> {
+    return Array.from(this.partnershipOffers.values())
+      .find(offer => offer.matchId === matchId);
+  }
+
+  async createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer> {
+    const id = this.currentPartnershipOfferId++;
+    
+    const newOffer: PartnershipOffer = {
+      id,
+      ...offer,
+      status: "pending",
+      athleteViewedAt: null,
+      athleteRespondedAt: null,
+      businessUpdatedAt: new Date(),
+      complianceStatus: "pending",
+      complianceNotes: null,
+      complianceReviewedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      expiresAt: offer.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Default 7 days expiry
+    };
+    
+    this.partnershipOffers.set(id, newOffer);
+    return newOffer;
+  }
+
+  async updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer> {
+    const offer = this.partnershipOffers.get(id);
+    if (!offer) {
+      throw new Error(`Partnership offer with ID ${id} not found`);
+    }
+    
+    const updatedOffer: PartnershipOffer = {
+      ...offer,
+      status,
+      athleteRespondedAt: status !== "pending" ? new Date() : offer.athleteRespondedAt,
+      updatedAt: new Date(),
+    };
+    
+    this.partnershipOffers.set(id, updatedOffer);
+    return updatedOffer;
+  }
+
+  async markPartnershipOfferViewed(id: number): Promise<PartnershipOffer> {
+    const offer = this.partnershipOffers.get(id);
+    if (!offer) {
+      throw new Error(`Partnership offer with ID ${id} not found`);
+    }
+    
+    const updatedOffer: PartnershipOffer = {
+      ...offer,
+      athleteViewedAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.partnershipOffers.set(id, updatedOffer);
+    return updatedOffer;
+  }
+
+  async updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer> {
+    const offer = this.partnershipOffers.get(id);
+    if (!offer) {
+      throw new Error(`Partnership offer with ID ${id} not found`);
+    }
+    
+    const updatedOffer: PartnershipOffer = {
+      ...offer,
+      complianceStatus: status,
+      complianceNotes: notes || offer.complianceNotes,
+      complianceReviewedAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    this.partnershipOffers.set(id, updatedOffer);
+    return updatedOffer;
   }
 }
 

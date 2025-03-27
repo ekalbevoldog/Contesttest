@@ -372,6 +372,64 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type ComplianceOfficer = typeof complianceOfficers.$inferSelect;
 export type InsertComplianceOfficer = z.infer<typeof insertComplianceOfficerSchema>;
 
+// Partnership Offers
+export const partnershipOffers = pgTable("partnership_offers", {
+  id: serial("id").primaryKey(),
+  matchId: integer("match_id").references(() => matches.id).notNull(),
+  businessId: integer("business_id").references(() => businesses.id).notNull(),
+  athleteId: integer("athlete_id").references(() => athletes.id).notNull(),
+  campaignId: integer("campaign_id").references(() => campaigns.id).notNull(),
+  
+  // Compensation Details
+  compensationType: text("compensation_type").notNull(), // monetary, product, affiliate, hybrid
+  offerAmount: text("offer_amount").notNull(), // monetary value or product value
+  paymentSchedule: text("payment_schedule"), // one-time, monthly, per-deliverable
+  bonusStructure: text("bonus_structure"), // performance bonuses or incentives
+  
+  // Deliverables
+  deliverables: jsonb("deliverables").notNull(), // array of required content pieces
+  contentSpecifications: text("content_specifications"), // detailed content requirements
+  postFrequency: text("post_frequency"), // how often content should be posted
+  approvalProcess: text("approval_process"), // content approval workflow
+  
+  // Rights and Terms
+  usageRights: text("usage_rights").notNull(), // how business can use athlete's content
+  term: text("term").notNull(), // duration of the partnership
+  exclusivity: text("exclusivity"), // exclusivity requirements
+  geographicRestrictions: text("geographic_restrictions"), // where content can be shared
+  
+  // Status
+  status: text("status").default("pending").notNull(), // pending, accepted, declined, expired
+  athleteViewedAt: timestamp("athlete_viewed_at"),
+  athleteRespondedAt: timestamp("athlete_responded_at"),
+  businessUpdatedAt: timestamp("business_updated_at"),
+  
+  // Compliance
+  complianceStatus: text("compliance_status").default("pending"), // pending, approved, rejected
+  complianceNotes: text("compliance_notes"),
+  complianceReviewedAt: timestamp("compliance_reviewed_at"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // when offer expires if not responded to
+});
+
+export const insertPartnershipOfferSchema = createInsertSchema(partnershipOffers).omit({
+  id: true,
+  status: true,
+  athleteViewedAt: true,
+  athleteRespondedAt: true,
+  businessUpdatedAt: true,
+  complianceStatus: true,
+  complianceNotes: true,
+  complianceReviewedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type PartnershipOffer = typeof partnershipOffers.$inferSelect;
+export type InsertPartnershipOffer = z.infer<typeof insertPartnershipOfferSchema>;
+
 // Feedback system
 export const feedbacks = pgTable("feedbacks", {
   id: serial("id").primaryKey(),

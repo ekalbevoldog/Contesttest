@@ -509,6 +509,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Partnership Offer endpoints
+  app.post("/api/partnership-offers", async (req: Request, res: Response) => {
+    try {
+      const { athleteId, businessId, campaignId, matchId, compensationType, offerAmount, deliverables, usageRights, term } = req.body;
+      
+      // Validate required fields
+      if (!athleteId || !businessId || !campaignId || !matchId || !compensationType || !offerAmount || !deliverables || !usageRights || !term) {
+        return res.status(400).json({ error: "Missing required fields for partnership offer" });
+      }
+
+      // Create a new partnership offer
+      const partnershipOffer = await storage.createPartnershipOffer({
+        athleteId,
+        businessId,
+        campaignId,
+        matchId,
+        compensationType,
+        offerAmount,
+        deliverables,
+        usageRights,
+        term,
+        paymentSchedule: req.body.paymentSchedule || null,
+        bonusStructure: req.body.bonusStructure || null,
+        contentSpecifications: req.body.contentSpecifications || null,
+        postFrequency: req.body.postFrequency || null,
+        approvalProcess: req.body.approvalProcess || null,
+        exclusivity: req.body.exclusivity || null,
+        geographicRestrictions: req.body.geographicRestrictions || null,
+        expiresAt: req.body.expiresAt || null,
+      });
+
+      res.status(201).json(partnershipOffer);
+    } catch (error) {
+      console.error("Error creating partnership offer:", error);
+      res.status(500).json({ error: "Failed to create partnership offer" });
+    }
+  });
+
+  app.get("/api/partnership-offers/athlete/:athleteId", async (req: Request, res: Response) => {
+    try {
+      const { athleteId } = req.params;
+      const offers = await storage.getPartnershipOffersByAthlete(parseInt(athleteId, 10));
+      res.json(offers);
+    } catch (error) {
+      console.error("Error fetching athlete partnership offers:", error);
+      res.status(500).json({ error: "Failed to fetch partnership offers" });
+    }
+  });
+
+  app.get("/api/partnership-offers/business/:businessId", async (req: Request, res: Response) => {
+    try {
+      const { businessId } = req.params;
+      const offers = await storage.getPartnershipOffersByBusiness(parseInt(businessId, 10));
+      res.json(offers);
+    } catch (error) {
+      console.error("Error fetching business partnership offers:", error);
+      res.status(500).json({ error: "Failed to fetch partnership offers" });
+    }
+  });
+
+  app.get("/api/partnership-offers/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const offer = await storage.getPartnershipOffer(parseInt(id, 10));
+      
+      if (!offer) {
+        return res.status(404).json({ error: "Partnership offer not found" });
+      }
+      
+      res.json(offer);
+    } catch (error) {
+      console.error("Error fetching partnership offer:", error);
+      res.status(500).json({ error: "Failed to fetch partnership offer" });
+    }
+  });
+
+  app.patch("/api/partnership-offers/:id/viewed", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updatedOffer = await storage.markPartnershipOfferViewed(parseInt(id, 10));
+      res.json(updatedOffer);
+    } catch (error) {
+      console.error("Error marking partnership offer as viewed:", error);
+      res.status(500).json({ error: "Failed to update partnership offer" });
+    }
+  });
+
+  app.patch("/api/partnership-offers/:id/status", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      if (!status || !['pending', 'accepted', 'declined', 'expired'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status value" });
+      }
+      
+      const updatedOffer = await storage.updatePartnershipOfferStatus(parseInt(id, 10), status);
+      res.json(updatedOffer);
+    } catch (error) {
+      console.error("Error updating partnership offer status:", error);
+      res.status(500).json({ error: "Failed to update partnership offer status" });
+    }
+  });
+
+  app.patch("/api/partnership-offers/:id/compliance", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status, notes } = req.body;
+      
+      if (!status || !['pending', 'approved', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: "Invalid compliance status value" });
+      }
+      
+      const updatedOffer = await storage.updatePartnershipOfferComplianceStatus(parseInt(id, 10), status, notes);
+      res.json(updatedOffer);
+    } catch (error) {
+      console.error("Error updating partnership offer compliance status:", error);
+      res.status(500).json({ error: "Failed to update partnership offer compliance status" });
+    }
+  });
+
   // Process personalized onboarding data
   app.post("/api/personalized-onboarding", async (req: Request, res: Response) => {
     try {
