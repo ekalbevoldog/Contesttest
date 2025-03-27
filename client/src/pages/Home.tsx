@@ -16,51 +16,103 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
-    // Aggressive autoplay implementation with logging
-    const attemptAutoplay = () => {
-      if (videoRef.current) {
-        console.log('Attempting to play video...');
-        
-        // Set video properties programmatically
-        videoRef.current.muted = true;
-        videoRef.current.playsInline = true;
-        videoRef.current.setAttribute('playsinline', '');
-        
-        // Try to play the video
-        const playPromise = videoRef.current.play();
-        
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log('Video autoplay successful!');
-            })
-            .catch(error => {
-              console.error('Autoplay was prevented:', error);
-              
-              // Add user interaction fallback
-              const handleUserInteraction = () => {
-                console.log('User interacted, trying to play video again');
-                videoRef.current?.play()
-                  .then(() => console.log('Video play on interaction successful'))
-                  .catch(e => console.error('Video play on interaction failed:', e));
-              };
-              
-              // Try to play on various user interactions
-              document.addEventListener('click', handleUserInteraction, { once: true });
-              document.addEventListener('touchstart', handleUserInteraction, { once: true });
-              document.addEventListener('keydown', handleUserInteraction, { once: true });
-            });
-        } else {
-          console.warn('Video play() returned undefined, browser may not support promises on HTMLMediaElement.play()');
-        }
-      }
+    // Full diagnostic autoplay implementation
+    const logVideoState = (prefix: string) => {
+      if (!videoRef.current) return;
+      
+      const video = videoRef.current;
+      console.log(`${prefix} - VIDEO DIAGNOSTIC:`, {
+        videoElement: video,
+        duration: video.duration,
+        readyState: video.readyState,
+        networkState: video.networkState,
+        paused: video.paused,
+        ended: video.ended,
+        currentTime: video.currentTime,
+        src: video.src,
+        srcExists: !!video.src,
+        canPlayType: video.canPlayType('video/mp4'),
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        visible: !!(video.offsetWidth || video.offsetHeight)
+      });
     };
     
-    // Try immediately
-    attemptAutoplay();
+    const attemptAutoplay = () => {
+      if (!videoRef.current) {
+        console.error('Video ref is null, cannot play');
+        return;
+      }
+      
+      console.log('Attempting to play video...');
+      
+      // Force all autoplay-friendly properties
+      const video = videoRef.current;
+      video.muted = true;
+      video.playsInline = true;
+      video.volume = 0;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('muted', '');
+      
+      // Check if video is loaded
+      logVideoState('Before play');
+      
+      // Force reload the video source
+      const currentSrc = video.src;
+      video.src = '';
+      // Short timeout to ensure the src reset takes effect
+      setTimeout(() => {
+        if (!videoRef.current) return;
+        
+        // Re-apply the source
+        videoRef.current.src = currentSrc; 
+        videoRef.current.load();
+        
+        // Try to play after loading
+        videoRef.current.onloadeddata = () => {
+          console.log('Video data loaded, attempting playback');
+          if (!videoRef.current) return;
+          
+          const playPromise = videoRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('✅ Video autoplay successful!');
+                logVideoState('After successful play');
+              })
+              .catch(error => {
+                console.error('❌ Autoplay was prevented:', error);
+                logVideoState('After failed play');
+                
+                // Add user interaction fallback
+                const handleUserInteraction = () => {
+                  console.log('User interacted, trying to play video again');
+                  if (!videoRef.current) return;
+                  
+                  videoRef.current.play()
+                    .then(() => {
+                      console.log('Video play on interaction successful');
+                      logVideoState('After interaction play');
+                    })
+                    .catch(e => console.error('Video play on interaction failed:', e));
+                };
+                
+                // Try to play on various user interactions
+                document.addEventListener('click', handleUserInteraction, { once: true });
+                document.addEventListener('touchstart', handleUserInteraction, { once: true });
+                document.addEventListener('keydown', handleUserInteraction, { once: true });
+              });
+          } else {
+            console.warn('Video play() returned undefined, browser may not support promises on HTMLMediaElement.play()');
+            logVideoState('After undefined play promise');
+          }
+        };
+      }, 100);
+    };
     
-    // Also try after a short delay (sometimes helps with certain browsers)
-    const timeoutId = setTimeout(attemptAutoplay, 1000);
+    // Try after a short delay to ensure component is fully mounted
+    const timeoutId = setTimeout(attemptAutoplay, 500);
     
     return () => clearTimeout(timeoutId);
   }, []);
