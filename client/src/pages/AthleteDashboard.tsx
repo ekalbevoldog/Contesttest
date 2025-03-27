@@ -506,7 +506,7 @@ export default function AthleteDashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
-                <div className="text-3xl font-bold text-pink-500">{activePartnerships.length}</div>
+                <div className="text-3xl font-bold text-[#ffebec]">{activePartnerships.length}</div>
                 <Badge className="bg-green-600 text-white hover:bg-green-700">Active</Badge>
               </div>
             </CardContent>
@@ -517,7 +517,7 @@ export default function AthleteDashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
-                <div className="text-3xl font-bold text-pink-500">{partnershipOffers.length}</div>
+                <div className="text-3xl font-bold text-[#ffebec]">{partnershipOffers.length}</div>
                 <Badge className="bg-blue-700 text-white hover:bg-blue-800">Pending</Badge>
               </div>
             </CardContent>
@@ -528,7 +528,7 @@ export default function AthleteDashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
-                <div className="text-3xl font-bold text-pink-500">5</div>
+                <div className="text-3xl font-bold text-[#ffebec]">5</div>
                 <Badge className="bg-amber-600 text-white hover:bg-amber-700">Due Soon</Badge>
               </div>
             </CardContent>
@@ -539,7 +539,7 @@ export default function AthleteDashboard() {
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
-                <div className="text-3xl font-bold text-pink-500">${earningsData.total}</div>
+                <div className="text-3xl font-bold text-[#ffebec]">${earningsData.total}</div>
                 <Badge className="bg-indigo-600 text-white hover:bg-indigo-700">{earningsData.change}</Badge>
               </div>
             </CardContent>
