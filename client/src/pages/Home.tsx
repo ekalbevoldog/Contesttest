@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,24 @@ import { Label } from "@/components/ui/label";
 export default function Home() {
   const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  useEffect(() => {
+    // Ensure video plays automatically when component mounts
+    if (videoRef.current) {
+      const playPromise = videoRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log('Autoplay was prevented:', error);
+          // We can try to play again when user interacts with the page
+          document.addEventListener('click', () => {
+            videoRef.current?.play();
+          }, { once: true });
+        });
+      }
+    }
+  }, []);
   
   return (
     <div className="min-h-screen bg-black text-white">
@@ -62,12 +80,14 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
                 <video 
+                  ref={videoRef}
                   className="w-full h-full object-cover rounded-lg"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
+                  autoPlay={true}
+                  muted={true}
+                  loop={true}
+                  playsInline={true}
                   preload="auto"
+                  controls={false}
                 >
                   <source src="/videos/landing-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
