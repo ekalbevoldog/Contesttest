@@ -68,6 +68,8 @@ export default function Home() {
                   loop={true}
                   playsInline={true}
                   preload="auto"
+                  defaultMuted={true}
+                  playsinline="true"
                 >
                   <source src="/videos/landing-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
