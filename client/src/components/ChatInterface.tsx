@@ -305,213 +305,125 @@ export default function ChatInterface() {
   }, [lastMessage, toast]);
   
   return (
-    <Card className="h-[calc(100vh-6rem)] bg-white shadow-md overflow-hidden border border-gray-200">
-      <div className="flex h-full flex-col">
-        {/* Main chat area */}
-        <div className="w-full flex flex-col h-full">
-          {/* Chat header */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#003366] to-[#001a33] flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
-            <div>
-              <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-[#00a3ff]">Contested Matchmaking Assistant</h3>
-              <p className="text-sm text-gray-300 mt-1">Connecting SMBs with mid-tier athletes</p>
-            </div>
-            
-            <div className="w-full md:w-auto flex flex-col md:flex-row gap-3 items-start md:items-center">
-              {/* WebSocket connection status */}
-              <div className={`flex items-center px-3 py-1.5 rounded-full text-xs ${
-                connectionStatus === 'open' 
-                  ? 'bg-[rgba(0,255,204,0.15)] border border-[rgba(0,255,204,0.5)] text-white' 
-                  : connectionStatus === 'connecting' 
-                    ? 'bg-[rgba(255,149,0,0.15)] border border-[rgba(255,149,0,0.5)] text-white' 
-                    : 'bg-[rgba(255,75,75,0.15)] border border-[rgba(255,75,75,0.5)] text-white'
-              }`}>
-                <div className={`h-3 w-3 rounded-full mr-2 ${
-                  connectionStatus === 'open' 
-                    ? 'bg-[#00ffcc]' 
-                    : connectionStatus === 'connecting' 
-                      ? 'bg-[#ff9500] animate-pulse' 
-                      : 'bg-[#ff4b4b]'
-                }`}></div>
-                <span className="font-medium">
-                  {connectionStatus === 'open' 
-                    ? 'Live Updates' 
-                    : connectionStatus === 'connecting' 
-                      ? 'Connecting...' 
-                      : 'Reconnecting...'}
-                </span>
-              </div>
-              
-              <div className="flex space-x-2">
-                {/* Test button for WebSocket notifications */}
-                {session && (
-                  <Button 
-                    size="sm" 
-                    className="flex items-center gap-1 bg-gradient-to-r from-[#ff9500] to-[#ff7200] hover:from-[#ff8a00] hover:to-[#ff6600] text-white"
-                    onClick={testMatchNotification}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M22 2L11 13"></path>
-                      <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
-                    </svg>
-                    Test Match
-                  </Button>
+    <div className="flex h-full flex-col bg-white">
+      <div className="w-full flex flex-col h-full">
+        {/* Chat messages */}
+        <ScrollArea className="flex-1 p-4 h-[calc(100vh-10rem)] md:h-[calc(60vh)]">
+          <div className="space-y-4">
+            {messages.map((message) => (
+              <div key={message.id}>
+                {message.type === 'assistant' ? (
+                  <div className="flex items-start mb-4">
+                    <div className="flex-shrink-0">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center text-white">
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="ml-2 bg-gray-100 rounded-lg py-2 px-3 max-w-[85%] shadow-sm border border-gray-200">
+                      <div className="text-sm text-gray-900">
+                        <p className="font-semibold mb-1 text-sm text-gray-800">Contested Assistant</p>
+                        <p className="whitespace-pre-line">{message.content}</p>
+                        
+                        {/* Show athlete form if needed */}
+                        {message.showAthleteForm && (
+                          <div className="mt-4 mb-2">
+                            <AthleteProfileForm onSubmit={handleFormSubmit} isLoading={isProcessingForm} />
+                          </div>
+                        )}
+                        
+                        {/* Show business form if needed */}
+                        {message.showBusinessForm && (
+                          <div className="mt-4 mb-2">
+                            <BusinessProfileForm onSubmit={handleFormSubmit} isLoading={isProcessingForm} />
+                          </div>
+                        )}
+                        
+                        {/* Show match results if needed */}
+                        {message.showMatchResults && message.matchData && (
+                          <div className="mt-4 mb-2">
+                            <CompactMatchResults 
+                              match={message.matchData} 
+                              userType={message.matchData.userType}
+                              isNewMatch={message.matchData.isNewMatch}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start mb-4 justify-end">
+                    <div className="mr-2 bg-gradient-to-r from-[#0066cc] to-[#003366] text-white rounded-lg py-2 px-3 max-w-[85%] shadow-sm">
+                      <div className="text-sm">
+                        <p>{message.content}</p>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
                 )}
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center gap-1 border-[#00a3ff] text-white hover:bg-[rgba(0,163,255,0.2)]"
-                  onClick={handleResetChat}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                  </svg>
-                  Reset Chat
-                </Button>
               </div>
-            </div>
-          </div>
-
-          {/* Chat messages */}
-          <ScrollArea className="flex-1 p-6 h-[calc(100vh-16rem)] md:h-[calc(100vh-10rem)]">
-            <div className="space-y-6">
-              {messages.map((message) => (
-                <div key={message.id}>
-                  {message.type === 'assistant' ? (
-                    <div className="flex items-start mb-6">
-                      <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white">
-                          <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="ml-3 bg-gradient-to-br from-[#f8f9fa] to-[#edf2f7] rounded-lg py-3 px-4 max-w-3xl shadow-sm border border-gray-100 overflow-visible">
-                        <div className="text-sm text-gray-900">
-                          <p className="font-bold mb-1 bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#0066cc]">Contested Assistant</p>
-                          <p>{message.content}</p>
-                          
-                          {/* Show athlete form if needed */}
-                          {message.showAthleteForm && (
-                            <div className="mt-6 mb-4">
-                              <AthleteProfileForm onSubmit={handleFormSubmit} isLoading={isProcessingForm} />
-                            </div>
-                          )}
-                          
-                          {/* Show business form if needed */}
-                          {message.showBusinessForm && (
-                            <div className="mt-6 mb-4">
-                              <BusinessProfileForm onSubmit={handleFormSubmit} isLoading={isProcessingForm} />
-                            </div>
-                          )}
-                          
-                          {/* Show match results if needed */}
-                          {message.showMatchResults && message.matchData && (
-                            <div className="mt-6 mb-4">
-                              <CompactMatchResults 
-                                match={message.matchData} 
-                                userType={message.matchData.userType}
-                                isNewMatch={message.matchData.isNewMatch}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-start mb-6 justify-end">
-                      <div className="mr-3 bg-gradient-to-r from-[#0066cc] to-[#003366] text-white rounded-lg py-3 px-4 max-w-3xl shadow-sm">
-                        <div className="text-sm">
-                          <p>{message.content}</p>
-                        </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
-                          <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              {/* Show typing indicator while waiting for response */}
-              {isTyping && (
-                <div className="flex items-start mb-6">
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white">
-                      <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-3 bg-gradient-to-br from-[#f8f9fa] to-[#edf2f7] rounded-lg py-3 px-4 shadow-sm border border-gray-100">
-                    <div className="flex space-x-2">
-                      <div className="h-2 w-2 bg-[#0066cc] rounded-full animate-bounce"></div>
-                      <div className="h-2 w-2 bg-[#0066cc] rounded-full animate-bounce delay-75"></div>
-                      <div className="h-2 w-2 bg-[#0066cc] rounded-full animate-bounce delay-150"></div>
-                    </div>
+            ))}
+            
+            {/* Show typing indicator while waiting for response */}
+            {isTyping && (
+              <div className="flex items-start mb-4">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center text-white">
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
                   </div>
                 </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-
-          {/* Chat input area */}
-          <div className="px-4 py-3 bg-gradient-to-r from-[#f5f7fa] to-[#ebedee] border-t border-gray-200">
-            <div className="flex space-x-3">
-              <div className="flex-grow">
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Type a message..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  disabled={isTyping || isProcessingForm}
-                  className="border-[#c0d0e0] focus-visible:ring-[#0066cc]"
-                />
+                <div className="ml-2 bg-gray-100 rounded-lg py-2 px-3 shadow-sm border border-gray-200">
+                  <div className="flex space-x-2">
+                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
+                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                  </div>
+                </div>
               </div>
-              <Button
-                type="button"
-                onClick={handleSendMessage}
-                disabled={!input.trim() || isTyping || isProcessingForm}
-                className="flex items-center bg-gradient-to-r from-[#003366] to-[#0066cc] hover:from-[#002b55] hover:to-[#0055aa] text-white"
-              >
-                <Send className="h-5 w-5 mr-1" />
-                Send
-              </Button>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#0066cc] font-semibold">Contested</span> © 2025</p>
+            )}
+            
+            <div ref={messagesEndRef} />
           </div>
+        </ScrollArea>
+
+        {/* Chat input area */}
+        <div className="px-4 py-3 bg-gradient-to-r from-[#f5f7fa] to-[#ebedee] border-t border-gray-200">
+          <div className="flex space-x-3">
+            <div className="flex-grow">
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Type a message..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                disabled={isTyping || isProcessingForm}
+                className="border-[#c0d0e0] focus-visible:ring-[#0066cc]"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleSendMessage}
+              disabled={!input.trim() || isTyping || isProcessingForm}
+              className="flex items-center bg-gradient-to-r from-[#003366] to-[#0066cc] hover:from-[#002b55] hover:to-[#0055aa] text-white"
+            >
+              <Send className="h-5 w-5 mr-1" />
+              Send
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#0066cc] font-semibold">Contested</span> © 2025</p>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }

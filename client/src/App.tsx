@@ -26,6 +26,7 @@ import AthleteProfileLink from "@/pages/AthleteProfileLink";
 import MatchAlgorithmTest from "@/pages/MatchAlgorithmTest";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AIAssistantDrawer from "@/components/AIAssistantDrawer";
 
 function Router() {
   return (
@@ -77,6 +78,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router />
+        <AIAssistantDrawer />
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
