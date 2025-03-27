@@ -65,28 +65,16 @@ export default function Home() {
               {/* Background styling */}
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
               
-              {/* Visual content area */}
-              <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center bg-zinc-900 z-10">
-                {/* Static image placeholder with gradient overlay */}
-                <div className="relative w-full h-full bg-gradient-to-tr from-red-600/30 to-amber-400/20 flex items-center justify-center">
-                  {/* Center content */}
-                  <div className="text-center px-6 py-8 rounded-xl bg-black/40 backdrop-blur-sm">
-                    <h3 className="text-xl md:text-2xl font-bold mb-3 text-white">
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-amber-300">
-                        Discover Your Perfect Match
-                      </span>
-                    </h3>
-                    <p className="text-zinc-300 mb-4">
-                      Join 500+ successful partnerships on our platform
-                    </p>
-                    <Button 
-                      className="bg-red-500 hover:bg-red-600 text-white"
-                      asChild
-                    >
-                      <Link to="/dynamic-onboarding">Start Today</Link>
-                    </Button>
-                  </div>
-                </div>
+              {/* Video container - simplified */}
+              <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg bg-zinc-900 z-10">
+                <video
+                  className="w-full h-full object-cover"
+                  src="/videos/landing-video.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
               </div>
             </div>
           </div>
