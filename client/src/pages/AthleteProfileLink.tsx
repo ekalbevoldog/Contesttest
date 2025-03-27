@@ -189,7 +189,7 @@ export default function AthleteProfileLink() {
         {/* Metrics Section - Live Stats */}
         <div className="w-full mb-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="uppercase text-xs font-semibold tracking-wider text-zinc-400">Live Performance Metrics</h3>
+            <h3 className="uppercase text-xs font-semibold tracking-wider text-white">Live Performance Metrics</h3>
             <button
               className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
               onClick={async () => {
@@ -221,19 +221,19 @@ export default function AthleteProfileLink() {
                   maximumFractionDigits: 1 
                 }).format(profile.metrics.followerCount) : '0'}
               </div>
-              <div className="text-xs text-zinc-400">Total Followers</div>
+              <div className="text-xs text-white">Total Followers</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-amber-500">
                 {profile.metrics?.engagement ? `${profile.metrics.engagement}%` : '0%'}
               </div>
-              <div className="text-xs text-zinc-400">Engagement</div>
+              <div className="text-xs text-white">Engagement</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-amber-500">
                 {profile.metrics?.contentQuality ? `${profile.metrics.contentQuality}/10` : '0/10'}
               </div>
-              <div className="text-xs text-zinc-400">Content Score</div>
+              <div className="text-xs text-white">Content Score</div>
             </div>
           </div>
           
@@ -251,12 +251,12 @@ export default function AthleteProfileLink() {
                     maximumFractionDigits: 1 
                   }).format(profile.metrics.instagramMetrics.followers)}
                 </div>
-                <div className="text-xs text-zinc-300 mt-1 flex justify-between">
-                  <span>Engagement: {profile.metrics.instagramMetrics.engagement}%</span>
-                  <span>Posts: {profile.metrics.instagramMetrics.posts}</span>
+                <div className="text-xs text-white mt-1 flex justify-between">
+                  <span><strong>Engagement:</strong> {profile.metrics.instagramMetrics.engagement}%</span>
+                  <span><strong>Posts:</strong> {profile.metrics.instagramMetrics.posts}</span>
                 </div>
-                <div className="mt-2 text-xs text-zinc-400">
-                  <span className="text-green-500">↑{profile.metrics.instagramMetrics.weeklyGrowth}%</span> weekly growth
+                <div className="mt-2 text-xs text-white">
+                  <span className="text-green-400 font-bold">↑{profile.metrics.instagramMetrics.weeklyGrowth}%</span> weekly growth
                 </div>
               </div>
             )}
@@ -273,12 +273,12 @@ export default function AthleteProfileLink() {
                     maximumFractionDigits: 1 
                   }).format(profile.metrics.twitterMetrics.followers)}
                 </div>
-                <div className="text-xs text-zinc-300 mt-1 flex justify-between">
-                  <span>Engagement: {profile.metrics.twitterMetrics.engagement}%</span>
-                  <span>Tweets: {profile.metrics.twitterMetrics.tweets}</span>
+                <div className="text-xs text-white mt-1 flex justify-between">
+                  <span><strong>Engagement:</strong> {profile.metrics.twitterMetrics.engagement}%</span>
+                  <span><strong>Tweets:</strong> {profile.metrics.twitterMetrics.tweets}</span>
                 </div>
-                <div className="mt-2 text-xs text-zinc-400">
-                  <span className="text-green-500">↑{profile.metrics.twitterMetrics.weeklyGrowth}%</span> weekly growth
+                <div className="mt-2 text-xs text-white">
+                  <span className="text-green-400 font-bold">↑{profile.metrics.twitterMetrics.weeklyGrowth}%</span> weekly growth
                 </div>
               </div>
             )}
@@ -295,12 +295,12 @@ export default function AthleteProfileLink() {
                     maximumFractionDigits: 1 
                   }).format(profile.metrics.tiktokMetrics.followers)}
                 </div>
-                <div className="text-xs text-zinc-300 mt-1 flex justify-between">
-                  <span>Engagement: {profile.metrics.tiktokMetrics.engagement}%</span>
-                  <span>Videos: {profile.metrics.tiktokMetrics.videos}</span>
+                <div className="text-xs text-white mt-1 flex justify-between">
+                  <span><strong>Engagement:</strong> {profile.metrics.tiktokMetrics.engagement}%</span>
+                  <span><strong>Videos:</strong> {profile.metrics.tiktokMetrics.videos}</span>
                 </div>
-                <div className="mt-2 text-xs text-zinc-400">
-                  <span className="text-green-500">↑{profile.metrics.tiktokMetrics.weeklyGrowth}%</span> weekly growth
+                <div className="mt-2 text-xs text-white">
+                  <span className="text-green-400 font-bold">↑{profile.metrics.tiktokMetrics.weeklyGrowth}%</span> weekly growth
                 </div>
               </div>
             )}
@@ -310,7 +310,7 @@ export default function AthleteProfileLink() {
         {/* Social media links */}
         {profile.socialHandles && Object.keys(profile.socialHandles).length > 0 && (
           <div className="w-full mb-6">
-            <h3 className="uppercase text-xs font-semibold tracking-wider mb-3 text-zinc-400">Connect On Social</h3>
+            <h3 className="uppercase text-xs font-semibold tracking-wider mb-3 text-white">Connect On Social</h3>
             <div className="grid grid-cols-4 gap-2">
               {Object.entries(profile.socialHandles).map(([platform, handle]) => 
                 handle ? (
@@ -344,7 +344,7 @@ export default function AthleteProfileLink() {
         
         {/* Custom link buttons */}
         <div className="w-full space-y-3">
-          <h3 className="uppercase text-xs font-semibold tracking-wider mb-3 text-zinc-400">Featured Content</h3>
+          <h3 className="uppercase text-xs font-semibold tracking-wider mb-3 text-white">Featured Content</h3>
           {profile.profileLinkButtons?.map((button) => (
             <a
               key={button.id}
@@ -367,8 +367,8 @@ export default function AthleteProfileLink() {
         
         {/* Contact for Partnerships Banner */}
         <div className="w-full mt-8 p-4 bg-gradient-to-r from-red-600/20 to-amber-500/20 rounded-lg border border-red-600/30 text-center">
-          <h3 className="font-semibold text-sm mb-1">Interested in a Partnership?</h3>
-          <p className="text-xs text-zinc-300 mb-2">Connect through the Contested platform for verified NIL opportunities</p>
+          <h3 className="font-semibold text-sm mb-1 text-white">Interested in a Partnership?</h3>
+          <p className="text-xs text-white mb-2">Connect through the Contested platform for verified NIL opportunities</p>
           <a href="/" className="inline-block text-xs px-4 py-2 rounded font-medium bg-gradient-to-r from-red-600 to-amber-500 text-white hover:from-red-500 hover:to-amber-400 transition-colors">
             Contact via Contested
           </a>
