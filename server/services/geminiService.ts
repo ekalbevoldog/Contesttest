@@ -304,14 +304,22 @@ class GeminiService {
   }
 
   // Continue the conversation based on session data
-  async continueConversation(message: string, sessionData: any) {
+  async continueConversation(message: string, sessionData: any, messageHistory: any[] = []) {
+    // Format the message history for the prompt
+    const formattedHistory = messageHistory.map(msg => 
+      `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+    ).join('\n\n');
+    
     const prompt = `
-      You are an AI assistant for NIL Connect, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
+      You are an AI assistant for Contested, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
       
       You're talking to a ${sessionData.userType}.
       
       Here's what you know about this user:
       ${JSON.stringify(sessionData)}
+      
+      Previous conversation history:
+      ${formattedHistory}
       
       Their latest message is: "${message}"
       

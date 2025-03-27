@@ -32,7 +32,7 @@ export default function Home() {
                 For Authentic Partnerships
               </h1>
               <p className="text-xl text-zinc-400 max-w-xl">
-                Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
+                Contested leverages cutting-edge AI to precisely match athletes and brands, unlocking powerful, data-driven marketing partnerships built for genuine impact and measurable results.
               </p>
               <div className="flex flex-wrap gap-4 pt-2">
                 <Button 

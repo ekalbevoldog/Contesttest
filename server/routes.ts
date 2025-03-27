@@ -156,11 +156,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           } else {
             // Continue the conversation
-            response = await geminiService.continueConversation(message, sessionData);
+            // Get previous messages for this session
+            const messageHistory = await storage.getMessages(sessionId);
+            
+            // Pass message history to the geminiService for context
+            response = await geminiService.continueConversation(message, sessionData, messageHistory);
           }
         } else {
           // Profile is completed, continue normal conversation
-          response = await geminiService.continueConversation(message, sessionData);
+          // Get previous messages for this session
+          const messageHistory = await storage.getMessages(sessionId);
+          
+          // Pass message history to the geminiService for context
+          response = await geminiService.continueConversation(message, sessionData, messageHistory);
         }
       }
       
