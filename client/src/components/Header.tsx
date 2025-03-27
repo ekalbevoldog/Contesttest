@@ -205,23 +205,9 @@ export default function Header() {
               </DropdownMenu>
             )}
             
-            {!user && (
-              <Button
-                size="sm"
-                className="bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium mr-2"
-                asChild
-              >
-                <Link href="/dynamic-onboarding">
-                  <span className="flex items-center">
-                    Get Started
-                  </span>
-                </Link>
-              </Button>
-            )}
-            
             <Button 
               size="sm" 
-              className="bg-[#9a0c0c] hover:bg-[#810a0a] text-white font-medium"
+              className="bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium"
               onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant'))}
             >
               <span className="flex items-center">
@@ -231,6 +217,20 @@ export default function Header() {
                 AI Assistant
               </span>
             </Button>
+            
+            {!user && (
+              <Button
+                size="sm"
+                className="bg-[#9a0c0c] hover:bg-[#810a0a] text-white font-medium ml-2"
+                asChild
+              >
+                <Link href="/dynamic-onboarding">
+                  <span className="flex items-center">
+                    Get Started
+                  </span>
+                </Link>
+              </Button>
+            )}
           </div>
           
           <div className="md:hidden">
@@ -372,6 +372,19 @@ export default function Header() {
                   
                   <div className="border-t border-gray-700 my-4 pt-4">
                     <div className="px-3 py-2 text-sm font-medium text-gray-300">Account</div>
+                    {!user && (
+                      <Link href="/dynamic-onboarding">
+                        <span
+                          className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
+                          onClick={() => setOpen(false)}
+                        >
+                          <svg className="h-4 w-4 mr-2 text-[#f03c3c]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                          </svg>
+                          Get Started
+                        </span>
+                      </Link>
+                    )}
                     {user ? (
                       <>
                         <Link href="/profile">
@@ -419,22 +432,8 @@ export default function Header() {
                     )}
                   </div>
                   
-                  {!user && (
-                    <Button 
-                      className="w-full mt-4 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium"
-                      onClick={() => setOpen(false)}
-                      asChild
-                    >
-                      <Link href="/dynamic-onboarding">
-                        <span className="flex items-center justify-center">
-                          Get Started
-                        </span>
-                      </Link>
-                    </Button>
-                  )}
-                  
                   <Button 
-                    className="w-full mt-6 bg-[#9a0c0c] hover:bg-[#810a0a] text-white font-medium" 
+                    className="w-full mt-6 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium" 
                     onClick={() => {
                       setOpen(false);
                       window.dispatchEvent(new CustomEvent('toggle-ai-assistant'));
