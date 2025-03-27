@@ -169,7 +169,7 @@ export default function Pricing() {
                     }`}
                     asChild
                   >
-                    <Link to="/dynamic-onboarding">{plan.buttonText}</Link>
+                    <Link to="/find-athlete-match">{plan.buttonText}</Link>
                   </Button>
                 </div>
               </Card>
@@ -424,7 +424,7 @@ export default function Pricing() {
               className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white font-bold hover:from-[#d42e2e] hover:to-[#e34c4c] transition-all shadow-md"
               asChild
             >
-              <Link to="/dynamic-onboarding">Get Started Now</Link>
+              <Link to="/find-athlete-match">Find Your Perfect Match Today</Link>
             </Button>
           </div>
         </div>
