@@ -173,36 +173,24 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
-                    <div className="flex items-center">
-                      <div className="flex">
-                        <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">$250</span>
-                        </div>
-                      </div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <span>$250</span>
                     </div>
                     <p className="text-xs text-zinc-500">per campaign</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
-                    <div className="flex items-center">
-                      <div className="flex">
-                        <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">92%</span>
-                        </div>
-                      </div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <span>92%</span>
                     </div>
                     <p className="text-xs text-zinc-500">of athletes find matches</p>
                   </div>
                   
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
-                    <div className="flex items-center">
-                      <div className="flex">
-                        <div className="flex flex-col">
-                          <span className="text-5xl font-bold text-white">48hrs</span>
-                        </div>
-                      </div>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <span>48hrs</span>
                     </div>
                     <p className="text-xs text-zinc-500">average timeframe</p>
                   </div>
