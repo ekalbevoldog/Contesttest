@@ -59,10 +59,15 @@ import {
   ArrowRight,
   Download,
   Target,
-  Heart
+  Heart,
+  Link,
+  Shield,
+  Trash2
 } from "lucide-react";
+import { SiTiktok } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import ProfileLinkEditor from "@/components/ProfileLinkEditor";
 
 export default function AthleteDashboard() {
   const [, navigate] = useLocation();
@@ -1520,6 +1525,25 @@ export default function AthleteDashboard() {
               <CardFooter className="flex justify-end">
                 <Button>Save Preferences</Button>
               </CardFooter>
+            </Card>
+            
+            {/* Shareable Profile Link */}
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link className="h-5 w-5 text-primary" />
+                  Shareable Profile Link
+                </CardTitle>
+                <CardDescription>
+                  Create your personal shareable profile page that connects to all your social media accounts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ProfileLinkEditor 
+                  athleteId={1} // This would come from the authenticated user's athlete profile
+                  initialData={profileData}
+                />
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

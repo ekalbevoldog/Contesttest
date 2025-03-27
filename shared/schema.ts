@@ -78,6 +78,17 @@ export const athletes = pgTable("athlete_profiles", {
   
   // Social Media
   socialHandles: jsonb("social_handles"),
+  
+  // Profile Link Settings
+  profileLinkEnabled: boolean("profile_link_enabled").default(false),
+  profileLinkId: text("profile_link_id"),
+  profileLinkTheme: text("profile_link_theme").default("default"),
+  profileLinkBackgroundColor: text("profile_link_background_color").default("#111111"),
+  profileLinkTextColor: text("profile_link_text_color").default("#ffffff"),
+  profileLinkAccentColor: text("profile_link_accent_color").default("#ff4500"),
+  profileLinkBio: text("profile_link_bio"),
+  profileLinkPhotoUrl: text("profile_link_photo_url"),
+  profileLinkButtons: jsonb("profile_link_buttons"),
   followerCount: integer("follower_count").notNull(),
   averageEngagementRate: real("average_engagement_rate"),
   contentQuality: integer("content_quality"), // 1-10 rating

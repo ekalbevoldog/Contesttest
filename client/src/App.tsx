@@ -22,6 +22,7 @@ import Solutions from "@/pages/Solutions";
 import Pricing from "@/pages/Pricing";
 import CaseStudies from "@/pages/CaseStudies";
 import Feedback from "@/pages/Feedback";
+import AthleteProfileLink from "@/pages/AthleteProfileLink";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -52,6 +53,9 @@ function Router() {
           
           {/* Message Center - available to all logged in users */}
           <ProtectedRoute path="/messages" component={MessageCenter} />
+          
+          {/* Public Athlete Profile Links */}
+          <Route path="/a/:profileLinkId" component={AthleteProfileLink} />
           
           {/* Admin and Integration Routes */}
           <Route path="/admin/n8n-config" component={N8nConfig} />
