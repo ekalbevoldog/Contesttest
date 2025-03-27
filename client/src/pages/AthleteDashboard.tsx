@@ -502,7 +502,7 @@ export default function AthleteDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Active Partnerships</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec]">Active Partnerships</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -513,7 +513,7 @@ export default function AthleteDashboard() {
           </Card>
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">New Opportunities</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec]">New Opportunities</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -524,7 +524,7 @@ export default function AthleteDashboard() {
           </Card>
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Upcoming Deliverables</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec]">Upcoming Deliverables</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -535,7 +535,7 @@ export default function AthleteDashboard() {
           </Card>
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Earned This Month</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec]">Earned This Month</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
