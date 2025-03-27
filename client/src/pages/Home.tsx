@@ -16,20 +16,53 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   useEffect(() => {
-    // Ensure video plays automatically when component mounts
-    if (videoRef.current) {
-      const playPromise = videoRef.current.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.log('Autoplay was prevented:', error);
-          // We can try to play again when user interacts with the page
-          document.addEventListener('click', () => {
-            videoRef.current?.play();
-          }, { once: true });
-        });
+    // Aggressive autoplay implementation with logging
+    const attemptAutoplay = () => {
+      if (videoRef.current) {
+        console.log('Attempting to play video...');
+        
+        // Set video properties programmatically
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.setAttribute('playsinline', '');
+        
+        // Try to play the video
+        const playPromise = videoRef.current.play();
+        
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('Video autoplay successful!');
+            })
+            .catch(error => {
+              console.error('Autoplay was prevented:', error);
+              
+              // Add user interaction fallback
+              const handleUserInteraction = () => {
+                console.log('User interacted, trying to play video again');
+                videoRef.current?.play()
+                  .then(() => console.log('Video play on interaction successful'))
+                  .catch(e => console.error('Video play on interaction failed:', e));
+              };
+              
+              // Try to play on various user interactions
+              document.addEventListener('click', handleUserInteraction, { once: true });
+              document.addEventListener('touchstart', handleUserInteraction, { once: true });
+              document.addEventListener('keydown', handleUserInteraction, { once: true });
+            });
+        } else {
+          console.warn('Video play() returned undefined, browser may not support promises on HTMLMediaElement.play()');
+        }
       }
-    }
+    };
+    
+    // Try immediately
+    attemptAutoplay();
+    
+    // Also try after a short delay (sometimes helps with certain browsers)
+    const timeoutId = setTimeout(attemptAutoplay, 1000);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
   
   return (
@@ -79,19 +112,18 @@ export default function Home() {
             <div className="relative h-72 md:h-96 hidden lg:block">
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
+                {/* Using absolute path with simple HTML attributes for maximum browser compatibility */}
                 <video 
                   ref={videoRef}
                   className="w-full h-full object-cover rounded-lg"
-                  autoPlay={true}
-                  muted={true}
-                  loop={true}
-                  playsInline={true}
-                  preload="auto"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="eager"
                   controls={false}
-                >
-                  <source src="/videos/landing-video.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                  src="/videos/landing-video.mp4"
+                />
               </div>
             </div>
           </div>
