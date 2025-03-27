@@ -55,7 +55,7 @@ function Router() {
           <ProtectedRoute path="/messages" component={MessageCenter} />
           
           {/* Public Athlete Profile Links */}
-          <Route path="/a/:profileLinkId" component={AthleteProfileLink} />
+          <Route path="/p/:linkId" component={AthleteProfileLink} />
           
           {/* Admin and Integration Routes */}
           <Route path="/admin/n8n-config" component={N8nConfig} />

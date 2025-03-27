@@ -99,7 +99,7 @@ export default function ProfileLinkEditor({ athleteId, onSave, initialData }: Pr
     tiktok: ""
   };
 
-  const profileUrl = `${window.location.origin}/athlete/${profileLinkId}`;
+  const profileUrl = `${window.location.origin}/p/${profileLinkId}`;
   
   const addButton = () => {
     if (!buttonLabel || !buttonUrl) {
@@ -182,7 +182,7 @@ export default function ProfileLinkEditor({ athleteId, onSave, initialData }: Pr
     setIsLoading(true);
     
     try {
-      const response = await apiRequest("PATCH", `/api/athlete-profiles/${athleteId}/profile-link`, data);
+      const response = await apiRequest("POST", `/api/athlete-profile/${athleteId}/profile-link`, data);
       
       if (!response.ok) {
         const errorData = await response.json();

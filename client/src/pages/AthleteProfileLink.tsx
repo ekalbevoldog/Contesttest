@@ -48,7 +48,7 @@ export default function AthleteProfileLink() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await apiRequest("GET", `/api/athlete-profiles/${linkId}`);
+        const res = await apiRequest("GET", `/api/athlete-profile/${linkId}`);
         const data = await res.json();
         
         if (data.error) {

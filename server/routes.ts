@@ -781,7 +781,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
             instagram: "@jordanmitchell",
             twitter: "@jmitch_hoops", 
             tiktok: "@jordanmitchell"
-          }
+          },
+          // Profile link data
+          profileLinkEnabled: true,
+          profileLinkId: "jordanmitchell",
+          profileLinkBio: "State University Basketball | Computer Science Major | Content Creator",
+          profileLinkPhotoUrl: "",
+          profileLinkTheme: "gradient",
+          profileLinkBackgroundColor: "#1e293b",
+          profileLinkTextColor: "#ffffff",
+          profileLinkAccentColor: "#3b82f6",
+          profileLinkButtons: [
+            {
+              id: "1",
+              label: "Instagram",
+              url: "https://instagram.com/jordanmitchell",
+              type: "social"
+            },
+            {
+              id: "2",
+              label: "Twitter",
+              url: "https://twitter.com/jmitch_hoops",
+              type: "social"
+            },
+            {
+              id: "3",
+              label: "TikTok",
+              url: "https://tiktok.com/@jordanmitchell",
+              type: "social"
+            },
+            {
+              id: "4",
+              label: "Watch My Highlights",
+              url: "https://youtube.com/c/jordanmitchell",
+              type: "video"
+            }
+          ]
         });
       }
       
@@ -1393,6 +1428,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to add admin response",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+  
+  // Get public athlete profile by profile link ID
+  app.get("/api/athlete-profile/:profileLinkId", async (req: Request, res: Response) => {
+    try {
+      const { profileLinkId } = req.params;
+      
+      // In a real implementation, you would fetch this from the database
+      // Mock data for demonstration purposes
+      const athleteProfile = {
+        id: 1,
+        name: "Jordan Mitchell",
+        sport: "Basketball",
+        school: "State University",
+        profileLinkEnabled: true,
+        profileLinkId: "jordanmitchell",
+        profileLinkBio: "State University Basketball | Computer Science Major | Content Creator",
+        profileLinkPhotoUrl: "",
+        profileLinkTheme: "gradient",
+        profileLinkBackgroundColor: "#1e293b",
+        profileLinkTextColor: "#ffffff",
+        profileLinkAccentColor: "#3b82f6",
+        socialHandles: {
+          instagram: "j.mitchell",
+          twitter: "jordanmitchell",
+          tiktok: "jmitch_hoops"
+        },
+        profileLinkButtons: [
+          {
+            id: "1",
+            label: "Instagram",
+            url: "https://instagram.com/j.mitchell",
+            type: "social"
+          },
+          {
+            id: "2",
+            label: "Twitter",
+            url: "https://twitter.com/jordanmitchell",
+            type: "social"
+          },
+          {
+            id: "3",
+            label: "TikTok",
+            url: "https://tiktok.com/@jmitch_hoops",
+            type: "social"
+          },
+          {
+            id: "4",
+            label: "Watch My Highlights",
+            url: "https://youtube.com/c/jordanmitchell",
+            type: "video"
+          }
+        ]
+      };
+      
+      // Check if this is the requested profile or return 404
+      if (profileLinkId.toLowerCase() === athleteProfile.profileLinkId.toLowerCase()) {
+        res.json(athleteProfile);
+      } else {
+        res.status(404).json({ error: "Athlete profile not found" });
+      }
+    } catch (error) {
+      console.error("Error fetching athlete profile:", error);
+      res.status(500).json({ error: "Failed to fetch athlete profile" });
+    }
+  });
+  
+  // Update athlete profile link data
+  app.post("/api/athlete-profile/:id/profile-link", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const profileLinkData = req.body;
+      
+      // In a real implementation, you would validate and update the database
+      console.log(`Updating profile link data for athlete ID ${id}:`, profileLinkData);
+      
+      // Return updated profile data
+      res.json({
+        id: parseInt(id),
+        ...profileLinkData,
+        updated: true
+      });
+    } catch (error) {
+      console.error("Error updating profile link:", error);
+      res.status(500).json({ error: "Failed to update profile link" });
     }
   });
   
