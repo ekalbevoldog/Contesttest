@@ -18,7 +18,8 @@ import {
   Webhook,
   User,
   MessageSquare,
-  Shield
+  Shield,
+  ExternalLink
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -166,6 +167,17 @@ export default function Header() {
                       <span>My Profile</span>
                     </Link>
                   </DropdownMenuItem>
+                  
+                  {/* Profile Link Manager - Only shown for athletes */}
+                  {userType === 'athlete' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/athlete/profile-link" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                        <ExternalLink className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                        <span>My Public Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
                       <Settings className="mr-2 h-4 w-4 text-[#f03c3c]" />
@@ -396,6 +408,20 @@ export default function Header() {
                             My Profile
                           </span>
                         </Link>
+                        
+                        {/* Public Profile Link for Athletes - mobile view */}
+                        {userType === 'athlete' && (
+                          <Link href="/athlete/profile-link">
+                            <span
+                              className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
+                              onClick={() => setOpen(false)}
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                              My Public Profile
+                            </span>
+                          </Link>
+                        )}
+                        
                         <Link href="/settings">
                           <span
                             className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"

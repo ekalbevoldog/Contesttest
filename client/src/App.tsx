@@ -23,6 +23,7 @@ import Pricing from "@/pages/Pricing";
 import CaseStudies from "@/pages/CaseStudies";
 import Feedback from "@/pages/Feedback";
 import AthleteProfileLink from "@/pages/AthleteProfileLink";
+import AthleteProfileLinkConfig from "@/pages/AthleteProfileLinkConfig";
 import MatchAlgorithmTest from "@/pages/MatchAlgorithmTest";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -55,6 +56,9 @@ function Router() {
           
           {/* Message Center - available to all logged in users */}
           <ProtectedRoute path="/messages" component={MessageCenter} />
+          
+          {/* Athlete Profile Configuration - only for athletes */}
+          <ProtectedRoute path="/athlete/profile-link" component={AthleteProfileLinkConfig} requiredUserType="athlete" />
           
           {/* Public Athlete Profile Links */}
           <Route path="/p/:linkId" component={AthleteProfileLink} />
