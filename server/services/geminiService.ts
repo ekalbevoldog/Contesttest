@@ -28,7 +28,18 @@ const campaignResponseSchema = z.object({
 
 const matchScoreSchema = z.object({
   score: z.number().min(0).max(100),
-  reason: z.string()
+  reason: z.string(),
+  // Detailed scoring dimensions
+  audienceFitScore: z.number().min(0).max(100),
+  contentStyleFitScore: z.number().min(0).max(100), 
+  brandValueAlignmentScore: z.number().min(0).max(100),
+  engagementPotentialScore: z.number().min(0).max(100),
+  compensationFitScore: z.number().min(0).max(100),
+  // Strength and weakness areas
+  strengthAreas: z.array(z.string()),
+  weaknessAreas: z.array(z.string()),
+  // Improvement suggestions
+  improvementSuggestions: z.array(z.string())
 });
 
 // New schema for processing and storing onboarding profile data
@@ -105,7 +116,25 @@ class GeminiService {
       } else if (prompt.includes("generate a match score")) {
         return responseSchema.parse({
           score: 85,
-          reason: "Strong alignment between the athlete's content style and the brand's campaign needs. The demographic overlap between the athlete's followers and the business target audience is significant."
+          reason: "Strong alignment between the athlete's content style and the brand's campaign needs. The demographic overlap between the athlete's followers and the business target audience is significant.",
+          audienceFitScore: 90,
+          contentStyleFitScore: 85,
+          brandValueAlignmentScore: 80,
+          engagementPotentialScore: 88,
+          compensationFitScore: 78,
+          strengthAreas: [
+            "Strong audience demographic overlap",
+            "Content style is highly compatible with campaign needs",
+            "Authentic voice matches brand values"
+          ],
+          weaknessAreas: [
+            "Compensation expectations may be slightly higher than budget",
+            "Limited experience with similar campaign types"
+          ],
+          improvementSuggestions: [
+            "Consider adjusting deliverable requirements to better match athlete's content style",
+            "Explore ways to highlight athlete's unique strengths in campaign execution"
+          ]
         });
       } else {
         // Generic response
@@ -352,9 +381,11 @@ class GeminiService {
   // Generate match score between athlete and business
   async generateMatchScore(athlete: any, business: any, campaign: any) {
     const prompt = `
-      You are an AI assistant for NIL Connect, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
+      You are an AI assistant for Contested, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
       
-      Assess the match between the following athlete and business/campaign:
+      Analyze the potential partnership match between the following athlete and business/campaign in detail.
+      Use your expertise in sports marketing, influencer partnerships, and brand alignment to generate a 
+      comprehensive, multi-dimensional matching analysis.
       
       ATHLETE:
       Name: ${athlete.name}
@@ -364,6 +395,7 @@ class GeminiService {
       Follower Count: ${athlete.followerCount}
       Content Style: ${athlete.contentStyle}
       Compensation Goals: ${athlete.compensationGoals}
+      ${athlete.socialMediaMetrics ? `Social Media Metrics: ${JSON.stringify(athlete.socialMediaMetrics)}` : ''}
       
       BUSINESS:
       Name: ${business.name}
@@ -378,13 +410,36 @@ class GeminiService {
       Description: ${campaign.description}
       Deliverables: ${JSON.stringify(campaign.deliverables)}
       
-      Based on this information, generate a match score from 0-100, where 100 is a perfect fit.
-      Consider factors like audience alignment, content style match, brand values, and compensation goals.
+      Generate a sophisticated multi-dimensional matching score with the following components:
       
-      Return your answer in the following JSON format:
+      1. OVERALL MATCH SCORE: A weighted average (0-100) that considers all factors below.
+      
+      2. DIMENSION SCORES (0-100 each):
+         - Audience Fit: How well the athlete's followers match the business's target audience
+         - Content Style Fit: Compatibility between athlete's content style and campaign needs
+         - Brand Value Alignment: How well the athlete's personal brand aligns with business values
+         - Engagement Potential: Predicted engagement rates for the campaign content
+         - Compensation Fit: How well campaign budget matches athlete's compensation expectations
+      
+      3. STRENGTH & WEAKNESS ANALYSIS:
+         - Identify 2-4 specific partnership strengths (specific areas of high compatibility)
+         - Identify 1-3 potential challenges or areas of concern
+         
+      4. IMPROVEMENT SUGGESTIONS:
+         - Provide 2-3 actionable recommendations to improve match quality
+      
+      Return your comprehensive analysis in the following JSON format:
       {
         "score": number between 0-100,
-        "reason": "2-3 sentences explaining why this match works (or doesn't)"
+        "reason": "2-3 sentences explaining overall match quality",
+        "audienceFitScore": number between 0-100,
+        "contentStyleFitScore": number between 0-100,
+        "brandValueAlignmentScore": number between 0-100,
+        "engagementPotentialScore": number between 0-100,
+        "compensationFitScore": number between 0-100,
+        "strengthAreas": ["strength1", "strength2", "strength3", "strength4"],
+        "weaknessAreas": ["weakness1", "weakness2", "weakness3"],
+        "improvementSuggestions": ["suggestion1", "suggestion2", "suggestion3"]
       }
     `;
     
@@ -395,7 +450,25 @@ class GeminiService {
       // Fallback match score
       return {
         score: 75,
-        reason: `${athlete.name}'s content style appears to align with ${business.name}'s campaign needs. The athlete's audience demographic and the business's target audience have potential overlap.`
+        reason: `${athlete.name}'s content style appears to align with ${business.name}'s campaign needs. The athlete's audience demographic and the business's target audience have potential overlap.`,
+        audienceFitScore: 78,
+        contentStyleFitScore: 80,
+        brandValueAlignmentScore: 72,
+        engagementPotentialScore: 75,
+        compensationFitScore: 70,
+        strengthAreas: [
+          "Audience demographic alignment",
+          "Content style compatibility",
+          "Brand voice synergy"
+        ],
+        weaknessAreas: [
+          "Limited experience with similar partnerships",
+          "Potential scheduling conflicts"
+        ],
+        improvementSuggestions: [
+          "Focus on highlighting shared brand values in content",
+          "Consider flexible deliverable timeline to accommodate athlete schedule"
+        ]
       };
     }
   }

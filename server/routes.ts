@@ -861,16 +861,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function to find the best match
   async function findBestMatch(athlete: any, business: any, campaign: any) {
-    // Use Gemini to generate a match score
+    // Use Gemini to generate a comprehensive match score with multi-dimensional analysis
     const matchResponse = await geminiService.generateMatchScore(athlete, business, campaign);
     
-    // Store the match
+    // Store the match with enhanced multi-dimensional data
     const matchData = {
       athleteId: athlete.id,
       businessId: business.id,
       campaignId: campaign.id,
       score: matchResponse.score,
-      reason: matchResponse.reason
+      reason: matchResponse.reason,
+      // Store all the multi-dimensional scores
+      audienceFitScore: matchResponse.audienceFitScore,
+      contentStyleFitScore: matchResponse.contentStyleFitScore,
+      brandValueAlignmentScore: matchResponse.brandValueAlignmentScore,
+      engagementPotentialScore: matchResponse.engagementPotentialScore,
+      compensationFitScore: matchResponse.compensationFitScore,
+      // Store strength and weakness areas as JSON
+      strengthAreas: matchResponse.strengthAreas ? JSON.stringify(matchResponse.strengthAreas) : null,
+      weaknessAreas: matchResponse.weaknessAreas ? JSON.stringify(matchResponse.weaknessAreas) : null
     };
     
     const match = await storage.storeMatch(matchData);
