@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { SiInstagram, SiTiktok, SiFacebook } from "react-icons/si";
-import { RefreshCw, Plus, Trash2, Twitter, ExternalLink, PlusCircle, Save } from "lucide-react";
+import { RefreshCw, Trash2, ExternalLink, PlusCircle, Save, Paintbrush, Globe, Link2, UserCircle, Share2, Smartphone, Eye } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface SocialHandle {
@@ -232,32 +232,71 @@ export default function AthleteProfileLinkConfig() {
   };
 
   return (
-    <div className="container py-10">
-      <div className="space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-4xl font-bold tracking-tight">Public Profile Manager</h1>
-          <p className="text-lg text-zinc-500 dark:text-zinc-400">
-            Customize your shareable athlete profile and connect with fans and sponsors
+    <div className="pb-10">
+      {/* Hero section with gradient */}
+      <div className="relative bg-gradient-to-br from-black to-zinc-900 mb-10">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-amber-500"></div>
+        <div className="absolute inset-0 overflow-hidden opacity-10">
+          <div className="absolute -bottom-1/2 -right-1/4 w-96 h-96 bg-red-500 rounded-full filter blur-3xl"></div>
+          <div className="absolute -top-1/4 -right-1/4 w-72 h-72 bg-amber-500 rounded-full filter blur-3xl"></div>
+        </div>
+        <div className="container relative z-10 py-16">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="h-8 w-1 bg-gradient-to-b from-red-600 to-amber-500"></div>
+            <h2 className="text-white text-sm font-bold uppercase tracking-widest">Profile Manager</h2>
+          </div>
+          <h1 className="text-5xl font-black tracking-tight bg-gradient-to-br from-white to-zinc-400 bg-clip-text text-transparent">
+            CREATE YOUR <span className="bg-gradient-to-r from-red-500 to-amber-500 bg-clip-text text-transparent">ATHLETE HUB</span>
+          </h1>
+          <p className="mt-4 text-xl text-zinc-400 max-w-2xl">
+            Design your personal brand page to showcase your achievements, connect with sponsors, and grow your influence
           </p>
         </div>
-        
+      </div>
+      
+      <div className="container">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Configuration Panel */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit(onSubmit)}>
               <Tabs defaultValue="general" className="w-full">
-                <TabsList className="mb-6 w-full justify-start">
-                  <TabsTrigger value="general">General</TabsTrigger>
-                  <TabsTrigger value="social">Social Media</TabsTrigger>
-                  <TabsTrigger value="content">Content & Links</TabsTrigger>
-                  <TabsTrigger value="appearance">Appearance</TabsTrigger>
+                <TabsList className="mb-8 w-full justify-start gap-1 border-b-0 bg-transparent p-0">
+                  <TabsTrigger 
+                    value="general" 
+                    className="relative data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none rounded-md data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:h-0.5 data-[state=active]:after:w-full data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-red-600 data-[state=active]:after:to-amber-500"
+                  >
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    General
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="social" 
+                    className="relative data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none rounded-md data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:h-0.5 data-[state=active]:after:w-full data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-red-600 data-[state=active]:after:to-amber-500"
+                  >
+                    <Globe className="mr-2 h-4 w-4" />
+                    Social Media
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="content" 
+                    className="relative data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none rounded-md data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:h-0.5 data-[state=active]:after:w-full data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-red-600 data-[state=active]:after:to-amber-500"
+                  >
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Content & Links
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="appearance" 
+                    className="relative data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:shadow-none rounded-md data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:h-0.5 data-[state=active]:after:w-full data-[state=active]:after:bg-gradient-to-r data-[state=active]:after:from-red-600 data-[state=active]:after:to-amber-500"
+                  >
+                    <Paintbrush className="mr-2 h-4 w-4" />
+                    Appearance
+                  </TabsTrigger>
                 </TabsList>
                 
                 {/* GENERAL TAB */}
                 <TabsContent value="general" className="space-y-6">
-                  <Card>
+                  <Card className="border-0 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 to-amber-500"></div>
                     <CardHeader>
-                      <CardTitle>Profile Settings</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-xl font-black"><UserCircle className="h-5 w-5 text-red-500" />PROFILE SETTINGS</CardTitle>
                       <CardDescription>
                         Configure your public athlete profile settings
                       </CardDescription>
@@ -312,9 +351,9 @@ export default function AthleteProfileLinkConfig() {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white">
+                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white font-bold uppercase tracking-wide text-sm shadow-lg hover:opacity-90 transition-opacity">
                         <Save className="mr-2 h-4 w-4" />
-                        Save Settings
+                        SAVE SETTINGS
                       </Button>
                     </CardFooter>
                   </Card>
@@ -322,9 +361,10 @@ export default function AthleteProfileLinkConfig() {
                 
                 {/* SOCIAL MEDIA TAB */}
                 <TabsContent value="social" className="space-y-6">
-                  <Card>
+                  <Card className="border-0 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 to-amber-500"></div>
                     <CardHeader>
-                      <CardTitle>Social Media Accounts</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-xl font-black"><Globe className="h-5 w-5 text-red-500" />SOCIAL MEDIA ACCOUNTS</CardTitle>
                       <CardDescription>
                         Connect your social media accounts to showcase your online presence
                       </CardDescription>
@@ -347,11 +387,13 @@ export default function AthleteProfileLinkConfig() {
                         </div>
                         
                         <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                            <Twitter className="text-white h-5 w-5" />
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-black to-zinc-800 flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
                           </div>
                           <div className="flex-1">
-                            <Label htmlFor="twitter">Twitter Username</Label>
+                            <Label htmlFor="twitter">X Username</Label>
                             <Input
                               id="twitter"
                               placeholder="username"
@@ -397,7 +439,7 @@ export default function AthleteProfileLinkConfig() {
                           type="button" 
                           variant="outline" 
                           size="sm" 
-                          className="mt-4"
+                          className="mt-4 border-red-500/20 hover:bg-red-500/10 hover:border-red-500/30 text-red-500 font-semibold"
                           onClick={refreshMetrics}
                           disabled={refreshingMetrics}
                         >
@@ -406,7 +448,7 @@ export default function AthleteProfileLinkConfig() {
                           ) : (
                             <RefreshCw className="mr-2 h-4 w-4" />
                           )}
-                          Refresh Social Metrics
+                          REFRESH METRICS
                         </Button>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
                           Refreshing metrics will fetch the latest follower counts and engagement rates from your connected social accounts.
@@ -414,9 +456,9 @@ export default function AthleteProfileLinkConfig() {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white">
+                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white font-bold uppercase tracking-wide text-sm shadow-lg hover:opacity-90 transition-opacity">
                         <Save className="mr-2 h-4 w-4" />
-                        Save Settings
+                        SAVE SETTINGS
                       </Button>
                     </CardFooter>
                   </Card>
@@ -424,9 +466,10 @@ export default function AthleteProfileLinkConfig() {
                 
                 {/* CONTENT & LINKS TAB */}
                 <TabsContent value="content" className="space-y-6">
-                  <Card>
+                  <Card className="border-0 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 to-amber-500"></div>
                     <CardHeader>
-                      <CardTitle>Content & Links</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-xl font-black"><Link2 className="h-5 w-5 text-red-500" />CONTENT & LINKS</CardTitle>
                       <CardDescription>
                         Add custom links to your profile to showcase content, sponsorships, and more
                       </CardDescription>
@@ -473,17 +516,17 @@ export default function AthleteProfileLinkConfig() {
                           type="button" 
                           variant="outline" 
                           onClick={addProfileButton}
-                          className="w-full border-dashed flex items-center justify-center py-6"
+                          className="w-full border-dashed flex items-center justify-center py-6 bg-black/5 hover:bg-gradient-to-r hover:from-red-600/10 hover:to-amber-500/10 transition-all"
                         >
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Add Link
+                          <PlusCircle className="mr-2 h-4 w-4 text-red-500" />
+                          <span className="font-semibold">ADD LINK</span>
                         </Button>
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white">
+                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white font-bold uppercase tracking-wide text-sm shadow-lg hover:opacity-90 transition-opacity">
                         <Save className="mr-2 h-4 w-4" />
-                        Save Settings
+                        SAVE SETTINGS
                       </Button>
                     </CardFooter>
                   </Card>
@@ -491,9 +534,10 @@ export default function AthleteProfileLinkConfig() {
                 
                 {/* APPEARANCE TAB */}
                 <TabsContent value="appearance" className="space-y-6">
-                  <Card>
+                  <Card className="border-0 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 to-amber-500"></div>
                     <CardHeader>
-                      <CardTitle>Appearance</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-xl font-black"><Paintbrush className="h-5 w-5 text-red-500" />APPEARANCE</CardTitle>
                       <CardDescription>
                         Customize the look and feel of your public profile
                       </CardDescription>
@@ -564,9 +608,9 @@ export default function AthleteProfileLinkConfig() {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-end">
-                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white">
+                      <Button type="submit" className="bg-gradient-to-r from-red-600 to-amber-500 text-white font-bold uppercase tracking-wide text-sm shadow-lg hover:opacity-90 transition-opacity">
                         <Save className="mr-2 h-4 w-4" />
-                        Save Settings
+                        SAVE SETTINGS
                       </Button>
                     </CardFooter>
                   </Card>
@@ -578,9 +622,10 @@ export default function AthleteProfileLinkConfig() {
           {/* Preview Panel */}
           <div className="lg:col-span-1">
             <div className="sticky top-20">
-              <Card>
+              <Card className="border-0 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 to-amber-500"></div>
                 <CardHeader>
-                  <CardTitle>Profile Preview</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-xl font-black"><Eye className="h-5 w-5 text-red-500" />PROFILE PREVIEW</CardTitle>
                   <CardDescription>
                     See how your profile will look to visitors
                   </CardDescription>
@@ -657,7 +702,9 @@ export default function AthleteProfileLinkConfig() {
                                   background: `linear-gradient(135deg, ${formValues.profileLinkAccentColor} 0%, rgba(0,0,0,0.5) 150%)` 
                                 }}
                               >
-                                <Twitter className="text-white h-3 w-3" />
+                                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                </svg>
                               </div>
                             )}
                             {formValues.socialHandles?.tiktok && (
@@ -745,12 +792,11 @@ export default function AthleteProfileLinkConfig() {
                       </div>
                       <Button 
                         type="button" 
-                        variant="outline" 
-                        className="w-full mt-2"
+                        className="w-full mt-2 bg-gradient-to-r from-red-600 to-amber-500 text-white font-bold uppercase tracking-wide text-sm shadow-lg hover:opacity-90 transition-opacity"
                         onClick={() => window.open(previewUrl, '_blank')}
                       >
                         <ExternalLink className="mr-2 h-4 w-4" />
-                        Open Live Preview
+                        VIEW LIVE PROFILE
                       </Button>
                     </>
                   )}
@@ -770,7 +816,7 @@ function getSocialUrl(platform: string, handle: string): string {
     case 'instagram':
       return `https://instagram.com/${handle}`;
     case 'twitter':
-      return `https://twitter.com/${handle}`;
+      return `https://x.com/${handle}`;
     case 'facebook':
       return `https://facebook.com/${handle}`;
     case 'tiktok':
