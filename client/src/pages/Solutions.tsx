@@ -95,87 +95,137 @@ export default function Solutions() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
             {/* AI Matching */}
-            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none">
-              <CardContent className="p-6">
-                <div className="h-16 w-16 mb-6 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                  </svg>
+            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/30 to-transparent rounded-bl-full"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-tr-full"></div>
+              
+              <CardContent className="p-6 relative z-10">
+                <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
+                  <div className="h-12 w-12 text-red-500 flex items-center justify-center">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13.3 8.8L9 4.5L4.5 9L8.8 13.3M15.1 10.6L10.6 15.1L15.4 19.9L19.9 15.4L15.1 10.6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9.5 4.5L14.5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M14.5 14.5L9.5 19.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M19.5 9.5L14.5 14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M4.5 14.5L9.5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-white">AI-Powered Matching</h3>
-                <p className="text-zinc-400 mb-6">
+                
+                <h3 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">AI-Powered Matching</h3>
+                <p className="text-zinc-400 mb-6 text-lg">
                   Our proprietary AI algorithm analyzes dozens of data points to find the perfect partnerships between athletes and businesses that share values, aesthetics, and audience demographics.
                 </p>
-                <ul className="space-y-2 text-zinc-400">
+                
+                <ul className="space-y-3 text-zinc-400">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Personality and values alignment</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Personality and values alignment</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Audience demographic analysis</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Audience demographic analysis</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Content style and quality assessment</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Content style and quality assessment</span>
                   </li>
                 </ul>
+                
+                <div className="mt-8 pt-6 border-t border-zinc-800">
+                  <div className="flex items-center">
+                    <div className="text-zinc-500 text-sm">Powered by</div>
+                    <div className="ml-2 text-white font-semibold">Google Gemini AI</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             {/* Campaign Management */}
-            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none">
-              <CardContent className="p-6">
-                <div className="h-16 w-16 mb-6 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
+            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/30 to-transparent rounded-bl-full"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-tr-full"></div>
+              
+              <CardContent className="p-6 relative z-10">
+                <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
+                  <div className="h-12 w-12 text-red-500 flex items-center justify-center">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke="currentColor" />
+                    </svg>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-white">Campaign Management</h3>
-                <p className="text-zinc-400 mb-6">
+                
+                <h3 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">Campaign Management</h3>
+                <p className="text-zinc-400 mb-6 text-lg">
                   Simplify the entire campaign lifecycle with our comprehensive tools for planning, execution, tracking, and reporting on NIL partnerships.
                 </p>
-                <ul className="space-y-2 text-zinc-400">
+                
+                <ul className="space-y-3 text-zinc-400">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Content calendar and deliverables tracking</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Content calendar and deliverables tracking</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Performance analytics dashboard</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Performance analytics dashboard</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Automated compliance documentation</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Automated compliance documentation</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
             {/* Compliance Management */}
-            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none">
-              <CardContent className="p-6">
-                <div className="h-16 w-16 mb-6 rounded-full bg-red-500/10 flex items-center justify-center">
-                  <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                  </svg>
+            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/30 to-transparent rounded-bl-full"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-tr-full"></div>
+              
+              <CardContent className="p-6 relative z-10">
+                <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
+                  <div className="h-12 w-12 text-red-500 flex items-center justify-center">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-white">NIL Compliance</h3>
-                <p className="text-zinc-400 mb-6">
+                
+                <h3 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">NIL Compliance</h3>
+                <p className="text-zinc-400 mb-6 text-lg">
                   Stay compliant with NCAA and university-specific NIL regulations with our dedicated compliance portal for athletes, businesses, and compliance officers.
                 </p>
-                <ul className="space-y-2 text-zinc-400">
+                
+                <ul className="space-y-3 text-zinc-400">
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>School-specific policy integration</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">School-specific policy integration</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Compliance officer approval workflow</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Compliance officer approval workflow</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                    <span>Automated disclosure reporting</span>
+                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    <span className="text-zinc-300">Automated disclosure reporting</span>
                   </li>
                 </ul>
               </CardContent>
