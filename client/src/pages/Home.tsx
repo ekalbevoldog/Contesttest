@@ -197,7 +197,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-center">
                     <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                      <Link to="/find-athlete-match">Find Your Perfect Match</Link>
+                      <Link to="/dynamic-onboarding">Find Your Perfect Match</Link>
                     </Button>
                   </div>
                 </div>
@@ -277,7 +277,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-center">
                     <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                      <Link to="/find-athlete-match">Find Your Perfect Match</Link>
+                      <Link to="/dynamic-onboarding">Find Your Perfect Match</Link>
                     </Button>
                   </div>
                 </div>
@@ -407,7 +407,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/find-athlete-match">Find Your Match</Link>
+                  <Link to="/dynamic-onboarding">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
@@ -457,7 +457,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/find-athlete-match">Find Your Match</Link>
+                  <Link to="/dynamic-onboarding">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
@@ -504,7 +504,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/find-athlete-match">Contact Sales</Link>
+                  <Link to="/dynamic-onboarding">Contact Sales</Link>
                 </Button>
               </div>
             </Card>
@@ -653,7 +653,7 @@ export default function Home() {
                 className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                 asChild
               >
-                <Link to="/find-athlete-match">Find Your Athlete Match Now</Link>
+                <Link to="/dynamic-onboarding">Find Your Athlete Match Now</Link>
               </Button>
               
               <Button 
