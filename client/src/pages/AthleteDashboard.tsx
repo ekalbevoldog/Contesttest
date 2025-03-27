@@ -826,11 +826,10 @@ export default function AthleteDashboard() {
                                   <Badge className="bg-yellow-100 text-yellow-800">
                                     Pending
                                   </Badge>
-                                )}
-                              </div>
+                                )}                              </div>
                             </CardHeader>
-                            <CardContent```javascript
-                            <div className="flex flex-col gap-4">
+                            <CardContent>
+                              <div className="flex flex-col gap-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="flex flex-col gap-1">
                                     <span className="text-sm text-gray-500">Due Date</span>
