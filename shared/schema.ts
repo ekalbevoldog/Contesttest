@@ -79,6 +79,13 @@ export const athletes = pgTable("athlete_profiles", {
   // Social Media
   socialHandles: jsonb("social_handles"),
   
+  // Social Media OAuth Connections
+  socialConnections: jsonb("social_connections"), // Store OAuth tokens and connection status
+  instagramMetrics: jsonb("instagram_metrics"), // Store cached metrics from Instagram
+  twitterMetrics: jsonb("twitter_metrics"), // Store cached metrics from Twitter
+  tiktokMetrics: jsonb("tiktok_metrics"), // Store cached metrics from TikTok
+  lastMetricsUpdate: timestamp("last_metrics_update"), // Timestamp of last metrics update
+  
   // Profile Link Settings
   profileLinkEnabled: boolean("profile_link_enabled").default(false),
   profileLinkId: text("profile_link_id"),

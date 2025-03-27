@@ -1448,13 +1448,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileLinkBio: "State University Basketball | Computer Science Major | Content Creator",
         profileLinkPhotoUrl: "",
         profileLinkTheme: "gradient",
-        profileLinkBackgroundColor: "#1e293b",
+        profileLinkBackgroundColor: "#111111",
         profileLinkTextColor: "#ffffff",
-        profileLinkAccentColor: "#3b82f6",
+        profileLinkAccentColor: "#e11d48",
         socialHandles: {
           instagram: "j.mitchell",
           twitter: "jordanmitchell",
           tiktok: "jmitch_hoops"
+        },
+        // Social metrics data
+        metrics: {
+          followerCount: 22750,
+          engagement: 8.4,
+          contentQuality: 9,
+          instagramMetrics: {
+            followers: 15200,
+            engagement: 8.4,
+            posts: 127,
+            reachPerPost: 12300,
+            impressions: 37500,
+            savedPosts: 845,
+            weeklyGrowth: 2.3
+          },
+          twitterMetrics: {
+            followers: 3600,
+            engagement: 2.1,
+            tweets: 342,
+            impressions: 15800,
+            retweets: 210,
+            likes: 1240,
+            weeklyGrowth: 1.2
+          },
+          tiktokMetrics: {
+            followers: 3950,
+            engagement: 12.7,
+            videos: 38,
+            views: 245000,
+            likes: 32100,
+            shares: 5400,
+            weeklyGrowth: 3.8
+          }
         },
         profileLinkButtons: [
           {
@@ -1493,6 +1526,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching athlete profile:", error);
       res.status(500).json({ error: "Failed to fetch athlete profile" });
+    }
+  });
+  
+  // Refresh athlete metrics from social platforms
+  app.get("/api/athlete-profile/:profileLinkId/refresh-metrics", async (req: Request, res: Response) => {
+    try {
+      const { profileLinkId } = req.params;
+      
+      // In a real implementation, this would fetch fresh data from social APIs
+      // For demo purposes, we'll return slightly varied metrics
+      
+      const randomVariance = () => (Math.random() > 0.5 ? 1 : -1) * Math.random() * 0.1;
+      
+      // Check if profile exists
+      if (profileLinkId.toLowerCase() === "jordanmitchell") {
+        const updatedMetrics = {
+          followerCount: Math.round(22750 * (1 + randomVariance())),
+          engagement: parseFloat((8.4 * (1 + randomVariance())).toFixed(1)),
+          contentQuality: 9,
+          instagramMetrics: {
+            followers: Math.round(15200 * (1 + randomVariance())),
+            engagement: parseFloat((8.4 * (1 + randomVariance())).toFixed(1)),
+            posts: 128, // One new post
+            reachPerPost: Math.round(12300 * (1 + randomVariance())),
+            impressions: Math.round(37500 * (1 + randomVariance())),
+            savedPosts: Math.round(845 * (1 + randomVariance())),
+            weeklyGrowth: parseFloat((2.3 * (1 + randomVariance())).toFixed(1))
+          },
+          twitterMetrics: {
+            followers: Math.round(3600 * (1 + randomVariance())),
+            engagement: parseFloat((2.1 * (1 + randomVariance())).toFixed(1)),
+            tweets: 344, // Two new tweets
+            impressions: Math.round(15800 * (1 + randomVariance())),
+            retweets: Math.round(210 * (1 + randomVariance())),
+            likes: Math.round(1240 * (1 + randomVariance())),
+            weeklyGrowth: parseFloat((1.2 * (1 + randomVariance())).toFixed(1))
+          },
+          tiktokMetrics: {
+            followers: Math.round(3950 * (1 + randomVariance())),
+            engagement: parseFloat((12.7 * (1 + randomVariance())).toFixed(1)),
+            videos: 39, // One new video
+            views: Math.round(245000 * (1 + randomVariance())),
+            likes: Math.round(32100 * (1 + randomVariance())),
+            shares: Math.round(5400 * (1 + randomVariance())),
+            weeklyGrowth: parseFloat((3.8 * (1 + randomVariance())).toFixed(1))
+          }
+        };
+        
+        res.json({
+          success: true,
+          metrics: updatedMetrics,
+          lastUpdated: new Date()
+        });
+      } else {
+        res.status(404).json({ error: "Athlete profile not found" });
+      }
+    } catch (error) {
+      console.error("Error refreshing metrics:", error);
+      res.status(500).json({ error: "Failed to refresh metrics" });
     }
   });
   
