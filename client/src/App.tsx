@@ -23,6 +23,7 @@ import Pricing from "@/pages/Pricing";
 import CaseStudies from "@/pages/CaseStudies";
 import Feedback from "@/pages/Feedback";
 import AthleteProfileLink from "@/pages/AthleteProfileLink";
+import MatchAlgorithmTest from "@/pages/MatchAlgorithmTest";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -59,6 +60,9 @@ function Router() {
           
           {/* Admin and Integration Routes */}
           <Route path="/admin/n8n-config" component={N8nConfig} />
+          
+          {/* Test Routes */}
+          <Route path="/match-algorithm-test" component={MatchAlgorithmTest} />
           
           <Route component={NotFound} />
         </Switch>
