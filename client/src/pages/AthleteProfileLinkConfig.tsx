@@ -67,7 +67,7 @@ export default function AthleteProfileLinkConfig() {
       profileLinkId: "",
       profileLinkBio: "",
       profileLinkPhotoUrl: "",
-      profileLinkTheme: "nike",
+      profileLinkTheme: "athletic",
       profileLinkBackgroundColor: "#111111",
       profileLinkTextColor: "#ffffff",
       profileLinkAccentColor: "#ff4500",
@@ -98,7 +98,7 @@ export default function AthleteProfileLinkConfig() {
           setValue("profileLinkId", data.profileLinkId || generateProfileId(data.name));
           setValue("profileLinkBio", data.profileLinkBio || "");
           setValue("profileLinkPhotoUrl", data.profileLinkPhotoUrl || "");
-          setValue("profileLinkTheme", data.profileLinkTheme || "nike");
+          setValue("profileLinkTheme", data.profileLinkTheme || "athletic");
           setValue("profileLinkBackgroundColor", data.profileLinkBackgroundColor || "#111111");
           setValue("profileLinkTextColor", data.profileLinkTextColor || "#ffffff");
           setValue("profileLinkAccentColor", data.profileLinkAccentColor || "#ff4500");
@@ -554,7 +554,7 @@ export default function AthleteProfileLinkConfig() {
                               <SelectValue placeholder="Select a theme" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="nike">Nike (Dark with red accents)</SelectItem>
+                              <SelectItem value="athletic">Athletic (Dark with red accents)</SelectItem>
                               <SelectItem value="modern">Modern (Clean, minimalist)</SelectItem>
                               <SelectItem value="vibrant">Vibrant (Bold colors)</SelectItem>
                             </SelectContent>
