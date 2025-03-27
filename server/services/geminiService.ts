@@ -13,10 +13,10 @@ const formPromptSchema = z.object({
 
 const conversationResponseSchema = z.object({
   reply: z.string(),
-  isFormPrompt: z.boolean().optional(),
-  showAthleteForm: z.boolean().optional(),
-  showBusinessForm: z.boolean().optional(),
-  showMatchResults: z.boolean().optional(),
+  isFormPrompt: z.boolean().optional().default(false),
+  showAthleteForm: z.boolean().optional().default(false),
+  showBusinessForm: z.boolean().optional().default(false),
+  showMatchResults: z.boolean().optional().default(false),
   matchData: z.any().optional()
 });
 
@@ -99,10 +99,20 @@ class GeminiService {
           reply: "Could you tell me more about yourself? This will help us find the best matches for you."
         });
       } else if (prompt.includes("should see a form")) {
-        return responseSchema.parse({
-          showForm: true,
-          reason: "User has expressed interest in creating a profile"
-        });
+        // Form prompts need to be handled differently based on schema type
+        try {
+          // First try to parse as a form prompt
+          return responseSchema.parse({
+            showForm: true,
+            reason: "User has expressed interest in creating a profile"
+          });
+        } catch (e) {
+          // If that fails, it's probably a conversation response schema
+          return responseSchema.parse({
+            reply: "Let me help you set up your profile. Would you like to proceed?",
+            isFormPrompt: true
+          });
+        }
       } else if (prompt.includes("create a NIL campaign concept")) {
         return responseSchema.parse({
           title: "Campus Ambassador Program",
