@@ -1,7 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
-import ChatInterface from "@/components/ChatInterface";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,22 +11,8 @@ import { Label } from "@/components/ui/label";
 
 
 export default function Home() {
-  const [showChat, setShowChat] = useState(false);
   const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
-  
-  // Listen for the custom event to toggle the AI assistant
-  useEffect(() => {
-    const handleToggleAssistant = () => {
-      setShowChat(prev => !prev);
-    };
-    
-    window.addEventListener('toggle-ai-assistant', handleToggleAssistant);
-    
-    return () => {
-      window.removeEventListener('toggle-ai-assistant', handleToggleAssistant);
-    };
-  }, []);
   
   return (
     <div className="min-h-screen bg-black text-white">
@@ -61,7 +46,7 @@ export default function Home() {
                   size="lg" 
                   variant="outline" 
                   className="border-amber-500 text-white hover:bg-amber-500/10"
-                  onClick={() => setShowChat(true)}
+                  onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant'))}
                 >
                   Chat with AI Assistant
                 </Button>
@@ -652,7 +637,7 @@ export default function Home() {
                 size="lg" 
                 variant="outline" 
                 className="border-red-500 text-white hover:bg-red-500/10"
-                onClick={() => setShowChat(true)}
+                onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant'))}
               >
                 Chat with AI Assistant
               </Button>
@@ -660,26 +645,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
-      {/* Chat Interface */}
-      {showChat && (
-        <div className="fixed bottom-8 right-8 z-50 max-w-md w-full shadow-2xl rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-red-500 to-amber-500 text-white p-4 flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Contested Assistant</h3>
-            <button 
-              onClick={() => setShowChat(false)}
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <div className="bg-zinc-950 p-2">
-            <ChatInterface />
-          </div>
-        </div>
-      )}
       
     </div>
   );
