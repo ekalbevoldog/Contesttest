@@ -29,7 +29,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  userType: text("user_type").notNull(),
+  userType: text("user_type", { enum: ["athlete", "business", "compliance", "admin"] }).notNull(),
   sessionId: text("session_id"),
   verified: boolean("verified").default(false),
   avatar: text("avatar"),
@@ -372,7 +372,7 @@ export type InsertComplianceOfficer = z.infer<typeof insertComplianceOfficerSche
 export const feedbacks = pgTable("feedbacks", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
-  userType: text("user_type").notNull(), // athlete, business, compliance
+  userType: text("user_type").notNull(), // athlete, business, compliance, admin
   feedbackType: text("feedback_type").notNull(), // general, match, feature, bug, other
   matchId: integer("match_id").references(() => matches.id),
   rating: integer("rating"), // 1-5 star rating

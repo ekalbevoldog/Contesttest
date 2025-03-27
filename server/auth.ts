@@ -29,6 +29,19 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Create admin user if it doesn't exist
+  (async () => {
+    const existingAdmin = await storage.getUserByUsername('admin');
+    if (!existingAdmin) {
+      const adminUser = await storage.createUser({
+        username: 'admin',
+        password: await hashPassword('adminpassword123'),
+        email: 'admin@contested.com',
+        userType: 'admin',
+      });
+      console.log('Created admin user: admin (admin)');
+    }
+  })();
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'contested-secret-key',
     resave: true,

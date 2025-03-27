@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 import { geminiService } from "./services/geminiService";
 import { bigQueryService } from "./services/bigQueryService";
 import { sessionService } from "./services/sessionService";
@@ -1606,6 +1607,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating profile link:", error);
       res.status(500).json({ error: "Failed to update profile link" });
+    }
+  });
+  
+  // Admin API Routes - These should be properly secured in a production environment
+  // Check if the user is an admin
+  const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    const user = req.user as Express.User;
+    if (user.userType !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    
+    next();
+  };
+  
+  // Admin routes
+  app.get("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+  
+  app.get("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const user = await storage.getUser(parseInt(req.params.id));
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+  
+  app.put("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      // This is just a placeholder - in a real application, you would update the user in the database
+      const userId = parseInt(req.params.id);
+      const userData = req.body;
+      
+      // Validate the user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Update the user
+      // This would typically call a storage method like storage.updateUser(userId, userData)
+      // For now, just return the original user with the updated data
+      res.json({ ...user, ...userData });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
     }
   });
   
