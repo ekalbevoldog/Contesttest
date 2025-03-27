@@ -205,9 +205,23 @@ export default function Header() {
               </DropdownMenu>
             )}
             
+            {!user && (
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium mr-2"
+                asChild
+              >
+                <Link href="/dynamic-onboarding">
+                  <span className="flex items-center">
+                    Get Started
+                  </span>
+                </Link>
+              </Button>
+            )}
+            
             <Button 
               size="sm" 
-              className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] text-white font-medium"
+              className="bg-[#9a0c0c] hover:bg-[#810a0a] text-white font-medium"
               onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant'))}
             >
               <span className="flex items-center">
@@ -405,8 +419,22 @@ export default function Header() {
                     )}
                   </div>
                   
+                  {!user && (
+                    <Button 
+                      className="w-full mt-4 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium"
+                      onClick={() => setOpen(false)}
+                      asChild
+                    >
+                      <Link href="/dynamic-onboarding">
+                        <span className="flex items-center justify-center">
+                          Get Started
+                        </span>
+                      </Link>
+                    </Button>
+                  )}
+                  
                   <Button 
-                    className="w-full mt-6 bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] text-white font-medium" 
+                    className="w-full mt-6 bg-[#9a0c0c] hover:bg-[#810a0a] text-white font-medium" 
                     onClick={() => {
                       setOpen(false);
                       window.dispatchEvent(new CustomEvent('toggle-ai-assistant'));
