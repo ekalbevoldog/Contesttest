@@ -8,9 +8,25 @@ export default function Solutions() {
     <div className="bg-black text-white min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-black pt-20 pb-16">
+        {/* Background patterns and effects */}
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/50 via-black/90 to-black"></div>
+        
+        {/* Diagonal line accent */}
+        <div className="absolute top-0 left-0 right-0 h-24 w-full bg-gradient-to-r from-red-500 to-amber-500 transform -rotate-1 -translate-y-16 opacity-40"></div>
+        
+        {/* Animated red circles */}
+        <div className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full bg-red-500/10 animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/4 h-32 w-32 rounded-full bg-amber-500/10 animate-pulse delay-700"></div>
+        
+        {/* Background athlete silhouette */}
+        <div className="absolute right-0 bottom-0 w-1/3 h-3/4 bg-[url('/athlete-silhouette.png')] bg-contain bg-no-repeat bg-right-bottom opacity-20"></div>
+        
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-block mb-4 rounded-full bg-red-500/10 px-4 py-1 border border-red-500/20">
+              <span className="text-red-400 font-semibold">Next Generation NIL Platform</span>
+            </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Solutions for Next-Gen Athlete Partnerships
@@ -35,6 +51,28 @@ export default function Solutions() {
               >
                 <Link to="/pricing">View Pricing</Link>
               </Button>
+            </div>
+          </div>
+          
+          {/* Logo partners strip */}
+          <div className="mt-16 max-w-5xl mx-auto">
+            <p className="text-center text-zinc-500 mb-6 text-sm uppercase tracking-wider">Trusted by leading brands and universities</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
+                <div className="text-zinc-400 font-bold">BRAND 1</div>
+              </div>
+              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
+                <div className="text-zinc-400 font-bold">BRAND 2</div>
+              </div>
+              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
+                <div className="text-zinc-400 font-bold">BRAND 3</div>
+              </div>
+              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
+                <div className="text-zinc-400 font-bold">BRAND 4</div>
+              </div>
+              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
+                <div className="text-zinc-400 font-bold">BRAND 5</div>
+              </div>
             </div>
           </div>
         </div>
@@ -156,6 +194,47 @@ export default function Solutions() {
         </div>
       </section>
 
+      {/* Visual Showcase */}
+      <section className="py-16 bg-black overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black z-10"></div>
+        <div className="container mx-auto px-4 relative z-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                  Real Results Through Strategic Partnerships
+                </span>
+              </h2>
+              <p className="text-xl text-zinc-400 mb-6">
+                Our platform has facilitated partnerships that drive measurable engagement, revenue, and brand growth for both athletes and businesses.
+              </p>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-zinc-900 p-4 rounded-lg">
+                  <div className="text-red-500 text-3xl font-bold">$3.2M+</div>
+                  <div className="text-zinc-400">Revenue generated</div>
+                </div>
+                <div className="bg-zinc-900 p-4 rounded-lg">
+                  <div className="text-red-500 text-3xl font-bold">1,200+</div>
+                  <div className="text-zinc-400">Partnerships formed</div>
+                </div>
+                <div className="bg-zinc-900 p-4 rounded-lg">
+                  <div className="text-red-500 text-3xl font-bold">48%</div>
+                  <div className="text-zinc-400">Avg. engagement increase</div>
+                </div>
+                <div className="bg-zinc-900 p-4 rounded-lg">
+                  <div className="text-red-500 text-3xl font-bold">3.8x</div>
+                  <div className="text-zinc-400">Average ROI</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative h-96 md:h-[500px] rounded-xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10"></div>
+              <div className="absolute inset-0 bg-[url('/athlete-partnership.jpg')] bg-cover bg-center transform hover:scale-105 transition-transform duration-700"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Use Cases */}
       <section className="py-20 bg-black">
         <div className="container mx-auto px-4">
@@ -246,6 +325,39 @@ export default function Solutions() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Image Strip */}
+      <section className="py-12 bg-black relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black z-10"></div>
+        <div className="container mx-auto px-4 relative z-20">
+          <div className="flex flex-wrap -mx-2 overflow-hidden">
+            {/* Image Strip - These would be actual image paths in production */}
+            <div className="w-1/2 md:w-1/4 px-2 mb-4">
+              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
+                <div className="h-full w-full bg-[url('/basketball-player.jpg')] bg-cover bg-center"></div>
+              </div>
+            </div>
+            <div className="w-1/2 md:w-1/4 px-2 mb-4">
+              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
+                <div className="h-full w-full bg-[url('/volleyball-player.jpg')] bg-cover bg-center"></div>
+              </div>
+            </div>
+            <div className="w-1/2 md:w-1/4 px-2 mb-4">
+              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
+                <div className="h-full w-full bg-[url('/local-cafe.jpg')] bg-cover bg-center"></div>
+              </div>
+            </div>
+            <div className="w-1/2 md:w-1/4 px-2 mb-4">
+              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
+                <div className="h-full w-full bg-[url('/outdoor-brand.jpg')] bg-cover bg-center"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Red diagonal line */}
+        <div className="absolute -bottom-10 left-0 right-0 h-20 bg-red-500 transform -rotate-1 z-0"></div>
       </section>
 
       {/* CTA Section */}
