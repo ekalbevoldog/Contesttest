@@ -15,106 +15,66 @@ export default function Home() {
   const [singleCampaign, setSingleCampaign] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  const [playButtonVisible, setPlayButtonVisible] = useState(true);
+  
   useEffect(() => {
-    // Full diagnostic autoplay implementation
-    const logVideoState = (prefix: string) => {
-      if (!videoRef.current) return;
+    // Simple setup approach
+    if (!videoRef.current) {
+      console.error('Video element not found');
+      return;
+    }
       
-      const video = videoRef.current;
-      console.log(`${prefix} - VIDEO DIAGNOSTIC:`, {
-        videoElement: video,
-        duration: video.duration,
-        readyState: video.readyState,
-        networkState: video.networkState,
-        paused: video.paused,
-        ended: video.ended,
-        currentTime: video.currentTime,
-        src: video.src,
-        srcExists: !!video.src,
-        canPlayType: video.canPlayType('video/mp4'),
-        videoWidth: video.videoWidth,
-        videoHeight: video.videoHeight,
-        visible: !!(video.offsetWidth || video.offsetHeight)
-      });
+    // Setup video element with best practices for autoplay
+    const video = videoRef.current;
+    video.muted = true;
+    video.playsInline = true;
+    video.volume = 0;
+    
+    // Pre-load the video
+    video.load();
+    
+    // Listen for loaded data event
+    const handleDataLoaded = () => {
+      console.log('Video data loaded, attempting to play');
+      
+      // Try to play the video
+      video.play()
+        .then(() => {
+          console.log('Video is playing!');
+          setPlayButtonVisible(false); // Hide the play button when video is playing
+        })
+        .catch(err => {
+          console.error('Autoplay failed:', err);
+          setPlayButtonVisible(true); // Keep the play button visible for user interaction
+        });
     };
     
-    const attemptAutoplay = () => {
-      if (!videoRef.current) {
-        console.error('Video ref is null, cannot play');
-        return;
+    // Listen for canplaythrough event
+    video.addEventListener('canplaythrough', handleDataLoaded, { once: true });
+    
+    // Manual play function for button click
+    const manualPlay = () => {
+      console.log('Manual play triggered');
+      video.play()
+        .then(() => {
+          setPlayButtonVisible(false);
+          console.log('Manual play successful');
+        })
+        .catch(error => console.error('Manual play failed:', error));
+    };
+    
+    // Add click handler to play button container
+    const playButtonContainer = document.querySelector('.video-play-button');
+    if (playButtonContainer) {
+      playButtonContainer.addEventListener('click', manualPlay);
+    }
+    
+    return () => {
+      video.removeEventListener('canplaythrough', handleDataLoaded);
+      if (playButtonContainer) {
+        playButtonContainer.removeEventListener('click', manualPlay);
       }
-      
-      console.log('Attempting to play video...');
-      
-      // Force all autoplay-friendly properties
-      const video = videoRef.current;
-      video.muted = true;
-      video.playsInline = true;
-      video.volume = 0;
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      video.setAttribute('muted', '');
-      
-      // Check if video is loaded
-      logVideoState('Before play');
-      
-      // Force reload the video source
-      const currentSrc = video.src;
-      video.src = '';
-      // Short timeout to ensure the src reset takes effect
-      setTimeout(() => {
-        if (!videoRef.current) return;
-        
-        // Re-apply the source
-        videoRef.current.src = currentSrc; 
-        videoRef.current.load();
-        
-        // Try to play after loading
-        videoRef.current.onloadeddata = () => {
-          console.log('Video data loaded, attempting playback');
-          if (!videoRef.current) return;
-          
-          const playPromise = videoRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log('✅ Video autoplay successful!');
-                logVideoState('After successful play');
-              })
-              .catch(error => {
-                console.error('❌ Autoplay was prevented:', error);
-                logVideoState('After failed play');
-                
-                // Add user interaction fallback
-                const handleUserInteraction = () => {
-                  console.log('User interacted, trying to play video again');
-                  if (!videoRef.current) return;
-                  
-                  videoRef.current.play()
-                    .then(() => {
-                      console.log('Video play on interaction successful');
-                      logVideoState('After interaction play');
-                    })
-                    .catch(e => console.error('Video play on interaction failed:', e));
-                };
-                
-                // Try to play on various user interactions
-                document.addEventListener('click', handleUserInteraction, { once: true });
-                document.addEventListener('touchstart', handleUserInteraction, { once: true });
-                document.addEventListener('keydown', handleUserInteraction, { once: true });
-              });
-          } else {
-            console.warn('Video play() returned undefined, browser may not support promises on HTMLMediaElement.play()');
-            logVideoState('After undefined play promise');
-          }
-        };
-      }, 100);
     };
-    
-    // Try after a short delay to ensure component is fully mounted
-    const timeoutId = setTimeout(attemptAutoplay, 500);
-    
-    return () => clearTimeout(timeoutId);
   }, []);
   
   return (
@@ -161,10 +121,13 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="relative h-72 md:h-96 hidden lg:block">
+            <div className="relative h-72 md:h-96 lg:block">
+              {/* Background styling */}
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
-              <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
-                {/* Using absolute path with simple HTML attributes for maximum browser compatibility */}
+              
+              {/* Video container with forced visibility */}
+              <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center bg-zinc-900 z-10">
+                {/* Embedded video using iframe as fallback method */}
                 <video 
                   ref={videoRef}
                   className="w-full h-full object-cover rounded-lg"
@@ -172,10 +135,42 @@ export default function Home() {
                   muted
                   loop
                   playsInline
-                  preload="eager"
+                  preload="auto"
                   controls={false}
                   src="/videos/landing-video.mp4"
+                  style={{ display: 'block', visibility: 'visible', opacity: 1 }}
                 />
+                
+                {/* Fallback play button for manual interaction */}
+                {playButtonVisible && (
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer video-play-button"
+                    onClick={() => {
+                      if (videoRef.current) {
+                        videoRef.current.play()
+                          .then(() => setPlayButtonVisible(false))
+                          .catch(err => console.error('Play failed on click:', err));
+                      }
+                    }}
+                  >
+                    <div className="bg-red-500 rounded-full p-4 shadow-lg animate-pulse">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className="text-white"
+                      >
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
