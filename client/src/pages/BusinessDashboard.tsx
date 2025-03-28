@@ -109,7 +109,7 @@ export default function BusinessDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Business Dashboard</h1>
-            <p className="text-gray-700 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
+            <p className="text-gray-800 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
           </div>
           <div className="flex items-center gap-3">
             <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
@@ -157,7 +157,7 @@ export default function BusinessDashboard() {
                       <div key={idx} className={`p-3 rounded-lg ${notification.unread ? 'bg-blue-50' : 'bg-gray-50'}`}>
                         <div className="flex justify-between items-start">
                           <div className="font-medium">{notification.title}</div>
-                          <div className="text-xs text-gray-700">{notification.time}</div>
+                          <div className="text-xs text-gray-800">{notification.time}</div>
                         </div>
                         <div className="text-sm mt-1">{notification.message}</div>
                       </div>
@@ -226,7 +226,7 @@ export default function BusinessDashboard() {
                           <div className="flex-1">
                             <div className="flex justify-between items-start">
                               <div className="font-medium">{message.name}</div>
-                              <div className="text-xs text-gray-700">{message.time}</div>
+                              <div className="text-xs text-gray-800">{message.time}</div>
                             </div>
                             <div className="text-sm mt-1">{message.message}</div>
                           </div>
@@ -268,15 +268,15 @@ export default function BusinessDashboard() {
                         <h4 className="text-sm font-medium mb-2">Profile Information</h4>
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Business Name</span>
+                            <span className="text-sm text-gray-700">Business Name</span>
                             <span className="font-medium">{profileData?.name || "Your Business"}</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Email</span>
+                            <span className="text-sm text-gray-700">Email</span>
                             <span className="font-medium">{profileData?.email || "email@example.com"}</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Account Type</span>
+                            <span className="text-sm text-gray-700">Account Type</span>
                             <Badge className="bg-[#0066cc]">Business Pro</Badge>
                           </div>
                         </div>
@@ -328,10 +328,10 @@ export default function BusinessDashboard() {
                         <h4 className="text-sm font-medium mb-2">Current Plan</h4>
                         <div className="p-3 rounded-lg bg-blue-50">
                           <div className="font-medium">Business Pro</div>
-                          <div className="text-sm text-gray-500 mt-1">$199/month, billed annually</div>
+                          <div className="text-sm text-gray-700 mt-1">$199/month, billed annually</div>
                           <div className="flex items-center mt-3">
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Active</Badge>
-                            <span className="text-xs text-gray-500 ml-2">Renews on October 15, 2023</span>
+                            <span className="text-xs text-gray-700 ml-2">Renews on October 15, 2023</span>
                           </div>
                         </div>
                         <div className="flex gap-2 mt-4">
@@ -351,7 +351,7 @@ export default function BusinessDashboard() {
                             <CreditCard className="h-5 w-5 text-gray-600" />
                             <div>
                               <div className="font-medium">Visa ending in 4242</div>
-                              <div className="text-xs text-gray-500">Expires 12/25</div>
+                              <div className="text-xs text-gray-700">Expires 12/25</div>
                             </div>
                           </div>
                           <Button variant="ghost" size="sm">

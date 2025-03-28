@@ -45,6 +45,11 @@
 }
 
 @layer components {
+  /* Better contrast for text-gray-600 elements */
+  .text-gray-600 {
+    @apply text-gray-400;
+  }
+  
   .futuristic-card {
     @apply relative overflow-hidden rounded-lg border border-zinc-800 shadow-md;
     background: linear-gradient(to bottom right, rgba(25, 25, 25, 0.95), rgba(17, 17, 17, 0.98));

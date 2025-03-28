@@ -466,7 +466,7 @@ export default function ComplianceDashboard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">NIL Compliance Dashboard</h1>
-              <p className="text-gray-600">{userData.school} | {userData.name}</p>
+              <p className="text-gray-800">{userData.school} | {userData.name}</p>
             </div>
           </div>
         </div>
@@ -477,40 +477,40 @@ export default function ComplianceDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-[#1a1a1a] border-[#333] text-white">
             <CardHeader className="pb-2">
-              <CardDescription className="text-gray-600">Pending Approvals</CardDescription>
+              <CardDescription className="text-gray-400">Pending Approvals</CardDescription>
               <CardTitle className="text-3xl flex items-center">
                 {partnerships.pending.length}
                 <AlertCircle className="ml-2 h-5 w-5 text-[#f03c3c]" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600">Partnerships awaiting your review</p>
+              <p className="text-sm text-gray-400">Partnerships awaiting your review</p>
             </CardContent>
           </Card>
           
           <Card className="bg-[#1a1a1a] border-[#333] text-white">
             <CardHeader className="pb-2">
-              <CardDescription className="text-gray-600">Active Athletes</CardDescription>
+              <CardDescription className="text-gray-400">Active Athletes</CardDescription>
               <CardTitle className="text-3xl flex items-center">
                 24
                 <Users className="ml-2 h-5 w-5 text-[#f03c3c]" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600">Athletes with active NIL deals</p>
+              <p className="text-sm text-gray-400">Athletes with active NIL deals</p>
             </CardContent>
           </Card>
           
           <Card className="bg-[#1a1a1a] border-[#333] text-white">
             <CardHeader className="pb-2">
-              <CardDescription className="text-gray-600">Total Approved</CardDescription>
+              <CardDescription className="text-gray-400">Total Approved</CardDescription>
               <CardTitle className="text-3xl flex items-center">
                 {partnerships.approved.length}
                 <Sparkles className="ml-2 h-5 w-5 text-[#f03c3c]" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600">Partnerships approved this year</p>
+              <p className="text-sm text-gray-400">Partnerships approved this year</p>
             </CardContent>
           </Card>
         </div>
@@ -536,7 +536,7 @@ export default function ComplianceDashboard() {
             <Card className="bg-[#1a1a1a] border-[#333] text-white">
               <CardHeader>
                 <CardTitle>Pending Partnership Approvals</CardTitle>
-                <CardDescription className="text-gray-600">
+                <CardDescription className="text-gray-400">
                   Review and approve NIL partnerships for your student athletes
                 </CardDescription>
               </CardHeader>
@@ -555,7 +555,7 @@ export default function ComplianceDashboard() {
                   <TableBody>
                     {partnerships.pending.length === 0 ? (
                       <TableRow className="border-[#333] hover:bg-[#222]">
-                        <TableCell colSpan={6} className="text-center py-8 text-gray-600">
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-400">
                           No pending partnerships to review
                         </TableCell>
                       </TableRow>
@@ -599,7 +599,7 @@ export default function ComplianceDashboard() {
                                 <DialogContent className="sm:max-w-[700px] bg-[#1a1a1a] border-[#333] text-white">
                                   <DialogHeader>
                                     <DialogTitle>Partnership Details</DialogTitle>
-                                    <DialogDescription className="text-gray-600">
+                                    <DialogDescription className="text-gray-400">
                                       Review all details of the partnership between {partnership.athlete.name} and {partnership.business.name}
                                     </DialogDescription>
                                   </DialogHeader>
@@ -763,7 +763,7 @@ export default function ComplianceDashboard() {
                                           <div className="space-y-4">
                                             <div className="h-48 overflow-y-auto border border-[#333] rounded-md p-3 bg-[#1a1a1a]">
                                               {partnership.messages.length === 0 ? (
-                                                <p className="text-gray-600 text-center py-4">No messages yet</p>
+                                                <p className="text-gray-400 text-center py-4">No messages yet</p>
                                               ) : (
                                                 <div className="space-y-3">
                                                   {partnership.messages.map((msg: any) => (
@@ -878,7 +878,7 @@ export default function ComplianceDashboard() {
                   <TableBody>
                     {partnerships.approved.length === 0 ? (
                       <TableRow className="border-[#333] hover:bg-[#222]">
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-600">
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-400">
                           No approved partnerships yet
                         </TableCell>
                       </TableRow>
