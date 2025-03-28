@@ -41,13 +41,22 @@ class WebSocketService {
   private async handleNewMessage(message: any) {
     try {
       // Store message in database
-      const storedMessage = await storage.storeMessage(message.sessionId, message.role, message.content, message.metadata);
+      const storedMessage = await storage.storeMessage(message.sessionId, message.sender, message.content, message.metadata);
       
-      // Broadcast to relevant clients
-      this.broadcastMessage({
-        type: 'new_message',
-        message: storedMessage
-      });
+      // Find recipient's websocket connection
+      const recipientClient = Array.from(this.clients.entries())
+        .find(([_, client]) => client.userType === message.recipientId);
+
+      if (recipientClient) {
+        // Send to specific recipient
+        const [recipientSessionId, client] = recipientClient;
+        if (client.ws.readyState === WebSocket.OPEN) {
+          client.ws.send(JSON.stringify({
+            type: 'new_message',
+            message: storedMessage
+          }));
+        }
+      }
 
       // Update unread counts
       this.updateUnreadCounts(message.sessionId);

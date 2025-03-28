@@ -44,17 +44,21 @@ export default function MessageCenter() {
   const handleSendMessage = () => {
     if (!message.trim() || selectedChat === null) return;
 
+    const recipientId = ['support', 'partnerships'][selectedChat];
+    
     const newMessage = {
       id: Date.now().toString(),
       content: message,
       sender: user?.username || 'You',
+      recipientId: recipientId,
       timestamp: new Date()
     };
 
     sendMessage({
       type: 'message',
       content: message,
-      recipientId: selectedChat
+      recipientId: recipientId,
+      sender: user?.username
     });
 
     setMessages(prev => [...prev, newMessage]);
