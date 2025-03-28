@@ -109,7 +109,7 @@ export default function BusinessDashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Business Dashboard</h1>
-            <p className="text-gray-500 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
+            <p className="text-gray-700 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
           </div>
           <div className="flex items-center gap-3">
             <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
@@ -157,7 +157,7 @@ export default function BusinessDashboard() {
                       <div key={idx} className={`p-3 rounded-lg ${notification.unread ? 'bg-blue-50' : 'bg-gray-50'}`}>
                         <div className="flex justify-between items-start">
                           <div className="font-medium">{notification.title}</div>
-                          <div className="text-xs text-gray-500">{notification.time}</div>
+                          <div className="text-xs text-gray-700">{notification.time}</div>
                         </div>
                         <div className="text-sm mt-1">{notification.message}</div>
                       </div>
@@ -226,7 +226,7 @@ export default function BusinessDashboard() {
                           <div className="flex-1">
                             <div className="flex justify-between items-start">
                               <div className="font-medium">{message.name}</div>
-                              <div className="text-xs text-gray-500">{message.time}</div>
+                              <div className="text-xs text-gray-700">{message.time}</div>
                             </div>
                             <div className="text-sm mt-1">{message.message}</div>
                           </div>
@@ -373,7 +373,7 @@ export default function BusinessDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-[#e0f2ff]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Active Campaigns</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">Active Campaigns</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -384,7 +384,7 @@ export default function BusinessDashboard() {
           </Card>
           <Card className="border-[#e0f2ff]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Athlete Partnerships</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">Athlete Partnerships</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -395,7 +395,7 @@ export default function BusinessDashboard() {
           </Card>
           <Card className="border-[#e0f2ff]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">Campaign Budget Used</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-700">Campaign Budget Used</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -428,8 +428,8 @@ export default function BusinessDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="h-[250px] flex items-center justify-center bg-gray-50 rounded-md">
-                      <LineChart className="h-16 w-16 text-gray-300" />
-                      <span className="ml-2 text-gray-400">Performance chart will appear here</span>
+                      <LineChart className="h-16 w-16 text-gray-500" />
+                      <span className="ml-2 text-gray-600">Performance chart will appear here</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -516,7 +516,7 @@ export default function BusinessDashboard() {
                     <div className="space-y-4">
                       <div className="flex flex-col items-center mb-4">
                         <div className="h-16 w-16 rounded bg-gray-200 flex items-center justify-center mb-2">
-                          <Building2 className="h-8 w-8 text-gray-400" />
+                          <Building2 className="h-8 w-8 text-gray-600" />
                         </div>
                         <div className="font-medium">{profileData?.name || "Your Business"}</div>
                         <div className="text-sm text-gray-500">{profileData?.productType || "Product Category"}</div>
@@ -774,7 +774,7 @@ export default function BusinessDashboard() {
                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                            <Users className="h-6 w-6 text-gray-400" />
+                            <Users className="h-6 w-6 text-gray-600" />
                           </div>
                           <div>
                             <div className="font-medium">{athlete.name}</div>
@@ -827,8 +827,8 @@ export default function BusinessDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md">
-                    <BarChart3 className="h-16 w-16 text-gray-300" />
-                    <span className="ml-2 text-gray-400">Performance chart will appear here</span>
+                    <BarChart3 className="h-16 w-16 text-gray-500" />
+                    <span className="ml-2 text-gray-600">Performance chart will appear here</span>
                   </div>
                 </CardContent>
               </Card>
@@ -843,8 +843,8 @@ export default function BusinessDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md">
-                    <LineChart className="h-16 w-16 text-gray-300" />
-                    <span className="ml-2 text-gray-400">ROI chart will appear here</span>
+                    <LineChart className="h-16 w-16 text-gray-500" />
+                    <span className="ml-2 text-gray-600">ROI chart will appear here</span>
                   </div>
                 </CardContent>
               </Card>
@@ -907,7 +907,7 @@ export default function BusinessDashboard() {
                   </Button>
                   
                   <div className="p-6 border border-dashed border-gray-300 rounded-md text-center">
-                    <div className="text-gray-400 mb-2">No payment methods added yet</div>
+                    <div className="text-gray-600 mb-2">No payment methods added yet</div>
                     <div className="text-sm text-gray-500">
                       Add a payment method to fund your campaigns and partnerships
                     </div>
@@ -926,7 +926,7 @@ export default function BusinessDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="p-6 border border-dashed border-gray-300 rounded-md text-center">
-                  <div className="text-gray-400 mb-2">No billing history yet</div>
+                  <div className="text-gray-600 mb-2">No billing history yet</div>
                   <div className="text-sm text-gray-500">
                     Your payment history will be displayed here once you make payments
                   </div>
