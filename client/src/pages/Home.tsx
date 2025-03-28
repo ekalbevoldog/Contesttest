@@ -146,9 +146,9 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Career Growth</h3>
+                    <h3 className="text-xl font-bold mb-2 text-white">Zero Upfront Cost</h3>
                     <p className="text-zinc-400">
-                      Build a portfolio of professional collaborations that can lead to bigger opportunities throughout your career.
+                      Joining is always free. We only succeed when you do—fees are charged exclusively after partnerships are successfully completed.
                     </p>
                   </CardContent>
                 </Card>
