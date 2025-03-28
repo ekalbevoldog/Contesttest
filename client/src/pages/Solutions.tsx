@@ -103,27 +103,27 @@ export default function Solutions() {
                 <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
                   <div className="h-12 w-12 text-red-500 flex items-center justify-center">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.5"></circle>
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" opacity="0.3"></circle>
-                      <circle cx="12" cy="5" r="1.5" fill="currentColor"></circle>
-                      <circle cx="19" cy="12" r="1.5" fill="currentColor"></circle>
-                      <circle cx="12" cy="19" r="1.5" fill="currentColor"></circle>
-                      <circle cx="5" cy="12" r="1.5" fill="currentColor"></circle>
-                      <circle cx="16" cy="8" r="1.2" fill="currentColor" opacity="0.8"></circle>
-                      <circle cx="16" cy="16" r="1.2" fill="currentColor" opacity="0.8"></circle>
-                      <circle cx="8" cy="16" r="1.2" fill="currentColor" opacity="0.8"></circle>
-                      <circle cx="8" cy="8" r="1.2" fill="currentColor" opacity="0.8"></circle>
-                      <path d="M12 6.5L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M17.5 12L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M12 17.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M6.5 12L8 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M8 8L12 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M16 16L17.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M8 16L12 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M8 8L6.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none"></circle>
-                      <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
-                      <path d="M13.5 10.5L10.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      {/* Brain outline with circuits */}
+                      <path d="M19 11C19 15.4183 15.6421 19 12 19C8.35786 19 5 15.4183 5 11C5 6.58172 8.35786 3 12 3C15.6421 3 19 6.58172 19 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      
+                      {/* Circuit lines */}
+                      <path d="M12 3V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M12 19V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M19 11H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M2 11H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      
+                      {/* Connection points */}
+                      <circle cx="12" cy="6" r="1" fill="currentColor"/>
+                      <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                      <circle cx="15" cy="11" r="1" fill="currentColor"/>
+                      <circle cx="9" cy="11" r="1" fill="currentColor"/>
+                      
+                      {/* Inner match pattern */}
+                      <path d="M9 7L12 10L15 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 15L12 12L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      
+                      {/* AI/Data Pulse */}
+                      <path d="M7 11.5H8.5L9.5 10L10.5 13L11.5 9L12.5 11.5L13.5 10L14.5 13L15.5 10L17 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                 </div>
