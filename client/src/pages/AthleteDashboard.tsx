@@ -673,7 +673,7 @@ export default function AthleteDashboard() {
                     ))
                   ) : (
                     <div className="text-center py-10">
-                      <div className="text-gray-400 mb-2">No partnership offers available</div>
+                      <div className="text-gray-600 mb-2">No partnership offers available</div>
                       <div className="text-sm text-gray-500 mb-4">
                         Complete your profile to receive more partnership matches
                       </div>
@@ -770,7 +770,7 @@ export default function AthleteDashboard() {
                     ))
                   ) : (
                     <div className="text-center py-10">
-                      <div className="text-gray-400 mb-2">No active partnerships</div>
+                      <div className="text-gray-600 mb-2">No active partnerships</div>
                       <div className="text-sm text-gray-500 mb-4">
                         Accept partnership offers to see them here
                       </div>
@@ -870,7 +870,7 @@ export default function AthleteDashboard() {
 
                   {activePartnerships.flatMap(p => p.deliverables).filter(d => d.status === "pending").length === 0 && (
                     <div className="text-center py-10">
-                      <div className="text-gray-400 mb-2">No pending deliverables</div>
+                      <div className="text-gray-600 mb-2">No pending deliverables</div>
                       <div className="text-sm text-gray-500 mb-4">
                         You're all caught up! Look for new partnership opportunities.
                       </div>
@@ -917,7 +917,7 @@ export default function AthleteDashboard() {
 
                   {activePartnerships.flatMap(p => p.deliverables).filter(d => d.status === "completed").length === 0 && (
                     <div className="text-center py-10">
-                      <div className="text-gray-400 mb-2">No completed deliverables yet</div>
+                      <div className="text-gray-600 mb-2">No completed deliverables yet</div>
                       <div className="text-sm text-gray-500 mb-4">
                         Complete your pending tasks to see them here
                       </div>
@@ -1039,8 +1039,8 @@ export default function AthleteDashboard() {
                 <div className="mt-8">
                   <h3 className="text-lg font-medium mb-4">Campaign Impact</h3>
                   <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md mb-6">
-                    <BarChart3 className="h-16 w-16 text-gray-300" />
-                    <span className="ml-2 text-gray-400">Campaign performance visualization</span>
+                    <BarChart3 className="h-16 w-16 text-gray-500" />
+                    <span className="ml-2 text-gray-600">Campaign performance visualization</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-gray-50 rounded-md">
@@ -1098,8 +1098,8 @@ export default function AthleteDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md mb-6">
-                  <BarChart3 className="h-16 w-16 text-gray-300" />
-                  <span className="ml-2 text-gray-400">Earnings chart for selected period</span>
+                  <BarChart3 className="h-16 w-16 text-gray-500" />
+                  <span className="ml-2 text-gray-600">Earnings chart for selected period</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Card className="bg-muted/50">
@@ -1377,7 +1377,7 @@ export default function AthleteDashboard() {
 
                   {activePartnerships.length === 0 && (
                     <div className="text-center py-10">
-                      <div className="text-gray-400 mb-2">No contracts available</div>
+                      <div className="text-gray-600 mb-2">No contracts available</div>
                       <div className="text-sm text-gray-500 mb-4">
                         Active partnerships will have contracts displayed here
                       </div>
