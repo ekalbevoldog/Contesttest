@@ -43,35 +43,35 @@ function Router() {
           <Route path="/find-athlete-match" component={RegistrationWizard} />
           <Route path="/personalized-onboarding" component={PersonalizedWizard} />
           <Route path="/dynamic-onboarding" component={DynamicOnboarding} />
-          
+
           {/* Marketing Pages */}
           <Route path="/solutions" component={Solutions} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/case-studies" component={CaseStudies} />
           <Route path="/feedback" component={Feedback} />
-          
+
           {/* Protected Dashboard Routes */}
           <ProtectedRoute path="/athlete/dashboard" component={AthleteDashboard} requiredUserType="athlete" />
           <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} requiredUserType="business" />
           <ProtectedRoute path="/compliance/dashboard" component={ComplianceDashboard} requiredUserType="compliance" />
-          
+
           {/* Message Center - available to all logged in users */}
           <ProtectedRoute path="/messages" component={MessageCenter} />
-          
+
           {/* Athlete Profile Configuration - only for athletes */}
           <ProtectedRoute path="/athlete/profile-link" component={AthleteProfileLinkConfig} requiredUserType="athlete" />
-          
+
           {/* Public Athlete Profile Links */}
           <Route path="/p/:linkId" component={AthleteProfileLink} />
-          
+
           {/* Admin and Integration Routes */}
           <Route path="/admin-login" component={AdminLogin} />
           <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} requiredUserType="admin" />
           <Route path="/admin/n8n-config" component={N8nConfig} />
-          
+
           {/* Test Routes */}
           <Route path="/match-algorithm-test" component={MatchAlgorithmTest} />
-          
+
           <Route component={NotFound} />
         </Switch>
       </main>

@@ -33,10 +33,10 @@ export default function Header() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const { user, logoutMutation } = useAuth();
-  
+
   // Extract user type from user object if available
   const userType = user?.userType || null;
-  
+
   return (
     <header className="bg-[#111111] border-b border-zinc-800 shadow-md backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,7 +48,7 @@ export default function Header() {
               </Link>
             </div>
           </div>
-          
+
           <div className="hidden md:flex items-center space-x-4">
             {/* Marketing Navigation Links - Only show when not logged in */}
             {!user && (
@@ -60,7 +60,7 @@ export default function Header() {
                     Solutions
                   </span>
                 </Link>
-                
+
                 <Link href="/pricing">
                   <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
                     location === "/pricing" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
@@ -68,7 +68,7 @@ export default function Header() {
                     Pricing
                   </span>
                 </Link>
-                
+
                 <Link href="/case-studies">
                   <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
                     location === "/case-studies" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
@@ -78,7 +78,7 @@ export default function Header() {
                 </Link>
               </>
             )}
-            
+
             {/* App Navigation - Only show when logged in */}
             {user && (
               <>
@@ -160,7 +160,7 @@ export default function Header() {
                 </Link>
               </>
             )}
-            
+
             {/* Admin Dropdown - Only shown for admins */}
             {user && (user.userType === 'admin' || user.username === 'admin') && (
               <DropdownMenu>
@@ -180,7 +180,7 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            
+
             {/* Sign In Dropdown or Profile Button */}
             {user ? (
               <DropdownMenu>
@@ -197,7 +197,13 @@ export default function Header() {
                       <span>My Profile</span>
                     </Link>
                   </DropdownMenuItem>
-                  
+                  <DropdownMenuItem asChild>
+                    <Link href="/messages" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                      <MessageSquare className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                      <span>Messages</span>
+                    </Link>
+                  </DropdownMenuItem>
+
                   {/* Profile Link Manager - Only shown for athletes */}
                   {userType === 'athlete' && (
                     <DropdownMenuItem asChild>
@@ -207,7 +213,7 @@ export default function Header() {
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  
+
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
                       <Settings className="mr-2 h-4 w-4 text-[#f03c3c]" />
@@ -246,7 +252,7 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            
+
             <Button 
               size="sm" 
               className="bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium"
@@ -259,7 +265,7 @@ export default function Header() {
                 AI Assistant
               </span>
             </Button>
-            
+
             {!user && (
               <Button
                 size="sm"
@@ -274,7 +280,7 @@ export default function Header() {
               </Button>
             )}
           </div>
-          
+
           <div className="md:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
@@ -290,7 +296,7 @@ export default function Header() {
                       <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
                     </Link>
                   </div>
-                  
+
                   {/* Marketing Navigation Links - Only for non-logged in users */}
                   {!user && (
                     <>
@@ -304,7 +310,7 @@ export default function Header() {
                           Solutions
                         </span>
                       </Link>
-                      
+
                       <Link href="/pricing">
                         <span 
                           className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
@@ -315,7 +321,7 @@ export default function Header() {
                           Pricing
                         </span>
                       </Link>
-                      
+
                       <Link href="/case-studies">
                         <span 
                           className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
@@ -328,7 +334,7 @@ export default function Header() {
                       </Link>
                     </>
                   )}
-                  
+
                   {/* App Navigation - Only for logged in users */}
                   {user && (
                     <>
@@ -373,7 +379,7 @@ export default function Header() {
                           <div className="border-b border-gray-700 pb-2 mb-2">
                             <p className="px-3 py-1 text-sm text-gray-400">Dashboard Access</p>
                           </div>
-                          
+
                           <Link href="/admin/dashboard">
                             <span 
                               className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
@@ -385,7 +391,7 @@ export default function Header() {
                               Admin Dashboard
                             </span>
                           </Link>
-                          
+
                           <Link href="/athlete/dashboard">
                             <span 
                               className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
@@ -397,7 +403,7 @@ export default function Header() {
                               Athlete Dashboard
                             </span>
                           </Link>
-                          
+
                           <Link href="/business/dashboard">
                             <span 
                               className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
@@ -409,7 +415,7 @@ export default function Header() {
                               Business Dashboard
                             </span>
                           </Link>
-                          
+
                           <Link href="/compliance/dashboard">
                             <span 
                               className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
@@ -439,7 +445,7 @@ export default function Header() {
                       </Link>
                     </>
                   )}
-                  
+
                   {/* Admin section - Only for admin users */}
                   {user && (user.userType === 'admin' || user.username === 'admin') && (
                     <div className="border-t border-gray-700 my-4 pt-4">
@@ -455,7 +461,7 @@ export default function Header() {
                       </Link>
                     </div>
                   )}
-                  
+
                   <div className="border-t border-gray-700 my-4 pt-4">
                     <div className="px-3 py-2 text-sm font-medium text-gray-300">Account</div>
                     {!user && (
@@ -482,7 +488,16 @@ export default function Header() {
                             My Profile
                           </span>
                         </Link>
-                        
+                        <Link href="/messages">
+                          <span
+                            className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
+                            onClick={() => setOpen(false)}
+                          >
+                            <MessageSquare className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                            Messages
+                          </span>
+                        </Link>
+
                         {/* Public Profile Link for Athletes - mobile view */}
                         {userType === 'athlete' && (
                           <Link href="/athlete/profile-link">
@@ -495,7 +510,7 @@ export default function Header() {
                             </span>
                           </Link>
                         )}
-                        
+
                         <Link href="/settings">
                           <span
                             className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white flex items-center"
@@ -531,7 +546,7 @@ export default function Header() {
                       </>
                     )}
                   </div>
-                  
+
                   <Button 
                     className="w-full mt-6 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium" 
                     onClick={() => {
