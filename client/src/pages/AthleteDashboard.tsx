@@ -468,7 +468,7 @@ export default function AthleteDashboard() {
                           <div>
                             <div className="font-medium">{notification.title}</div>
                             <div className="text-sm text-gray-600 mt-1">{notification.message}</div>
-                            <div className="text-xs text-gray-500 mt-1">{notification.time}</div>
+                            <div className="text-xs text-gray-700 mt-1">{notification.time}</div>
                           </div>
                         </div>
                       </div>
@@ -511,7 +511,7 @@ export default function AthleteDashboard() {
                           <div>
                             <div className="font-medium">{message.from}</div>
                             <div className="text-sm text-gray-600 mt-1">{message.message}</div>
-                            <div className="text-xs text-gray-500 mt-1">{message.time}</div>
+                            <div className="text-xs text-gray-700 mt-1">{message.time}</div>
                           </div>
                         </div>
                       </div>
@@ -642,20 +642,20 @@ export default function AthleteDashboard() {
                         <CardContent className="pb-2">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-500">Offer Amount</span>
+                              <span className="text-sm text-gray-700">Offer Amount</span>
                               <span className="font-semibold">${offer.offerAmount}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-500">Response Deadline</span>
+                              <span className="text-sm text-gray-700">Response Deadline</span>
                               <span className="font-semibold">{new Date(offer.deadline).toLocaleDateString()}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-500">Deliverables</span>
+                              <span className="text-sm text-gray-700">Deliverables</span>
                               <span className="font-semibold">{offer.deliverables.length} Items</span>
                             </div>
                           </div>
                           <div className="mt-2">
-                            <span className="text-sm text-gray-500 block mb-1">Required Deliverables:</span>
+                            <span className="text-sm text-gray-700 block mb-1">Required Deliverables:</span>
                             <div className="flex flex-wrap gap-2">
                               {offer.deliverables.map((deliverable, idx) => (
                                 <Badge key={idx} variant="outline" className="bg-primary/5">
@@ -944,22 +944,22 @@ export default function AthleteDashboard() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-gray-50 rounded-md">
-                    <div className="text-gray-500 text-sm">Total Followers</div>
+                    <div className="text-gray-700 font-medium text-sm">Total Followers</div>
                     <div className="text-2xl font-bold">125.7K</div>
                     <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+8.3%</Badge>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-md">
-                    <div className="text-gray-500 text-sm">Avg. Engagement</div>
+                    <div className="text-gray-700 font-medium text-sm">Avg. Engagement</div>
                     <div className="text-2xl font-bold">5.52%</div>
                     <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+0.9%</Badge>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-md">
-                    <div className="text-gray-500 text-sm">Audience Reached</div>
+                    <div className="text-gray-700 font-medium text-sm">Audience Reached</div>
                     <div className="text-2xl font-bold">1.12M+</div>
                     <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+12.5%</Badge>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-md">
-                    <div className="text-gray-500 text-sm">Content Deliverables</div>
+                    <div className="text-gray-700 font-medium text-sm">Content Deliverables</div>
                     <div className="text-2xl font-bold">42</div>
                     <Badge className="mt-1 bg-green-100 text-green-800 hover:bg-green-200">+5 this month</Badge>
                   </div>
@@ -975,15 +975,15 @@ export default function AthleteDashboard() {
                       <CardContent>
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Followers</span>
+                            <span className="text-sm text-gray-700 font-medium">Followers</span>
                             <span className="font-medium">78.5K</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Engagement Rate</span>
+                            <span className="text-sm text-gray-700 font-medium">Engagement Rate</span>
                             <span className="font-medium">6.2%</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Avg. Reach per Post</span>
+                            <span className="text-sm text-gray-700 font-medium">Avg. Reach per Post</span>
                             <span className="font-medium">35.4K</span>
                           </div>
                         </div>
@@ -997,15 +997,15 @@ export default function AthleteDashboard() {
                       <CardContent>
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Followers</span>
+                            <span className="text-sm text-gray-700 font-medium">Followers</span>
                             <span className="font-medium">42.3K</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Engagement Rate</span>
+                            <span className="text-sm text-gray-700 font-medium">Engagement Rate</span>
                             <span className="font-medium">8.7%</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Avg. Views per Video</span>
+                            <span className="text-sm text-gray-700 font-medium">Avg. Views per Video</span>
                             <span className="font-medium">56K</span>
                           </div>
                         </div>
@@ -1019,15 +1019,15 @@ export default function AthleteDashboard() {
                       <CardContent>
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Followers</span>
+                            <span className="text-sm text-gray-700 font-medium">Followers</span>
                             <span className="font-medium">15.9K</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Engagement Rate</span>
+                            <span className="text-sm text-gray-700 font-medium">Engagement Rate</span>
                             <span className="font-medium">3.8%</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500">Avg. Impressions</span>
+                            <span className="text-sm text-gray-700 font-medium">Avg. Impressions</span>
                             <span className="font-medium">21.2K</span>
                           </div>
                         </div>
@@ -1039,24 +1039,24 @@ export default function AthleteDashboard() {
                 <div className="mt-8">
                   <h3 className="text-lg font-medium mb-4">Campaign Impact</h3>
                   <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md mb-6">
-                    <BarChart3 className="h-16 w-16 text-gray-500" />
-                    <span className="ml-2 text-gray-600">Campaign performance visualization</span>
+                    <BarChart3 className="h-16 w-16 text-gray-600" />
+                    <span className="ml-2 text-gray-700 font-medium">Campaign performance visualization</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-gray-50 rounded-md">
-                      <div className="text-gray-500 text-sm">Top Performing</div>
+                      <div className="text-gray-700 font-medium text-sm">Top Performing</div>
                       <div className="mt-1 font-medium">Athletic Wear Co</div>
-                      <div className="text-sm text-gray-500">87K impressions</div>
+                      <div className="text-sm text-gray-700">87K impressions</div>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-md">
-                      <div className="text-gray-500 text-sm">Most Engaging</div>
+                      <div className="text-gray-700 font-medium text-sm">Most Engaging</div>
                       <div className="mt-1 font-medium">Energy Drinks Co</div>
-                      <div className="text-sm text-gray-500">9.2% engagement</div>
+                      <div className="text-sm text-gray-700">9.2% engagement</div>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-md">
-                      <div className="text-gray-500 text-sm">Audience Growth</div>
+                      <div className="text-gray-700 font-medium text-sm">Audience Growth</div>
                       <div className="mt-1 font-medium">+12.5K followers</div>
-                      <div className="text-sm text-gray-500">Since first campaign</div>
+                      <div className="text-sm text-gray-700">Since first campaign</div>
                     </div>
                   </div>
                 </div>
@@ -1098,44 +1098,44 @@ export default function AthleteDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md mb-6">
-                  <BarChart3 className="h-16 w-16 text-gray-500" />
-                  <span className="ml-2 text-gray-600">Earnings chart for selected period</span>
+                  <BarChart3 className="h-16 w-16 text-gray-600" />
+                  <span className="ml-2 text-gray-700 font-medium">Earnings chart for selected period</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-gray-500">Total Earnings</CardTitle>
+                      <CardTitle className="text-sm font-medium text-gray-700">Total Earnings</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">${earningsData.total}</div>
-                      <p className="text-sm text-gray-500">From {earningsData.campaigns} campaigns</p>
+                      <p className="text-sm text-gray-700">From {earningsData.campaigns} campaigns</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-gray-500">Pending</CardTitle>
+                      <CardTitle className="text-sm font-medium text-gray-700">Pending</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">${earningsData.pending}</div>
-                      <p className="text-sm text-gray-500">To be received</p>
+                      <p className="text-sm text-gray-700">To be received</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-gray-500">Received</CardTitle>
+                      <CardTitle className="text-sm font-medium text-gray-700">Received</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">${earningsData.completed}</div>
-                      <p className="text-sm text-gray-500">Payments received</p>
+                      <p className="text-sm text-gray-700">Payments received</p>
                     </CardContent>
                   </Card>
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-gray-500">Growth Rate</CardTitle>
+                      <CardTitle className="text-sm font-medium text-gray-700">Growth Rate</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">{earningsData.change}</div>
-                      <p className="text-sm text-gray-500">From previous period</p>
+                      <p className="text-sm text-gray-700">From previous period</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -1187,12 +1187,12 @@ export default function AthleteDashboard() {
                     <div key={idx} className="flex items-center justify-between p-4 rounded-md bg-gray-50">
                       <div>
                         <div className="font-medium">{transaction.brand}</div>
-                        <div className="text-sm text-gray-500">{transaction.campaign}</div>
+                        <div className="text-sm text-gray-700">{transaction.campaign}</div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <div className="font-semibold">${transaction.amount}</div>
-                          <div className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</div>
+                          <div className="text-sm text-gray-700">{new Date(transaction.date).toLocaleDateString()}</div>
                         </div>
                         <Badge 
                           className={transaction.status === "completed" 
@@ -1250,7 +1250,7 @@ export default function AthleteDashboard() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center justify-between text-sm text-gray-700">
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4" />
                             By {resource.author}
@@ -1362,7 +1362,7 @@ export default function AthleteDashboard() {
                         <FileText className="h-5 w-5 text-primary" />
                         <div>
                           <div className="font-medium">{partnership.brand} Contract</div>
-                          <div className="text-sm text-gray-500">{partnership.campaign}</div>
+                          <div className="text-sm text-gray-700">{partnership.campaign}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1378,7 +1378,7 @@ export default function AthleteDashboard() {
                   {activePartnerships.length === 0 && (
                     <div className="text-center py-10">
                       <div className="text-gray-600 mb-2">No contracts available</div>
-                      <div className="text-sm text-gray-500 mb-4">
+                      <div className="text-sm text-gray-700 mb-4">
                         Active partnerships will have contracts displayed here
                       </div>
                     </div>
@@ -1408,7 +1408,7 @@ export default function AthleteDashboard() {
                         <FileText className="h-5 w-5 text-primary" />
                         <div>
                           <div className="font-medium">{doc.type} - Tax Year {doc.year}</div>
-                          <div className="text-sm text-gray-500">Issued on: {new Date(doc.date).toLocaleDateString()}</div>
+                          <div className="text-sm text-gray-700">Issued on: {new Date(doc.date).toLocaleDateString()}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1443,19 +1443,19 @@ export default function AthleteDashboard() {
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="flex-1 space-y-4">
                         <div>
-                          <label className="text-sm font-medium text-gray-500">Full Name</label>
+                          <label className="text-sm font-medium text-gray-700">Full Name</label>
                           <div className="mt-1 p-3 bg-gray-50 rounded-md">
                             {profileData?.name || "Jordan Mitchell"}
                           </div>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-500">Email Address</label>
+                          <label className="text-sm font-medium text-gray-700">Email Address</label>
                           <div className="mt-1 p-3 bg-gray-50 rounded-md">
                             athlete@contested.com
                           </div>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-500">Phone Number</label>
+                          <label className="text-sm font-medium text-gray-700">Phone Number</label>
                           <div className="mt-1 p-3 bg-gray-50 rounded-md">
                             (555) 123-4567
                           </div>
@@ -1463,19 +1463,19 @@ export default function AthleteDashboard() {
                       </div>
                       <div className="flex-1 space-y-4">
                         <div>
-                          <label className="text-sm font-medium text-gray-500">Sport</label>
+                          <label className="text-sm font-medium text-gray-700">Sport</label>
                           <div className="mt-1 p-3 bg-gray-50 rounded-md">
                             {profileData?.sport || "Basketball"}
                           </div>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-500">School</label>
+                          <label className="text-sm font-medium text-gray-700">School</label>
                           <div className="mt-1 p-3 bg-gray-50 rounded-md">
                             {profileData?.school || "State University"}
                           </div>
                         </div>
                         <div>
-                          <label className="text-sm font-medium text-gray-500">Account Type</label>
+                          <label className="text-sm font-medium text-gray-700">Account Type</label>
                           <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center justify-between">
                             <span>Athlete</span>
                             <Badge className="bg-primary">Premium</Badge>
@@ -1508,7 +1508,7 @@ export default function AthleteDashboard() {
                       <div className="bg-white p-3 rounded-md font-bold tracking-wider text-lg mb-3">
                         ATHLETE25
                       </div>
-                      <p className="text-sm text-gray-500 mb-4">
+                      <p className="text-sm text-gray-700 mb-4">
                         Share this code with friends to give them a 25% discount on their first month
                       </p>
                       <Button className="w-full">
@@ -1518,7 +1518,7 @@ export default function AthleteDashboard() {
                     </div>
                     <div>
                       <p className="font-medium">Referral Benefits</p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-700 mt-1">
                         For each friend who joins using your code, you'll receive a $50 bonus after their first partnership
                       </p>
                     </div>
@@ -1526,7 +1526,7 @@ export default function AthleteDashboard() {
                     <div>
                       <p className="font-medium">Your Referrals</p>
                       <p className="text-2xl font-bold mt-1">3</p>
-                      <p className="text-sm text-gray-500">Total referrals</p>
+                      <p className="text-sm text-gray-700">Total referrals</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1556,11 +1556,11 @@ export default function AthleteDashboard() {
                       <span className="font-medium">{notification.type}</span>
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
-                          <label className="text-sm text-gray-500">Email</label>
+                          <label className="text-sm text-gray-700">Email</label>
                           <input type="checkbox" checked={notification.email} className="rounded-md" onChange={() => {}} />
                         </div>
                         <div className="flex items-center gap-2">
-                          <label className="text-sm text-gray-500">Push</label>
+                          <label className="text-sm text-gray-700">Push</label>
                           <input type="checkbox" checked={notification.push} className="rounded-md" onChange={() => {}} />
                         </div>
                       </div>
