@@ -1,10 +1,10 @@
-
 import { WebSocket } from 'ws';
 import { storage } from '../storage';
 
 interface ConnectedClient {
   ws: WebSocket;
   userId?: number;
+  userType?: number; // Added userType
   lastActivity: Date;
 }
 
@@ -12,16 +12,17 @@ class WebSocketService {
   private clients: Map<string, ConnectedClient> = new Map();
   private messageQueue: Map<number, any[]> = new Map();
 
-  registerClient(sessionId: string, ws: WebSocket) {
+  registerClient(sessionId: string, ws: WebSocket, userType: number) { // Added userType parameter
     this.clients.set(sessionId, {
       ws,
+      userType, // Added userType
       lastActivity: new Date()
     });
 
     ws.on('message', async (data: string) => {
       try {
         const message = JSON.parse(data);
-        
+
         if (message.type === 'presence') {
           this.updatePresence(sessionId);
         } else if (message.type === 'message') {
@@ -41,22 +42,21 @@ class WebSocketService {
   private async handleNewMessage(message: any) {
     try {
       // Store message in database
-      const storedMessage = await storage.storeMessage(message.sessionId, message.sender, message.content, message.metadata);
-      
-      // Find recipient's websocket connection
-      const recipientClient = Array.from(this.clients.entries())
-        .find(([_, client]) => client.userType === message.recipientId);
+      const storedMessage = await storage.storeMessage(message.sessionId, message.sender, message.content, {
+        recipientId: message.recipientId
+      });
 
-      if (recipientClient) {
-        // Send to specific recipient
-        const [recipientSessionId, client] = recipientClient;
-        if (client.ws.readyState === WebSocket.OPEN) {
+      // Find clients with matching role
+      Array.from(this.clients.entries()).forEach(([sessionId, client]) => {
+        if (client.userType === message.recipientId && client.ws.readyState === WebSocket.OPEN) {
           client.ws.send(JSON.stringify({
-            type: 'new_message',
-            message: storedMessage
+            type: 'message',
+            content: message.content,
+            sender: message.sender,
+            timestamp: new Date()
           }));
         }
-      }
+      });
 
       // Update unread counts
       this.updateUnreadCounts(message.sessionId);
