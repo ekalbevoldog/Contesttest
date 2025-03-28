@@ -103,19 +103,42 @@ export default function Solutions() {
                 <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
                   <div className="h-12 w-12 text-red-500 flex items-center justify-center">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.3 8.8L9 4.5L4.5 9L8.8 13.3M15.1 10.6L10.6 15.1L15.4 19.9L19.9 15.4L15.1 10.6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9.5 4.5L14.5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14.5 14.5L9.5 19.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M19.5 9.5L14.5 14.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M4.5 14.5L9.5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      {/* Brain Connection Circle */}
+                      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
+                      
+                      {/* Network Nodes */}
+                      <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+                      <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+                      <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+                      <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+                      <circle cx="16" cy="8" r="1.2" fill="currentColor" opacity="0.8" />
+                      <circle cx="16" cy="16" r="1.2" fill="currentColor" opacity="0.8" />
+                      <circle cx="8" cy="16" r="1.2" fill="currentColor" opacity="0.8" />
+                      <circle cx="8" cy="8" r="1.2" fill="currentColor" opacity="0.8" />
+                      
+                      {/* Connection Lines */}
+                      <path d="M12 6.5L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M17.5 12L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M12 17.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M6.5 12L8 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M8 8L12 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M16 16L17.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M8 16L12 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M8 8L6.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      
+                      {/* Central Brain Icon */}
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                      <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M13.5 10.5L10.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                   </div>
                 </div>
                 
                 <h3 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">AI-Powered Matching</h3>
-                <h4 className="text-lg font-semibold text-zinc-300 mb-4">Intelligent partnership recommendations powered by data</h4>
+                <h4 className="text-lg font-semibold text-zinc-300 mb-4">Precision Matching, Maximum Impact</h4>
                 <p className="text-zinc-400 mb-6 text-lg">
-                  Our proprietary AI algorithm analyzes dozens of data points to find the perfect partnerships between athletes and businesses that share values, aesthetics, and audience demographics.
+                  Our proprietary AI-driven algorithm identifies perfect athlete-brand partnerships by analyzing extensive data points—optimizing audience fit, brand alignment, and content style.
                 </p>
                 
                 <ul className="space-y-3 text-zinc-400">
@@ -123,19 +146,19 @@ export default function Solutions() {
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Personality and values alignment</span>
+                    <span className="text-zinc-300">Advanced Personality and Values Alignment</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Audience demographic analysis</span>
+                    <span className="text-zinc-300">Deep Audience Demographic Insights</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Content style and quality assessment</span>
+                    <span className="text-zinc-300">Content Quality and Engagement Predictions</span>
                   </li>
                 </ul>
                 
