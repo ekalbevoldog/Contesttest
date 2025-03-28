@@ -348,7 +348,7 @@ export default function BusinessDashboard() {
                         <h4 className="text-sm font-medium mb-2">Payment Method</h4>
                         <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50">
                           <div className="flex items-center gap-3">
-                            <CreditCard className="h-5 w-5 text-gray-400" />
+                            <CreditCard className="h-5 w-5 text-gray-600" />
                             <div>
                               <div className="font-medium">Visa ending in 4242</div>
                               <div className="text-xs text-gray-500">Expires 12/25</div>

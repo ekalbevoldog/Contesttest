@@ -466,7 +466,7 @@ export default function ComplianceDashboard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">NIL Compliance Dashboard</h1>
-              <p className="text-gray-400">{userData.school} | {userData.name}</p>
+              <p className="text-gray-600">{userData.school} | {userData.name}</p>
             </div>
           </div>
         </div>
@@ -477,40 +477,40 @@ export default function ComplianceDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-[#1a1a1a] border-[#333] text-white">
             <CardHeader className="pb-2">
-              <CardDescription className="text-gray-400">Pending Approvals</CardDescription>
+              <CardDescription className="text-gray-600">Pending Approvals</CardDescription>
               <CardTitle className="text-3xl flex items-center">
                 {partnerships.pending.length}
                 <AlertCircle className="ml-2 h-5 w-5 text-[#f03c3c]" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-300">Partnerships awaiting your review</p>
+              <p className="text-sm text-gray-600">Partnerships awaiting your review</p>
             </CardContent>
           </Card>
           
           <Card className="bg-[#1a1a1a] border-[#333] text-white">
             <CardHeader className="pb-2">
-              <CardDescription className="text-gray-400">Active Athletes</CardDescription>
+              <CardDescription className="text-gray-600">Active Athletes</CardDescription>
               <CardTitle className="text-3xl flex items-center">
                 24
                 <Users className="ml-2 h-5 w-5 text-[#f03c3c]" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-300">Athletes with active NIL deals</p>
+              <p className="text-sm text-gray-600">Athletes with active NIL deals</p>
             </CardContent>
           </Card>
           
           <Card className="bg-[#1a1a1a] border-[#333] text-white">
             <CardHeader className="pb-2">
-              <CardDescription className="text-gray-400">Total Approved</CardDescription>
+              <CardDescription className="text-gray-600">Total Approved</CardDescription>
               <CardTitle className="text-3xl flex items-center">
                 {partnerships.approved.length}
                 <Sparkles className="ml-2 h-5 w-5 text-[#f03c3c]" />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-300">Partnerships approved this year</p>
+              <p className="text-sm text-gray-600">Partnerships approved this year</p>
             </CardContent>
           </Card>
         </div>
@@ -536,7 +536,7 @@ export default function ComplianceDashboard() {
             <Card className="bg-[#1a1a1a] border-[#333] text-white">
               <CardHeader>
                 <CardTitle>Pending Partnership Approvals</CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardDescription className="text-gray-600">
                   Review and approve NIL partnerships for your student athletes
                 </CardDescription>
               </CardHeader>
@@ -555,7 +555,7 @@ export default function ComplianceDashboard() {
                   <TableBody>
                     {partnerships.pending.length === 0 ? (
                       <TableRow className="border-[#333] hover:bg-[#222]">
-                        <TableCell colSpan={6} className="text-center py-8 text-gray-400">
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-600">
                           No pending partnerships to review
                         </TableCell>
                       </TableRow>
@@ -565,20 +565,20 @@ export default function ComplianceDashboard() {
                           <TableCell>
                             <div>
                               <div className="font-medium">{partnership.athlete.name}</div>
-                              <div className="text-sm text-gray-400">{partnership.athlete.sport}, {partnership.athlete.year}</div>
+                              <div className="text-sm text-gray-600">{partnership.athlete.sport}, {partnership.athlete.year}</div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div>
                               <div className="font-medium">{partnership.business.name}</div>
-                              <div className="text-sm text-gray-400">{partnership.business.type}</div>
+                              <div className="text-sm text-gray-600">{partnership.business.type}</div>
                             </div>
                           </TableCell>
                           <TableCell>{partnership.details.type}</TableCell>
                           <TableCell>{partnership.details.compensation}</TableCell>
                           <TableCell>
                             <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                              <Calendar className="h-4 w-4 mr-1 text-gray-600" />
                               {partnership.details.submittedDate}
                             </div>
                           </TableCell>
@@ -599,7 +599,7 @@ export default function ComplianceDashboard() {
                                 <DialogContent className="sm:max-w-[700px] bg-[#1a1a1a] border-[#333] text-white">
                                   <DialogHeader>
                                     <DialogTitle>Partnership Details</DialogTitle>
-                                    <DialogDescription className="text-gray-400">
+                                    <DialogDescription className="text-gray-600">
                                       Review all details of the partnership between {partnership.athlete.name} and {partnership.business.name}
                                     </DialogDescription>
                                   </DialogHeader>
@@ -618,35 +618,35 @@ export default function ComplianceDashboard() {
                                         <AccordionContent className="px-4 pt-2 pb-4 bg-[#222] rounded-md mb-2">
                                           <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Name:</p>
+                                              <p className="text-sm font-medium text-gray-600">Name:</p>
                                               <p>{partnership.athlete.name}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Sport:</p>
+                                              <p className="text-sm font-medium text-gray-600">Sport:</p>
                                               <p>{partnership.athlete.sport}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Year:</p>
+                                              <p className="text-sm font-medium text-gray-600">Year:</p>
                                               <p>{partnership.athlete.year}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Academic Status:</p>
+                                              <p className="text-sm font-medium text-gray-600">Academic Status:</p>
                                               <p>{partnership.athlete.academicStatus}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Contact Email:</p>
+                                              <p className="text-sm font-medium text-gray-600">Contact Email:</p>
                                               <p>{partnership.athlete.email}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Phone:</p>
+                                              <p className="text-sm font-medium text-gray-600">Phone:</p>
                                               <p>{partnership.athlete.phone}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Stats:</p>
+                                              <p className="text-sm font-medium text-gray-600">Stats:</p>
                                               <p>{partnership.athlete.stats}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Social Media:</p>
+                                              <p className="text-sm font-medium text-gray-600">Social Media:</p>
                                               <p>
                                                 {partnership.athlete.socialMedia?.instagram || 'N/A'} 
                                                 {partnership.athlete.socialMedia?.twitter ? ` / ${partnership.athlete.socialMedia.twitter}` : ''} 
@@ -669,35 +669,35 @@ export default function ComplianceDashboard() {
                                         <AccordionContent className="px-4 pt-2 pb-4 bg-[#222] rounded-md mb-2">
                                           <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Name:</p>
+                                              <p className="text-sm font-medium text-gray-600">Name:</p>
                                               <p>{partnership.business.name}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Type:</p>
+                                              <p className="text-sm font-medium text-gray-600">Type:</p>
                                               <p>{partnership.business.type}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Contact Person:</p>
+                                              <p className="text-sm font-medium text-gray-600">Contact Person:</p>
                                               <p>{partnership.business.contact}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Email:</p>
+                                              <p className="text-sm font-medium text-gray-600">Email:</p>
                                               <p>{partnership.business.email}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Phone:</p>
+                                              <p className="text-sm font-medium text-gray-600">Phone:</p>
                                               <p>{partnership.business.phone}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Website:</p>
+                                              <p className="text-sm font-medium text-gray-600">Website:</p>
                                               <p>{partnership.business.website}</p>
                                             </div>
                                             <div className="col-span-2">
-                                              <p className="text-sm font-medium text-gray-400">Address:</p>
+                                              <p className="text-sm font-medium text-gray-600">Address:</p>
                                               <p>{partnership.business.address}</p>
                                             </div>
                                             <div className="col-span-2">
-                                              <p className="text-sm font-medium text-gray-400">Company History:</p>
+                                              <p className="text-sm font-medium text-gray-600">Company History:</p>
                                               <p>{partnership.business.history}</p>
                                             </div>
                                           </div>
@@ -716,19 +716,19 @@ export default function ComplianceDashboard() {
                                         <AccordionContent className="px-4 pt-2 pb-4 bg-[#222] rounded-md mb-2">
                                           <div className="space-y-4">
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Partnership Type:</p>
+                                              <p className="text-sm font-medium text-gray-600">Partnership Type:</p>
                                               <p className="font-medium text-white">{partnership.details.type}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Compensation:</p>
+                                              <p className="text-sm font-medium text-gray-600">Compensation:</p>
                                               <p className="font-medium text-white">{partnership.details.compensation}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Duration:</p>
+                                              <p className="text-sm font-medium text-gray-600">Duration:</p>
                                               <p>{partnership.details.duration}</p>
                                             </div>
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Deliverables:</p>
+                                              <p className="text-sm font-medium text-gray-600">Deliverables:</p>
                                               <ul className="list-disc pl-5 mt-2 space-y-1">
                                                 {partnership.details.deliverables.map((item: string, idx: number) => (
                                                   <li key={idx}>{item}</li>
@@ -737,7 +737,7 @@ export default function ComplianceDashboard() {
                                             </div>
                                             {partnership.details.additionalNotes && (
                                               <div>
-                                                <p className="text-sm font-medium text-gray-400">Additional Notes:</p>
+                                                <p className="text-sm font-medium text-gray-600">Additional Notes:</p>
                                                 <p>{partnership.details.additionalNotes}</p>
                                               </div>
                                             )}
@@ -763,7 +763,7 @@ export default function ComplianceDashboard() {
                                           <div className="space-y-4">
                                             <div className="h-48 overflow-y-auto border border-[#333] rounded-md p-3 bg-[#1a1a1a]">
                                               {partnership.messages.length === 0 ? (
-                                                <p className="text-gray-400 text-center py-4">No messages yet</p>
+                                                <p className="text-gray-600 text-center py-4">No messages yet</p>
                                               ) : (
                                                 <div className="space-y-3">
                                                   {partnership.messages.map((msg: any) => (
@@ -773,7 +773,7 @@ export default function ComplianceDashboard() {
                                                     >
                                                       <p className="text-sm font-medium">{msg.sender === 'compliance' ? 'You' : 'Athlete/Business'}</p>
                                                       <p>{msg.text}</p>
-                                                      <p className="text-xs text-gray-400 mt-1">
+                                                      <p className="text-xs text-gray-600 mt-1">
                                                         {new Date(msg.timestamp).toLocaleString()}
                                                       </p>
                                                     </div>
@@ -858,7 +858,7 @@ export default function ComplianceDashboard() {
             <Card className="bg-[#1a1a1a] border-[#333] text-white">
               <CardHeader>
                 <CardTitle>Approved Partnerships</CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardDescription className="text-gray-600">
                   All NIL partnerships that have been approved
                 </CardDescription>
               </CardHeader>
@@ -878,7 +878,7 @@ export default function ComplianceDashboard() {
                   <TableBody>
                     {partnerships.approved.length === 0 ? (
                       <TableRow className="border-[#333] hover:bg-[#222]">
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-600">
                           No approved partnerships yet
                         </TableCell>
                       </TableRow>
@@ -888,13 +888,13 @@ export default function ComplianceDashboard() {
                           <TableCell>
                             <div>
                               <div className="font-medium">{partnership.athlete.name}</div>
-                              <div className="text-sm text-gray-400">{partnership.athlete.sport}, {partnership.athlete.year}</div>
+                              <div className="text-sm text-gray-600">{partnership.athlete.sport}, {partnership.athlete.year}</div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div>
                               <div className="font-medium">{partnership.business.name}</div>
-                              <div className="text-sm text-gray-400">{partnership.business.type}</div>
+                              <div className="text-sm text-gray-600">{partnership.business.type}</div>
                             </div>
                           </TableCell>
                           <TableCell>{partnership.details.type}</TableCell>
@@ -906,7 +906,7 @@ export default function ComplianceDashboard() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-1 text-gray-400" />
+                              <Calendar className="h-4 w-4 mr-1 text-gray-600" />
                               {partnership.details.approvedDate}
                             </div>
                           </TableCell>
@@ -926,7 +926,7 @@ export default function ComplianceDashboard() {
                               <DialogContent className="sm:max-w-[700px] bg-[#1a1a1a] border-[#333] text-white">
                                 <DialogHeader>
                                   <DialogTitle>Partnership Details</DialogTitle>
-                                  <DialogDescription className="text-gray-400">
+                                  <DialogDescription className="text-gray-600">
                                     Review all details of the partnership between {partnership.athlete.name} and {partnership.business.name}
                                   </DialogDescription>
                                 </DialogHeader>
@@ -945,35 +945,35 @@ export default function ComplianceDashboard() {
                                       <AccordionContent className="px-4 pt-2 pb-4 bg-[#222] rounded-md mb-2">
                                         <div className="grid grid-cols-2 gap-4">
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Name:</p>
+                                            <p className="text-sm font-medium text-gray-600">Name:</p>
                                             <p>{partnership.athlete.name}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Sport:</p>
+                                            <p className="text-sm font-medium text-gray-600">Sport:</p>
                                             <p>{partnership.athlete.sport}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Year:</p>
+                                            <p className="text-sm font-medium text-gray-600">Year:</p>
                                             <p>{partnership.athlete.year}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Academic Status:</p>
+                                            <p className="text-sm font-medium text-gray-600">Academic Status:</p>
                                             <p>{partnership.athlete.academicStatus}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Contact Email:</p>
+                                            <p className="text-sm font-medium text-gray-600">Contact Email:</p>
                                             <p>{partnership.athlete.email}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Phone:</p>
+                                            <p className="text-sm font-medium text-gray-600">Phone:</p>
                                             <p>{partnership.athlete.phone}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Stats:</p>
+                                            <p className="text-sm font-medium text-gray-600">Stats:</p>
                                             <p>{partnership.athlete.stats}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Social Media:</p>
+                                            <p className="text-sm font-medium text-gray-600">Social Media:</p>
                                             <p>{partnership.athlete.socialMedia.instagram || 'N/A'} {partnership.athlete.socialMedia.twitter ? `/ ${partnership.athlete.socialMedia.twitter}` : ''} {partnership.athlete.socialMedia.tiktok ? `/ ${partnership.athlete.socialMedia.tiktok}` : ''}</p>
                                           </div>
                                         </div>
@@ -992,35 +992,35 @@ export default function ComplianceDashboard() {
                                       <AccordionContent className="px-4 pt-2 pb-4 bg-[#222] rounded-md mb-2">
                                         <div className="grid grid-cols-2 gap-4">
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Name:</p>
+                                            <p className="text-sm font-medium text-gray-600">Name:</p>
                                             <p>{partnership.business.name}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Type:</p>
+                                            <p className="text-sm font-medium text-gray-600">Type:</p>
                                             <p>{partnership.business.type}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Contact Person:</p>
+                                            <p className="text-sm font-medium text-gray-600">Contact Person:</p>
                                             <p>{partnership.business.contact}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Email:</p>
+                                            <p className="text-sm font-medium text-gray-600">Email:</p>
                                             <p>{partnership.business.email}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Phone:</p>
+                                            <p className="text-sm font-medium text-gray-600">Phone:</p>
                                             <p>{partnership.business.phone}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Website:</p>
+                                            <p className="text-sm font-medium text-gray-600">Website:</p>
                                             <p>{partnership.business.website}</p>
                                           </div>
                                           <div className="col-span-2">
-                                            <p className="text-sm font-medium text-gray-400">Address:</p>
+                                            <p className="text-sm font-medium text-gray-600">Address:</p>
                                             <p>{partnership.business.address}</p>
                                           </div>
                                           <div className="col-span-2">
-                                            <p className="text-sm font-medium text-gray-400">Company History:</p>
+                                            <p className="text-sm font-medium text-gray-600">Company History:</p>
                                             <p>{partnership.business.history}</p>
                                           </div>
                                         </div>
@@ -1039,23 +1039,23 @@ export default function ComplianceDashboard() {
                                       <AccordionContent className="px-4 pt-2 pb-4 bg-[#222] rounded-md mb-2">
                                         <div className="space-y-4">
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Partnership Type:</p>
+                                            <p className="text-sm font-medium text-gray-600">Partnership Type:</p>
                                             <p className="font-medium text-white">{partnership.details.type}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Compensation:</p>
+                                            <p className="text-sm font-medium text-gray-600">Compensation:</p>
                                             <p className="font-medium text-white">{partnership.details.compensation}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Duration:</p>
+                                            <p className="text-sm font-medium text-gray-600">Duration:</p>
                                             <p>{partnership.details.duration}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Approved Date:</p>
+                                            <p className="text-sm font-medium text-gray-600">Approved Date:</p>
                                             <p>{partnership.details.approvedDate}</p>
                                           </div>
                                           <div>
-                                            <p className="text-sm font-medium text-gray-400">Deliverables:</p>
+                                            <p className="text-sm font-medium text-gray-600">Deliverables:</p>
                                             <ul className="list-disc pl-5 mt-2 space-y-1">
                                               {partnership.details.deliverables.map((item: string, idx: number) => (
                                                 <li key={idx}>{item}</li>
@@ -1064,7 +1064,7 @@ export default function ComplianceDashboard() {
                                           </div>
                                           {partnership.details.additionalNotes && (
                                             <div>
-                                              <p className="text-sm font-medium text-gray-400">Additional Notes:</p>
+                                              <p className="text-sm font-medium text-gray-600">Additional Notes:</p>
                                               <p>{partnership.details.additionalNotes}</p>
                                             </div>
                                           )}
@@ -1090,7 +1090,7 @@ export default function ComplianceDashboard() {
                                         <div className="space-y-4">
                                           <div className="h-48 overflow-y-auto border border-[#333] rounded-md p-3 bg-[#1a1a1a]">
                                             {partnership.messages.length === 0 ? (
-                                              <p className="text-gray-400 text-center py-4">No messages yet</p>
+                                              <p className="text-gray-600 text-center py-4">No messages yet</p>
                                             ) : (
                                               <div className="space-y-3">
                                                 {partnership.messages.map((msg: any) => (
@@ -1100,7 +1100,7 @@ export default function ComplianceDashboard() {
                                                   >
                                                     <p className="text-sm font-medium">{msg.sender === 'compliance' ? 'You' : 'Athlete/Business'}</p>
                                                     <p>{msg.text}</p>
-                                                    <p className="text-xs text-gray-400 mt-1">
+                                                    <p className="text-xs text-gray-600 mt-1">
                                                       {new Date(msg.timestamp).toLocaleString()}
                                                     </p>
                                                   </div>

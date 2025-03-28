@@ -141,9 +141,9 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="h-[300px] flex items-center justify-center border rounded-md p-4">
                   <div className="text-center">
-                    <BarChart2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <BarChart2 className="h-16 w-16 text-gray-600 mx-auto mb-4" />
                     <p className="text-sm text-gray-500">Interactive chart would display here</p>
-                    <p className="text-xs text-gray-400">Showing metrics over the past 6 months</p>
+                    <p className="text-xs text-gray-600">Showing metrics over the past 6 months</p>
                   </div>
                 </div>
               </CardContent>
@@ -163,7 +163,7 @@ const AdminDashboard = () => {
                     <div>
                       <p className="text-sm font-medium">New User Registration</p>
                       <p className="text-xs text-gray-500">Marcus Johnson joined as an athlete</p>
-                      <p className="text-xs text-gray-400">Today, 10:23 AM</p>
+                      <p className="text-xs text-gray-600">Today, 10:23 AM</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -173,7 +173,7 @@ const AdminDashboard = () => {
                     <div>
                       <p className="text-sm font-medium">New Partnership</p>
                       <p className="text-xs text-gray-500">Jordan Mitchell & Emma's Sportswear</p>
-                      <p className="text-xs text-gray-400">Yesterday, 4:45 PM</p>
+                      <p className="text-xs text-gray-600">Yesterday, 4:45 PM</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -183,7 +183,7 @@ const AdminDashboard = () => {
                     <div>
                       <p className="text-sm font-medium">Compliance Alert</p>
                       <p className="text-xs text-gray-500">Partnership #103 requires review</p>
-                      <p className="text-xs text-gray-400">Mar 27, 2:15 PM</p>
+                      <p className="text-xs text-gray-600">Mar 27, 2:15 PM</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -193,7 +193,7 @@ const AdminDashboard = () => {
                     <div>
                       <p className="text-sm font-medium">System Update</p>
                       <p className="text-xs text-gray-500">New matching algorithm deployed</p>
-                      <p className="text-xs text-gray-400">Mar 25, 11:10 AM</p>
+                      <p className="text-xs text-gray-600">Mar 25, 11:10 AM</p>
                     </div>
                   </div>
                 </div>
@@ -215,7 +215,7 @@ const AdminDashboard = () => {
                   {mockPartnerships.filter(p => p.status === "pending").map((partnership) => (
                     <div key={partnership.id} className="flex items-center justify-between border-b pb-3">
                       <div className="flex items-center gap-3">
-                        <Calendar className="h-5 w-5 text-gray-400" />
+                        <Calendar className="h-5 w-5 text-gray-600" />
                         <div>
                           <p className="text-sm font-medium">{partnership.athlete} + {partnership.business}</p>
                           <p className="text-xs text-gray-500">Starting soon • {partnership.value}</p>
@@ -228,7 +228,7 @@ const AdminDashboard = () => {
                   ))}
                   <div className="flex items-center justify-between border-b pb-3">
                     <div className="flex items-center gap-3">
-                      <Calendar className="h-5 w-5 text-gray-400" />
+                      <Calendar className="h-5 w-5 text-gray-600" />
                       <div>
                         <p className="text-sm font-medium">Alex Rivera + Sport Tech</p>
                         <p className="text-xs text-gray-500">Starting Apr 5 • $1,200</p>
