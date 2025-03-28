@@ -24,7 +24,7 @@ interface LoginData {
 
 interface RegisterData extends LoginData {
   email: string;
-  userType: "athlete" | "business" | "compliance";
+  userType: "athlete" | "business" | "compliance" | "admin";
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -173,5 +173,16 @@ export function useAuth() {
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context;
+  
+  // Add a convenience method for logout
+  const logoutUser = () => {
+    if (context.logoutMutation) {
+      context.logoutMutation.mutate();
+    }
+  };
+  
+  return {
+    ...context,
+    logoutUser
+  };
 }

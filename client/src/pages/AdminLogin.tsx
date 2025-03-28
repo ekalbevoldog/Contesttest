@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -47,19 +47,14 @@ export default function AdminLogin() {
     },
   });
 
-  async function onSubmit(data: LoginFormValues) {
-    try {
-      await loginMutation.mutateAsync({
-        username: data.email,
-        password: data.password
-      });
-      
-      // After successful login, check if user is admin
-      if (user?.userType === 'admin') {
-        // Redirect to admin dashboard
+  // Watch for user changes and handle redirection
+  useEffect(() => {
+    if (user) {
+      if (user.userType === 'admin') {
+        // Redirect admin users to the admin dashboard
         navigate("/admin/dashboard");
       } else {
-        // Show access denied message
+        // Show access denied message for non-admin users
         toast({
           title: "Access denied",
           description: "This login portal is for administrators only.",
@@ -69,6 +64,16 @@ export default function AdminLogin() {
         // Redirect back to home
         setTimeout(() => navigate("/"), 2000);
       }
+    }
+  }, [user, navigate, toast]);
+
+  async function onSubmit(data: LoginFormValues) {
+    try {
+      await loginMutation.mutateAsync({
+        username: data.email,
+        password: data.password
+      });
+      // Redirection is handled by the useEffect watching for user changes
     } catch (error) {
       // Login error is handled by the mutation itself
       console.error("Login error:", error);

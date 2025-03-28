@@ -2,7 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { geminiService } from "./services/geminiService";
+// Temporarily use mock service to debug server startup issues
+import { geminiService } from "./services/mockGeminiService";
 import { bigQueryService } from "./services/bigQueryService";
 import { sessionService } from "./services/sessionService";
 import { z } from "zod";

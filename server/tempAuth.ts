@@ -22,7 +22,7 @@ const testUsers = new Map<string, User>();
 const activeSessions: Map<string, User> = new Map();
 
 // Create some test users
-const createTestUser = (username: string, userType: string): User => {
+const createTestUser = (username: string, userType: "athlete" | "business" | "compliance" | "admin"): User => {
   const id = testUsers.size + 1;
   const user: User = {
     id,
@@ -87,6 +87,9 @@ export function setupAuth(app: Express) {
       }
       
       // Create new user
+      if (userType !== "athlete" && userType !== "business" && userType !== "compliance" && userType !== "admin") {
+        return res.status(400).json({ error: "Invalid user type" });
+      }
       const user = createTestUser(username, userType);
       
       // Set session

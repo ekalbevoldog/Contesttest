@@ -5,7 +5,7 @@ import { Redirect, Route } from "wouter";
 interface ProtectedRouteProps {
   path: string;
   component: React.ComponentType<any>;
-  requiredUserType?: "athlete" | "business" | "compliance" | null;
+  requiredUserType?: "athlete" | "business" | "compliance" | "admin" | null;
 }
 
 export function ProtectedRoute({
@@ -45,6 +45,8 @@ export function ProtectedRoute({
       redirectPath = "/business/dashboard";
     } else if (user.userType === 'compliance') {
       redirectPath = "/compliance/dashboard";
+    } else if (user.userType === 'admin') {
+      redirectPath = "/admin/dashboard";
     }
     
     return (
