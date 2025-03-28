@@ -120,7 +120,7 @@ export default function Home() {
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
                     <p className="text-zinc-400">
-                      Turn your social media presence and athletic achievements into income with partnerships that respect your personal brand.
+                      Contested unlocks your earning potential by automatically matching you directly with personalized partnership offers.
                     </p>
                   </CardContent>
                 </Card>
@@ -134,7 +134,8 @@ export default function Home() {
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
                     <p className="text-zinc-400">
-                      Access quality partnership opportunities specifically matched to your sport, values, content style, and audience.
+                      Powered by our proprietary AI, you'll only receive offers that perfectly align with your sport, personal brand, and audience.
+                      We handle the matching—you focus on creating authentic content.
                     </p>
                   </CardContent>
                 </Card>
@@ -182,7 +183,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-center">
                     <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                      <Link to="/dynamic-onboarding">Get Started</Link>
+                      <Link to="/solutions">Learn More</Link>
                     </Button>
                   </div>
                 </div>

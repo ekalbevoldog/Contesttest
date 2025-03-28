@@ -89,7 +89,7 @@ export default function Solutions() {
               </span>
             </h2>
             <p className="text-xl text-zinc-400">
-              From discovering the perfect match to managing ongoing campaigns, Contested provides end-to-end solutions for NIL partnerships.
+              Contested streamlines the entire NIL partnership process—from precise athlete-brand matching to campaign management and compliance—ensuring seamless collaborations and measurable results.
             </p>
           </div>
 
