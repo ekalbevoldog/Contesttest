@@ -48,6 +48,7 @@ createTestUser("athlete1", "athlete");
 createTestUser("business1", "business");
 createTestUser("compliance1", "compliance");
 createTestUser("blake", "business");
+createTestUser("admin", "admin");
 
 // Simple auth implementation with in-memory test users
 export function setupAuth(app: Express) {
