@@ -5,7 +5,7 @@ import {
   users
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers } from "../shared/schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -22,31 +22,31 @@ export interface IStorage {
   createSession(session: InsertSession): Promise<Session>;
   updateSession(sessionId: string, data: Partial<Session>): Promise<Session>;
   deleteSession(sessionId: string): Promise<void>;
-  
+
   // Athlete operations
   getAthlete(id: number): Promise<Athlete | undefined>;
   getAthleteBySession(sessionId: string): Promise<Athlete | undefined>;
   storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete>;
   getAllAthletes(): Promise<Athlete[]>;
-  
+
   // Business operations
   getBusiness(id: number): Promise<Business | undefined>;
   getBusinessBySession(sessionId: string): Promise<Business | undefined>;
   storeBusinessProfile(business: InsertBusiness): Promise<Business>;
   getAllBusinesses(): Promise<Business[]>;
-  
+
   // Campaign operations
   getCampaign(id: number): Promise<Campaign | undefined>;
   getCampaignsByBusiness(businessId: number): Promise<Campaign[]>;
   storeCampaign(campaign: InsertCampaign): Promise<Campaign>;
-  
+
   // Match operations
   getMatch(id: number): Promise<Match | undefined>;
   getMatchesForAthlete(athleteId: number): Promise<Match[]>;
   getMatchesForBusiness(businessId: number): Promise<Match[]>;
   storeMatch(match: InsertMatch): Promise<Match>;
   getAllMatches(): Promise<Match[]>;
-  
+
   // Partnership Offer operations
   getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined>;
   getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]>;
@@ -56,11 +56,13 @@ export interface IStorage {
   updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer>;
   markPartnershipOfferViewed(id: number): Promise<PartnershipOffer>;
   updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer>;
-  
+
   // Message operations
-  getMessages(sessionId: string): Promise<Message[]>;
-  storeMessage(sessionId: string, role: string, content: string): Promise<Message>;
-  
+  getMessages(sessionId: string, limit?: number, offset?: number): Promise<Message[]>;
+  storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message>;
+  getUnreadMessageCounts(sessionId: string): Promise<number>;
+  markMessagesRead(sessionId: string, messageIds: number[]): Promise<void>;
+
   // Auth operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -69,7 +71,7 @@ export interface IStorage {
   updateUser(userId: number, userData: Partial<User>): Promise<User | undefined>;
   updateStripeCustomerId(userId: number, customerId: string): Promise<User>;
   updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User>;
-  
+
   // Feedback operations
   getFeedback(id: number): Promise<Feedback | undefined>;
   getFeedbackByUser(userId: number): Promise<Feedback[]>;
@@ -79,7 +81,7 @@ export interface IStorage {
   storeFeedback(feedback: InsertFeedback): Promise<Feedback>;
   updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback>;
   addAdminResponse(feedbackId: number, response: string): Promise<Feedback>;
-  
+
   // Session Store for Express Session
   sessionStore: session.Store;
 }
@@ -87,7 +89,7 @@ export interface IStorage {
 // PostgreSQL implementation of IStorage
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-  
+
   constructor() {
     // Create session store for Express sessions using memorystore for now due to Neon compatibility issues
     import('memorystore').then(memorystore => {
@@ -100,22 +102,22 @@ export class DatabaseStorage implements IStorage {
       // Fallback to in-memory session
       this.sessionStore = new session.MemoryStore();
     });
-    
+
     // Initialize with basic memory store until the import completes
     this.sessionStore = new session.MemoryStore();
   }
-  
+
   // Session operations
   async getSession(sessionId: string): Promise<Session | undefined> {
     const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, sessionId));
     return session;
   }
-  
+
   async createSession(session: InsertSession): Promise<Session> {
     const [newSession] = await db.insert(sessions).values(session).returning();
     return newSession;
   }
-  
+
   async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
     const [updatedSession] = await db
       .update(sessions)
@@ -125,133 +127,156 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(sessions.sessionId, sessionId))
       .returning();
-    
+
     if (!updatedSession) {
       throw new Error(`Session with ID ${sessionId} not found`);
     }
-    
+
     return updatedSession;
   }
-  
+
   async deleteSession(sessionId: string): Promise<void> {
     await db.delete(sessions).where(eq(sessions.sessionId, sessionId));
   }
-  
+
   // Athlete operations
   async getAthlete(id: number): Promise<Athlete | undefined> {
     const [athlete] = await db.select().from(athletes).where(eq(athletes.id, id));
     return athlete;
   }
-  
+
   async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
     const [athlete] = await db.select().from(athletes).where(eq(athletes.sessionId, sessionId));
     return athlete;
   }
-  
+
   async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
     const [newAthlete] = await db.insert(athletes).values(athlete).returning();
     return newAthlete;
   }
-  
+
   async getAllAthletes(): Promise<Athlete[]> {
     return await db.select().from(athletes);
   }
-  
+
   // Business operations
   async getBusiness(id: number): Promise<Business | undefined> {
     const [business] = await db.select().from(businesses).where(eq(businesses.id, id));
     return business;
   }
-  
+
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
     const [business] = await db.select().from(businesses).where(eq(businesses.sessionId, sessionId));
     return business;
   }
-  
+
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
     const [newBusiness] = await db.insert(businesses).values(business).returning();
     return newBusiness;
   }
-  
+
   async getAllBusinesses(): Promise<Business[]> {
     return await db.select().from(businesses);
   }
-  
+
   // Campaign operations
   async getCampaign(id: number): Promise<Campaign | undefined> {
     const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
     return campaign;
   }
-  
+
   async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
     return await db.select().from(campaigns).where(eq(campaigns.businessId, businessId));
   }
-  
+
   async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
     const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
     return newCampaign;
   }
-  
+
   // Match operations
   async getMatch(id: number): Promise<Match | undefined> {
     const [match] = await db.select().from(matches).where(eq(matches.id, id));
     return match;
   }
-  
+
   async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
     return await db.select().from(matches).where(eq(matches.athleteId, athleteId));
   }
-  
+
   async getMatchesForBusiness(businessId: number): Promise<Match[]> {
     return await db.select().from(matches).where(eq(matches.businessId, businessId));
   }
-  
+
   async storeMatch(match: InsertMatch): Promise<Match> {
     const [newMatch] = await db.insert(matches).values(match).returning();
     return newMatch;
   }
-  
+
   async getAllMatches(): Promise<Match[]> {
     return await db.select().from(matches);
   }
-  
+
   // Message operations
-  async getMessages(sessionId: string): Promise<Message[]> {
-    return await db
-      .select()
-      .from(messages)
+  async getMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
+    return await db.select().from(messages)
       .where(eq(messages.sessionId, sessionId))
-      .orderBy(messages.createdAt);
+      .orderBy(desc(messages.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
-  
-  async storeMessage(sessionId: string, role: string, content: string): Promise<Message> {
-    const [message] = await db
-      .insert(messages)
-      .values({
-        sessionId,
-        role,
-        content
-      })
-      .returning();
-    
+
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message> {
+    const message = await db.insert(messages).values({
+      sessionId,
+      role,
+      content,
+      metadata: metadata ? JSON.stringify(metadata) : null,
+      unread: true
+    }).returning().get();
+
     return message;
   }
-  
+
+  async getUnreadMessageCounts(sessionId: string): Promise<number> {
+    const result = await db.select({
+      count: sql`count(*)`
+    })
+    .from(messages)
+    .where(and(
+      eq(messages.sessionId, sessionId),
+      eq(messages.unread, true)
+    ))
+    .get();
+
+    return result?.count || 0;
+  }
+
+  async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
+    await db.update(messages)
+      .set({ unread: false })
+      .where(and(
+        eq(messages.sessionId, sessionId),
+        inArray(messages.id, messageIds)
+      ));
+  }
+
+
   // Auth operations
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
-  
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
   }
-  
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
@@ -260,7 +285,7 @@ export class DatabaseStorage implements IStorage {
   async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
     // Remove properties that shouldn't be directly updated
     const { id, createdAt, ...safeUserData } = userData as any;
-    
+
     const [updatedUser] = await db
       .update(users)
       .set({
@@ -269,7 +294,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId))
       .returning();
-    
+
     return updatedUser;
   }
 
@@ -282,14 +307,14 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId))
       .returning();
-    
+
     if (!updatedUser) {
       throw new Error(`User with ID ${userId} not found`);
     }
-    
+
     return updatedUser;
   }
-  
+
   async updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User> {
     const [updatedUser] = await db
       .update(users)
@@ -300,11 +325,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId))
       .returning();
-    
+
     if (!updatedUser) {
       throw new Error(`User with ID ${userId} not found`);
     }
-    
+
     return updatedUser;
   }
 
@@ -344,11 +369,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(feedbacks.id, feedbackId))
       .returning();
-    
+
     if (!updatedFeedback) {
       throw new Error(`Feedback with ID ${feedbackId} not found`);
     }
-    
+
     return updatedFeedback;
   }
 
@@ -361,11 +386,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(feedbacks.id, feedbackId))
       .returning();
-    
+
     if (!updatedFeedback) {
       throw new Error(`Feedback with ID ${feedbackId} not found`);
     }
-    
+
     return updatedFeedback;
   }
 
@@ -404,11 +429,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(partnershipOffers.id, id))
       .returning();
-    
+
     if (!updatedOffer) {
       throw new Error(`Partnership offer with ID ${id} not found`);
     }
-    
+
     return updatedOffer;
   }
 
@@ -422,11 +447,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(partnershipOffers.id, id))
       .returning();
-    
+
     if (!updatedOffer) {
       throw new Error(`Partnership offer with ID ${id} not found`);
     }
-    
+
     return updatedOffer;
   }
 
@@ -442,11 +467,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(partnershipOffers.id, id))
       .returning();
-    
+
     if (!updatedOffer) {
       throw new Error(`Partnership offer with ID ${id} not found`);
     }
-    
+
     return updatedOffer;
   }
 }
@@ -472,7 +497,7 @@ export class MemStorage implements IStorage {
   private currentUserId: number;
   private currentFeedbackId: number;
   sessionStore: session.Store;
-  
+
   constructor() {
     this.sessions = new Map();
     this.athletes = new Map();
@@ -492,19 +517,19 @@ export class MemStorage implements IStorage {
     this.currentMessageId = 1;
     this.currentUserId = 1;
     this.currentFeedbackId = 1;
-    
+
     // Create a memory store for Express sessions
     // Initialize with basic memory store until the import completes
     this.sessionStore = new session.MemoryStore();
   }
-  
+
   async getSession(sessionId: string): Promise<Session | undefined> {
     return this.sessions.get(sessionId);
   }
-  
+
   async createSession(session: InsertSession): Promise<Session> {
     const id = this.currentSessionId++;
-    
+
     const newSession: Session = {
       id,
       sessionId: session.sessionId,
@@ -517,44 +542,44 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.sessions.set(session.sessionId, newSession);
     return newSession;
   }
-  
+
   async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
     const session = this.sessions.get(sessionId);
-    
+
     if (!session) {
       throw new Error(`Session with ID ${sessionId} not found`);
     }
-    
+
     const updatedSession: Session = {
       ...session,
       ...data,
       updatedAt: new Date(),
     };
-    
+
     this.sessions.set(sessionId, updatedSession);
     return updatedSession;
   }
-  
+
   async deleteSession(sessionId: string): Promise<void> {
     this.sessions.delete(sessionId);
   }
-  
+
   async getAthlete(id: number): Promise<Athlete | undefined> {
     return this.athletes.get(id);
   }
-  
+
   async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
     const athletes = Array.from(this.athletes.values());
     return athletes.find(athlete => athlete.sessionId === sessionId);
   }
-  
+
   async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
     const id = this.currentAthleteId++;
-    
+
     const newAthlete: Athlete = {
       id,
       ...athlete,
@@ -591,27 +616,27 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.athletes.set(id, newAthlete);
     return newAthlete;
   }
-  
+
   async getAllAthletes(): Promise<Athlete[]> {
     return Array.from(this.athletes.values());
   }
-  
+
   async getBusiness(id: number): Promise<Business | undefined> {
     return this.businesses.get(id);
   }
-  
+
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
     const businesses = Array.from(this.businesses.values());
     return businesses.find(business => business.sessionId === sessionId);
   }
-  
+
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
     const id = this.currentBusinessId++;
-    
+
     const newBusiness: Business = {
       id,
       ...business,
@@ -650,27 +675,27 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.businesses.set(id, newBusiness);
     return newBusiness;
   }
-  
+
   async getAllBusinesses(): Promise<Business[]> {
     return Array.from(this.businesses.values());
   }
-  
+
   async getCampaign(id: number): Promise<Campaign | undefined> {
     return this.campaigns.get(id);
   }
-  
+
   async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
     return Array.from(this.campaigns.values())
       .filter(campaign => campaign.businessId === businessId);
   }
-  
+
   async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
     const id = this.currentCampaignId++;
-    
+
     const newCampaign: Campaign = {
       id,
       ...campaign,
@@ -695,28 +720,28 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.campaigns.set(id, newCampaign);
     return newCampaign;
   }
-  
+
   async getMatch(id: number): Promise<Match | undefined> {
     return this.matches.get(id);
   }
-  
+
   async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
     return Array.from(this.matches.values())
       .filter(match => match.athleteId === athleteId);
   }
-  
+
   async getMatchesForBusiness(businessId: number): Promise<Match[]> {
     return Array.from(this.matches.values())
       .filter(match => match.businessId === businessId);
   }
-  
+
   async storeMatch(match: InsertMatch): Promise<Match> {
     const id = this.currentMatchId++;
-    
+
     const newMatch: Match = {
       id,
       ...match,
@@ -740,52 +765,69 @@ export class MemStorage implements IStorage {
       completedAt: null,
       createdAt: new Date(),
     };
-    
+
     this.matches.set(id, newMatch);
     return newMatch;
   }
-  
+
   async getAllMatches(): Promise<Match[]> {
     return Array.from(this.matches.values());
   }
-  
+
   async getMessages(sessionId: string): Promise<Message[]> {
     return this.messages.get(sessionId) || [];
   }
-  
-  async storeMessage(sessionId: string, role: string, content: string): Promise<Message> {
+
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message> {
     const id = this.currentMessageId++;
-    
+
     const message: Message = {
       id,
       sessionId,
       role,
       content,
+      metadata: metadata ? JSON.stringify(metadata) : null,
+      unread: true,
       createdAt: new Date(),
     };
-    
+
     const sessionMessages = this.messages.get(sessionId) || [];
     sessionMessages.push(message);
     this.messages.set(sessionId, sessionMessages);
-    
+
     return message;
   }
-  
+
+  async getUnreadMessageCounts(sessionId: string): Promise<number> {
+    const messages = this.messages.get(sessionId) || [];
+    return messages.filter(msg => msg.unread).length;
+  }
+
+  async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
+    const sessionMessages = this.messages.get(sessionId) || [];
+    sessionMessages.forEach(msg => {
+      if (messageIds.includes(msg.id)) {
+        msg.unread = false;
+      }
+    });
+    this.messages.set(sessionId, sessionMessages);
+  }
+
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(user => user.username === username);
   }
-  
+
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
-  
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
-    
+
     const newUser: User = {
       id,
       ...insertUser,
@@ -797,60 +839,60 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.users.set(id, newUser);
     return newUser;
   }
-  
+
   async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
     const user = this.users.get(userId);
-    
+
     if (!user) {
       return undefined;
     }
-    
+
     // Remove properties that shouldn't be directly updated
     const { id, createdAt, ...safeUserData } = userData as any;
-    
+
     const updatedUser: User = {
       ...user,
       ...safeUserData,
       updatedAt: new Date(),
     };
-    
+
     this.users.set(userId, updatedUser);
     return updatedUser;
   }
-  
+
   async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {
     const user = this.users.get(userId);
     if (!user) {
       throw new Error(`User with ID ${userId} not found`);
     }
-    
+
     const updatedUser: User = {
       ...user,
       stripeCustomerId: customerId,
       updatedAt: new Date(),
     };
-    
+
     this.users.set(userId, updatedUser);
     return updatedUser;
   }
-  
+
   async updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User> {
     const user = this.users.get(userId);
     if (!user) {
       throw new Error(`User with ID ${userId} not found`);
     }
-    
+
     const updatedUser: User = {
       ...user,
       stripeCustomerId: data.customerId,
       stripeSubscriptionId: data.subscriptionId,
       updatedAt: new Date(),
     };
-    
+
     this.users.set(userId, updatedUser);
     return updatedUser;
   }
@@ -882,7 +924,7 @@ export class MemStorage implements IStorage {
 
   async storeFeedback(feedback: InsertFeedback): Promise<Feedback> {
     const id = this.currentFeedbackId++;
-    
+
     const newFeedback: Feedback = {
       id,
       ...feedback,
@@ -892,7 +934,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.feedbacks.set(id, newFeedback);
     return newFeedback;
   }
@@ -902,13 +944,13 @@ export class MemStorage implements IStorage {
     if (!feedback) {
       throw new Error(`Feedback with ID ${feedbackId} not found`);
     }
-    
+
     const updatedFeedback: Feedback = {
       ...feedback,
       status,
       updatedAt: new Date(),
     };
-    
+
     this.feedbacks.set(feedbackId, updatedFeedback);
     return updatedFeedback;
   }
@@ -918,13 +960,13 @@ export class MemStorage implements IStorage {
     if (!feedback) {
       throw new Error(`Feedback with ID ${feedbackId} not found`);
     }
-    
+
     const updatedFeedback: Feedback = {
       ...feedback,
       adminResponse: response,
       updatedAt: new Date(),
     };
-    
+
     this.feedbacks.set(feedbackId, updatedFeedback);
     return updatedFeedback;
   }
@@ -951,7 +993,7 @@ export class MemStorage implements IStorage {
 
   async createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer> {
     const id = this.currentPartnershipOfferId++;
-    
+
     const newOffer: PartnershipOffer = {
       id,
       ...offer,
@@ -966,7 +1008,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
       expiresAt: offer.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Default 7 days expiry
     };
-    
+
     this.partnershipOffers.set(id, newOffer);
     return newOffer;
   }
@@ -976,14 +1018,14 @@ export class MemStorage implements IStorage {
     if (!offer) {
       throw new Error(`Partnership offer with ID ${id} not found`);
     }
-    
+
     const updatedOffer: PartnershipOffer = {
       ...offer,
       status,
       athleteRespondedAt: status !== "pending" ? new Date() : offer.athleteRespondedAt,
       updatedAt: new Date(),
     };
-    
+
     this.partnershipOffers.set(id, updatedOffer);
     return updatedOffer;
   }
@@ -993,13 +1035,13 @@ export class MemStorage implements IStorage {
     if (!offer) {
       throw new Error(`Partnership offer with ID ${id} not found`);
     }
-    
+
     const updatedOffer: PartnershipOffer = {
       ...offer,
       athleteViewedAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.partnershipOffers.set(id, updatedOffer);
     return updatedOffer;
   }
@@ -1009,7 +1051,7 @@ export class MemStorage implements IStorage {
     if (!offer) {
       throw new Error(`Partnership offer with ID ${id} not found`);
     }
-    
+
     const updatedOffer: PartnershipOffer = {
       ...offer,
       complianceStatus: status,
@@ -1017,7 +1059,7 @@ export class MemStorage implements IStorage {
       complianceReviewedAt: new Date(),
       updatedAt: new Date(),
     };
-    
+
     this.partnershipOffers.set(id, updatedOffer);
     return updatedOffer;
   }

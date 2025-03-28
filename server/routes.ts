@@ -13,7 +13,7 @@ import { setupAuth } from "./tempAuth";
 import { insertFeedbackSchema, Feedback } from "@shared/schema";
 
 // Map to store active WebSocket connections by session ID
-const connectedClients = new Map<string, WebSocket>();
+import { websocketService } from './services/websocketService';
 
 // Schema for session creation
 const sessionCreateSchema = z.object({});

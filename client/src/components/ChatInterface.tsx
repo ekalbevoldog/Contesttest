@@ -36,7 +36,48 @@ export default function ChatInterface() {
   const { toast } = useToast();
   
   // Set up WebSocket connection
-  const { lastMessage, connectionStatus } = useWebSocket(session);
+  const { lastMessage, sendMessage, connectionStatus } = useWebSocket(session);
+
+useEffect(() => {
+  if (session) {
+    // Register session with WebSocket
+    sendMessage({
+      type: 'register',
+      sessionId: session
+    });
+
+    // Start presence heartbeat
+    const heartbeat = setInterval(() => {
+      sendMessage({
+        type: 'presence',
+        sessionId: session
+      });
+    }, 30000);
+
+    return () => clearInterval(heartbeat);
+  }
+}, [session, sendMessage]);
+
+const handleFileUpload = async (files: FileList) => {
+  // In a real implementation, upload files to storage and get URLs
+  // For demo, we'll use fake URLs
+  const attachments = Array.from(files).map(file => ({
+    type: file.type,
+    url: URL.createObjectURL(file),
+    name: file.name,
+    size: file.size
+  }));
+
+  sendMessage({
+    type: 'message',
+    sessionId: session,
+    role: 'user',
+    content: 'Sent attachments',
+    metadata: {
+      attachments
+    }
+  });
+};
   
   // Initialize session and welcome message
   useEffect(() => {
