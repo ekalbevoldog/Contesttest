@@ -175,7 +175,7 @@ export default function Home() {
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <span>48hrs</span>
+                      <span>3.5 hours</span>
                     </div>
                     <p className="text-xs text-zinc-500">average timeframe</p>
                   </div>
