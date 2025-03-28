@@ -1790,7 +1790,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.put("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
     try {
-      // This is just a placeholder - in a real application, you would update the user in the database
       const userId = parseInt(req.params.id);
       const userData = req.body;
       
@@ -1800,10 +1799,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "User not found" });
       }
       
-      // Update the user
-      // This would typically call a storage method like storage.updateUser(userId, userData)
-      // For now, just return the original user with the updated data
-      res.json({ ...user, ...userData });
+      // Update the user with our new updateUser method
+      const updatedUser = await storage.updateUser(userId, userData);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "Failed to update user" });
+      }
+      
+      res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ error: "Failed to update user" });

@@ -66,6 +66,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(insertUser: InsertUser): Promise<User>;
+  updateUser(userId: number, userData: Partial<User>): Promise<User | undefined>;
   updateStripeCustomerId(userId: number, customerId: string): Promise<User>;
   updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User>;
   
@@ -254,6 +255,22 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
+    // Remove properties that shouldn't be directly updated
+    const { id, createdAt, ...safeUserData } = userData as any;
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        ...safeUserData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
   }
 
   async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {
@@ -783,6 +800,26 @@ export class MemStorage implements IStorage {
     
     this.users.set(id, newUser);
     return newUser;
+  }
+  
+  async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    
+    if (!user) {
+      return undefined;
+    }
+    
+    // Remove properties that shouldn't be directly updated
+    const { id, createdAt, ...safeUserData } = userData as any;
+    
+    const updatedUser: User = {
+      ...user,
+      ...safeUserData,
+      updatedAt: new Date(),
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
   }
   
   async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {

@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { 
@@ -28,39 +32,64 @@ import {
   Calendar
 } from "lucide-react";
 
-// Mock data - would be replaced with API calls in production
-const mockUsers = [
-  { id: 1, name: "Jordan Mitchell", type: "athlete", status: "active", created: "2023-08-12", lastActive: "2024-03-28" },
-  { id: 2, name: "Emma's Sportswear", type: "business", status: "active", created: "2023-09-05", lastActive: "2024-03-27" },
-  { id: 3, name: "Marcus Johnson", type: "athlete", status: "pending", created: "2024-02-20", lastActive: "2024-03-25" },
-  { id: 4, name: "Power Nutrition Co", type: "business", status: "active", created: "2023-10-15", lastActive: "2024-03-26" },
-  { id: 5, name: "Sarah Thompson", type: "athlete", status: "inactive", created: "2023-11-30", lastActive: "2024-02-14" }
-];
-
-const mockPartnerships = [
-  { id: 101, athlete: "Jordan Mitchell", business: "Emma's Sportswear", status: "active", value: "$2,500", created: "2024-01-15" },
-  { id: 102, athlete: "Marcus Johnson", business: "Power Nutrition Co", status: "pending", value: "$1,800", created: "2024-03-10" },
-  { id: 103, athlete: "Sarah Thompson", business: "Fitness First", status: "completed", value: "$3,200", created: "2023-12-05" }
-];
-
-const mockSystemMetrics = {
-  userCount: 214,
-  activePartnerships: 42,
-  pendingPartnerships: 18,
-  matchSuccess: 76,
-  totalRevenue: "$187,500"
+// Initial default values that will be replaced with real data
+const defaultSystemMetrics = {
+  userCount: 0,
+  activePartnerships: 0,
+  pendingPartnerships: 0,
+  matchSuccess: 0,
+  totalRevenue: "$0"
 };
-
-const mockFeedback = [
-  { id: 201, user: "Jordan Mitchell", type: "feature", text: "Would love to see integration with Instagram", status: "new", date: "2024-03-25" },
-  { id: 202, user: "Emma's Sportswear", type: "bug", text: "Profile page showing errors when uploading new photos", status: "in-progress", date: "2024-03-22" },
-  { id: 203, user: "Sarah Thompson", type: "general", text: "The overall experience has been excellent!", status: "closed", date: "2024-03-18" },
-];
 
 const AdminDashboard = () => {
   const [, navigate] = useLocation();
   const { user, logoutUser } = useAuth();
   const { toast } = useToast();
+  const [systemMetrics, setSystemMetrics] = useState(defaultSystemMetrics);
+  
+  // Fetch users from API
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['/api/admin/users'],
+    enabled: !!user && user.userType === 'admin',
+  });
+  
+  // Fetch partnerships data
+  const { data: matches = [], isLoading: isLoadingMatches } = useQuery({
+    queryKey: ['/api/matches'],
+    enabled: !!user && user.userType === 'admin',
+  });
+  
+  // Fetch partnership offers data
+  const { data: offers = [], isLoading: isLoadingOffers } = useQuery({
+    queryKey: ['/api/partnership-offers'],
+    enabled: !!user && user.userType === 'admin',
+  });
+  
+  // Fetch feedback data
+  const { data: feedback = [], isLoading: isLoadingFeedback } = useQuery({
+    queryKey: ['/api/feedback/public'],
+    enabled: !!user && user.userType === 'admin',
+  });
+  
+  // Process data to generate system metrics
+  useEffect(() => {
+    if (users.length && matches.length) {
+      // Calculate metrics based on real data
+      const activePartnerships = matches.filter(m => m.status === 'active').length;
+      const pendingPartnerships = offers.filter(o => o.status === 'pending').length;
+      const successfulMatches = matches.filter(m => m.status === 'completed' || m.status === 'active').length;
+      const matchSuccess = users.length > 0 ? Math.floor((successfulMatches / matches.length) * 100) : 0;
+      
+      // Update system metrics
+      setSystemMetrics({
+        userCount: users.length,
+        activePartnerships,
+        pendingPartnerships,
+        matchSuccess,
+        totalRevenue: `$${(activePartnerships * 2500).toLocaleString()}` // Estimate based on active partnerships
+      });
+    }
+  }, [users, matches, offers]);
 
   // Check if user is admin, redirect if not
   useEffect(() => {
@@ -74,12 +103,22 @@ const AdminDashboard = () => {
     }
   }, [user, navigate, toast]);
 
+  // Format date helper function
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   // Stats cards data
   const statsCards = [
-    { title: "Total Users", value: mockSystemMetrics.userCount, icon: <Users className="h-6 w-6 text-primary" />, change: "+12% from last month" },
-    { title: "Active Partnerships", value: mockSystemMetrics.activePartnerships, icon: <Handshake className="h-6 w-6 text-primary" />, change: "+8% from last month" },
-    { title: "Match Success Rate", value: `${mockSystemMetrics.matchSuccess}%`, icon: <Zap className="h-6 w-6 text-primary" />, change: "+3% from last month" },
-    { title: "Platform Revenue", value: mockSystemMetrics.totalRevenue, icon: <BarChart3 className="h-6 w-6 text-primary" />, change: "+15% from last month" },
+    { title: "Total Users", value: systemMetrics.userCount, icon: <Users className="h-6 w-6 text-primary" />, change: "Real-time data" },
+    { title: "Active Partnerships", value: systemMetrics.activePartnerships, icon: <Handshake className="h-6 w-6 text-primary" />, change: "Real-time data" },
+    { title: "Match Success Rate", value: `${systemMetrics.matchSuccess}%`, icon: <Zap className="h-6 w-6 text-primary" />, change: "Based on completed matches" },
+    { title: "Platform Revenue", value: systemMetrics.totalRevenue, icon: <BarChart3 className="h-6 w-6 text-primary" />, change: "Estimated value" },
   ];
 
   return (
@@ -212,13 +251,17 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockPartnerships.filter(p => p.status === "pending").map((partnership) => (
-                    <div key={partnership.id} className="flex items-center justify-between border-b pb-3">
+                  {isLoadingOffers ? (
+                    <div className="text-center p-4">
+                      <p className="text-sm text-gray-500">Loading upcoming partnerships...</p>
+                    </div>
+                  ) : offers.filter(o => o.status === "pending").slice(0, 3).map((offer) => (
+                    <div key={offer.id} className="flex items-center justify-between border-b pb-3">
                       <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-gray-600" />
                         <div>
-                          <p className="text-sm font-medium">{partnership.athlete} + {partnership.business}</p>
-                          <p className="text-xs text-gray-500">Starting soon • {partnership.value}</p>
+                          <p className="text-sm font-medium">Athlete #{offer.athleteId} + Business #{offer.businessId}</p>
+                          <p className="text-xs text-gray-500">Campaign #{offer.campaignId} • {offer.compensation ? `$${offer.compensation}` : 'Varies'}</p>
                         </div>
                       </div>
                       <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
@@ -226,18 +269,11 @@ const AdminDashboard = () => {
                       </Badge>
                     </div>
                   ))}
-                  <div className="flex items-center justify-between border-b pb-3">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-5 w-5 text-gray-600" />
-                      <div>
-                        <p className="text-sm font-medium">Alex Rivera + Sport Tech</p>
-                        <p className="text-xs text-gray-500">Starting Apr 5 • $1,200</p>
-                      </div>
+                  {offers && offers.filter(o => o.status === "pending").length === 0 && (
+                    <div className="text-center p-4">
+                      <p className="text-sm text-gray-500">No pending partnerships found</p>
                     </div>
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                      Pending
-                    </Badge>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -311,24 +347,33 @@ const AdminDashboard = () => {
                   <div className="font-medium text-sm">Actions</div>
                 </div>
                 <div className="divide-y">
-                  {mockUsers.map((user) => (
+                  {isLoadingUsers ? (
+                    <div className="p-8 text-center">
+                      <p className="text-gray-500">Loading users...</p>
+                    </div>
+                  ) : users.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <p className="text-gray-500">No users found</p>
+                    </div>
+                  ) : users.map((user) => (
                     <div key={user.id} className="grid grid-cols-6 p-3 items-center">
                       <div className="col-span-2 flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>{user.username ? user.username.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-medium">{user.name}</p>
-                          <p className="text-xs text-gray-500">Last active: {user.lastActive}</p>
+                          <p className="text-sm font-medium">{user.username || 'Unnamed User'}</p>
+                          <p className="text-xs text-gray-500">Last active: {formatDate(user.updatedAt)}</p>
                         </div>
                       </div>
                       <div>
                         <Badge variant="outline" className={
-                          user.type === "athlete" ? "bg-blue-50 text-blue-700 border-blue-200" : 
-                          user.type === "business" ? "bg-purple-50 text-purple-700 border-purple-200" :
+                          user.userType === "athlete" ? "bg-blue-50 text-blue-700 border-blue-200" : 
+                          user.userType === "business" ? "bg-purple-50 text-purple-700 border-purple-200" :
+                          user.userType === "admin" ? "bg-red-50 text-red-700 border-red-200" :
                           "bg-gray-50 text-gray-700 border-gray-200"
                         }>
-                          {user.type.charAt(0).toUpperCase() + user.type.slice(1)}
+                          {user.userType ? user.userType.charAt(0).toUpperCase() + user.userType.slice(1) : 'Unknown'}
                         </Badge>
                       </div>
                       <div>
@@ -337,13 +382,68 @@ const AdminDashboard = () => {
                           user.status === "pending" ? "outline" : 
                           "secondary"
                         }>
-                          {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                          {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Inactive'}
                         </Badge>
                       </div>
-                      <div className="text-sm">{user.created}</div>
+                      <div className="text-sm">{formatDate(user.createdAt)}</div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">View</Button>
-                        <Button size="sm" variant="outline">Edit</Button>
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/admin/users/${user.id}`)}>View</Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">Edit</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit User</DialogTitle>
+                              <DialogDescription>
+                                Make changes to user information below.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="username" className="text-right">
+                                  Username
+                                </Label>
+                                <Input id="username" defaultValue={user.username || ''} className="col-span-3" />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="userType" className="text-right">
+                                  User Type
+                                </Label>
+                                <Select defaultValue={user.userType || 'user'}>
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select user type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="athlete">Athlete</SelectItem>
+                                    <SelectItem value="business">Business</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="user">Regular User</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="status" className="text-right">
+                                  Status
+                                </Label>
+                                <Select defaultValue={user.status || 'inactive'}>
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                    <SelectItem value="suspended">Suspended</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button type="submit">Save changes</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                   ))}
@@ -371,24 +471,83 @@ const AdminDashboard = () => {
                   <div className="font-medium text-sm">Actions</div>
                 </div>
                 <div className="divide-y">
-                  {mockPartnerships.map((partnership) => (
-                    <div key={partnership.id} className="grid grid-cols-6 p-3 items-center">
-                      <div className="text-sm font-medium">#{partnership.id}</div>
-                      <div className="text-sm">{partnership.athlete}</div>
-                      <div className="text-sm">{partnership.business}</div>
+                  {isLoadingOffers ? (
+                    <div className="p-8 text-center">
+                      <p className="text-gray-500">Loading partnerships...</p>
+                    </div>
+                  ) : offers.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <p className="text-gray-500">No partnership offers found</p>
+                    </div>
+                  ) : offers.map((offer) => (
+                    <div key={offer.id} className="grid grid-cols-6 p-3 items-center">
+                      <div className="text-sm font-medium">#{offer.id}</div>
+                      <div className="text-sm">Athlete ID: {offer.athleteId}</div>
+                      <div className="text-sm">Business ID: {offer.businessId}</div>
                       <div>
                         <Badge variant={
-                          partnership.status === "active" ? "default" : 
-                          partnership.status === "pending" ? "outline" : 
-                          "secondary"
+                          offer.status === "accepted" ? "default" : 
+                          offer.status === "pending" ? "outline" : 
+                          offer.status === "declined" ? "secondary" :
+                          "outline"
                         }>
-                          {partnership.status.charAt(0).toUpperCase() + partnership.status.slice(1)}
+                          {offer.status ? offer.status.charAt(0).toUpperCase() + offer.status.slice(1) : 'Unknown'}
                         </Badge>
                       </div>
-                      <div className="text-sm font-medium">{partnership.value}</div>
+                      <div className="text-sm font-medium">
+                        {offer.compensation ? `$${offer.compensation}` : 'Varies'}
+                      </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Details</Button>
-                        <Button size="sm" variant="outline">Edit</Button>
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/admin/partnerships/${offer.id}`)}>Details</Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">Edit</Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Partnership</DialogTitle>
+                              <DialogDescription>
+                                Update partnership status and details.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="status" className="text-right">
+                                  Status
+                                </Label>
+                                <Select defaultValue={offer.status || 'pending'}>
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="accepted">Accepted</SelectItem>
+                                    <SelectItem value="declined">Declined</SelectItem>
+                                    <SelectItem value="expired">Expired</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="complianceStatus" className="text-right">
+                                  Compliance
+                                </Label>
+                                <Select defaultValue={offer.complianceStatus || 'pending'}>
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select compliance status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending Review</SelectItem>
+                                    <SelectItem value="approved">Approved</SelectItem>
+                                    <SelectItem value="rejected">Rejected</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button type="submit">Save changes</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
                   ))}
@@ -414,19 +573,27 @@ const AdminDashboard = () => {
                   <div className="font-medium text-sm">Status</div>
                 </div>
                 <div className="divide-y">
-                  {mockFeedback.map((item) => (
+                  {isLoadingFeedback ? (
+                    <div className="p-8 text-center">
+                      <p className="text-gray-500">Loading feedback...</p>
+                    </div>
+                  ) : feedback.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <p className="text-gray-500">No feedback found</p>
+                    </div>
+                  ) : feedback.map((item) => (
                     <div key={item.id} className="grid grid-cols-5 p-3 items-center">
-                      <div className="text-sm font-medium">{item.user}</div>
+                      <div className="text-sm font-medium">User #{item.userId}</div>
                       <div>
                         <Badge variant="outline" className={
-                          item.type === "feature" ? "bg-green-50 text-green-700 border-green-200" : 
-                          item.type === "bug" ? "bg-red-50 text-red-700 border-red-200" :
+                          item.feedbackType === "feature" ? "bg-green-50 text-green-700 border-green-200" : 
+                          item.feedbackType === "bug" ? "bg-red-50 text-red-700 border-red-200" :
                           "bg-gray-50 text-gray-700 border-gray-200"
                         }>
-                          {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                          {item.feedbackType.charAt(0).toUpperCase() + item.feedbackType.slice(1)}
                         </Badge>
                       </div>
-                      <div className="col-span-2 text-sm">{item.text}</div>
+                      <div className="col-span-2 text-sm">{item.content}</div>
                       <div>
                         <Badge variant={
                           item.status === "new" ? "default" : 
