@@ -109,15 +109,45 @@ export default function Header() {
                       Compliance Dashboard
                     </span>
                   </Link>
+                ) : userType === 'admin' ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
+                        location.includes("dashboard") ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+                      }`}>
+                        <BarChart className="mr-1 h-4 w-4 text-[#f03c3c]" />
+                        Dashboards
+                      </span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56 bg-gray-900 border-[#f03c3c]/50 text-white">
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/dashboard" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                          <Settings className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/athlete/dashboard" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                          <Trophy className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                          <span>Athlete Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/business/dashboard" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                          <Briefcase className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                          <span>Business Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/compliance/dashboard" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                          <Shield className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                          <span>Compliance Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
-                  <Link href="/dashboard">
-                    <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                      location === "/dashboard" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
-                    }`}>
-                      <BarChart className="mr-1 h-4 w-4 text-[#f03c3c]" />
-                      Dashboard
-                    </span>
-                  </Link>
+                  <span></span> /* Default case - should not be visible as there's no longer a generic dashboard */
                 )}
 
                 <Link href="/messages">
