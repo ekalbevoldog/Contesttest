@@ -619,7 +619,7 @@ export default function AthleteDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {partnershipOffers.length > 0 ? (
-                    partnershipOffers.map((offer) => (
+                    partnershipOffers.map((offer: any) => (
                       <Card key={offer.id} className="bg-muted/50">
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-center">
@@ -657,7 +657,7 @@ export default function AthleteDashboard() {
                           <div className="mt-2">
                             <span className="text-sm text-gray-700 block mb-1">Required Deliverables:</span>
                             <div className="flex flex-wrap gap-2">
-                              {offer.deliverables.map((deliverable, idx) => (
+                              {offer.deliverables.map((deliverable: any, idx: number) => (
                                 <Badge key={idx} variant="outline" className="bg-primary/5">
                                   {deliverable}
                                 </Badge>
@@ -674,7 +674,7 @@ export default function AthleteDashboard() {
                   ) : (
                     <div className="text-center py-10">
                       <div className="text-gray-600 mb-2">No partnership offers available</div>
-                      <div className="text-sm text-gray-500 mb-4">
+                      <div className="text-sm text-gray-700 mb-4">
                         Complete your profile to receive more partnership matches
                       </div>
                       <Button variant="outline">Update Your Profile</Button>
@@ -687,7 +687,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
+                  <Users className="h-5 w-5 text-primary/80" />
                   Active Partnerships
                 </CardTitle>
                 <CardDescription>
@@ -697,7 +697,7 @@ export default function AthleteDashboard() {
               <CardContent>
                 <div className="space-y-6">
                   {activePartnerships.length > 0 ? (
-                    activePartnerships.map((partnership) => (
+                    activePartnerships.map((partnership: any) => (
                       <Card key={partnership.id} className="bg-muted/50">
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-center">
@@ -718,22 +718,22 @@ export default function AthleteDashboard() {
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-500">Start Date</span>
+                              <span className="text-sm text-gray-700">Start Date</span>
                               <span className="font-semibold">{new Date(partnership.startDate).toLocaleDateString()}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-500">End Date</span>
+                              <span className="text-sm text-gray-700">End Date</span>
                               <span className="font-semibold">{new Date(partnership.endDate).toLocaleDateString()}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-500">Total Value</span>
+                              <span className="text-sm text-gray-700">Total Value</span>
                               <span className="font-semibold">${partnership.totalValue}</span>
                             </div>
                           </div>
 
-                          <span className="text-sm text-gray-500 block mb-2">Deliverable Progress:</span>
+                          <span className="text-sm text-gray-700 block mb-2">Deliverable Progress:</span>
                           <div className="space-y-3">
-                            {partnership.deliverables.map((deliverable, idx) => (
+                            {partnership.deliverables.map((deliverable: any, idx: number) => (
                               <div key={idx} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   {deliverable.status === "completed" ? (
@@ -746,7 +746,7 @@ export default function AthleteDashboard() {
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-sm text-gray-500">
+                                  <span className="text-sm text-gray-700">
                                     Due: {new Date(deliverable.deadline).toLocaleDateString()}
                                   </span>
                                   <Badge 
@@ -771,7 +771,7 @@ export default function AthleteDashboard() {
                   ) : (
                     <div className="text-center py-10">
                       <div className="text-gray-600 mb-2">No active partnerships</div>
-                      <div className="text-sm text-gray-500 mb-4">
+                      <div className="text-sm text-gray-700 mb-4">
                         Accept partnership offers to see them here
                       </div>
                       <Button variant="outline">Explore Offers</Button>
@@ -787,7 +787,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-primary" />
+                  <Clock className="h-5 w-5 text-primary/80" />
                   Upcoming Deliverables
                 </CardTitle>
                 <CardDescription>
@@ -833,11 +833,11 @@ export default function AthleteDashboard() {
                               <div className="flex flex-col gap-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-sm text-gray-500">Due Date</span>
+                                    <span className="text-sm text-gray-700">Due Date</span>
                                     <span className="font-semibold">{new Date(deliverable.deadline).toLocaleDateString()}</span>
                                   </div>
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-sm text-gray-500">Time Remaining</span>
+                                    <span className="text-sm text-gray-700">Time Remaining</span>
                                     <div className="flex items-center gap-2">
                                       <span className={`font-semibold ${isUrgent ? "text-red-600" : ""}`}>
                                         {daysRemaining} days
@@ -850,7 +850,7 @@ export default function AthleteDashboard() {
                                   </div>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                  <span className="text-sm text-gray-500">Deliverable Requirements</span>
+                                  <span className="text-sm text-gray-700">Deliverable Requirements</span>
                                   <ul className="list-disc list-inside text-sm">
                                     <li>Create content featuring the product in authentic use</li>
                                     <li>Include required hashtags and brand mentions</li>
@@ -871,7 +871,7 @@ export default function AthleteDashboard() {
                   {activePartnerships.flatMap(p => p.deliverables).filter(d => d.status === "pending").length === 0 && (
                     <div className="text-center py-10">
                       <div className="text-gray-600 mb-2">No pending deliverables</div>
-                      <div className="text-sm text-gray-500 mb-4">
+                      <div className="text-sm text-gray-700 mb-4">
                         You're all caught up! Look for new partnership opportunities.
                       </div>
                       <Button variant="outline">Find New Partnerships</Button>
@@ -884,7 +884,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <CheckCircle2 className="h-5 w-5 text-primary/80" />
                   Completed Deliverables
                 </CardTitle>
                 <CardDescription>
@@ -902,7 +902,7 @@ export default function AthleteDashboard() {
                             <CheckCircle2 className="h-5 w-5 text-green-600" />
                             <div>
                               <div className="font-medium">{deliverable.task}</div>
-                              <div className="text-sm text-gray-500">{partnership.brand} - {partnership.campaign}</div>
+                              <div className="text-sm text-gray-700">{partnership.brand} - {partnership.campaign}</div>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -918,7 +918,7 @@ export default function AthleteDashboard() {
                   {activePartnerships.flatMap(p => p.deliverables).filter(d => d.status === "completed").length === 0 && (
                     <div className="text-center py-10">
                       <div className="text-gray-600 mb-2">No completed deliverables yet</div>
-                      <div className="text-sm text-gray-500 mb-4">
+                      <div className="text-sm text-gray-700 mb-4">
                         Complete your pending tasks to see them here
                       </div>
                       <Button variant="outline">View Pending Tasks</Button>
@@ -934,7 +934,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <LineChart className="h-5 w-5 text-primary" />
+                  <LineChart className="h-5 w-5 text-primary/80" />
                   Performance Metrics
                 </CardTitle>
                 <CardDescription>
@@ -1071,7 +1071,7 @@ export default function AthleteDashboard() {
                 <div className="flex flex-col md:flex-row justify-between md:items-center">
                   <div>
                     <CardTitle className="flex items-center gap-2 mb-2">
-                      <Wallet className="h-5 w-5 text-primary" />
+                      <Wallet className="h-5 w-5 text-primary/80" />
                       Earnings Summary
                     </CardTitle>
                     <CardDescription>
@@ -1145,7 +1145,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
+                  <FileText className="h-5 w-5 text-primary/80" />
                   Recent Transactions
                 </CardTitle>
                 <CardDescription>
@@ -1221,7 +1221,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
+                  <BookOpen className="h-5 w-5 text-primary/80" />
                   Education Center
                 </CardTitle>
                 <CardDescription>
@@ -1279,7 +1279,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
+                  <Target className="h-5 w-5 text-primary/80" />
                   Best Practices
                 </CardTitle>
                 <CardDescription>
@@ -1290,7 +1290,7 @@ export default function AthleteDashboard() {
                 <div className="space-y-6">
                   <div className="bg-muted/50 rounded-lg p-5">
                     <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                      <Heart className="h-5 w-5 text-primary" />
+                      <Heart className="h-5 w-5 text-primary/80" />
                       Content Creation Tips
                     </h3>
                     <ul className="space-y-3">
@@ -1315,7 +1315,7 @@ export default function AthleteDashboard() {
 
                   <div className="bg-muted/50 rounded-lg p-5">
                     <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                      <Heart className="h-5 w-5 text-primary" />
+                      <Heart className="h-5 w-5 text-primary/80" />
                       Communication Best Practices
                     </h3>
                     <ul className="space-y-3">
@@ -1347,7 +1347,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
+                  <FileText className="h-5 w-5 text-primary/80" />
                   Partnership Contracts
                 </CardTitle>
                 <CardDescription>
@@ -1359,7 +1359,7 @@ export default function AthleteDashboard() {
                   {activePartnerships.map((partnership) => (
                     <div key={partnership.id} className="flex items-center justify-between p-4 rounded-md bg-gray-50">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-primary" />
+                        <FileText className="h-5 w-5 text-primary/80" />
                         <div>
                           <div className="font-medium">{partnership.brand} Contract</div>
                           <div className="text-sm text-gray-700">{partnership.campaign}</div>
@@ -1390,7 +1390,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
+                  <FileText className="h-5 w-5 text-primary/80" />
                   Tax Documents
                 </CardTitle>
                 <CardDescription>
@@ -1405,7 +1405,7 @@ export default function AthleteDashboard() {
                   ].map((doc, idx) => (
                     <div key={idx} className="flex items-center justify-between p-4 rounded-md bg-gray-50">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-primary" />
+                        <FileText className="h-5 w-5 text-primary/80" />
                         <div>
                           <div className="font-medium">{doc.type} - Tax Year {doc.year}</div>
                           <div className="text-sm text-gray-700">Issued on: {new Date(doc.date).toLocaleDateString()}</div>
@@ -1431,7 +1431,7 @@ export default function AthleteDashboard() {
               <Card className="border-primary/20 md:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
+                    <User className="h-5 w-5 text-primary/80" />
                     Account Information
                   </CardTitle>
                   <CardDescription>
@@ -1493,7 +1493,7 @@ export default function AthleteDashboard() {
               <Card className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Share2 className="h-5 w-5 text-primary" />
+                    <Share2 className="h-5 w-5 text-primary/80" />
                     Refer a Friend
                   </CardTitle>
                   <CardDescription>
@@ -1503,7 +1503,7 @@ export default function AthleteDashboard() {
                 <CardContent>
                   <div className="space-y-4 text-center">
                     <div className="bg-primary/10 p-6 rounded-md">
-                      <Gift className="h-12 w-12 text-primary mx-auto mb-3" />
+                      <Gift className="h-12 w-12 text-primary/80 mx-auto mb-3" />
                       <p className="font-medium mb-1">Your Referral Code</p>
                       <div className="bg-white p-3 rounded-md font-bold tracking-wider text-lg mb-3">
                         ATHLETE25
@@ -1536,7 +1536,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-primary" />
+                  <Bell className="h-5 w-5 text-primary/80" />
                   Notification Preferences
                 </CardTitle>
                 <CardDescription>
@@ -1577,7 +1577,7 @@ export default function AthleteDashboard() {
             <Card className="border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Link className="h-5 w-5 text-primary" />
+                  <Link className="h-5 w-5 text-primary/80" />
                   Shareable Profile Link
                 </CardTitle>
                 <CardDescription>
