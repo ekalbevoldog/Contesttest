@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,12 +13,12 @@ export default function Home() {
   const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
   // Removed video ref
-  
+
   // Removed video-related state and effects
-  
+
   return (
     <div className="min-h-screen bg-black text-white">
-      
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-black">
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
@@ -64,7 +63,7 @@ export default function Home() {
             <div className="relative h-72 md:h-96 lg:block">
               {/* Background styling */}
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
-              
+
               {/* Video container - simplified */}
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg bg-zinc-900 z-10">
                 <video
@@ -83,11 +82,11 @@ export default function Home() {
             </div>
           </div>
         </div>
-        
+
         {/* Divider */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
       </section>
-      
+
       {/* Benefits Section */}
       <section className="py-20 bg-[#111]">
         <div className="container mx-auto px-4">
@@ -102,13 +101,13 @@ export default function Home() {
               delivering authentic partnerships that drive real results.
             </p>
           </div>
-          
+
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
               <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Athletes</TabsTrigger>
               <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Businesses</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="athletes" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
@@ -119,12 +118,13 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Unlock Your Earning Potential</h4>
                     <p className="text-zinc-400">
                       Contested unlocks your earning potential by automatically matching you directly with personalized partnership offers.
                     </p>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
                     <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
@@ -133,13 +133,14 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Perfect Brand Alignment</h4>
                     <p className="text-zinc-400">
                       Powered by our proprietary AI, you'll only receive offers that perfectly align with your sport, personal brand, and audience.
                       We handle the matching—you focus on creating authentic content.
                     </p>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
                     <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
@@ -148,13 +149,14 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Zero Upfront Cost</h3>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Free to Join</h4>
                     <p className="text-zinc-400">
                       Joining is always free. We only succeed when you do—fees are charged exclusively after partnerships are successfully completed.
                     </p>
                   </CardContent>
                 </Card>
               </div>
-              
+
               <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-black p-5 rounded-lg shadow-md">
@@ -164,7 +166,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs text-zinc-500">per campaign</p>
                   </div>
-                  
+
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
@@ -172,7 +174,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs text-zinc-500">of athletes find matches</p>
                   </div>
-                  
+
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
@@ -180,7 +182,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs text-zinc-500">average timeframe</p>
                   </div>
-                  
+
                   <div className="flex items-center justify-center">
                     <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
                       <Link to="/solutions">Learn More</Link>
@@ -189,7 +191,7 @@ export default function Home() {
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="businesses" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
@@ -200,12 +202,13 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Authentic Influencers</h3>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Genuine Brand Alignment</h4>
                     <p className="text-zinc-400">
                       Connect with college athletes who genuinely align with your brand values and can authentically represent your products.
                     </p>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
                     <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
@@ -214,12 +217,13 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Measurable Results</h3>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Track Your ROI</h4>
                     <p className="text-zinc-400">
                       Get detailed analytics on campaign performance and engagement to track your return on investment.
                     </p>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
                   <CardContent className="p-6">
                     <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
@@ -228,13 +232,14 @@ export default function Home() {
                       </svg>
                     </div>
                     <h3 className="text-xl font-bold mb-2 text-white">Cost-Effective</h3>
+                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Affordable Influencer Marketing</h4>
                     <p className="text-zinc-400">
                       Access quality influencer marketing at a fraction of the cost of traditional celebrity endorsements.
                     </p>
                   </CardContent>
                 </Card>
               </div>
-              
+
               <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-black p-5 rounded-lg shadow-md">
@@ -244,7 +249,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs text-zinc-500">return on investment</p>
                   </div>
-                  
+
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Engagement Rate</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
@@ -252,7 +257,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs text-zinc-500">avg. across platforms</p>
                   </div>
-                  
+
                   <div className="bg-black p-5 rounded-lg shadow-md">
                     <h4 className="text-base font-semibold text-zinc-400 mb-1">Audience Reached</h4>
                     <div className="text-3xl font-bold text-red-500 flex items-center">
@@ -260,7 +265,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs text-zinc-500">monthly impressions</p>
                   </div>
-                  
+
                   <div className="flex items-center justify-center">
                     <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
                       <Link to="/dynamic-onboarding">Get Started</Link>
@@ -272,7 +277,7 @@ export default function Home() {
           </Tabs>
         </div>
       </section>
-      
+
       {/* Budget Exploration Section */}
       <section className="py-24 bg-[#0a0a0a]">
         <div className="container mx-auto px-4 max-w-5xl">
@@ -286,7 +291,7 @@ export default function Home() {
               Explore what's possible at different investment levels before you commit
             </p>
           </div>
-          
+
           <div className="mb-8">
             <label className="block text-zinc-400 text-lg mb-2">Explore Budget Ranges</label>
             <div className="flex items-center mb-4">
@@ -294,7 +299,7 @@ export default function Home() {
                 ${budgetValue[0]}
               </span>
             </div>
-            
+
             <div className="py-6">
               <Slider
                 defaultValue={[30000]}
@@ -304,7 +309,7 @@ export default function Home() {
                 value={budgetValue}
                 onValueChange={setBudgetValue}
               />
-              
+
               {/* Tick marks */}
               <div className="flex justify-between text-zinc-500 text-sm mt-4">
                 <span>$500</span>
@@ -313,7 +318,7 @@ export default function Home() {
                 <span>$30,000+</span>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-r from-blue-950 to-blue-900 p-6 rounded-lg border border-blue-800/40 text-white mb-10">
               <div className="flex items-start mb-2">
                 <span className="text-3xl font-bold text-blue-300 mr-2">
@@ -332,7 +337,7 @@ export default function Home() {
                   "Ideal for high-profile athletes featuring multiple deliverables and long-term partnerships."}
               </p>
             </div>
-            
+
             <div className="flex justify-center mt-8">
               <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 px-8 py-6 text-lg" asChild>
                 <Link to="/explore-matches">Explore Athlete Matches</Link>
@@ -341,7 +346,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* Pricing Section */}
       <section className="py-20 bg-[#121212]">
         <div className="container mx-auto px-4">
@@ -355,13 +360,13 @@ export default function Home() {
               Choose the plan that's right for you, with no hidden fees or long-term commitments.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Basic Plan */}
             <Card id="basic-plan" className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1 text-white">Basic</h3>
-                <p className="text-zinc-400 text-sm mb-4">Perfect for getting started</p>
+                <h4 className="text-sm font-medium text-zinc-400 mb-4">Perfect for getting started</h4>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">$99</span>
                   <span className="text-zinc-400">/month</span>
@@ -397,7 +402,7 @@ export default function Home() {
                 </Button>
               </div>
             </Card>
-            
+
             {/* Pro Plan */}
             <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden border-red-500 border-2">
               <div className="absolute -right-12 top-8 bg-red-500 text-white py-1 px-12 transform rotate-45">
@@ -405,7 +410,7 @@ export default function Home() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1 text-white">Professional</h3>
-                <p className="text-zinc-400 text-sm mb-4">For growing businesses</p>
+                <h4 className="text-sm font-medium text-zinc-400 mb-4">For growing businesses</h4>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">$249</span>
                   <span className="text-zinc-400">/month</span>
@@ -447,12 +452,12 @@ export default function Home() {
                 </Button>
               </div>
             </Card>
-            
+
             {/* Enterprise Plan */}
             <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-1 text-white">Enterprise</h3>
-                <p className="text-zinc-400 text-sm mb-4">For larger organizations</p>
+                <h4 className="text-sm font-medium text-zinc-400 mb-4">For larger organizations</h4>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">$749</span>
                   <span className="text-zinc-400">/month</span>
@@ -495,13 +500,13 @@ export default function Home() {
               </div>
             </Card>
           </div>
-          
+
           <div className="text-center mt-8 text-gray-400">
             All plans include a 14-day free trial. No credit card required.
           </div>
         </div>
       </section>
-      
+
       {/* Testimonials / Success Stories */}
       <section className="py-20 bg-black">
         <div className="container mx-auto px-4">
@@ -515,7 +520,7 @@ export default function Home() {
               See how athletes and businesses are creating winning partnerships with Contested.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
               <div className="flex flex-col h-full">
@@ -565,7 +570,7 @@ export default function Home() {
                 </div>
               </div>
             </Card>
-            
+
             <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
               <div className="flex flex-col h-full">
                 <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
@@ -615,7 +620,7 @@ export default function Home() {
               </div>
             </Card>
           </div>
-          
+
           <div className="mt-12 text-center">
             <Button variant="outline" className="border-red-500 text-white hover:bg-red-500/10">
               View More Success Stories
@@ -623,7 +628,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* CTA Section */}
       <section className="py-20 bg-zinc-950 text-white relative overflow-hidden border-t border-zinc-800">
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
@@ -641,7 +646,7 @@ export default function Home() {
               >
                 <Link to="/dynamic-onboarding">Find Your Athlete Match Now</Link>
               </Button>
-              
+
               <Button 
                 size="lg" 
                 variant="outline" 
@@ -654,7 +659,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* Footer Section */}
       <footer className="bg-black py-8 border-t border-zinc-900">
         <div className="container mx-auto px-4">
