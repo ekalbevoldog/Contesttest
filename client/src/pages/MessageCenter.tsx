@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,17 @@ import { Send } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useAuth } from "@/hooks/use-auth";
 
+type Message = {
+  id: string;
+  content: string;
+  sender: string;
+  timestamp: Date;
+};
+
 export default function MessageCenter() {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const { user } = useAuth();
   const { sendMessage, lastMessage } = useWebSocket();
 
@@ -20,7 +28,12 @@ export default function MessageCenter() {
       try {
         const data = JSON.parse(lastMessage);
         if (data.type === 'message') {
-          setMessages(prev => [...prev, data]);
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            content: data.content,
+            sender: data.sender,
+            timestamp: new Date()
+          }]);
         }
       } catch (e) {
         console.error('Error parsing message:', e);
@@ -29,7 +42,14 @@ export default function MessageCenter() {
   }, [lastMessage]);
 
   const handleSendMessage = () => {
-    if (!message.trim() || !selectedChat) return;
+    if (!message.trim() || selectedChat === null) return;
+
+    const newMessage = {
+      id: Date.now().toString(),
+      content: message,
+      sender: user?.username || 'You',
+      timestamp: new Date()
+    };
 
     sendMessage({
       type: 'message',
@@ -37,6 +57,7 @@ export default function MessageCenter() {
       recipientId: selectedChat
     });
 
+    setMessages(prev => [...prev, newMessage]);
     setMessage('');
   };
 
@@ -73,41 +94,39 @@ export default function MessageCenter() {
         </Card>
 
         <Card className="md:col-span-2">
-          <CardHeader className="border-b">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarFallback>
-                  {selectedChat !== null ? ['S', 'P'][selectedChat] : '?'}
-                </AvatarFallback>
-              </Avatar>
-              <CardTitle>
-                {selectedChat !== null ? ['Support', 'Partnerships'][selectedChat] : 'Select a chat'}
-              </CardTitle>
-            </div>
+          <CardHeader>
+            <CardTitle>
+              {selectedChat !== null ? ['Support', 'Partnerships'][selectedChat] : 'Select a chat'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[calc(100vh-16rem)] mb-4">
-              <div className="space-y-4 p-4">
-                {messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.sender === user?.id ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`rounded-lg p-3 max-w-[80%] ${
-                      msg.sender === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.sender === 'You' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%] rounded-lg p-3 ${
+                      msg.sender === 'You' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                     }`}>
-                      {msg.content}
+                      <p className="text-sm font-medium mb-1">{msg.sender}</p>
+                      <p className="text-sm">{msg.content}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </ScrollArea>
+            
             <div className="flex gap-2">
               <Input
-                placeholder="Type a message..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                className="flex-1"
+                placeholder="Type your message..."
+                disabled={selectedChat === null}
               />
-              <Button size="icon" onClick={handleSendMessage}>
+              <Button 
+                onClick={handleSendMessage}
+                disabled={selectedChat === null || !message.trim()}
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
