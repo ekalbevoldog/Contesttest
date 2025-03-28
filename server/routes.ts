@@ -62,6 +62,27 @@ const profileSchema = z.object({
   ])
 );
 
+// Helper middleware to check if user is authenticated and has specific role
+const checkUserAuth = (requiredRole: string | null = null) => async (req: Request, res: Response, next: NextFunction) => {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  if (requiredRole) {
+    try {
+      const user = await storage.getUser(parseInt(req.session.userId.toString()));
+      if (!user || user.userType !== requiredRole) {
+        return res.status(403).json({ error: `${requiredRole} access required` });
+      }
+    } catch (err) {
+      console.error("Error checking user role:", err);
+      return res.status(500).json({ error: "Server error checking permissions" });
+    }
+  }
+  
+  next();
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
@@ -1469,7 +1490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/feedback/public", async (req: Request, res: Response) => {
     try {
       const feedbacks = await storage.getPublicFeedback();
-      return res.status(200).json({ feedbacks });
+      return res.status(200).json(feedbacks); // Return array directly, not wrapped in object
     } catch (error) {
       console.error("Error retrieving public feedback:", error);
       return res.status(500).json({
@@ -1480,7 +1501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update feedback status (admin/compliance only)
-  app.patch("/api/feedback/:feedbackId/status", async (req: Request, res: Response) => {
+  app.patch("/api/feedback/:feedbackId/status", checkUserAuth("compliance"), async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated and has admin/compliance role
       if (!req.isAuthenticated()) {
@@ -1516,7 +1537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Add admin response to feedback
-  app.patch("/api/feedback/:feedbackId/response", async (req: Request, res: Response) => {
+  app.patch("/api/feedback/:feedbackId/response", checkUserAuth("compliance"), async (req: Request, res: Response) => {
     try {
       // Check if user is authenticated and has admin/compliance role
       if (!req.isAuthenticated()) {
@@ -1750,19 +1771,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Admin API Routes - These should be properly secured in a production environment
-  // Check if the user is an admin
-  const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-    
-    const user = req.user as Express.User;
-    if (user.userType !== "admin") {
-      return res.status(403).json({ error: "Admin access required" });
-    }
-    
-    next();
-  };
+  // Use our helper middleware for admin routes
+  const requireAdmin = checkUserAuth("admin");
   
   // Admin routes
   app.get("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {

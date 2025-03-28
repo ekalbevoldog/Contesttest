@@ -66,10 +66,13 @@ const AdminDashboard = () => {
   });
   
   // Fetch feedback data
-  const { data: feedback = [], isLoading: isLoadingFeedback } = useQuery({
+  const { data: feedbackResponse, isLoading: isLoadingFeedback } = useQuery({
     queryKey: ['/api/feedback/public'],
     enabled: !!user && user.userType === 'admin',
   });
+  
+  // Process feedback data to ensure it's an array
+  const feedback = Array.isArray(feedbackResponse) ? feedbackResponse : [];
   
   // Process data to generate system metrics
   useEffect(() => {
