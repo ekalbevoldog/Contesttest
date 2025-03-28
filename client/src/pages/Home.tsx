@@ -74,7 +74,11 @@ export default function Home() {
                   muted
                   loop
                   playsInline
+                  controls={false}
+                  poster="/contested-logo.png"
+                  style={{ display: 'block', maxWidth: '100%', height: '100%' }}
                 />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent"></div>
               </div>
             </div>
           </div>
