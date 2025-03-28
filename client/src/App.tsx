@@ -25,6 +25,7 @@ import Feedback from "@/pages/Feedback";
 import AthleteProfileLink from "@/pages/AthleteProfileLink";
 import AthleteProfileLinkConfig from "@/pages/AthleteProfileLinkConfig";
 import MatchAlgorithmTest from "@/pages/MatchAlgorithmTest";
+import AdminLogin from "@/pages/AdminLogin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AIAssistantDrawer from "@/components/AIAssistantDrawer";
@@ -64,6 +65,7 @@ function Router() {
           <Route path="/p/:linkId" component={AthleteProfileLink} />
           
           {/* Admin and Integration Routes */}
+          <Route path="/admin-login" component={AdminLogin} />
           <Route path="/admin/n8n-config" component={N8nConfig} />
           
           {/* Test Routes */}

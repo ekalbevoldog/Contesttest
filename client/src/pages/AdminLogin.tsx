@@ -3,6 +3,17 @@ import { useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -13,96 +24,82 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Loader2, ShieldAlert } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().min(1, { message: "Please enter your username or email" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function AdminLogin() {
   const [, navigate] = useLocation();
-  const { loginMutation } = useAuth();
+  const { loginMutation, user } = useAuth();
   const { toast } = useToast();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const isLoading = loginMutation.isPending;
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
 
   async function onSubmit(data: LoginFormValues) {
-    setErrorMessage(null);
-    
     try {
-      const user = await loginMutation.mutateAsync(data);
-      
-      if (user.userType !== "admin") {
-        toast({
-          title: "Access Denied",
-          description: "This login is for admin users only.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      toast({
-        title: "Login successful",
-        description: "Welcome to the admin dashboard.",
+      await loginMutation.mutateAsync({
+        username: data.email,
+        password: data.password
       });
       
-      navigate("/admin/dashboard");
-    } catch (error: any) {
-      setErrorMessage(error.message || "Login failed. Please check your credentials.");
+      // After successful login, check if user is admin
+      if (user?.userType === 'admin') {
+        // Redirect to admin dashboard
+        navigate("/admin/dashboard");
+      } else {
+        // Show access denied message
+        toast({
+          title: "Access denied",
+          description: "This login portal is for administrators only.",
+          variant: "destructive",
+        });
+        
+        // Redirect back to home
+        setTimeout(() => navigate("/"), 2000);
+      }
+    } catch (error) {
+      // Login error is handled by the mutation itself
+      console.error("Login error:", error);
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-center justify-center mb-4">
-            <ShieldAlert className="h-10 w-10 text-primary" />
-          </div>
-          <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
-          <CardDescription className="text-center">
-            Access restricted to authorized administrators.
+    <div className="container mx-auto flex items-center justify-center min-h-[80vh] px-4">
+      <Card className="w-full max-w-md border-primary/20">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Admin Portal</CardTitle>
+          <CardDescription>
+            Sign in to access the administrative dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6"
-            >
-              {errorMessage && (
-                <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                  {errorMessage}
-                </div>
-              )}
-              
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Username or Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your username" {...field} />
+                      <Input placeholder="admin" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="password"
@@ -110,23 +107,14 @@ export default function AdminLogin() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter your password"
-                        {...field}
-                      />
+                      <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending ? (
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Logging in...
@@ -139,8 +127,8 @@ export default function AdminLogin() {
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-center text-sm text-muted-foreground">
-            This area is reserved for platform administrators only.
+          <p className="text-sm text-muted-foreground">
+            Authorized personnel only. Unauthorized access attempts will be logged.
           </p>
         </CardFooter>
       </Card>

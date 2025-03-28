@@ -654,6 +654,21 @@ export default function Home() {
         </div>
       </section>
       
+      {/* Footer Section */}
+      <footer className="bg-black py-8 border-t border-zinc-900">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="mb-4 md:mb-0">
+              <p className="text-zinc-500 text-sm">© {new Date().getFullYear()} Contested. All rights reserved.</p>
+            </div>
+            <div className="flex flex-wrap gap-4 text-zinc-500 text-sm">
+              <Link to="/privacy" className="hover:text-zinc-300">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-zinc-300">Terms of Service</Link>
+              <Link to="/admin-login" className="hover:text-zinc-300">Admin Login</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
