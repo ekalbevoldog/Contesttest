@@ -103,34 +103,27 @@ export default function Solutions() {
                 <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
                   <div className="h-12 w-12 text-red-500 flex items-center justify-center">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      {/* Brain Connection Circle */}
-                      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" opacity="0.3" />
-                      
-                      {/* Network Nodes */}
-                      <circle cx="12" cy="5" r="1.5" fill="currentColor" />
-                      <circle cx="19" cy="12" r="1.5" fill="currentColor" />
-                      <circle cx="12" cy="19" r="1.5" fill="currentColor" />
-                      <circle cx="5" cy="12" r="1.5" fill="currentColor" />
-                      <circle cx="16" cy="8" r="1.2" fill="currentColor" opacity="0.8" />
-                      <circle cx="16" cy="16" r="1.2" fill="currentColor" opacity="0.8" />
-                      <circle cx="8" cy="16" r="1.2" fill="currentColor" opacity="0.8" />
-                      <circle cx="8" cy="8" r="1.2" fill="currentColor" opacity="0.8" />
-                      
-                      {/* Connection Lines */}
-                      <path d="M12 6.5L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M17.5 12L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M12 17.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M6.5 12L8 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M8 8L12 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M16 16L17.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M8 16L12 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M8 8L6.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      
-                      {/* Central Brain Icon */}
-                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                      <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M13.5 10.5L10.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.5"></circle>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" opacity="0.3"></circle>
+                      <circle cx="12" cy="5" r="1.5" fill="currentColor"></circle>
+                      <circle cx="19" cy="12" r="1.5" fill="currentColor"></circle>
+                      <circle cx="12" cy="19" r="1.5" fill="currentColor"></circle>
+                      <circle cx="5" cy="12" r="1.5" fill="currentColor"></circle>
+                      <circle cx="16" cy="8" r="1.2" fill="currentColor" opacity="0.8"></circle>
+                      <circle cx="16" cy="16" r="1.2" fill="currentColor" opacity="0.8"></circle>
+                      <circle cx="8" cy="16" r="1.2" fill="currentColor" opacity="0.8"></circle>
+                      <circle cx="8" cy="8" r="1.2" fill="currentColor" opacity="0.8"></circle>
+                      <path d="M12 6.5L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M17.5 12L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M12 17.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M6.5 12L8 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M8 8L12 6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M16 16L17.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M8 16L12 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M8 8L6.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none"></circle>
+                      <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+                      <path d="M13.5 10.5L10.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
                     </svg>
                   </div>
                 </div>
@@ -186,9 +179,9 @@ export default function Solutions() {
                 </div>
                 
                 <h3 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">Campaign Management</h3>
-                <h4 className="text-lg font-semibold text-zinc-300 mb-4">End-to-end partnership lifecycle management</h4>
+                <h4 className="text-lg font-semibold text-zinc-300 mb-4">All-in-One Campaign Simplicity</h4>
                 <p className="text-zinc-400 mb-6 text-lg">
-                  Simplify the entire campaign lifecycle with our comprehensive tools for planning, execution, tracking, and reporting on NIL partnerships.
+                  Manage your entire campaign lifecycle effortlessly. Our comprehensive platform automates planning, execution, tracking, and reporting, letting you focus on results, not logistics.
                 </p>
                 
                 <ul className="space-y-3 text-zinc-400">
@@ -196,19 +189,19 @@ export default function Solutions() {
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Content calendar and deliverables tracking</span>
+                    <span className="text-zinc-300">Centralized Content Scheduling & Deliverables</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Performance analytics dashboard</span>
+                    <span className="text-zinc-300">Real-Time Performance Analytics Dashboard</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Automated compliance documentation</span>
+                    <span className="text-zinc-300">Automated Documentation & Compliance Records</span>
                   </li>
                 </ul>
               </CardContent>
@@ -229,9 +222,9 @@ export default function Solutions() {
                 </div>
                 
                 <h3 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">NIL Compliance</h3>
-                <h4 className="text-lg font-semibold text-zinc-300 mb-4">Automated compliance tracking & reporting</h4>
+                <h4 className="text-lg font-semibold text-zinc-300 mb-4">Compliance Made Effortless</h4>
                 <p className="text-zinc-400 mb-6 text-lg">
-                  Stay compliant with NCAA and university-specific NIL regulations with our dedicated compliance portal for athletes, businesses, and compliance officers.
+                  Navigate NCAA and university-specific NIL regulations smoothly. Our dedicated compliance tools simplify approvals, minimize administrative hurdles, and ensure transparency for all stakeholders.
                 </p>
                 
                 <ul className="space-y-3 text-zinc-400">
@@ -239,19 +232,19 @@ export default function Solutions() {
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">School-specific policy integration</span>
+                    <span className="text-zinc-300">Integrated School-Specific Policy Guidelines</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Compliance officer approval workflow</span>
+                    <span className="text-zinc-300">Expedited Compliance Officer Approvals</span>
                   </li>
                   <li className="flex items-start">
                     <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
                       <CheckCircle2 className="h-4 w-4" />
                     </div>
-                    <span className="text-zinc-300">Automated disclosure reporting</span>
+                    <span className="text-zinc-300">Automated NIL Disclosure & Reporting</span>
                   </li>
                 </ul>
               </CardContent>
