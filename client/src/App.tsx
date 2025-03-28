@@ -56,7 +56,7 @@ function Router() {
           <ProtectedRoute path="/compliance/dashboard" component={ComplianceDashboard} requiredUserType="compliance" />
 
           {/* Message Center - available to all logged in users */}
-          <ProtectedRoute path="/messages" component={MessageCenter} />
+          <ProtectedRoute path="/messages" component={() => <MessageCenter />} />
 
           {/* Athlete Profile Configuration - only for athletes */}
           <ProtectedRoute path="/athlete/profile-link" component={AthleteProfileLinkConfig} requiredUserType="athlete" />
