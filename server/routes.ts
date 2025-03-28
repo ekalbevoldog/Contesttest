@@ -64,16 +64,19 @@ const profileSchema = z.object({
 
 // Helper middleware to check if user is authenticated and has specific role
 const checkUserAuth = (requiredRole: string | null = null) => async (req: Request, res: Response, next: NextFunction) => {
-  if (!req.session || !req.session.userId) {
+  if (!req.session || !req.session.passport || !req.session.passport.user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
   
   if (requiredRole) {
     try {
-      const user = await storage.getUser(parseInt(req.session.userId.toString()));
+      const user = await storage.getUser(req.session.passport.user);
       if (!user || user.userType !== requiredRole) {
         return res.status(403).json({ error: `${requiredRole} access required` });
       }
+      
+      // Attach the user to the request for convenience in route handlers
+      req.user = user;
     } catch (err) {
       console.error("Error checking user role:", err);
       return res.status(500).json({ error: "Server error checking permissions" });

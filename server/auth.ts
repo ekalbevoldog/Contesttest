@@ -1,11 +1,20 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+
+// Extend Express session type to include passport property
+declare module 'express-session' {
+  interface Session {
+    passport?: {
+      user: number;
+    };
+  }
+}
 
 declare global {
   namespace Express {
@@ -138,7 +147,8 @@ export function setupAuth(app: Express) {
     // Dispatch logout event
     const logoutEvent = new CustomEvent("contestedLogout");
     
-    req.logout((err) => {
+    // Destroy the session to log out
+    req.session.destroy((err) => {
       if (err) return next(err);
       res.status(200).json({ message: "Logged out successfully" });
     });
@@ -146,20 +156,41 @@ export function setupAuth(app: Express) {
 
   // Get the current logged-in user
   app.get("/api/auth/user", (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.session || !req.session.passport || !req.session.passport.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    res.json(req.user);
+    storage.getUser(req.session.passport.user)
+      .then(user => {
+        if (!user) {
+          return res.status(401).json({ error: "User not found" });
+        }
+        res.json(user);
+      })
+      .catch(err => {
+        console.error("Error fetching user:", err);
+        res.status(500).json({ error: "Server error" });
+      });
   });
 
   // Update user profile
   app.put("/api/auth/user", (req, res, next) => {
-    if (!req.isAuthenticated()) {
+    if (!req.session || !req.session.passport || !req.session.passport.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
     
-    // Update user profile - implement when adding profile update functionality
+    const userId = req.session.passport.user;
     
-    res.json(req.user);
+    // Update user profile with the data from the request
+    storage.updateUser(userId, req.body)
+      .then(updatedUser => {
+        if (!updatedUser) {
+          return res.status(400).json({ error: "Failed to update user" });
+        }
+        res.json(updatedUser);
+      })
+      .catch(err => {
+        console.error("Error updating user:", err);
+        res.status(500).json({ error: "Server error" });
+      });
   });
 }
