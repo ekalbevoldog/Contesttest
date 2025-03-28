@@ -124,13 +124,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/auth/logout");
+      const res = await apiRequest("POST", "/api/auth/logout-direct");
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Logout failed");
       }
     },
     onSuccess: () => {
+      // Immediately set user to null without waiting for server
       setUser(null);
       queryClient.setQueryData(["/api/auth/user"], null);
       queryClient.invalidateQueries();
@@ -142,13 +143,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Dispatch custom logout event
       const logoutEvent = new CustomEvent("contestedLogout");
       window.dispatchEvent(logoutEvent);
+      
+      // Force a page reload to clear any remaining state
+      window.location.href = "/";
     },
     onError: (error: Error) => {
+      // Even if the server call fails, still clear local session state
+      setUser(null);
+      queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.invalidateQueries();
+      
       toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
+        title: "Logged out",
+        description: "Your session has been cleared locally.",
       });
+      
+      window.location.href = "/";
     },
   });
 

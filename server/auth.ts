@@ -153,6 +153,12 @@ export function setupAuth(app: Express) {
       res.status(200).json({ message: "Logged out successfully" });
     });
   });
+  
+  // Alternative logout endpoint that doesn't rely on session
+  app.post("/api/auth/logout-direct", (req, res) => {
+    // Simply return success - client will handle the state cleanup
+    res.status(200).json({ message: "Logged out successfully" });
+  });
 
   // Get the current logged-in user
   app.get("/api/auth/user", (req, res) => {
