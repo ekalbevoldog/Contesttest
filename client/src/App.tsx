@@ -51,7 +51,6 @@ function Router() {
           <Route path="/feedback" component={Feedback} />
           
           {/* Protected Dashboard Routes */}
-          <ProtectedRoute path="/dashboard" component={Dashboard} />
           <ProtectedRoute path="/athlete/dashboard" component={AthleteDashboard} requiredUserType="athlete" />
           <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} requiredUserType="business" />
           <ProtectedRoute path="/compliance/dashboard" component={ComplianceDashboard} requiredUserType="compliance" />

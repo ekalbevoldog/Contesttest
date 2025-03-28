@@ -156,6 +156,51 @@ const AdminDashboard = () => {
           </Card>
         ))}
       </div>
+      
+      {/* Role-specific Dashboard Access */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">View Role Dashboards</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="pt-6 pb-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="p-3 bg-blue-100 rounded-full mb-3">
+                  <Users className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="font-bold mb-2">Athlete Dashboard</h3>
+                <p className="text-sm text-gray-500 mb-4">View the platform from an athlete's perspective</p>
+                <Button onClick={() => navigate("/athlete/dashboard")}>Access Dashboard</Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="pt-6 pb-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="p-3 bg-green-100 rounded-full mb-3">
+                  <Building2 className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="font-bold mb-2">Business Dashboard</h3>
+                <p className="text-sm text-gray-500 mb-4">View the platform from a business's perspective</p>
+                <Button onClick={() => navigate("/business/dashboard")}>Access Dashboard</Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="pt-6 pb-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="p-3 bg-amber-100 rounded-full mb-3">
+                  <ShieldCheck className="h-8 w-8 text-amber-600" />
+                </div>
+                <h3 className="font-bold mb-2">Compliance Dashboard</h3>
+                <p className="text-sm text-gray-500 mb-4">View the platform from a compliance officer's perspective</p>
+                <Button onClick={() => navigate("/compliance/dashboard")}>Access Dashboard</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="dashboard" className="w-full">

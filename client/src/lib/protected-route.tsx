@@ -34,9 +34,10 @@ export function ProtectedRoute({
     );
   }
 
-  // If requiredUserType is specified and user type doesn't match, redirect to the appropriate dashboard
-  if (requiredUserType && user.userType !== requiredUserType) {
-    let redirectPath = "/dashboard";
+  // If requiredUserType is specified and user type doesn't match, 
+  // redirect to the appropriate dashboard (except for admin who can access all dashboards)
+  if (requiredUserType && user.userType !== requiredUserType && user.userType !== 'admin') {
+    let redirectPath = "";
     
     // Redirect to the appropriate dashboard based on user type
     if (user.userType === 'athlete') {
