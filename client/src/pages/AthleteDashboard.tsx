@@ -426,7 +426,7 @@ export default function AthleteDashboard() {
                 Athlete Dashboard
               </span>
             </h1>
-            <p className="text-gray-700 mt-1">Manage your partnerships, track deliverables, and grow your personal brand</p>
+            <p className="text-[#ffebec] mt-1">Manage your partnerships, track deliverables, and grow your personal brand</p>
           </div>
           <div className="flex items-center gap-3">
             <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
@@ -718,20 +718,20 @@ export default function AthleteDashboard() {
                         <CardContent>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-700">Start Date</span>
+                              <span className="text-sm text-blue-700">Start Date</span>
                               <span className="font-semibold">{new Date(partnership.startDate).toLocaleDateString()}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-700">End Date</span>
+                              <span className="text-sm text-blue-700">End Date</span>
                               <span className="font-semibold">{new Date(partnership.endDate).toLocaleDateString()}</span>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm text-gray-700">Total Value</span>
+                              <span className="text-sm text-blue-700">Total Value</span>
                               <span className="font-semibold">${partnership.totalValue}</span>
                             </div>
                           </div>
 
-                          <span className="text-sm text-gray-700 block mb-2">Deliverable Progress:</span>
+                          <span className="text-sm text-blue-700 block mb-2">Deliverable Progress:</span>
                           <div className="space-y-3">
                             {partnership.deliverables.map((deliverable: any, idx: number) => (
                               <div key={idx} className="flex items-center justify-between">
@@ -746,7 +746,7 @@ export default function AthleteDashboard() {
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-sm text-gray-700">
+                                  <span className="text-sm green-600">
                                     Due: {new Date(deliverable.deadline).toLocaleDateString()}
                                   </span>
                                   <Badge 
@@ -833,11 +833,11 @@ export default function AthleteDashboard() {
                               <div className="flex flex-col gap-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-sm text-gray-700">Due Date</span>
+                                    <span className="text-sm text-blue-700">Due Date</span>
                                     <span className="font-semibold">{new Date(deliverable.deadline).toLocaleDateString()}</span>
                                   </div>
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-sm text-gray-700">Time Remaining</span>
+                                    <span className="text-sm text-blue-700">Time Remaining</span>
                                     <div className="flex items-center gap-2">
                                       <span className={`font-semibold ${isUrgent ? "text-red-600" : ""}`}>
                                         {daysRemaining} days
@@ -850,7 +850,7 @@ export default function AthleteDashboard() {
                                   </div>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                  <span className="text-sm text-gray-700">Deliverable Requirements</span>
+                                  <span className="text-sm text-blue-700">Deliverable Requirements</span>
                                   <ul className="list-disc list-inside text-sm">
                                     <li>Create content featuring the product in authentic use</li>
                                     <li>Include required hashtags and brand mentions</li>
@@ -897,16 +897,16 @@ export default function AthleteDashboard() {
                     partnership.deliverables
                       .filter(d => d.status === "completed")
                       .map((deliverable, idx) => (
-                        <div key={`${partnership.id}-${idx}`} className="flex items-center justify-between p-3 rounded-md bg-gray-50">
+                        <div key={`${partnership.id}-${idx}`} className="flex items-center justify-between p-3 rounded-md bg-blue-50">
                           <div className="flex items-center gap-3">
                             <CheckCircle2 className="h-5 w-5 text-green-600" />
                             <div>
                               <div className="font-medium">{deliverable.task}</div>
-                              <div className="text-sm text-gray-700">{partnership.brand} - {partnership.campaign}</div>
+                              <div className="text-sm text-blue-700">{partnership.brand} - {partnership.campaign}</div>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-blue-500">
                               Completed on {new Date().toLocaleDateString()}
                             </span>
                             <Badge className="bg-green-100 text-green-800">Completed</Badge>
