@@ -368,18 +368,62 @@ export default function Header() {
                             Compliance Dashboard
                           </span>
                         </Link>
+                      ) : userType === 'admin' ? (
+                        <>
+                          <div className="border-b border-gray-700 pb-2 mb-2">
+                            <p className="px-3 py-1 text-sm text-gray-400">Dashboard Access</p>
+                          </div>
+                          
+                          <Link href="/admin/dashboard">
+                            <span 
+                              className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                                location === "/admin/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                              }`}
+                              onClick={() => setOpen(false)}
+                            >
+                              <Settings className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                              Admin Dashboard
+                            </span>
+                          </Link>
+                          
+                          <Link href="/athlete/dashboard">
+                            <span 
+                              className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                                location === "/athlete/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                              }`}
+                              onClick={() => setOpen(false)}
+                            >
+                              <Trophy className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                              Athlete Dashboard
+                            </span>
+                          </Link>
+                          
+                          <Link href="/business/dashboard">
+                            <span 
+                              className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                                location === "/business/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                              }`}
+                              onClick={() => setOpen(false)}
+                            >
+                              <Briefcase className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                              Business Dashboard
+                            </span>
+                          </Link>
+                          
+                          <Link href="/compliance/dashboard">
+                            <span 
+                              className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
+                                location === "/compliance/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                              }`}
+                              onClick={() => setOpen(false)}
+                            >
+                              <Shield className="mr-2 h-4 w-4 text-[#f03c3c]" />
+                              Compliance Dashboard
+                            </span>
+                          </Link>
+                        </>
                       ) : (
-                        <Link href="/dashboard">
-                          <span 
-                            className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                              location === "/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
-                            }`}
-                            onClick={() => setOpen(false)}
-                          >
-                            <BarChart className="mr-2 h-4 w-4 text-[#f03c3c]" />
-                            Dashboard
-                          </span>
-                        </Link>
+                        <span></span> /* Default case - should not be visible as there's no longer a generic dashboard */
                       )}
 
                       <Link href="/messages">
