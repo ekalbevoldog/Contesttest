@@ -113,7 +113,7 @@ export default function Solutions() {
                 </div>
                 
                 <h3 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">AI-Powered Matching</h3>
-                <p className="text-sm text-zinc-300 mb-4">Intelligent partnership recommendations powered by data</p>
+                <h4 className="text-lg font-semibold text-zinc-300 mb-4">Intelligent partnership recommendations powered by data</h4>
                 <p className="text-zinc-400 mb-6 text-lg">
                   Our proprietary AI algorithm analyzes dozens of data points to find the perfect partnerships between athletes and businesses that share values, aesthetics, and audience demographics.
                 </p>
