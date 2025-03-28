@@ -156,6 +156,7 @@ export default function AthleteDashboard() {
 
   // Define profile data type
   type ProfileData = {
+    id?: string;
     name?: string;
     sport?: string;
     school?: string;
@@ -237,16 +238,16 @@ export default function AthleteDashboard() {
 
   // Fetch partnership offers for the athlete
   const { data: partnershipOffersData = [] } = useQuery({
-    queryKey: ['/api/partnership-offers/athlete', athleteProfile?.id],
+    queryKey: ['/api/partnership-offers/athlete', profileData?.id],
     queryFn: async () => {
-      if (!athleteProfile?.id) return [];
-      const response = await fetch(`/api/partnership-offers/athlete/${athleteProfile.id}`);
+      if (!profileData?.id) return [];
+      const response = await fetch(`/api/partnership-offers/athlete/${profileData.id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch partnership offers');
       }
       return response.json();
     },
-    enabled: !!athleteProfile?.id,
+    enabled: !!profileData?.id,
   });
 
   // Format the partnership offers for display with business and campaign info
