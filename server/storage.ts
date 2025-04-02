@@ -58,8 +58,8 @@ export interface IStorage {
 
   // Message operations
   getMessages(sessionId: string, limit?: number, offset?: number): Promise<Message[]>;
-  storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message>;
-  getUnreadMessageCounts(sessionId: string): Promise<number>;
+  storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata, senderId?: number, recipientId?: number): Promise<Message>;
+  getUnreadMessageCounts(userId: number): Promise<{ [sessionId: string]: number }>;
   markMessagesRead(sessionId: string, messageIds: number[]): Promise<void>;
 
   // Auth operations
@@ -225,37 +225,48 @@ export class DatabaseStorage implements IStorage {
       .offset(offset);
   }
 
-  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message> {
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata, senderId?: number, recipientId?: number): Promise<Message> {
     const [message] = await db.insert(messages).values({
       sessionId,
       role,
       content,
       metadata: metadata ? JSON.stringify(metadata) : null,
-      unread: true
+      unread: true,
+      read: false,
+      senderId: senderId || null,
+      recipientId: recipientId || null
     }).returning();
 
     return message;
   }
 
-  async getUnreadMessageCounts(sessionId: string): Promise<number> {
-    const result = await db.select({
-      count: sql`count(*)`
-    })
-    .from(messages)
-    .where(and(
-      eq(messages.sessionId, sessionId),
-      eq(messages.unread, true)
-    ));
+  async getUnreadMessageCounts(userId: number): Promise<{ [sessionId: string]: number }> {
+    const messagesResult = await db.select()
+      .from(messages)
+      .where(and(
+        eq(messages.recipientId, userId),
+        eq(messages.unread, true)
+      ));
 
-    if (result.length > 0 && typeof result[0].count === 'number') {
-      return result[0].count;
-    }
-    return 0;
+    const counts: { [sessionId: string]: number } = {};
+    messagesResult.forEach(message => {
+      if (message.sessionId) {
+        if (!counts[message.sessionId]) {
+          counts[message.sessionId] = 0;
+        }
+        counts[message.sessionId]++;
+      }
+    });
+
+    return counts;
   }
 
   async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
     await db.update(messages)
-      .set({ unread: false })
+      .set({ 
+        unread: false,
+        read: true 
+      })
       .where(and(
         eq(messages.sessionId, sessionId),
         inArray(messages.id, messageIds)
@@ -779,7 +790,7 @@ export class MemStorage implements IStorage {
     return this.messages.get(sessionId) || [];
   }
 
-  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message> {
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata, senderId?: number, recipientId?: number): Promise<Message> {
     const id = this.currentMessageId++;
 
     const message: Message = {
@@ -789,6 +800,9 @@ export class MemStorage implements IStorage {
       content,
       metadata: metadata ? JSON.stringify(metadata) : null,
       unread: true,
+      read: false,
+      senderId: senderId || null,
+      recipientId: recipientId || null,
       createdAt: new Date(),
     };
 
@@ -799,9 +813,22 @@ export class MemStorage implements IStorage {
     return message;
   }
 
-  async getUnreadMessageCounts(sessionId: string): Promise<number> {
-    const messages = this.messages.get(sessionId) || [];
-    return messages.filter(msg => msg.unread).length;
+  async getUnreadMessageCounts(userId: number): Promise<{ [sessionId: string]: number }> {
+    const counts: { [sessionId: string]: number } = {};
+    
+    // Iterate through all sessions
+    for (const [sessionId, sessionMessages] of this.messages.entries()) {
+      // Count unread messages for this user in this session
+      const unreadCount = sessionMessages.filter(msg => 
+        msg.recipientId === userId && msg.unread === true
+      ).length;
+      
+      if (unreadCount > 0) {
+        counts[sessionId] = unreadCount;
+      }
+    }
+    
+    return counts;
   }
 
   async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
@@ -809,6 +836,7 @@ export class MemStorage implements IStorage {
     sessionMessages.forEach(msg => {
       if (messageIds.includes(msg.id)) {
         msg.unread = false;
+        msg.read = true;
       }
     });
     this.messages.set(sessionId, sessionMessages);
@@ -1067,5 +1095,5 @@ export class MemStorage implements IStorage {
 }
 
 // Create and export storage instance
-// Temporarily using MemStorage until database connection issue is fixed
+// Temporarily using MemStorage until valid Supabase credentials are provided
 export const storage = new MemStorage();

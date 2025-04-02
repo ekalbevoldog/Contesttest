@@ -5,14 +5,20 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Ensure DATABASE_URL is set
-if (!process.env.DATABASE_URL) {
-  console.error('❌ ERROR: DATABASE_URL environment variable is not set');
+// Ensure Supabase Database URL is set
+if (!process.env.SUPABASE_DATABASE_URL) {
+  console.error('❌ ERROR: SUPABASE_DATABASE_URL environment variable is not set');
   process.exit(1);
 }
 
-// Create Neon SQL connection
-const sql = neon(process.env.DATABASE_URL);
+// For backwards compatibility and ease of transition
+// We'll set DATABASE_URL to SUPABASE_DATABASE_URL if not already set
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.SUPABASE_DATABASE_URL;
+}
+
+// Create Neon SQL connection (which works with Supabase PostgreSQL)
+const sql = neon(process.env.SUPABASE_DATABASE_URL);
 
 // Create Drizzle ORM instance
 export const db = drizzle(sql as any, { 

@@ -320,6 +320,9 @@ export const messages = pgTable("messages", {
   content: text("content").notNull(),
   metadata: jsonb("metadata"),
   unread: boolean("unread").default(true),
+  read: boolean("read").default(false),
+  recipientId: integer("recipient_id"),
+  senderId: integer("sender_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

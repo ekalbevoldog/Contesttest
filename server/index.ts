@@ -77,8 +77,9 @@ app.get('/api/health', (_req: Request, res: Response) => {
     const isConnected = await testConnection();
     
     if (!isConnected) {
-      console.error("❌ Failed to connect to the database, server will not start");
-      process.exit(1);
+      console.warn("⚠️ Failed to connect to the database, falling back to in-memory storage");
+      console.warn("⚠️ This is acceptable for development but not for production");
+      // Continue with in-memory storage, no need to exit
     }
     
     // Register API routes
@@ -114,7 +115,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
     }, () => {
       console.log("==========================================");
       console.log(`🚀 Server started successfully! Listening on port ${port}`);
-      console.log(`💾 Database connection established`);
+      console.log(`💾 ${isConnected ? 'Database connection established' : 'Using in-memory storage (no persistence)'}`);
       console.log(`🌐 API available at http://localhost:${port}/api`);
       console.log(`📱 Web application available at http://localhost:${port}`);
       console.log("==========================================");
