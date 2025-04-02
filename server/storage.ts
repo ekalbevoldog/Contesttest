@@ -6,7 +6,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
-import { sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers } from "../shared/schema";
+import { sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers } from "./schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import connectPg from "connect-pg-simple";
