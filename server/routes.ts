@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
 // Temporarily use mock service to debug server startup issues
-import { geminiService } from "./services/mockGeminiService";
+import { geminiService } from "./services/geminiService";
 import { bigQueryService } from "./services/bigQueryService";
 import { sessionService } from "./services/sessionService";
 import { z } from "zod";
