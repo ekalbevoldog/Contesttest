@@ -1,11 +1,18 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { testConnection, getDatabaseHealth } from "./db";
+import dotenv from "dotenv";
 
+// Load environment variables
+dotenv.config();
+
+// Create Express application
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -36,35 +43,104 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  const server = await registerRoutes(app);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    console.error("Server error:", err);
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+// Database health check endpoint
+app.get('/api/health/db', async (_req: Request, res: Response) => {
+  try {
+    const health = await getDatabaseHealth();
+    if (health.status === 'healthy') {
+      return res.status(200).json(health);
+    }
+    return res.status(503).json(health);
+  } catch (error) {
+    return res.status(500).json({ 
+      status: 'error', 
+      message: 'Error checking database health',
+      error: String(error)
+    });
   }
+});
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+// Application health check endpoint
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'healthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || 'unknown'
   });
+});
+
+(async () => {
+  try {
+    // Verify database connection before starting server
+    console.log("Checking database connection...");
+    const isConnected = await testConnection();
+    
+    if (!isConnected) {
+      console.error("❌ Failed to connect to the database, server will not start");
+      process.exit(1);
+    }
+    
+    // Register API routes
+    const server = await registerRoutes(app);
+
+    // Global error handler
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+
+      res.status(status).json({ 
+        error: message,
+        status: status,
+        timestamp: new Date().toISOString()
+      });
+      
+      console.error("Server error:", err);
+    });
+
+    // Setup Vite for development or static serving for production
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    // Start the server
+    const port = process.env.PORT || 5000;
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      console.log("==========================================");
+      console.log(`🚀 Server started successfully! Listening on port ${port}`);
+      console.log(`💾 Database connection established`);
+      console.log(`🌐 API available at http://localhost:${port}/api`);
+      console.log(`📱 Web application available at http://localhost:${port}`);
+      console.log("==========================================");
+    });
+    
+    // Handle graceful shutdown
+    const gracefulShutdown = () => {
+      console.log("🛑 Shutting down gracefully...");
+      server.close(() => {
+        console.log("✅ Server closed");
+        process.exit(0);
+      });
+      
+      // Force close after 10 seconds
+      setTimeout(() => {
+        console.error("⚠️ Could not close connections in time, forcefully shutting down");
+        process.exit(1);
+      }, 10000);
+    };
+    
+    // Listen for termination signals
+    process.on('SIGTERM', gracefulShutdown);
+    process.on('SIGINT', gracefulShutdown);
+    
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
 })();

@@ -318,6 +318,8 @@ export const messages = pgTable("messages", {
   sessionId: text("session_id").notNull(),
   role: text("role").notNull(),
   content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  unread: boolean("unread").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -368,6 +370,16 @@ export type InsertMatch = z.infer<typeof insertMatchSchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+// Message metadata type for additional message properties
+export interface MessageMetadata {
+  sources?: string[];
+  tokens?: number;
+  processingTime?: number;
+  model?: string;
+  context?: string;
+  [key: string]: any;
+}
 
 export type ComplianceOfficer = typeof complianceOfficers.$inferSelect;
 export type InsertComplianceOfficer = z.infer<typeof insertComplianceOfficerSchema>;

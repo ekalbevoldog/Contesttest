@@ -1,7 +1,7 @@
 import { 
   InsertSession, InsertAthlete, InsertBusiness, 
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
-  Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer,
+  Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer, MessageMetadata,
   users, sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers
 } from "./schema";
 import { db } from "./db";
@@ -226,13 +226,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message> {
-    const message = await db.insert(messages).values({
+    const [message] = await db.insert(messages).values({
       sessionId,
       role,
       content,
       metadata: metadata ? JSON.stringify(metadata) : null,
       unread: true
-    }).returning().get();
+    }).returning();
 
     return message;
   }
@@ -245,10 +245,12 @@ export class DatabaseStorage implements IStorage {
     .where(and(
       eq(messages.sessionId, sessionId),
       eq(messages.unread, true)
-    ))
-    .get();
+    ));
 
-    return result?.count || 0;
+    if (result.length > 0 && typeof result[0].count === 'number') {
+      return result[0].count;
+    }
+    return 0;
   }
 
   async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
