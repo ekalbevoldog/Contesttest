@@ -95,6 +95,37 @@ export async function getDatabaseHealth() {
     
     // Get current timestamp from database to check latency
     const timeResult = await client`SELECT NOW() as current_time`;
+
+
+/**
+ * Test Supabase connection health
+ * @returns Promise resolving to connection status
+ */
+export async function testSupabaseConnection(): Promise<boolean> {
+  try {
+    if (!client) {
+      console.error('❌ Database client is not initialized');
+      return false;
+    }
+    
+    // Test query to verify connection and permissions
+    const result = await client`
+      SELECT current_user, current_database(), version() as version;
+    `;
+    
+    console.log('✅ Supabase connection test successful:', {
+      user: result[0].current_user,
+      database: result[0].current_database,
+      version: result[0].version
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Supabase connection test failed:', error);
+    return false;
+  }
+}
+
     const dbTime = timeResult[0]?.current_time || null;
     
     // Get the number of tables in the public schema
