@@ -5,25 +5,35 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Ensure Supabase Database URL is set
-if (!process.env.SUPABASE_DATABASE_URL) {
-  console.error('❌ ERROR: SUPABASE_DATABASE_URL environment variable is not set');
-  process.exit(1);
+// Set DATABASE_URL from Supabase if available
+let dbConnectionUrl = process.env.DATABASE_URL;
+
+// Check for Supabase Database URL
+if (process.env.SUPABASE_DATABASE_URL) {
+  console.log('📦 Using Supabase PostgreSQL database connection');
+  dbConnectionUrl = process.env.SUPABASE_DATABASE_URL;
+} else if (!dbConnectionUrl) {
+  console.warn('⚠️ No DATABASE_URL or SUPABASE_DATABASE_URL environment variable is set');
+  console.warn('⚠️ Application will use in-memory storage as fallback');
 }
 
-// For backwards compatibility and ease of transition
-// We'll set DATABASE_URL to SUPABASE_DATABASE_URL if not already set
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.SUPABASE_DATABASE_URL;
+// Create SQL connection
+let sql: any;
+try {
+  if (dbConnectionUrl) {
+    sql = neon(dbConnectionUrl);
+    console.log('🔌 SQL connection initialized successfully');
+  } else {
+    console.warn('⚠️ No database URL available, SQL connection not initialized');
+  }
+} catch (error) {
+  console.error('❌ Failed to initialize SQL connection:', error);
 }
 
-// Create Neon SQL connection (which works with Supabase PostgreSQL)
-const sql = neon(process.env.SUPABASE_DATABASE_URL);
-
-// Create Drizzle ORM instance
-export const db = drizzle(sql as any, { 
+// Create Drizzle ORM instance if SQL is available
+export const db = sql ? drizzle(sql, { 
   logger: process.env.NODE_ENV !== 'production',
-});
+}) : null;
 
 // Maximum number of retry attempts for connection
 const MAX_RETRY_ATTEMPTS = 3;
