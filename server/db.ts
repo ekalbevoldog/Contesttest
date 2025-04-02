@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
-import * as schema from "../shared/schema";
+import * as schema from "./schema";
 
 // Initialize the connection to the database
 const sql: NeonQueryFunction<boolean, boolean> = neon(process.env.DATABASE_URL!);
