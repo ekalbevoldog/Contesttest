@@ -1,37 +1,41 @@
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
-// Set DATABASE_URL from Supabase if available
+// Set DATABASE_URL from environment variables
 let dbConnectionUrl = process.env.DATABASE_URL;
 
-// Check for Supabase Database URL
-if (process.env.SUPABASE_DATABASE_URL) {
-  console.log('📦 Using Supabase PostgreSQL database connection');
-  dbConnectionUrl = process.env.SUPABASE_DATABASE_URL;
-} else if (!dbConnectionUrl) {
-  console.warn('⚠️ No DATABASE_URL or SUPABASE_DATABASE_URL environment variable is set');
+// Check database connection URLs
+if (dbConnectionUrl) {
+  console.log('📦 Using DATABASE_URL for PostgreSQL connection');
+} else {
+  console.warn('⚠️ No DATABASE_URL environment variable is set');
   console.warn('⚠️ Application will use in-memory storage as fallback');
 }
 
 // Create SQL connection
-let sql: any;
+let client: any;
 try {
   if (dbConnectionUrl) {
-    sql = neon(dbConnectionUrl);
-    console.log('🔌 SQL connection initialized successfully');
+    // Initialize postgres client
+    client = postgres(dbConnectionUrl, { 
+      max: 10, // Maximum number of connections
+      idle_timeout: 30, // Idle timeout in seconds
+      connect_timeout: 10, // Connection timeout in seconds
+    });
+    console.log('🔌 PostgreSQL connection initialized successfully');
   } else {
     console.warn('⚠️ No database URL available, SQL connection not initialized');
   }
 } catch (error) {
-  console.error('❌ Failed to initialize SQL connection:', error);
+  console.error('❌ Failed to initialize PostgreSQL connection:', error);
 }
 
-// Create Drizzle ORM instance if SQL is available
-export const db = sql ? drizzle(sql, { 
+// Create Drizzle ORM instance if client is available
+export const db = client ? drizzle(client, { 
   logger: process.env.NODE_ENV !== 'production',
 }) : null;
 
@@ -47,8 +51,13 @@ const RETRY_DELAY = 2000;
  */
 export async function testConnection(retryCount = 0): Promise<boolean> {
   try {
+    if (!client) {
+      console.error('❌ Database client is not initialized');
+      return false;
+    }
+    
     // Simple query to check if the database is accessible
-    const result = await sql`SELECT 1 as connected`;
+    const result = await client`SELECT 1 as connected`;
     if (result[0]?.connected === 1) {
       if (retryCount > 0) {
         console.log(`✅ Database connection established after ${retryCount} retries`);
@@ -76,16 +85,20 @@ export async function testConnection(retryCount = 0): Promise<boolean> {
  */
 export async function getDatabaseHealth() {
   try {
+    if (!client) {
+      throw new Error('Database client is not initialized');
+    }
+    
     // Get PostgreSQL version
-    const versionResult = await sql`SELECT version()`;
+    const versionResult = await client`SELECT version()`;
     const version = versionResult[0]?.version || 'Unknown';
     
     // Get current timestamp from database to check latency
-    const timeResult = await sql`SELECT NOW() as current_time`;
+    const timeResult = await client`SELECT NOW() as current_time`;
     const dbTime = timeResult[0]?.current_time || null;
     
     // Get the number of tables in the public schema
-    const tablesResult = await sql`
+    const tablesResult = await client`
       SELECT COUNT(*) as table_count 
       FROM information_schema.tables 
       WHERE table_schema = 'public'

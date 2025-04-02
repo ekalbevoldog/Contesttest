@@ -123,6 +123,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSession(session: InsertSession): Promise<Session> {
+    if (!db) {
+      throw new Error("Database connection not available");
+    }
+    
     const [newSession] = await db.insert(sessions).values(session).returning();
     return newSession;
   }
