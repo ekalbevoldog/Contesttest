@@ -2,11 +2,10 @@ import {
   InsertSession, InsertAthlete, InsertBusiness, 
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer,
-  users
-} from "@shared/schema";
+  users, sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers
+} from "./schema";
 import { db } from "./db";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
-import { sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers } from "./schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import connectPg from "connect-pg-simple";
