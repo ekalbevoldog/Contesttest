@@ -110,6 +110,14 @@ export class DatabaseStorage implements IStorage {
       console.error("❌ Database instance is null, operations will fail");
     }
   }
+  
+  // Helper method to check database connection
+  private checkDbConnection() {
+    if (!db) {
+      throw new Error("Database connection not available");
+    }
+    return db;
+  }
 
   // Session operations
   async getSession(sessionId: string): Promise<Session | undefined> {
@@ -132,6 +140,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
+    if (!db) {
+      throw new Error("Database connection not available");
+    }
+    
     const [updatedSession] = await db
       .update(sessions)
       .set({
@@ -149,27 +161,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteSession(sessionId: string): Promise<void> {
+    if (!db) {
+      throw new Error("Database connection not available");
+    }
+    
     await db.delete(sessions).where(eq(sessions.sessionId, sessionId));
   }
 
   // Athlete operations
   async getAthlete(id: number): Promise<Athlete | undefined> {
-    const [athlete] = await db.select().from(athletes).where(eq(athletes.id, id));
+    const dbConn = this.checkDbConnection();
+    const [athlete] = await dbConn.select().from(athletes).where(eq(athletes.id, id));
     return athlete;
   }
 
   async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
-    const [athlete] = await db.select().from(athletes).where(eq(athletes.sessionId, sessionId));
+    const dbConn = this.checkDbConnection();
+    const [athlete] = await dbConn.select().from(athletes).where(eq(athletes.sessionId, sessionId));
     return athlete;
   }
 
   async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
-    const [newAthlete] = await db.insert(athletes).values(athlete).returning();
+    const dbConn = this.checkDbConnection();
+    const [newAthlete] = await dbConn.insert(athletes).values(athlete).returning();
     return newAthlete;
   }
 
   async getAllAthletes(): Promise<Athlete[]> {
-    return await db.select().from(athletes);
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(athletes);
   }
 
   // Business operations
