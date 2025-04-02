@@ -1,0 +1,11 @@
+// drizzle.config.ts
+import type { Config } from "drizzle-kit";
+
+export default {
+   schema: "./server/schema.ts",         // or wherever your schema file is
+  out: "./drizzle/migrations",   // folder for migration files
+  dialect: "postgresql",         // the actual SQL dialect
+  dbCredentials: {
+    connectionString: process.env.DATABASE_URL!,
+  },
+} satisfies Config;
