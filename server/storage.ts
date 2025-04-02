@@ -4,7 +4,7 @@ import {
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer, MessageMetadata,
   users, sessions, athletes, businesses, campaigns, matches, messages, feedbacks, partnershipOffers
 } from "./schema";
-import { db } from "./db";
+import { db, testConnection } from "./db";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -1095,5 +1095,27 @@ export class MemStorage implements IStorage {
 }
 
 // Create and export storage instance
-// Temporarily using MemStorage until valid Supabase credentials are provided
-export const storage = new MemStorage();
+// We'll try to use the database connection if available, otherwise fall back to in-memory storage
+
+// Initialize with memory storage as default
+let storage: IStorage = new MemStorage();
+
+// Try to set up database storage
+(async () => {
+  try {
+    // Test if database connection is working
+    const isConnected = await testConnection();
+    
+    if (isConnected && db) {
+      console.log('✅ Database connection successful - using DatabaseStorage implementation');
+      storage = new DatabaseStorage();
+    } else {
+      console.warn('⚠️ Database connection failed or is null - falling back to MemStorage implementation');
+    }
+  } catch (error) {
+    console.error('❌ Error testing database connection:', error);
+    console.warn('⚠️ Using in-memory storage as fallback due to database connection error');
+  }
+})();
+
+export { storage };
