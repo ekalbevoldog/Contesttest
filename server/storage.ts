@@ -111,7 +111,11 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  // Helper method to check database connection
+  /**
+   * Checks if the database connection is available and returns the Drizzle ORM instance
+   * @returns The Drizzle ORM instance
+   * @throws Error if the database connection is not available
+   */
   private checkDbConnection() {
     if (!db) {
       throw new Error("Database connection not available");
@@ -194,65 +198,78 @@ export class DatabaseStorage implements IStorage {
 
   // Business operations
   async getBusiness(id: number): Promise<Business | undefined> {
-    const [business] = await db.select().from(businesses).where(eq(businesses.id, id));
+    const dbConn = this.checkDbConnection();
+    const [business] = await dbConn.select().from(businesses).where(eq(businesses.id, id));
     return business;
   }
 
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
-    const [business] = await db.select().from(businesses).where(eq(businesses.sessionId, sessionId));
+    const dbConn = this.checkDbConnection();
+    const [business] = await dbConn.select().from(businesses).where(eq(businesses.sessionId, sessionId));
     return business;
   }
 
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
-    const [newBusiness] = await db.insert(businesses).values(business).returning();
+    const dbConn = this.checkDbConnection();
+    const [newBusiness] = await dbConn.insert(businesses).values(business).returning();
     return newBusiness;
   }
 
   async getAllBusinesses(): Promise<Business[]> {
-    return await db.select().from(businesses);
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(businesses);
   }
 
   // Campaign operations
   async getCampaign(id: number): Promise<Campaign | undefined> {
-    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
+    const dbConn = this.checkDbConnection();
+    const [campaign] = await dbConn.select().from(campaigns).where(eq(campaigns.id, id));
     return campaign;
   }
 
   async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
-    return await db.select().from(campaigns).where(eq(campaigns.businessId, businessId));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(campaigns).where(eq(campaigns.businessId, businessId));
   }
 
   async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
+    const dbConn = this.checkDbConnection();
+    const [newCampaign] = await dbConn.insert(campaigns).values(campaign).returning();
     return newCampaign;
   }
 
   // Match operations
   async getMatch(id: number): Promise<Match | undefined> {
-    const [match] = await db.select().from(matches).where(eq(matches.id, id));
+    const dbConn = this.checkDbConnection();
+    const [match] = await dbConn.select().from(matches).where(eq(matches.id, id));
     return match;
   }
 
   async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
-    return await db.select().from(matches).where(eq(matches.athleteId, athleteId));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(matches).where(eq(matches.athleteId, athleteId));
   }
 
   async getMatchesForBusiness(businessId: number): Promise<Match[]> {
-    return await db.select().from(matches).where(eq(matches.businessId, businessId));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(matches).where(eq(matches.businessId, businessId));
   }
 
   async storeMatch(match: InsertMatch): Promise<Match> {
-    const [newMatch] = await db.insert(matches).values(match).returning();
+    const dbConn = this.checkDbConnection();
+    const [newMatch] = await dbConn.insert(matches).values(match).returning();
     return newMatch;
   }
 
   async getAllMatches(): Promise<Match[]> {
-    return await db.select().from(matches);
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(matches);
   }
 
   // Message operations
   async getMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
-    return await db.select().from(messages)
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(messages)
       .where(eq(messages.sessionId, sessionId))
       .orderBy(desc(messages.createdAt))
       .limit(limit)
@@ -260,7 +277,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata, senderId?: number, recipientId?: number): Promise<Message> {
-    const [message] = await db.insert(messages).values({
+    const dbConn = this.checkDbConnection();
+    const [message] = await dbConn.insert(messages).values({
       sessionId,
       role,
       content,
@@ -275,7 +293,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnreadMessageCounts(userId: number): Promise<{ [sessionId: string]: number }> {
-    const messagesResult = await db.select()
+    const dbConn = this.checkDbConnection();
+    const messagesResult = await dbConn.select()
       .from(messages)
       .where(and(
         eq(messages.recipientId, userId),
@@ -296,7 +315,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
-    await db.update(messages)
+    const dbConn = this.checkDbConnection();
+    await dbConn.update(messages)
       .set({ 
         unread: false,
         read: true 
@@ -310,29 +330,34 @@ export class DatabaseStorage implements IStorage {
 
   // Auth operations
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const dbConn = this.checkDbConnection();
+    const [user] = await dbConn.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const dbConn = this.checkDbConnection();
+    const [user] = await dbConn.select().from(users).where(eq(users.username, username));
     return user;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(users);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const dbConn = this.checkDbConnection();
+    const [user] = await dbConn.insert(users).values(insertUser).returning();
     return user;
   }
 
   async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
+    const dbConn = this.checkDbConnection();
     // Remove properties that shouldn't be directly updated
     const { id, createdAt, ...safeUserData } = userData as any;
 
-    const [updatedUser] = await db
+    const [updatedUser] = await dbConn
       .update(users)
       .set({
         ...safeUserData,
@@ -345,7 +370,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {
-    const [updatedUser] = await db
+    const dbConn = this.checkDbConnection();
+    const [updatedUser] = await dbConn
       .update(users)
       .set({
         stripeCustomerId: customerId,
@@ -362,7 +388,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User> {
-    const [updatedUser] = await db
+    const dbConn = this.checkDbConnection();
+    const [updatedUser] = await dbConn
       .update(users)
       .set({
         stripeCustomerId: data.customerId,
@@ -381,33 +408,40 @@ export class DatabaseStorage implements IStorage {
 
   // Feedback operations
   async getFeedback(id: number): Promise<Feedback | undefined> {
-    const [feedback] = await db.select().from(feedbacks).where(eq(feedbacks.id, id));
+    const dbConn = this.checkDbConnection();
+    const [feedback] = await dbConn.select().from(feedbacks).where(eq(feedbacks.id, id));
     return feedback;
   }
 
   async getFeedbackByUser(userId: number): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.userId, userId));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(feedbacks).where(eq(feedbacks.userId, userId));
   }
 
   async getFeedbackByMatch(matchId: number): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.matchId, matchId));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(feedbacks).where(eq(feedbacks.matchId, matchId));
   }
 
   async getFeedbackByType(feedbackType: string): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.feedbackType, feedbackType));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(feedbacks).where(eq(feedbacks.feedbackType, feedbackType));
   }
 
   async getPublicFeedback(): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.isPublic, true));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(feedbacks).where(eq(feedbacks.isPublic, true));
   }
 
   async storeFeedback(feedback: InsertFeedback): Promise<Feedback> {
-    const [newFeedback] = await db.insert(feedbacks).values(feedback).returning();
+    const dbConn = this.checkDbConnection();
+    const [newFeedback] = await dbConn.insert(feedbacks).values(feedback).returning();
     return newFeedback;
   }
 
   async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> {
-    const [updatedFeedback] = await db
+    const dbConn = this.checkDbConnection();
+    const [updatedFeedback] = await dbConn
       .update(feedbacks)
       .set({
         status,
@@ -424,7 +458,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> {
-    const [updatedFeedback] = await db
+    const dbConn = this.checkDbConnection();
+    const [updatedFeedback] = await dbConn
       .update(feedbacks)
       .set({
         adminResponse: response,
@@ -442,31 +477,37 @@ export class DatabaseStorage implements IStorage {
 
   // Partnership Offer operations
   async getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined> {
-    const [offer] = await db.select().from(partnershipOffers).where(eq(partnershipOffers.id, id));
+    const dbConn = this.checkDbConnection();
+    const [offer] = await dbConn.select().from(partnershipOffers).where(eq(partnershipOffers.id, id));
     return offer;
   }
 
   async getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]> {
-    return await db.select().from(partnershipOffers).where(eq(partnershipOffers.athleteId, athleteId));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(partnershipOffers).where(eq(partnershipOffers.athleteId, athleteId));
   }
 
   async getPartnershipOffersByBusiness(businessId: number): Promise<PartnershipOffer[]> {
-    return await db.select().from(partnershipOffers).where(eq(partnershipOffers.businessId, businessId));
+    const dbConn = this.checkDbConnection();
+    return await dbConn.select().from(partnershipOffers).where(eq(partnershipOffers.businessId, businessId));
   }
 
   async getPartnershipOffersByMatch(matchId: number): Promise<PartnershipOffer | undefined> {
-    const [offer] = await db.select().from(partnershipOffers).where(eq(partnershipOffers.matchId, matchId));
+    const dbConn = this.checkDbConnection();
+    const [offer] = await dbConn.select().from(partnershipOffers).where(eq(partnershipOffers.matchId, matchId));
     return offer;
   }
 
   async createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer> {
-    const [newOffer] = await db.insert(partnershipOffers).values(offer).returning();
+    const dbConn = this.checkDbConnection();
+    const [newOffer] = await dbConn.insert(partnershipOffers).values(offer).returning();
     return newOffer;
   }
 
   async updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer> {
+    const dbConn = this.checkDbConnection();
     const now = new Date();
-    const [updatedOffer] = await db
+    const [updatedOffer] = await dbConn
       .update(partnershipOffers)
       .set({
         status,
@@ -484,8 +525,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markPartnershipOfferViewed(id: number): Promise<PartnershipOffer> {
+    const dbConn = this.checkDbConnection();
     const now = new Date();
-    const [updatedOffer] = await db
+    const [updatedOffer] = await dbConn
       .update(partnershipOffers)
       .set({
         athleteViewedAt: now,
@@ -502,8 +544,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer> {
+    const dbConn = this.checkDbConnection();
     const now = new Date();
-    const [updatedOffer] = await db
+    const [updatedOffer] = await dbConn
       .update(partnershipOffers)
       .set({
         complianceStatus: status,

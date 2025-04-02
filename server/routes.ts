@@ -90,6 +90,41 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
+  
+  // Database health check
+  app.get("/api/db/health", async (req: Request, res: Response) => {
+    try {
+      const { getDatabaseHealth } = await import('./db');
+      const healthData = await getDatabaseHealth();
+      return res.status(200).json(healthData);
+    } catch (error) {
+      console.error("Error checking database health:", error);
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to check database health",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+  
+  // Supabase connection status
+  app.get("/api/db/supabase-status", async (req: Request, res: Response) => {
+    try {
+      const { testSupabaseConnection } = await import('./db');
+      const isConnected = await testSupabaseConnection();
+      return res.status(200).json({
+        status: isConnected ? "connected" : "disconnected",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error checking Supabase connection:", error);
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to check Supabase connection",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
   // Create a new session
   app.post("/api/chat/session", async (req: Request, res: Response) => {
     try {

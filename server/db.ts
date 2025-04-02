@@ -95,7 +95,31 @@ export async function getDatabaseHealth() {
     
     // Get current timestamp from database to check latency
     const timeResult = await client`SELECT NOW() as current_time`;
-
+    const dbTime = timeResult[0]?.current_time || null;
+    
+    // Get the number of tables in the public schema
+    const tablesResult = await client`
+      SELECT COUNT(*) as table_count 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `;
+    const tableCount = tablesResult[0]?.table_count || 0;
+    
+    return {
+      status: 'healthy',
+      version,
+      timestamp: dbTime,
+      tableCount,
+      latency: null // Could add latency measurement if needed
+    };
+  } catch (error) {
+    console.error('❌ Database health check failed:', error);
+    return {
+      status: 'unhealthy',
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
 
 /**
  * Test Supabase connection health
@@ -123,31 +147,5 @@ export async function testSupabaseConnection(): Promise<boolean> {
   } catch (error) {
     console.error('❌ Supabase connection test failed:', error);
     return false;
-  }
-}
-
-    const dbTime = timeResult[0]?.current_time || null;
-    
-    // Get the number of tables in the public schema
-    const tablesResult = await client`
-      SELECT COUNT(*) as table_count 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public'
-    `;
-    const tableCount = tablesResult[0]?.table_count || 0;
-    
-    return {
-      status: 'healthy',
-      version,
-      timestamp: dbTime,
-      tableCount,
-      latency: null // Could add latency measurement if needed
-    };
-  } catch (error) {
-    console.error('❌ Database health check failed:', error);
-    return {
-      status: 'unhealthy',
-      error: error instanceof Error ? error.message : String(error)
-    };
   }
 }
