@@ -104,10 +104,20 @@ export class DatabaseStorage implements IStorage {
 
     // Initialize with basic memory store until the import completes
     this.sessionStore = new session.MemoryStore();
+    
+    // Validate database connection
+    if (!db) {
+      console.error("❌ Database instance is null, operations will fail");
+    }
   }
 
   // Session operations
   async getSession(sessionId: string): Promise<Session | undefined> {
+    if (!db) {
+      console.error("❌ Database not available for getSession operation");
+      throw new Error("Database connection not available");
+    }
+    
     const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, sessionId));
     return session;
   }
