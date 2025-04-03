@@ -5,9 +5,13 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Parse database URL components
-const dbUrl = new URL(process.env.DATABASE_URL || 
-  'postgresql://neondb_owner:npg_Hsj1IWXf6USc@ep-patient-butterfly-a6bg3zba.us-west-2.aws.neon.tech/neondb?sslmode=require');
+// Use Supabase database URL
+const dbUrl = new URL(process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || '');
+
+if (!dbUrl.toString()) {
+  console.error('⚠️ No SUPABASE_DATABASE_URL or DATABASE_URL environment variable is set');
+  process.exit(1);
+}
 
 export default {
   schema: "./server/schema.ts",  // points to schema in server directory

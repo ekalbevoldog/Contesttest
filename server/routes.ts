@@ -96,11 +96,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { getDatabaseHealth } = await import('./db');
       const healthData = await getDatabaseHealth();
-      return res.status(200).json(healthData);
+      return res.status(200).json({
+        ...healthData,
+        provider: "Supabase PostgreSQL",
+        environment: process.env.NODE_ENV || "development"
+      });
     } catch (error) {
       console.error("Error checking database health:", error);
       return res.status(500).json({
         status: "error",
+        provider: "Supabase PostgreSQL",
         message: "Failed to check database health",
         error: error instanceof Error ? error.message : "Unknown error",
       });
@@ -114,12 +119,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isConnected = await testSupabaseConnection();
       return res.status(200).json({
         status: isConnected ? "connected" : "disconnected",
+        provider: "Supabase PostgreSQL",
+        message: isConnected ? "Successfully connected to Supabase" : "Failed to connect to Supabase",
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error("Error checking Supabase connection:", error);
       return res.status(500).json({
         status: "error",
+        provider: "Supabase PostgreSQL",
         message: "Failed to check Supabase connection",
         error: error instanceof Error ? error.message : "Unknown error",
       });

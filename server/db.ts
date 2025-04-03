@@ -5,14 +5,21 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Set DATABASE_URL from environment variables
-let dbConnectionUrl = process.env.DATABASE_URL;
+// Set DATABASE_URL from environment variables, preferring Supabase 
+// but falling back to local PostgreSQL if Supabase is not configured
+let dbConnectionUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+let isSupabase = !!process.env.SUPABASE_DATABASE_URL;
 
 // Check database connection URLs
 if (dbConnectionUrl) {
-  console.log('📦 Using DATABASE_URL for PostgreSQL connection');
+  if (isSupabase) {
+    console.log('📦 Using Supabase PostgreSQL connection');
+  } else {
+    console.log('📦 Using local PostgreSQL connection (development mode)');
+    console.log('⚠️ Note: For production, please configure Supabase connection');
+  }
 } else {
-  console.warn('⚠️ No DATABASE_URL environment variable is set');
+  console.warn('⚠️ No database URL environment variable is set');
   console.warn('⚠️ Application will use in-memory storage as fallback');
 }
 
