@@ -118,10 +118,10 @@ const AdminDashboard = () => {
 
   // Stats cards data
   const statsCards = [
-    { title: "Total Users", value: systemMetrics.userCount, icon: <Users className="h-6 w-6 text-primary" />, change: "Real-time data" },
-    { title: "Active Partnerships", value: systemMetrics.activePartnerships, icon: <Handshake className="h-6 w-6 text-primary" />, change: "Real-time data" },
-    { title: "Match Success Rate", value: `${systemMetrics.matchSuccess}%`, icon: <Zap className="h-6 w-6 text-primary" />, change: "Based on completed matches" },
-    { title: "Platform Revenue", value: systemMetrics.totalRevenue, icon: <BarChart3 className="h-6 w-6 text-primary" />, change: "Estimated value" },
+    { title: "Total Users", value: systemMetrics.userCount, icon: <Users className="h-8 w-8 text-white" />, change: "Real-time data" },
+    { title: "Active Partnerships", value: systemMetrics.activePartnerships, icon: <Handshake className="h-8 w-8 text-white" />, change: "Real-time data" },
+    { title: "Match Success Rate", value: `${systemMetrics.matchSuccess}%`, icon: <Zap className="h-8 w-8 text-white" />, change: "Based on completed matches" },
+    { title: "Platform Revenue", value: systemMetrics.totalRevenue, icon: <BarChart3 className="h-8 w-8 text-white" />, change: "Estimated value" },
   ];
 
   return (
