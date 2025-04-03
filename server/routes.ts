@@ -2,9 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import * as schema from "./schema";
 // Temporarily use mock service to debug server startup issues
-import { geminiService } from "./services/geminiService";
+import { geminiService } from "./services/mockGeminiService";
 import { bigQueryService } from "./services/bigQueryService";
 import { sessionService } from "./services/sessionService";
 import { z } from "zod";
@@ -90,49 +89,6 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
-  
-  // Database health check
-  app.get("/api/db/health", async (req: Request, res: Response) => {
-    try {
-      const { getDatabaseHealth } = await import('./db');
-      const healthData = await getDatabaseHealth();
-      return res.status(200).json({
-        ...healthData,
-        provider: "Supabase PostgreSQL",
-        environment: process.env.NODE_ENV || "development"
-      });
-    } catch (error) {
-      console.error("Error checking database health:", error);
-      return res.status(500).json({
-        status: "error",
-        provider: "Supabase PostgreSQL",
-        message: "Failed to check database health",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
-  
-  // Supabase connection status
-  app.get("/api/db/supabase-status", async (req: Request, res: Response) => {
-    try {
-      const { testSupabaseConnection } = await import('./db');
-      const isConnected = await testSupabaseConnection();
-      return res.status(200).json({
-        status: isConnected ? "connected" : "disconnected",
-        provider: "Supabase PostgreSQL",
-        message: isConnected ? "Successfully connected to Supabase" : "Failed to connect to Supabase",
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Error checking Supabase connection:", error);
-      return res.status(500).json({
-        status: "error",
-        provider: "Supabase PostgreSQL",
-        message: "Failed to check Supabase connection",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
   // Create a new session
   app.post("/api/chat/session", async (req: Request, res: Response) => {
     try {
