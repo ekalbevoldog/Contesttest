@@ -1171,27 +1171,45 @@ export class MemStorage implements IStorage {
   }
 }
 
+// Import Supabase storage implementation
+import { SupabaseStorage, getSupabaseStorage } from "./supabaseStorage";
+import supabaseClient from "./supabaseClient";
+
 // Create and export storage instance
-// We'll try to use the database connection if available, otherwise fall back to in-memory storage
+// We'll try to use Supabase first, then PostgreSQL direct connection if available
+// otherwise fall back to in-memory storage
 
 // Initialize with memory storage as default
 let storage: IStorage = new MemStorage();
 
-// Try to set up database storage
+// Try to set up storage with appropriate implementation
 (async () => {
   try {
-    // Test if database connection is working
-    const isConnected = await testConnection();
+    // First, try to use Supabase client if available
+    if (supabaseClient) {
+      try {
+        console.log('🔍 Attempting to use Supabase client...');
+        storage = getSupabaseStorage();
+        console.log('✅ Successfully initialized Supabase storage');
+        return; // Exit early if Supabase client works
+      } catch (supabaseError) {
+        console.error('❌ Supabase client initialization failed:', supabaseError);
+        console.log('⚠️ Falling back to direct PostgreSQL connection...');
+      }
+    }
     
+    // Next, try direct PostgreSQL connection if Supabase client fails
+    const isConnected = await testConnection();
     if (isConnected && db) {
-      console.log('✅ Database connection successful - using DatabaseStorage implementation');
+      console.log('✅ Direct PostgreSQL connection successful - using DatabaseStorage implementation');
       storage = new DatabaseStorage();
     } else {
-      console.warn('⚠️ Database connection failed or is null - falling back to MemStorage implementation');
+      console.warn('⚠️ Both Supabase and direct database connections failed');
+      console.warn('⚠️ Using in-memory storage as last resort fallback');
     }
   } catch (error) {
-    console.error('❌ Error testing database connection:', error);
-    console.warn('⚠️ Using in-memory storage as fallback due to database connection error');
+    console.error('❌ Error during storage initialization:', error);
+    console.warn('⚠️ Using in-memory storage as fallback due to connection errors');
   }
 })();
 
