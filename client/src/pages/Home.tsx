@@ -353,11 +353,11 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                Simple, Transparent Pricing
+                Flexible Platform Pricing
               </span>
             </h2>
             <p className="text-gray-300 max-w-2xl mx-auto">
-              Choose the plan that's right for you, with no hidden fees or long-term commitments.
+              Low monthly subscription with success-based platform fees. Pay only when partnerships succeed.
             </p>
           </div>
 
