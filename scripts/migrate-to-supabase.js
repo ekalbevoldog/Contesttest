@@ -5,8 +5,9 @@
  * 
  * This script:
  * 1. Checks connection to Supabase PostgreSQL
- * 2. Drops existing tables from the Supabase database (if any)
- * 3. Pushes the schema to the Supabase database
+ * 2. Validates the connection is to Supabase, not Neon
+ * 3. Drops existing tables from the Supabase database (if any)
+ * 4. Pushes the schema to the Supabase database
  * 
  * Usage:
  *   node scripts/migrate-to-supabase.js
@@ -25,10 +26,27 @@ dotenv.config();
 const execPromise = promisify(exec);
 
 // Get the Supabase database URL
-const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
 
 if (!supabaseDbUrl) {
   console.error('❌ No SUPABASE_DATABASE_URL environment variable is set');
+  console.error('❌ This script only works with Supabase, not with local PostgreSQL or Neon');
+  process.exit(1);
+}
+
+// Check if the URL is for Supabase, not Neon
+if (supabaseDbUrl.includes('neon.tech')) {
+  console.error('❌ Error: Detected Neon database URL');
+  console.error('❌ This script only works with Supabase databases');
+  console.error('❌ Please provide a valid Supabase database URL');
+  process.exit(1);
+}
+
+// Verify the URL contains supabase.co
+if (!supabaseDbUrl.includes('supabase.co')) {
+  console.error('❌ Error: The database URL does not appear to be a Supabase URL');
+  console.error('❌ Supabase database URLs should contain "supabase.co"');
+  console.error('❌ Please check your SUPABASE_DATABASE_URL environment variable');
   process.exit(1);
 }
 

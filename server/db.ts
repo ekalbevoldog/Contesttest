@@ -5,21 +5,49 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Set DATABASE_URL from environment variables, preferring Supabase 
-// but falling back to local PostgreSQL if Supabase is not configured
-let dbConnectionUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
-let isSupabase = !!process.env.SUPABASE_DATABASE_URL;
+// Get available database URLs
+const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
+const localDbUrl = process.env.DATABASE_URL;
+let dbConnectionUrl: string | undefined = undefined;
+let isSupabase = false;
 
-// Check database connection URLs
-if (dbConnectionUrl) {
-  if (isSupabase) {
-    console.log('📦 Using Supabase PostgreSQL connection');
+// Validate URLs and prioritize connections:
+// 1. First try Supabase if available (preferred for production)
+// 2. Then try local PostgreSQL if available (for development)
+// 3. Fall back to in-memory storage if neither is available
+
+// Check if we have a Supabase URL
+if (supabaseDbUrl) {
+  // Verify it's not a Neon URL
+  if (supabaseDbUrl.includes('neon.tech')) {
+    console.error('❌ Neon database detected in SUPABASE_DATABASE_URL');
+    console.error('❌ The application should use ONLY Supabase or local PostgreSQL');
+    console.error('❌ SUPABASE_DATABASE_URL will be ignored');
   } else {
+    dbConnectionUrl = supabaseDbUrl;
+    isSupabase = true;
+    console.log('📦 Using Supabase PostgreSQL connection');
+  }
+}
+
+// If Supabase URL is not available or was rejected, try local PostgreSQL
+if (!dbConnectionUrl && localDbUrl) {
+  // Verify local URL is not a Neon URL
+  if (localDbUrl.includes('neon.tech')) {
+    console.error('❌ Neon database detected in DATABASE_URL');
+    console.error('❌ The application should use ONLY Supabase or local PostgreSQL');
+    console.error('❌ DATABASE_URL will be ignored');
+  } else {
+    dbConnectionUrl = localDbUrl;
+    isSupabase = false;
     console.log('📦 Using local PostgreSQL connection (development mode)');
     console.log('⚠️ Note: For production, please configure Supabase connection');
   }
-} else {
-  console.warn('⚠️ No database URL environment variable is set');
+}
+
+// If both URLs are unavailable or rejected
+if (!dbConnectionUrl) {
+  console.warn('⚠️ No valid database URL environment variable is set');
   console.warn('⚠️ Application will use in-memory storage as fallback');
 }
 
