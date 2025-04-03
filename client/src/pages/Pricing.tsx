@@ -18,10 +18,12 @@ export default function Pricing() {
     {
       name: "Basic",
       description: "Perfect for individuals just getting started with NIL",
-      monthlyPrice: 99,
-      yearlyPrice: 990,
-      savings: "Save $198",
+      monthlyPrice: 49,
+      yearlyPrice: 490,
+      savings: "Save $98",
+      platformFee: "5%",
       features: [
+        "5% platform fee on successful partnerships",
         "Up to 3 active campaigns",
         "10 athlete matches per month",
         "Basic analytics dashboard",
@@ -35,10 +37,12 @@ export default function Pricing() {
     {
       name: "Professional",
       description: "For growing NIL programs and businesses",
-      monthlyPrice: 249,
-      yearlyPrice: 2490,
-      savings: "Save $498",
+      monthlyPrice: 149,
+      yearlyPrice: 1490,
+      savings: "Save $298",
+      platformFee: "3%",
       features: [
+        "3% platform fee on successful partnerships",
         "Up to 10 active campaigns",
         "Unlimited athlete matches",
         "Advanced analytics dashboard",
@@ -54,10 +58,12 @@ export default function Pricing() {
     {
       name: "Enterprise",
       description: "For large organizations and agencies",
-      monthlyPrice: 749,
-      yearlyPrice: 7490,
-      savings: "Save $1,498",
+      monthlyPrice: 499,
+      yearlyPrice: 4990,
+      savings: "Save $998",
+      platformFee: "Custom",
       features: [
+        "Custom platform fee on successful partnerships",
         "Unlimited campaigns",
         "Unlimited athlete matches",
         "Custom analytics & API access",
