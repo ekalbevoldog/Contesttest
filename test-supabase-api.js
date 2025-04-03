@@ -1,54 +1,67 @@
-import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
 
 async function testSupabaseAPI() {
   console.log('🔍 Testing Supabase API Connection');
   
-  // Check environment variables
-  console.log('Checking environment variables:');
+  // Get Supabase credentials
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_KEY;
   
-  if (!supabaseUrl) {
-    console.error('❌ SUPABASE_URL environment variable is missing');
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Missing Supabase credentials (SUPABASE_URL or SUPABASE_KEY)');
     return;
   }
   
-  if (!supabaseKey) {
-    console.error('❌ SUPABASE_KEY environment variable is missing');
-    return;
-  }
-  
-  console.log(`✅ SUPABASE_URL: ${supabaseUrl.substring(0, 20)}...`);
-  console.log(`✅ SUPABASE_KEY: ${supabaseKey.substring(0, 5)}...`);
+  console.log('✅ Supabase credentials found');
+  console.log(`Supabase URL: ${supabaseUrl}`);
   
   try {
-    // Create Supabase client
-    console.log('\nCreating Supabase client...');
+    // Initialize the Supabase client
     const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase client initialized');
     
-    // Test basic API functionality
-    console.log('\nTesting auth API...');
-    const { data: authData, error: authError } = await supabase.auth.getSession();
+    // Test authentication functionality
+    console.log('\n1. Testing auth API:');
+    const authResponse = await supabase.auth.getSession();
+    console.log('Auth service status:', authResponse.error ? '❌ Error' : '✅ Working');
     
-    if (authError) {
-      console.error('❌ Auth API failed:', authError.message);
+    // Try to list tables directly
+    console.log('\n2. Attempting to directly list tables:');
+    const { data: tablesData, error: tablesError } = await supabase
+      .from('users')
+      .select('*')
+      .limit(1);
+    
+    if (tablesError) {
+      console.error('❌ Failed to fetch users table:', tablesError.message);
+      console.log('ℹ️ The database tables might not exist yet. Run the migration script.');
     } else {
-      console.log('✅ Auth API working:', authData ? 'Session data received' : 'No active session');
+      console.log('✅ Users table exists in the database');
+      console.log(`Found ${tablesData.length} user records`);
+      if (tablesData.length > 0) {
+        console.log(`Sample user: ${JSON.stringify(tablesData[0], null, 2)}`);
+      }
     }
     
-    // Test storage API
-    console.log('\nTesting storage API...');
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    // Test storage service
+    console.log('\n3. Testing storage service:');
+    const { data: buckets, error: bucketsError } = await supabase
+      .storage
+      .listBuckets();
     
     if (bucketsError) {
-      console.error('❌ Storage API failed:', bucketsError.message);
+      console.error('❌ Failed to access storage:', bucketsError.message);
     } else {
-      console.log('✅ Storage API working:', buckets.length > 0 ? `${buckets.length} buckets found` : 'No buckets found');
+      console.log('✅ Storage service is working');
+      console.log(`Found ${buckets.length} storage buckets:`);
+      buckets.forEach(bucket => {
+        console.log(`- ${bucket.name}`);
+      });
     }
     
-  } catch (err) {
-    console.error('❌ Supabase client error:', err.message);
+  } catch (error) {
+    console.error('❌ Unhandled error:', error);
   }
 }
 

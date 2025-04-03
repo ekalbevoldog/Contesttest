@@ -1,30 +1,26 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
-// Make sure we have the Supabase URL and key
+// Get Supabase credentials
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
-// Validate required environment variables
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase environment variables:');
-  if (!supabaseUrl) console.error('  - SUPABASE_URL is not set');
-  if (!supabaseKey) console.error('  - SUPABASE_KEY is not set');
-  console.error('❌ Supabase client will not be initialized');
-}
+// Initialize the Supabase client
+let supabase: any = null;
 
-// Create Supabase client (returns null if credentials are missing)
-const supabaseClient = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
-
-if (supabaseClient) {
-  console.log('✅ Supabase client initialized successfully');
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase client initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize Supabase client:', error);
+  }
 } else {
-  console.warn('⚠️ Supabase client not initialized due to missing credentials');
+  console.warn('⚠️ SUPABASE_URL or SUPABASE_KEY environment variables are not set');
+  console.warn('⚠️ Supabase client will not be available');
 }
 
-export default supabaseClient;
+export default supabase;

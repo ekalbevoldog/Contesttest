@@ -1,5 +1,4 @@
-// drizzle.config.ts
-import type { Config } from "drizzle-kit";
+// drizzle.config.js
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -31,4 +30,4 @@ export default {
     port: dbUrl.port ? parseInt(dbUrl.port) : 5432,
     ssl: true  // Always use SSL for Supabase connections
   },
-} satisfies Config;
+};

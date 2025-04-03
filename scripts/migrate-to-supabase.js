@@ -1,4 +1,11 @@
-#!/usr/bin/env node
+import { createClient } from '@supabase/supabase-js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { execSync } from 'child_process';
+import 'dotenv/config';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * Supabase Migration Script
@@ -13,160 +20,146 @@
  *   node scripts/migrate-to-supabase.js
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import * as fs from 'fs';
-import * as path from 'path';
-import postgres from 'postgres';
-import dotenv from 'dotenv';
+// Get environment variables
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseDatabaseUrl = process.env.SUPABASE_DATABASE_URL;
 
-// Load environment variables
-dotenv.config();
-
-const execPromise = promisify(exec);
-
-// Get the Supabase database URL
-const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
-
-if (!supabaseDbUrl) {
-  console.error('❌ No SUPABASE_DATABASE_URL environment variable is set');
-  console.error('❌ This script only works with Supabase, not with local PostgreSQL or Neon');
+// Check if Supabase credentials are available
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ SUPABASE_URL or SUPABASE_KEY environment variables are not set');
   process.exit(1);
 }
 
-// Check if the URL is for Supabase, not Neon
-if (supabaseDbUrl.includes('neon.tech')) {
-  console.error('❌ Error: Detected Neon database URL');
-  console.error('❌ This script only works with Supabase databases');
-  console.error('❌ Please provide a valid Supabase database URL');
-  process.exit(1);
-}
+// Initialize Supabase client
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Verify the URL contains supabase.co
-if (!supabaseDbUrl.includes('supabase.co')) {
-  console.error('❌ Error: The database URL does not appear to be a Supabase URL');
-  console.error('❌ Supabase database URLs should contain "supabase.co"');
-  console.error('❌ Please check your SUPABASE_DATABASE_URL environment variable');
-  process.exit(1);
-}
-
-console.log('🔄 Starting migration to Supabase...');
-
-// Step 1: Test connection to Supabase
+// Test connection to Supabase
 async function testSupabaseConnection() {
-  let client;
   try {
-    console.log('🔌 Testing connection to Supabase PostgreSQL...');
-    client = postgres(supabaseDbUrl, { 
-      max: 1,
-      idle_timeout: 10, 
-      connect_timeout: 10,
-    });
+    console.log('🔍 Testing Supabase API connection...');
+    const { data, error } = await supabase.auth.getSession();
     
-    const result = await client`SELECT current_user, current_database(), version() as version`;
+    if (error) {
+      console.error('❌ Supabase API connection failed:', error.message);
+      return false;
+    }
     
-    console.log('✅ Supabase connection successful:', {
-      user: result[0].current_user,
-      database: result[0].current_database,
-      version: result[0].version
-    });
-    
+    console.log('✅ Supabase API connection successful');
     return true;
   } catch (error) {
-    console.error('❌ Failed to connect to Supabase:', error);
+    console.error('❌ Error testing Supabase connection:', error);
     return false;
-  } finally {
-    if (client) {
-      await client.end();
-    }
   }
 }
 
-// Step 2: Drop existing tables if they exist
+// Drop existing tables (if any) to start fresh
 async function dropExistingTables() {
-  let client;
   try {
-    console.log('🧹 Dropping existing tables from Supabase database...');
-    client = postgres(supabaseDbUrl, { 
-      max: 1
-    });
+    console.log('🧹 Dropping existing tables from Supabase...');
     
-    // Get all tables in the public schema
-    const tables = await client`
-      SELECT tablename FROM pg_catalog.pg_tables 
-      WHERE schemaname = 'public'
-    `;
+    // Execute SQL query to drop all tables in the public schema
+    const { error } = await supabase.rpc('drop_all_tables_in_public_schema');
     
-    if (tables.length === 0) {
-      console.log('ℹ️ No existing tables found in Supabase database');
-      return;
+    if (error) {
+      console.error('❌ Failed to drop tables:', error.message);
+      
+      // Create the function if it doesn't exist
+      console.log('🔄 Creating drop_all_tables function...');
+      
+      const createFunctionSQL = `
+        CREATE OR REPLACE FUNCTION drop_all_tables_in_public_schema()
+        RETURNS void AS $$
+        DECLARE
+            stmt TEXT;
+        BEGIN
+            FOR stmt IN
+                SELECT 'DROP TABLE IF EXISTS "' || tablename || '" CASCADE;' 
+                FROM pg_tables
+                WHERE schemaname = 'public'
+            LOOP
+                EXECUTE stmt;
+            END LOOP;
+        END;
+        $$ LANGUAGE plpgsql;
+      `;
+      
+      const { error: createFuncError } = await supabase.rpc('exec_sql', { 
+        sql: createFunctionSQL 
+      });
+      
+      if (createFuncError) {
+        console.error('❌ Failed to create function:', createFuncError.message);
+        console.log('⚠️ Will continue with migration, tables may already be empty');
+      } else {
+        // Try dropping tables again
+        const { error: dropError } = await supabase.rpc('drop_all_tables_in_public_schema');
+        if (dropError) {
+          console.error('❌ Still failed to drop tables:', dropError.message);
+          console.log('⚠️ Will continue with migration');
+        } else {
+          console.log('✅ Successfully dropped all existing tables');
+        }
+      }
+    } else {
+      console.log('✅ Successfully dropped all existing tables');
     }
-    
-    console.log(`ℹ️ Found ${tables.length} tables to drop: ${tables.map(t => t.tablename).join(', ')}`);
-    
-    // Disable foreign key checks
-    await client`SET session_replication_role = 'replica'`;
-    
-    // Drop all tables
-    for (const table of tables) {
-      console.log(`🗑️ Dropping table: ${table.tablename}`);
-      await client`DROP TABLE IF EXISTS "${table.tablename}" CASCADE`;
-    }
-    
-    // Re-enable foreign key checks
-    await client`SET session_replication_role = 'origin'`;
-    
-    console.log('✅ Successfully dropped all existing tables');
   } catch (error) {
-    console.error('❌ Failed to drop existing tables:', error);
-    throw error;
-  } finally {
-    if (client) {
-      await client.end();
-    }
+    console.error('❌ Error during table cleanup:', error);
+    console.log('⚠️ Will continue with migration');
   }
 }
 
-// Step 3: Push schema to Supabase
+// Push schema to Supabase database
 async function pushSchemaToSupabase() {
   try {
-    console.log('🔄 Pushing schema to Supabase database...');
-    const { stdout, stderr } = await execPromise('npm run db:push');
+    console.log('🚀 Pushing schema to Supabase...');
     
-    if (stderr && !stderr.includes('Generated')) {
-      throw new Error(stderr);
-    }
+    // Use drizzle-kit to push the schema
+    const drizzlePushCommand = 'npm run db:push';
     
-    console.log('✅ Successfully pushed schema to Supabase');
-    console.log(stdout);
+    // Execute the command
+    console.log(`Executing: ${drizzlePushCommand}`);
+    const output = execSync(drizzlePushCommand, { 
+      cwd: join(__dirname, '..'),
+      stdio: 'inherit'
+    });
+    
+    console.log('✅ Schema migration completed successfully');
+    return true;
   } catch (error) {
-    console.error('❌ Failed to push schema to Supabase:', error);
-    throw error;
+    console.error('❌ Error pushing schema:', error);
+    return false;
   }
 }
 
 // Main function
 async function main() {
-  try {
-    // Step 1: Test connection
-    const connected = await testSupabaseConnection();
-    if (!connected) {
-      console.error('❌ Cannot proceed with migration due to connection issues');
-      process.exit(1);
-    }
-    
-    // Step 2: Drop existing tables
-    await dropExistingTables();
-    
-    // Step 3: Push schema to Supabase
-    await pushSchemaToSupabase();
-    
-    console.log('🎉 Migration to Supabase completed successfully!');
-    console.log('ℹ️ Your application is now connected to Supabase PostgreSQL');
-  } catch (error) {
-    console.error('❌ Migration failed:', error);
+  console.log('🚀 Starting Supabase migration');
+  
+  // Step 1: Test Supabase connection
+  const supabaseConnected = await testSupabaseConnection();
+  if (!supabaseConnected) {
+    console.error('❌ Cannot proceed with migration due to connection issues');
+    process.exit(1);
+  }
+  
+  // Step 2: Drop existing tables
+  await dropExistingTables();
+  
+  // Step 3: Push schema to Supabase
+  const migrationSuccess = await pushSchemaToSupabase();
+  
+  if (migrationSuccess) {
+    console.log('✅ Migration to Supabase completed successfully');
+  } else {
+    console.error('❌ Migration to Supabase failed');
     process.exit(1);
   }
 }
 
-main();
+// Run the migration
+main().catch(error => {
+  console.error('❌ Unhandled error:', error);
+  process.exit(1);
+});

@@ -1,5 +1,5 @@
-// drizzle.config.ts
-import type { Config } from "drizzle-kit";
+// drizzle.config.js - Root config file that points to the schema file
+import { defineConfig } from 'drizzle-kit';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -19,7 +19,7 @@ const dbUrl = new URL(supabaseDbUrl);
 
 console.log('Using Supabase for database migrations');
 
-export default {
+export default defineConfig({
   schema: "./server/schema.ts",  // points to schema in server directory
   out: "./drizzle/migrations",   // folder for migration files
   dialect: "postgresql",         // the actual SQL dialect
@@ -29,6 +29,6 @@ export default {
     password: dbUrl.password,
     database: dbUrl.pathname.substring(1), // remove leading '/'
     port: dbUrl.port ? parseInt(dbUrl.port) : 5432,
-    ssl: true  // Always use SSL for Supabase connections
+    ssl: true                   // Always use SSL for Supabase connections
   },
-} satisfies Config;
+});

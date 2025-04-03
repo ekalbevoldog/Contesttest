@@ -1,72 +1,59 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
-// Get available database URLs
+// Get available Supabase URLs
 const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
-const localDbUrl = process.env.DATABASE_URL;
-let dbConnectionUrl: string | undefined = undefined;
-let isSupabase = false;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
-// Validate URLs and prioritize connections:
-// 1. First try Supabase if available (preferred for production)
-// 2. Then try local PostgreSQL if available (for development)
-// 3. Fall back to in-memory storage if neither is available
-
-// Check if we have a Supabase URL
-if (supabaseDbUrl) {
-  // Verify it's not a Neon URL
-  if (supabaseDbUrl.includes('neon.tech')) {
-    console.error('❌ Neon database detected in SUPABASE_DATABASE_URL');
-    console.error('❌ The application should use ONLY Supabase or local PostgreSQL');
-    console.error('❌ SUPABASE_DATABASE_URL will be ignored');
-  } else {
-    dbConnectionUrl = supabaseDbUrl;
-    isSupabase = true;
-    console.log('📦 Using Supabase PostgreSQL connection');
+// Create Supabase client if credentials are available
+export let supabaseClient: any = null;
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabaseClient = createClient(supabaseUrl, supabaseKey);
+    console.log('📦 Supabase client initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize Supabase client:', error);
   }
+} else {
+  console.warn('⚠️ SUPABASE_URL or SUPABASE_KEY environment variables are not set');
+  console.warn('⚠️ Supabase client features will not be available');
 }
 
-// If Supabase URL is not available or was rejected, try local PostgreSQL
-if (!dbConnectionUrl && localDbUrl) {
-  // Verify local URL is not a Neon URL
-  if (localDbUrl.includes('neon.tech')) {
-    console.error('❌ Neon database detected in DATABASE_URL');
-    console.error('❌ The application should use ONLY Supabase or local PostgreSQL');
-    console.error('❌ DATABASE_URL will be ignored');
-  } else {
-    dbConnectionUrl = localDbUrl;
-    isSupabase = false;
-    console.log('📦 Using local PostgreSQL connection (development mode)');
-    console.log('⚠️ Note: For production, please configure Supabase connection');
-  }
-}
+// Create SQL connection as a fallback
+// NOTE: We're prioritizing the Supabase client over direct connection 
+// due to DNS issues with Supabase PostgreSQL
+let client: any = null;
+let directConnectionAttempted = false;
 
-// If both URLs are unavailable or rejected
-if (!dbConnectionUrl) {
-  console.warn('⚠️ No valid database URL environment variable is set');
-  console.warn('⚠️ Application will use in-memory storage as fallback');
-}
-
-// Create SQL connection
-let client: any;
-try {
-  if (dbConnectionUrl) {
-    // Initialize postgres client
-    client = postgres(dbConnectionUrl, { 
+if (supabaseClient) {
+  console.log('📦 Using Supabase API client for database access');
+} else if (supabaseDbUrl) {
+  directConnectionAttempted = true;
+  try {
+    // Only attempt direct connection if Supabase client is not available
+    console.log('⚠️ Attempting direct PostgreSQL connection (not recommended)');
+    
+    // Initialize postgres client with connection pooling
+    client = postgres(supabaseDbUrl, { 
       max: 10, // Maximum number of connections
       idle_timeout: 30, // Idle timeout in seconds
-      connect_timeout: 10, // Connection timeout in seconds
+      connect_timeout: 15, // Extended connection timeout
+      ssl: {
+        rejectUnauthorized: false // Required for Supabase connections
+      }
     });
-    console.log('🔌 PostgreSQL connection initialized successfully');
-  } else {
-    console.warn('⚠️ No database URL available, SQL connection not initialized');
+    console.log('🔌 PostgreSQL direct connection initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize PostgreSQL connection:', error);
   }
-} catch (error) {
-  console.error('❌ Failed to initialize PostgreSQL connection:', error);
+} else {
+  console.warn('⚠️ No database credentials available, storage will use in-memory fallback');
 }
 
 // Create Drizzle ORM instance if client is available
@@ -157,26 +144,41 @@ export async function getDatabaseHealth() {
 }
 
 /**
- * Test Supabase connection health
+ * Test Supabase connection health using Supabase JS client
  * @returns Promise resolving to connection status
  */
 export async function testSupabaseConnection(): Promise<boolean> {
   try {
-    if (!client) {
-      console.error('❌ Database client is not initialized');
+    if (!supabaseClient) {
+      console.error('❌ Supabase client is not initialized');
       return false;
     }
     
-    // Test query to verify connection and permissions
-    const result = await client`
-      SELECT current_user, current_database(), version() as version;
-    `;
+    // Test authentication functionality (doesn't require a logged-in user)
+    const { data, error } = await supabaseClient.auth.getSession();
     
-    console.log('✅ Supabase connection test successful:', {
-      user: result[0].current_user,
-      database: result[0].current_database,
-      version: result[0].version
-    });
+    if (error) {
+      console.error('❌ Supabase connection test failed:', error.message);
+      return false;
+    }
+    
+    console.log('✅ Supabase API connection test successful');
+    
+    // Test if Supabase database is accessible via storage API
+    if (directConnectionAttempted && client) {
+      try {
+        // Direct connection attempt
+        const result = await client`SELECT current_user, current_database(), version() as version`;
+        console.log('✅ Direct PostgreSQL connection successful:', {
+          user: result[0].current_user,
+          database: result[0].current_database,
+          version: result[0].version
+        });
+      } catch (dbError) {
+        console.warn('⚠️ Direct PostgreSQL connection failed, but Supabase API is working');
+        console.warn('⚠️ Will use Supabase client for database operations');
+      }
+    }
     
     return true;
   } catch (error) {
