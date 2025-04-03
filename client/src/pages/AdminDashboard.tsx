@@ -127,13 +127,13 @@ const AdminDashboard = () => {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-gray-600" />
+            <Bell className="h-5 w-5 text-white/80 hover:text-white transition-colors" />
             <Badge variant="secondary">3</Badge>
           </div>
-          <Button variant="outline" onClick={() => logoutUser()}>Logout</Button>
+          <Button variant="outline" className="text-white border-white/20 hover:bg-white/10" onClick={() => logoutUser()}>Logout</Button>
         </div>
       </div>
 
