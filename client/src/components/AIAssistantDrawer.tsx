@@ -130,7 +130,7 @@ export default function AIAssistantDrawer() {
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
       <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-xl overflow-hidden flex flex-col h-[90vh] md:h-[80vh]">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-red-500 to-amber-500">
+        <div className="flex justify-between items-center p-4 bg-[hsl(345,90%,55%)]">
           <h2 className="text-xl font-bold text-white">Contested Assistant</h2>
           <button 
             onClick={() => setIsOpen(false)} 
@@ -154,7 +154,7 @@ export default function AIAssistantDrawer() {
             </div>
             
             <button 
-              className="flex items-center gap-1 bg-gradient-to-r from-[#ff9500] to-[#ff7200] hover:from-[#ff8a00] hover:to-[#ff6600] text-white px-3 py-1.5 rounded-full text-xs font-medium"
+              className="flex items-center gap-1 bg-[hsl(345,90%,55%)] hover:bg-[hsl(345,90%,45%)] text-white px-3 py-1.5 rounded-full text-xs font-medium"
               onClick={testMatchNotification}
             >
               <svg
@@ -175,7 +175,7 @@ export default function AIAssistantDrawer() {
             </button>
             
             <button 
-              className="flex items-center gap-1 border border-[#00a3ff] text-white hover:bg-[rgba(0,163,255,0.2)] px-3 py-1.5 rounded-full text-xs font-medium"
+              className="flex items-center gap-1 border border-[hsl(345,90%,55%)] text-white hover:bg-[hsla(345,90%,55%,0.2)] px-3 py-1.5 rounded-full text-xs font-medium"
               onClick={handleResetChat}
             >
               <svg
