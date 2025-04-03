@@ -356,7 +356,7 @@ const handleFileUpload = async (files: FileList) => {
                 {message.type === 'assistant' ? (
                   <div className="flex items-start mb-4">
                     <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center text-white">
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white">
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
@@ -417,7 +417,7 @@ const handleFileUpload = async (files: FileList) => {
             {isTyping && (
               <div className="flex items-start mb-4">
                 <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-amber-500 flex items-center justify-center text-white">
+                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white">
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
@@ -425,9 +425,9 @@ const handleFileUpload = async (files: FileList) => {
                 </div>
                 <div className="ml-2 bg-gray-100 rounded-lg py-2 px-3 shadow-sm border border-gray-200">
                   <div className="flex space-x-2">
-                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
-                    <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                    <div className="h-2 w-2 bg-primary/70 rounded-full animate-bounce"></div>
+                    <div className="h-2 w-2 bg-primary/70 rounded-full animate-bounce delay-75"></div>
+                    <div className="h-2 w-2 bg-primary/70 rounded-full animate-bounce delay-150"></div>
                   </div>
                 </div>
               </div>
@@ -449,20 +449,20 @@ const handleFileUpload = async (files: FileList) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
                 disabled={isTyping || isProcessingForm}
-                className="border-[#c0d0e0] focus-visible:ring-[#0066cc]"
+                className="border-gray-200 focus-visible:ring-primary"
               />
             </div>
             <Button
               type="button"
               onClick={handleSendMessage}
               disabled={!input.trim() || isTyping || isProcessingForm}
-              className="flex items-center bg-gradient-to-r from-[#003366] to-[#0066cc] hover:from-[#002b55] hover:to-[#0055aa] text-white"
+              className="flex items-center bg-primary hover:bg-primary/90 text-white"
             >
               <Send className="h-5 w-5 mr-1" />
               Send
             </Button>
           </div>
-          <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#0066cc] font-semibold">Contested</span> © 2025</p>
+          <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary font-semibold">Contested</span> © 2025</p>
         </div>
       </div>
     </div>

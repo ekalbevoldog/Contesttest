@@ -15,6 +15,9 @@ import { insertFeedbackSchema, Feedback } from "@shared/schema";
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';
 
+// Map to store connected WebSocket clients
+const connectedClients = new Map<string, WebSocket>();
+
 // Schema for session creation
 const sessionCreateSchema = z.object({});
 
