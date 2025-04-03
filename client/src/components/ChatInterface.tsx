@@ -303,7 +303,14 @@ const handleFileUpload = async (files: FileList) => {
   
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      const container = messagesEndRef.current.parentElement?.parentElement;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      } else {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
   }, [messages]);
   
   // Focus input when component mounts
@@ -339,17 +346,25 @@ const handleFileUpload = async (files: FileList) => {
         
         // Scroll to the bottom after adding the message
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          if (messagesEndRef.current) {
+            const container = messagesEndRef.current.parentElement?.parentElement;
+            if (container) {
+              container.scrollTop = container.scrollHeight;
+            } else {
+              messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
         }, 100);
       }
     }
   }, [lastMessage, toast]);
   
   return (
-    <div className="flex flex-col bg-white h-full overflow-hidden">
-      <div className="w-full flex flex-col h-full flex-grow">
-        {/* Chat messages */}
-        <ScrollArea className="flex-1 p-4 h-[60vh] md:h-[60vh]">
+    <div className="flex flex-col bg-white h-full">
+      {/* Fixed height wrapper */}
+      <div className="flex flex-col h-full">
+        {/* Messages container with fixed height - adjusting to leave room for input area */}
+        <div className="h-[calc(100%-80px)] overflow-y-auto p-4">
           <div className="space-y-4">
             {messages.map((message) => (
               <div key={message.id}>
@@ -435,9 +450,9 @@ const handleFileUpload = async (files: FileList) => {
             
             <div ref={messagesEndRef} />
           </div>
-        </ScrollArea>
+        </div>
 
-        {/* Chat input area */}
+        {/* Chat input area - fixed height */}
         <div className="px-4 py-3 bg-[#f5f7fa] border-t border-gray-200">
           <div className="flex space-x-3">
             <div className="flex-grow">
