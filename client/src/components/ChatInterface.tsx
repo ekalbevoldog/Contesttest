@@ -346,10 +346,10 @@ const handleFileUpload = async (files: FileList) => {
   }, [lastMessage, toast]);
   
   return (
-    <div className="flex h-full flex-col bg-white">
-      <div className="w-full flex flex-col h-full">
+    <div className="flex flex-col bg-white h-full overflow-hidden">
+      <div className="w-full flex flex-col h-full flex-grow">
         {/* Chat messages */}
-        <ScrollArea className="flex-1 p-4 h-[calc(100vh-10rem)] md:h-[calc(60vh)]">
+        <ScrollArea className="flex-1 p-4 h-[60vh] md:h-[60vh]">
           <div className="space-y-4">
             {messages.map((message) => (
               <div key={message.id}>
