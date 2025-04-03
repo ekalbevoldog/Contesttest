@@ -128,14 +128,31 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
   // Send a message through the WebSocket
   const sendMessage = useCallback((message: any) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(message));
+      try {
+        socketRef.current.send(JSON.stringify(message));
+        console.log('WebSocket message sent successfully:', message.type);
+      } catch (error) {
+        console.error('Error sending WebSocket message:', error);
+        connectWebSocket(); // Try to reconnect on send error
+      }
     } else {
       console.error('WebSocket is not connected, cannot send message. Current state:', 
         socketRef.current ? socketRef.current.readyState : 'No socket');
       
       // If no connection, attempt to reconnect
       if (!socketRef.current || socketRef.current.readyState === WebSocket.CLOSED) {
+        console.log('Attempting to reconnect WebSocket before sending message');
         connectWebSocket();
+        
+        // Queue the message to be sent after connection is established
+        setTimeout(() => {
+          if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            console.log('Sending delayed message after reconnection');
+            socketRef.current.send(JSON.stringify(message));
+          } else {
+            console.error('Failed to send message after reconnection attempt');
+          }
+        }, 1000); // Wait 1 second for connection to establish
       }
     }
   }, [connectWebSocket]);

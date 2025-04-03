@@ -317,11 +317,35 @@ class GeminiService {
 
   // Determine if a form should be shown based on the conversation
   async shouldShowForm(message: string, userType: string) {
+    console.log(`shouldShowForm called with message: "${message}", userType: "${userType}"`);
+    
     // Check for common keywords that might indicate the user wants to proceed
-    const affirmativeKeywords = ['yes', 'sure', 'proceed', 'ok', 'okay', 'go ahead', 'submit', 'profile', 'form', 'register', 'signup', 'sign up', 'sign me up', 'continue', 'next'];
+    const affirmativeKeywords = ['yes', 'sure', 'proceed', 'ok', 'okay', 'go ahead', 'submit', 'profile', 'form', 'register', 'signup', 'sign up', 'sign me up', 'continue', 'next', 'business', 'athlete', 'partner', 'i am', 'start', 'ready'];
     
     // Simple keyword matching instead of relying on the AI for this determination
-    if (affirmativeKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+    const messageLC = message.toLowerCase();
+    
+    // Special handling for business identification
+    if (messageLC.includes('business') || messageLC.includes('company') || messageLC.includes('brand')) {
+      console.log(`Form display triggered for business: "${message}"`);
+      return true;
+    }
+    
+    // Special handling for athlete identification
+    if (messageLC.includes('athlete') || messageLC.includes('player') || messageLC.includes('sports')) {
+      console.log(`Form display triggered for athlete: "${message}"`);
+      return true;
+    }
+    
+    // Check for any affirmative keywords
+    if (affirmativeKeywords.some(keyword => messageLC.includes(keyword))) {
+      console.log(`Form display triggered by keyword match: "${message}"`);
+      return true;
+    }
+    
+    // Short affirmative responses
+    if (['yes', 'y', 'sure', 'ok', 'yeah'].includes(messageLC)) {
+      console.log(`Form display triggered by short affirmative: "${message}"`);
       return true;
     }
     
@@ -345,29 +369,35 @@ class GeminiService {
       // First, try using the formPromptSchema
       try {
         const result = await this.callGemini(prompt, formPromptSchema);
+        console.log(`AI form decision for "${message}": ${result.showForm ? "show form" : "don't show form"}`);
         return result.showForm;
       } catch (formError) {
-        console.log("Error with form prompt schema, trying fallback method");
+        console.log("Error with form prompt schema, trying fallback method", formError);
         
         // Fallback to a simpler check using conversationResponseSchema
         const conversationResult = await this.callGemini(prompt, conversationResponseSchema);
         
-        // If we got any response, assume the user is not ready for a form
+        // If we got any response, check for positive indicators
         if (conversationResult && conversationResult.reply) {
-          return conversationResult.reply.toLowerCase().includes('yes') || 
-                 conversationResult.reply.toLowerCase().includes('profile') ||
-                 conversationResult.reply.toLowerCase().includes('form');
+          const shouldShow = conversationResult.reply.toLowerCase().includes('yes') || 
+                            conversationResult.reply.toLowerCase().includes('profile') ||
+                            conversationResult.reply.toLowerCase().includes('form');
+          console.log(`Fallback form decision for "${message}": ${shouldShow ? "show form" : "don't show form"}`);
+          return shouldShow;
         }
       }
       
       // If we reached here, default to false
+      console.log(`No determination made for "${message}", defaulting to false`);
       return false;
     } catch (error) {
       console.error("Error determining if form should be shown:", error);
       // Check if the original message directly indicates readiness
-      return message.toLowerCase() === 'yes' || 
-             message.toLowerCase() === 'yes please' || 
-             message.toLowerCase().includes('proceed');
+      const fallbackDecision = messageLC === 'yes' || 
+                             messageLC === 'yes please' || 
+                             messageLC.includes('proceed');
+      console.log(`Error fallback for "${message}": ${fallbackDecision ? "show form" : "don't show form"}`);
+      return fallbackDecision;
     }
   }
 

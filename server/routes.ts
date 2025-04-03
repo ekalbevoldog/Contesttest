@@ -150,17 +150,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if user type has been determined
       if (!sessionData.userType) {
+        console.log(`Classifying user based on message: "${message}"`);
         // Classify user as athlete or business
         response = await geminiService.classifyUser(message);
+        
+        console.log(`User classified as: ${response.userType}`);
         
         // Update session with user type
         if (response.userType) {
           await sessionService.updateSession(sessionId, {
             userType: response.userType
           });
+          
+          // Log session update for debugging
+          console.log(`Session ${sessionId} updated with userType: ${response.userType}`);
+          
+          // Store this interaction for debugging
+          await storage.storeMessage(sessionId, "system", `User classified as: ${response.userType}`);
         }
         
         // Handle follow-up questions based on user type
+        console.log(`Generating follow-up for ${response.userType}`);
         response = await geminiService.generateFollowUpQuestions(response.userType, response.reply);
       } else {
         // User type already known, determine the next step in conversation
@@ -173,11 +183,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const shouldShowForm = await geminiService.shouldShowForm(message, userType);
           
           if (shouldShowForm) {
-            // Return the form prompt
+            // Return the form prompt with detailed logging
+            console.log(`Showing ${userType} form for session ${sessionId}`);
+            
+            // Store this interaction for debugging purposes
+            await storage.storeMessage(sessionId, "system", `Triggered ${userType} form display`);
+            
             return res.status(200).json({
               reply: userType === "athlete" 
-                ? "Great! Let's create your mid-tier athlete profile. Please fill out the form below to help us match you with the right SMBs:" 
-                : "Fantastic! Let's set up your SMB profile. Please complete the following details to help us find suitable athletes for your marketing campaigns:",
+                ? "Great! Let's create your athlete profile. Please fill out the form below to help us match you with the right businesses:" 
+                : "Fantastic! Let's set up your business profile. Please complete the following details to help us find suitable athletes for your marketing campaigns:",
               isFormPrompt: true,
               showAthleteForm: userType === "athlete",
               showBusinessForm: userType === "business",
