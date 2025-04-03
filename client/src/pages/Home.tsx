@@ -368,10 +368,17 @@ export default function Home() {
                 <h3 className="text-xl font-bold mb-1 text-white">Basic</h3>
                 <h4 className="text-sm font-medium text-zinc-400 mb-4">Perfect for getting started</h4>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$99</span>
+                  <span className="text-4xl font-bold text-white">$49</span>
                   <span className="text-zinc-400">/month</span>
+                  <div className="text-sm text-red-500">5% platform fee</div>
                 </div>
                 <ul className="space-y-3 mb-8 text-zinc-400">
+                  <li className="flex items-center">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>5% platform fee on successful partnerships</span>
+                  </li>
                   <li className="flex items-center">
                     <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -388,17 +395,11 @@ export default function Home() {
                     <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    <span>Basic analytics</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Email support</span>
+                    <span>Basic analytics dashboard</span>
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/dynamic-onboarding">Find Your Match</Link>
+                  <Link to="/dynamic-onboarding">Get Started</Link>
                 </Button>
               </div>
             </Card>
@@ -412,10 +413,17 @@ export default function Home() {
                 <h3 className="text-xl font-bold mb-1 text-white">Professional</h3>
                 <h4 className="text-sm font-medium text-zinc-400 mb-4">For growing businesses</h4>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$249</span>
+                  <span className="text-4xl font-bold text-white">$149</span>
                   <span className="text-zinc-400">/month</span>
+                  <div className="text-sm text-red-500">3% platform fee</div>
                 </div>
                 <ul className="space-y-3 mb-8 text-zinc-400">
+                  <li className="flex items-center">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>3% platform fee on successful partnerships</span>
+                  </li>
                   <li className="flex items-center">
                     <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -434,21 +442,9 @@ export default function Home() {
                     </svg>
                     <span>Advanced analytics dashboard</span>
                   </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Priority matching algorithm</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Priority support</span>
-                  </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/dynamic-onboarding">Find Your Match</Link>
+                  <Link to="/dynamic-onboarding">Get Started</Link>
                 </Button>
               </div>
             </Card>
@@ -459,10 +455,17 @@ export default function Home() {
                 <h3 className="text-xl font-bold mb-1 text-white">Enterprise</h3>
                 <h4 className="text-sm font-medium text-zinc-400 mb-4">For larger organizations</h4>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$749</span>
+                  <span className="text-4xl font-bold text-white">$499</span>
                   <span className="text-zinc-400">/month</span>
+                  <div className="text-sm text-red-500">Custom platform fee</div>
                 </div>
                 <ul className="space-y-3 mb-8 text-zinc-400">
+                  <li className="flex items-center">
+                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Custom platform fee on successful partnerships</span>
+                  </li>
                   <li className="flex items-center">
                     <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -473,25 +476,13 @@ export default function Home() {
                     <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    <span>Unlimited athlete matches</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Custom reporting & API access</span>
+                    <span>Custom analytics & API access</span>
                   </li>
                   <li className="flex items-center">
                     <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                     <span>Dedicated account manager</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Strategic campaign consulting</span>
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
