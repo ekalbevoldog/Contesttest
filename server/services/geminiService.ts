@@ -86,40 +86,99 @@ class GeminiService {
         const userMessage = prompt.match(/Here's the user's message: "(.*?)"/)?.[1] || "";
         console.log(`Mock classification processing message: "${userMessage}"`);
         
-        // Look for business indicators
-        if (userMessage.toLowerCase().includes("business") || 
-            userMessage.toLowerCase().match(/i'?m\s+a\s+business/i) ||
-            userMessage.toLowerCase().includes("company") ||
-            userMessage.toLowerCase().includes("brand") ||
-            userMessage.toLowerCase().includes("marketing")) {
-          console.log("Mock classification detected business");
+        // Expanded business indicators check with points system
+        const msgLower = userMessage.toLowerCase();
+        let businessPoints = 0;
+        let athletePoints = 0;
+        
+        // Business keyword check (more comprehensive)
+        const businessKeywords = [
+          'business', 'company', 'brand', 'organization', 'enterprise', 
+          'corporation', 'firm', 'startup', 'marketing', 'advertiser',
+          'sponsor', 'partnership', 'hire', 'recruit', 'find athletes',
+          'looking for athletes', 'work with athletes', 'promote', 'promote my',
+          'promote our', 'my business', 'our business', 'my company',
+          'our company', 'owner', 'sell', 'selling', 'product', 'service', 
+          'audience', 'customers', 'market', 'advertise', 'campaign'
+        ];
+        
+        // Check for business keywords
+        for (const keyword of businessKeywords) {
+          if (msgLower.includes(keyword)) {
+            businessPoints += 3;
+            console.log(`Business point for keyword: ${keyword}`);
+          }
+        }
+        
+        // Strong business indicators
+        if (msgLower.match(/(?:i'?m|i\s+am)\s+(?:a|an)\s+business/i)) businessPoints += 10;
+        if (msgLower.match(/(?:i|we)(?:\s+am|\s+are|'m)(?:\s+a|\s+an)?\s+company/i)) businessPoints += 10;
+        if (msgLower.match(/(?:i|we)\s+(?:own|run|manage)/i)) businessPoints += 8;
+        if (msgLower.match(/(?:ceo|founder|owner|director)/i)) businessPoints += 8;
+        if (msgLower.match(/(?:our|my)\s+(?:product|service|brand|company|business)/i)) businessPoints += 8;
+        if (msgLower.match(/(?:looking|searching|want|need)\s+(?:to\s+)?(?:hire|contract|sponsor|partner)/i)) businessPoints += 7;
+        
+        console.log(`Business points: ${businessPoints}`);
+        
+        // Athlete keywords
+        const athleteKeywords = [
+          'athlete', 'player', 'team', 'sport', 'sports', 'game', 'games',
+          'play', 'playing', 'compete', 'competing', 'competition',
+          'college', 'university', 'school', 'NCAA', 'division', 
+          'scholarship', 'tournament', 'championship', 'league'
+        ];
+        
+        // Check for athlete keywords
+        for (const keyword of athleteKeywords) {
+          if (msgLower.includes(keyword)) {
+            athletePoints += 3;
+            console.log(`Athlete point for keyword: ${keyword}`);
+          }
+        }
+        
+        // Strong athlete indicators
+        if (msgLower.match(/(?:i'?m|i\s+am)\s+(?:a|an)\s+athlete/i)) athletePoints += 10;
+        if (msgLower.match(/(?:i\s+play|i'm\s+a\s+player)/i)) athletePoints += 8;
+        if (msgLower.match(/(?:my|our)\s+(?:team|sport|coach)/i)) athletePoints += 8;
+        if (msgLower.match(/(?:i'm\s+in|i\s+attend|i\s+go\s+to)\s+(?:college|university|school)/i)) athletePoints += 7;
+        
+        console.log(`Athlete points: ${athletePoints}`);
+        
+        // Make a decision based on points
+        if (businessPoints > athletePoints) {
+          console.log(`Mock classification detected business (${businessPoints} vs ${athletePoints} points)`);
           return responseSchema.parse({
             userType: "business",
-            reply: "Thanks for letting me know you're a business! I'd love to help connect you with student athletes for NIL partnerships. What type of products or services does your business offer?"
+            reply: "Thanks for reaching out! Based on your message, it seems you're representing a business interested in NIL partnerships. I'd love to help connect you with student athletes. Could you tell me more about your business and what you're looking for in a partnership?"
           });
-        }
-        // Look for athlete indicators 
-        else if (userMessage.toLowerCase().includes("athlete") || 
-                userMessage.toLowerCase().includes("sports") ||
-                userMessage.toLowerCase().includes("player") ||
-                userMessage.toLowerCase().includes("college") ||
-                userMessage.toLowerCase().includes("team")) {
-          console.log("Mock classification detected athlete");
+        } else if (athletePoints > businessPoints) {
+          console.log(`Mock classification detected athlete (${athletePoints} vs ${businessPoints} points)`);
           return responseSchema.parse({
             userType: "athlete",
-            reply: "Thanks for letting me know you're an athlete! I'd love to help connect you with potential NIL opportunities. What sport do you play, and which school do you attend?"
+            reply: "Thanks for reaching out! It sounds like you're an athlete interested in NIL opportunities. I'd love to help connect you with businesses. Could you tell me more about your sport and which school you attend?"
           });
-        }
-        // Default cases
-        else if (prompt.toLowerCase().includes("athlete")) {
-          return responseSchema.parse({
-            userType: "athlete",
-            reply: "Thanks for reaching out! I'd love to help connect you with potential NIL opportunities. What sport do you play, and which school do you attend?"
-          });
+        } else if (businessPoints === 0 && athletePoints === 0) {
+          // If no clear signal, default based on the prompt context
+          if (prompt.toLowerCase().includes("athlete")) {
+            console.log("No strong signals - defaulting to athlete based on prompt context");
+            return responseSchema.parse({
+              userType: "athlete",
+              reply: "Thanks for reaching out! I'd love to help connect you with potential NIL opportunities as an athlete. What sport do you play, and which school do you attend?"
+            });
+          } else {
+            console.log("No strong signals - defaulting to business based on prompt context");
+            return responseSchema.parse({
+              userType: "business",
+              reply: "Thanks for reaching out! I'd love to help connect you with student athletes for NIL partnerships. What type of products or services does your business offer?"
+            });
+          }
         } else {
+          // Equal points - need a tiebreaker
+          // Default slightly to business to ensure proper form displays
+          console.log("Tie between business and athlete - defaulting to business");
           return responseSchema.parse({
             userType: "business",
-            reply: "Thanks for reaching out! I'd love to help connect you with student athletes for NIL partnerships. What type of products or services does your business offer?"
+            reply: "Thanks for your message! I'm here to help with NIL partnerships. It seems you might be interested in connecting with student athletes. Could you confirm if you're a business looking to partner with athletes, or if you're an athlete looking for opportunities?"
           });
         }
       } else if (prompt.includes("generate a follow-up question")) {
@@ -290,43 +349,61 @@ class GeminiService {
   async classifyUser(message: string) {
     console.log(`Classifying user based on message: "${message}"`);
     
-    // First try a direct pattern-matching approach for common indicators
+    // Use a points-based system to improve classification accuracy
     const messageLC = message.toLowerCase();
+    let businessPoints = 0;
+    let athletePoints = 0;
     
-    // Business identification patterns
+    // Business keyword check (comprehensive)
     const businessKeywords = [
       'business', 'company', 'brand', 'organization', 'enterprise', 
       'corporation', 'firm', 'startup', 'marketing', 'advertiser',
       'sponsor', 'partnership', 'hire', 'recruit', 'find athletes',
       'looking for athletes', 'work with athletes', 'promote', 'promote my',
       'promote our', 'my business', 'our business', 'my company',
-      'our company', 'i own', 'we own', 'i run', 'we run', 
-      'i manage', 'we manage', 'ceo', 'founder', 'owner',
-      'sell', 'selling', 'product', 'service', 'audience',
-      'customers', 'market', 'advertise', 'advertising', 'campaign',
-      'promotion', 'launch', 'brand awareness'
+      'our company', 'owner', 'sell', 'selling', 'product', 'service', 
+      'audience', 'customers', 'market', 'advertise', 'campaign',
+      'promotion', 'launch', 'brand', 'products', 'services',
+      'ceo', 'founder', 'director', 'manager'
     ];
     
-    // Check for direct "I'm a business" statement
-    const businessRegex = /(?:i'?m|i\s+am)\s+a\s+business/i;
-    if (businessRegex.test(messageLC)) {
-      console.log(`Direct business identification found in: "${message}"`);
-      return {
-        userType: "business", 
-        reply: "Thanks for letting me know you're a business! I'd love to help connect you with student athletes for NIL partnerships. What type of products or services does your business offer?"
-      };
-    }
-    
     // Check for business keywords
-    if (businessKeywords.some(keyword => messageLC.includes(keyword))) {
-      console.log(`Business keyword found in: "${message}"`);
-      return {
-        userType: "business", 
-        reply: "Thanks for reaching out! Based on your message, it seems you're representing a business interested in NIL partnerships. I'd love to help connect you with student athletes. Could you tell me more about your business and what you're looking for in a partnership?"
-      };
+    for (const keyword of businessKeywords) {
+      if (messageLC.includes(keyword)) {
+        businessPoints += 3;
+        console.log(`Business point for keyword: ${keyword}`);
+      }
     }
     
-    // Athlete identification patterns
+    // Strong business indicators with higher point values
+    if (messageLC.match(/(?:i'?m|i\s+am)\s+(?:a|an)\s+business/i)) {
+      businessPoints += 15;
+      console.log("Strong business indicator: direct business identification");
+    }
+    if (messageLC.match(/(?:i|we)(?:\s+am|\s+are|'m)(?:\s+a|\s+an)?\s+company/i)) {
+      businessPoints += 12; 
+      console.log("Strong business indicator: company identification");
+    }
+    if (messageLC.match(/(?:i|we)\s+(?:own|run|manage)/i)) {
+      businessPoints += 10;
+      console.log("Strong business indicator: ownership/management reference");
+    }
+    if (messageLC.match(/(?:ceo|founder|owner|director)/i)) {
+      businessPoints += 10;
+      console.log("Strong business indicator: business role");
+    }
+    if (messageLC.match(/(?:our|my)\s+(?:product|service|brand|company|business)/i)) {
+      businessPoints += 10;
+      console.log("Strong business indicator: product/service ownership");
+    }
+    if (messageLC.match(/(?:looking|searching|want|need)\s+(?:to\s+)?(?:hire|contract|sponsor|partner)/i)) {
+      businessPoints += 8;
+      console.log("Strong business indicator: hiring/partnership intent");
+    }
+    
+    console.log(`Business points: ${businessPoints}`);
+    
+    // Athlete keyword check
     const athleteKeywords = [
       'athlete', 'player', 'team', 'sport', 'sports', 'game', 'games',
       'play', 'playing', 'compete', 'competing', 'competition',
@@ -334,50 +411,67 @@ class GeminiService {
       'scholarship', 'recruit', 'recruiting', 'coach', 'coaching',
       'practice', 'training', 'workout', 'my sport', 'my team',
       'student athlete', 'varsity', 'amateur', 'professional',
-      'tournament', 'championship', 'league', 'conference'
+      'tournament', 'championship', 'league', 'conference',
+      'basketball', 'football', 'soccer', 'baseball', 'volleyball'
     ];
     
-    // Check for direct "I'm an athlete" statement
-    const athleteRegex = /(?:i'?m|i\s+am)\s+(?:an|a)\s+athlete/i;
-    if (athleteRegex.test(messageLC)) {
-      console.log(`Direct athlete identification found in: "${message}"`);
-      return {
-        userType: "athlete", 
-        reply: "Thanks for letting me know you're an athlete! I'd love to help connect you with potential NIL opportunities. What sport do you play, and which school do you attend?"
-      };
+    // Check for athlete keywords
+    for (const keyword of athleteKeywords) {
+      if (messageLC.includes(keyword)) {
+        athletePoints += 3;
+        console.log(`Athlete point for keyword: ${keyword}`);
+      }
     }
     
-    // Check for athlete keywords
-    if (athleteKeywords.some(keyword => messageLC.includes(keyword))) {
-      console.log(`Athlete keyword found in: "${message}"`);
+    // Strong athlete indicators with higher point values
+    if (messageLC.match(/(?:i'?m|i\s+am)\s+(?:a|an)\s+athlete/i)) {
+      athletePoints += 15;
+      console.log("Strong athlete indicator: direct athlete identification");
+    }
+    if (messageLC.match(/(?:i\s+play|i'm\s+a\s+player)/i)) {
+      athletePoints += 10;
+      console.log("Strong athlete indicator: player identification");
+    }
+    if (messageLC.match(/(?:my|our)\s+(?:team|sport|coach)/i)) {
+      athletePoints += 10;
+      console.log("Strong athlete indicator: team/sport ownership");
+    }
+    if (messageLC.match(/(?:i'm\s+in|i\s+attend|i\s+go\s+to)\s+(?:college|university|school)/i)) {
+      athletePoints += 8;
+      console.log("Strong athlete indicator: school attendance");
+    }
+    
+    console.log(`Athlete points: ${athletePoints}`);
+    
+    // Make decision based on points
+    if (businessPoints > athletePoints) {
+      console.log(`Classification result: business (${businessPoints} vs ${athletePoints} points)`);
+      return {
+        userType: "business", 
+        reply: "Thanks for reaching out! Based on your message, it seems you're representing a business interested in NIL partnerships. I'd love to help connect you with student athletes. Could you tell me more about your business and what you're looking for in a partnership?"
+      };
+    } 
+    else if (athletePoints > businessPoints) {
+      console.log(`Classification result: athlete (${athletePoints} vs ${businessPoints} points)`);
       return {
         userType: "athlete", 
         reply: "Thanks for reaching out! It sounds like you're an athlete interested in NIL opportunities. I'd love to help connect you with businesses. Could you tell me more about your sport and which school you attend?"
       };
     }
-    
-    // If no clear pattern is found, use the AI model
-    const prompt = `
-      You are an AI assistant for NIL Connect, a platform that matches college athletes with businesses for Name, Image, and Likeness (NIL) partnerships.
-      
-      Your task is to determine if the user is a college athlete or a business based on their message. 
-      Always return your answer in the following JSON format:
-      {
-        "userType": "athlete" or "business",
-        "reply": "Your friendly, conversational response acknowledging their type and asking for more information"
-      }
-      
-      Here's the user's message: "${message}"
-    `;
-    
-    try {
-      return await this.callGemini(prompt, userClassificationSchema);
-    } catch (error) {
-      console.error("Error classifying user:", error);
-      // Fallback response if classification fails
+    else if (businessPoints === 0 && athletePoints === 0) {
+      // If no signals, fall back to AI model but with a more business-leading prompt
+      console.log("No classification signals detected, leaning toward business as default");
       return {
-        userType: "athlete", // Default to athlete
-        reply: "Thanks for reaching out to Contested! I'm here to help match college athletes with businesses. Could you tell me a bit more about yourself? Are you a college athlete looking for NIL opportunities, or a business looking to connect with athletes?"
+        userType: "business",
+        reply: "Thanks for your message! I'm here to help with athlete-brand connections. Are you looking to promote your business through athlete partnerships, or are you an athlete interested in brand deals?"
+      };
+    }
+    else {
+      // Equal points - business takes slight priority to ensure form display
+      console.log("Equal points between business and athlete - defaulting to business");
+      return {
+        userType: "business", 
+        reply: "Thanks for your message! I'm here to help with NIL partnerships. It seems you might be interested in connecting with student athletes. Could you confirm if you're a business looking to partner with athletes, or if you're an athlete looking for opportunities?"
       };
     }
   }

@@ -129,23 +129,19 @@ export default function AIAssistantDrawer() {
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
       <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-xl overflow-hidden flex flex-col h-[90vh] md:h-[80vh]">
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 bg-[hsl(345,90%,55%)]">
-          <h2 className="text-xl font-bold text-white">Contested Assistant</h2>
-          <button 
-            onClick={() => setIsOpen(false)} 
-            className="text-white hover:text-white/80 transition"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
-        {/* Blue header with info */}
-        <div className="bg-gradient-to-r from-[#003366] to-[#001a33] p-4 text-white">
-          <div className="flex flex-col space-y-1">
-            <h3 className="text-xl font-bold">Contested Matchmaking Assistant</h3>
-            <p className="text-sm text-gray-300">Connecting SMBs with mid-tier athletes</p>
+        {/* Single Header with Controls */}
+        <div className="bg-[#0c1e36] p-4 text-white">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-bold">Contested Assistant</h2>
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="text-white hover:text-white/80 transition"
+            >
+              <X className="h-6 w-6" />
+            </button>
           </div>
+          
+          <p className="text-sm text-gray-300">Connecting SMBs with mid-tier athletes</p>
           
           <div className="flex mt-3 space-x-3">
             <div className="flex items-center px-3 py-1.5 rounded-full text-xs bg-[rgba(0,255,204,0.15)] border border-[rgba(0,255,204,0.5)] text-white">
@@ -154,7 +150,7 @@ export default function AIAssistantDrawer() {
             </div>
             
             <button 
-              className="flex items-center gap-1 bg-[hsl(345,90%,55%)] hover:bg-[hsl(345,90%,45%)] text-white px-3 py-1.5 rounded-full text-xs font-medium"
+              className="flex items-center gap-1 bg-[#243b5e] hover:bg-[#304d77] text-white px-3 py-1.5 rounded-full text-xs font-medium"
               onClick={testMatchNotification}
             >
               <svg
@@ -175,7 +171,7 @@ export default function AIAssistantDrawer() {
             </button>
             
             <button 
-              className="flex items-center gap-1 border border-[hsl(345,90%,55%)] text-white hover:bg-[hsla(345,90%,55%,0.2)] px-3 py-1.5 rounded-full text-xs font-medium"
+              className="flex items-center gap-1 border border-[#3a5a88] text-white hover:bg-[rgba(58,90,136,0.2)] px-3 py-1.5 rounded-full text-xs font-medium"
               onClick={handleResetChat}
             >
               <svg

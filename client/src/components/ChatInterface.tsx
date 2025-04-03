@@ -356,7 +356,7 @@ const handleFileUpload = async (files: FileList) => {
                 {message.type === 'assistant' ? (
                   <div className="flex items-start mb-4">
                     <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white">
+                      <div className="h-8 w-8 rounded-full bg-[#0c1e36] flex items-center justify-center text-white">
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
@@ -396,7 +396,7 @@ const handleFileUpload = async (files: FileList) => {
                   </div>
                 ) : (
                   <div className="flex items-start mb-4 justify-end">
-                    <div className="mr-2 bg-gradient-to-r from-[#0066cc] to-[#003366] text-white rounded-lg py-2 px-3 max-w-[85%] shadow-sm">
+                    <div className="mr-2 bg-[#0c1e36] text-white rounded-lg py-2 px-3 max-w-[85%] shadow-sm">
                       <div className="text-sm">
                         <p>{message.content}</p>
                       </div>
@@ -417,7 +417,7 @@ const handleFileUpload = async (files: FileList) => {
             {isTyping && (
               <div className="flex items-start mb-4">
                 <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white">
+                  <div className="h-8 w-8 rounded-full bg-[#0c1e36] flex items-center justify-center text-white">
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
@@ -425,9 +425,9 @@ const handleFileUpload = async (files: FileList) => {
                 </div>
                 <div className="ml-2 bg-gray-100 rounded-lg py-2 px-3 shadow-sm border border-gray-200">
                   <div className="flex space-x-2">
-                    <div className="h-2 w-2 bg-primary/70 rounded-full animate-bounce"></div>
-                    <div className="h-2 w-2 bg-primary/70 rounded-full animate-bounce delay-75"></div>
-                    <div className="h-2 w-2 bg-primary/70 rounded-full animate-bounce delay-150"></div>
+                    <div className="h-2.5 w-2.5 bg-[#0c1e36]/70 rounded-full animate-bounce"></div>
+                    <div className="h-2.5 w-2.5 bg-[#0c1e36]/70 rounded-full animate-bounce delay-75"></div>
+                    <div className="h-2.5 w-2.5 bg-[#0c1e36]/70 rounded-full animate-bounce delay-150"></div>
                   </div>
                 </div>
               </div>
@@ -438,7 +438,7 @@ const handleFileUpload = async (files: FileList) => {
         </ScrollArea>
 
         {/* Chat input area */}
-        <div className="px-4 py-3 bg-gradient-to-r from-[#f5f7fa] to-[#ebedee] border-t border-gray-200">
+        <div className="px-4 py-3 bg-[#f5f7fa] border-t border-gray-200">
           <div className="flex space-x-3">
             <div className="flex-grow">
               <Input
@@ -449,20 +449,20 @@ const handleFileUpload = async (files: FileList) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
                 disabled={isTyping || isProcessingForm}
-                className="border-gray-200 focus-visible:ring-primary"
+                className="border-gray-300 focus-visible:ring-[#0c1e36] focus:border-[#0c1e36]"
               />
             </div>
             <Button
               type="button"
               onClick={handleSendMessage}
               disabled={!input.trim() || isTyping || isProcessingForm}
-              className="flex items-center bg-primary hover:bg-primary/90 text-white"
+              className="flex items-center bg-[#0c1e36] hover:bg-[#1a3151] text-white"
             >
               <Send className="h-5 w-5 mr-1" />
               Send
             </Button>
           </div>
-          <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary/80 to-primary font-semibold">Contested</span> © 2025</p>
+          <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="font-semibold text-[#0c1e36]">Contested</span> © 2025</p>
         </div>
       </div>
     </div>
