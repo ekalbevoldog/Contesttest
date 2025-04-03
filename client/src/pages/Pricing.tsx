@@ -87,20 +87,20 @@ export default function Pricing() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Simple, Transparent Pricing
               </span>
             </h1>
             <p className="text-xl text-gray-300 mb-6">
               Choose the plan that's right for you, with no hidden fees or long-term commitments.
             </p>
-            
+
             {/* Billing Toggle */}
             <div className="inline-flex items-center bg-[#2A2A2A] p-1 rounded-lg mb-12">
               <button
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingPeriod === 'monthly'
-                    ? 'bg-[#f03c3c] text-white'
+                    ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white'
                     : 'text-gray-300 hover:text-white'
                 }`}
                 onClick={() => setBillingPeriod('monthly')}
@@ -110,7 +110,7 @@ export default function Pricing() {
               <button
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   billingPeriod === 'yearly'
-                    ? 'bg-[#f03c3c] text-white'
+                    ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white'
                     : 'text-gray-300 hover:text-white'
                 }`}
                 onClick={() => setBillingPeriod('yearly')}
@@ -120,7 +120,7 @@ export default function Pricing() {
             </div>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] opacity-70"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
       </section>
 
       {/* Pricing Cards */}
@@ -131,18 +131,18 @@ export default function Pricing() {
               <Card 
                 key={index}
                 className={`bg-[#2A2A2A] border-none shadow-md relative overflow-hidden ${
-                  plan.isPopular ? 'ring-2 ring-[#f03c3c]' : ''
+                  plan.isPopular ? 'ring-2 ring-red-500' : ''
                 }`}
               >
                 {plan.isPopular && (
-                  <div className="absolute -right-12 top-8 bg-[#f03c3c] text-white py-1 px-12 transform rotate-45">
+                  <div className="absolute -right-12 top-8 bg-red-500 text-white py-1 px-12 transform rotate-45">
                     <span className="text-xs font-bold">POPULAR</span>
                   </div>
                 )}
                 <div className="p-6">
                   <h3 className="text-2xl font-bold text-white mb-1">{plan.name}</h3>
                   <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
-                  
+
                   <div className="mb-8">
                     <div className="flex items-baseline">
                       <span className="text-4xl font-bold text-white">
@@ -153,25 +153,25 @@ export default function Pricing() {
                       </span>
                     </div>
                     {billingPeriod === 'yearly' && (
-                      <div className="mt-2 text-[#f03c3c] text-sm font-medium">{plan.savings}</div>
+                      <div className="mt-2 text-red-500 text-sm font-medium">{plan.savings}</div>
                     )}
                   </div>
-                  
+
                   <ul className="space-y-3 mb-8 text-gray-300">
                     {plan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start">
-                        <CheckCircle2 className="h-5 w-5 text-[#f03c3c] mr-2 mt-0.5 flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
-                  
+
                   <Button 
                     variant={plan.buttonVariant}
                     className={`w-full ${
                       plan.buttonVariant === 'default' 
-                      ? 'bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white hover:from-[#d42e2e] hover:to-[#e34c4c]' 
-                      : 'border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)]'
+                      ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-700 hover:to-amber-700' 
+                      : 'border-red-500 text-white hover:bg-[rgba(240,60,60,0.1)]'
                     }`}
                     asChild
                   >
@@ -181,7 +181,7 @@ export default function Pricing() {
               </Card>
             ))}
           </div>
-          
+
           <div className="text-center mt-8 text-gray-400">
             All plans include a 14-day free trial. No credit card required.
           </div>
@@ -193,7 +193,7 @@ export default function Pricing() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto mb-16 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Frequently Asked Questions
               </span>
             </h2>
@@ -205,17 +205,17 @@ export default function Pricing() {
           <div className="max-w-3xl mx-auto">
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="w-full grid grid-cols-3 mb-8 bg-[#2A2A2A]">
-                <TabsTrigger value="general" className="data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">
+                <TabsTrigger value="general" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
                   General
                 </TabsTrigger>
-                <TabsTrigger value="billing" className="data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">
+                <TabsTrigger value="billing" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
                   Billing
                 </TabsTrigger>
-                <TabsTrigger value="features" className="data-[state=active]:bg-[#f03c3c] data-[state=active]:text-white">
+                <TabsTrigger value="features" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
                   Features
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="general" className="space-y-4">
                 <div className="bg-[#2A2A2A] p-6 rounded-lg">
                   <h3 className="text-xl font-bold mb-2 text-white">What is Contested?</h3>
@@ -236,7 +236,7 @@ export default function Pricing() {
                   </p>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="billing" className="space-y-4">
                 <div className="bg-[#2A2A2A] p-6 rounded-lg">
                   <h3 className="text-xl font-bold mb-2 text-white">How does billing work?</h3>
@@ -257,7 +257,7 @@ export default function Pricing() {
                   </p>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="features" className="space-y-4">
                 <div className="bg-[#2A2A2A] p-6 rounded-lg">
                   <h3 className="text-xl font-bold mb-2 text-white">What does "athlete match" mean?</h3>
@@ -288,7 +288,7 @@ export default function Pricing() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto mb-16 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c]">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Plan Comparison
               </span>
             </h2>
@@ -313,7 +313,7 @@ export default function Pricing() {
                   <div className="p-6 bg-[#252525]">
                     <h3 className="font-bold text-lg text-white mb-2">Platform Features</h3>
                   </div>
-                  
+
                   <FeatureRow 
                     feature="Active Campaigns" 
                     tooltip="The number of concurrent partnership campaigns you can run"
@@ -321,7 +321,7 @@ export default function Pricing() {
                     pro="Up to 10"
                     enterprise="Unlimited"
                   />
-                  
+
                   <FeatureRow 
                     feature="Monthly Athlete Matches" 
                     tooltip="Number of AI-generated athlete partnership suggestions per month"
@@ -329,7 +329,7 @@ export default function Pricing() {
                     pro="Unlimited"
                     enterprise="Unlimited"
                   />
-                  
+
                   <FeatureRow 
                     feature="Matching Algorithm Priority" 
                     tooltip="Priority level in the matching queue for faster results"
@@ -337,7 +337,7 @@ export default function Pricing() {
                     pro="Priority"
                     enterprise="Custom"
                   />
-                  
+
                   <FeatureRow 
                     feature="User Accounts" 
                     tooltip="Number of team members who can access your dashboard"
@@ -345,12 +345,12 @@ export default function Pricing() {
                     pro="5"
                     enterprise="Unlimited"
                   />
-                  
+
                   {/* Analytics */}
                   <div className="p-6 bg-[#252525]">
                     <h3 className="font-bold text-lg text-white mb-2">Analytics & Reporting</h3>
                   </div>
-                  
+
                   <FeatureRow 
                     feature="Performance Dashboard" 
                     tooltip="Real-time metrics on campaign performance"
@@ -358,7 +358,7 @@ export default function Pricing() {
                     pro="Advanced"
                     enterprise="Custom"
                   />
-                  
+
                   <FeatureRow 
                     feature="Audience Demographics" 
                     tooltip="Detailed breakdown of audience reached through partnerships"
@@ -366,7 +366,7 @@ export default function Pricing() {
                     pro="✓"
                     enterprise="✓"
                   />
-                  
+
                   <FeatureRow 
                     feature="ROI Calculations" 
                     tooltip="Tools to measure return on investment"
@@ -374,7 +374,7 @@ export default function Pricing() {
                     pro="Advanced"
                     enterprise="Custom"
                   />
-                  
+
                   <FeatureRow 
                     feature="Custom Reports" 
                     tooltip="Generate custom reports for campaign analysis"
@@ -382,7 +382,7 @@ export default function Pricing() {
                     pro="✓"
                     enterprise="✓"
                   />
-                  
+
                   <FeatureRow 
                     feature="API Access" 
                     tooltip="Access to Contested's API for custom integrations"
@@ -390,12 +390,12 @@ export default function Pricing() {
                     pro="—"
                     enterprise="✓"
                   />
-                  
+
                   {/* Support */}
                   <div className="p-6 bg-[#252525]">
                     <h3 className="font-bold text-lg text-white mb-2">Support & Services</h3>
                   </div>
-                  
+
                   <FeatureRow 
                     feature="Support Response Time" 
                     tooltip="Typical time to first response"
@@ -403,7 +403,7 @@ export default function Pricing() {
                     pro="24 hours"
                     enterprise="4 hours"
                   />
-                  
+
                   <FeatureRow 
                     feature="Dedicated Account Manager" 
                     tooltip="A personal point of contact for your account"
@@ -411,7 +411,7 @@ export default function Pricing() {
                     pro="—"
                     enterprise="✓"
                   />
-                  
+
                   <FeatureRow 
                     feature="Campaign Strategy Consulting" 
                     tooltip="Expert assistance with campaign planning and execution"
@@ -423,11 +423,11 @@ export default function Pricing() {
               </div>
             </div>
           </div>
-          
+
           <div className="text-center mt-12">
             <Button 
               size="lg" 
-              className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] text-white font-bold hover:from-[#d42e2e] hover:to-[#e34c4c] transition-all shadow-md"
+              className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-700 hover:to-amber-700 transition-all shadow-md"
               asChild
             >
               <Link to="/dynamic-onboarding">Get Started Now</Link>
