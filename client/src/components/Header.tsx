@@ -101,9 +101,9 @@ export default function Header() {
                     </span>
                   </Link>
                 ) : userType === 'compliance' ? (
-                  <Link href="/compliance/dashboard">
+                  <Link href="/compliance">
                     <span className={`px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center ${
-                      location === "/compliance/dashboard" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
+                      location === "/compliance" ? "bg-[rgba(240,60,60,0.15)] text-white" : "text-gray-300 hover:text-white hover:bg-[rgba(240,60,60,0.1)]"
                     }`}>
                       <BarChart className="mr-1 h-4 w-4 text-[#f03c3c]" />
                       Compliance Dashboard
@@ -363,10 +363,10 @@ export default function Header() {
                           </span>
                         </Link>
                       ) : userType === 'compliance' ? (
-                        <Link href="/compliance/dashboard">
+                        <Link href="/compliance">
                           <span 
                             className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                              location === "/compliance/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                              location === "/compliance" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
                             }`}
                             onClick={() => setOpen(false)}
                           >
@@ -416,10 +416,10 @@ export default function Header() {
                             </span>
                           </Link>
 
-                          <Link href="/compliance/dashboard">
+                          <Link href="/compliance">
                             <span 
                               className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer flex items-center ${
-                                location === "/compliance/dashboard" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
+                                location === "/compliance" ? "bg-[rgba(240,60,60,0.25)] text-white" : "text-gray-300 hover:bg-[rgba(240,60,60,0.15)] hover:text-white"
                               }`}
                               onClick={() => setOpen(false)}
                             >
