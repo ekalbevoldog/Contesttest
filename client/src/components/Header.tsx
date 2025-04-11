@@ -139,7 +139,7 @@ export default function Header() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/compliance/dashboard" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
+                        <Link href="/compliance" className="cursor-pointer w-full flex items-center hover:bg-[rgba(240,60,60,0.15)]">
                           <Shield className="mr-2 h-4 w-4 text-[#f03c3c]" />
                           <span>Compliance Dashboard</span>
                         </Link>
