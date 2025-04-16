@@ -12,6 +12,7 @@ import Onboarding from "@/pages/Onboarding";
 import RegistrationWizard from "@/pages/RegistrationWizard";
 import PersonalizedWizard from "@/pages/PersonalizedWizard";
 import DynamicOnboarding from "@/pages/DynamicOnboarding";
+import EnhancedOnboarding from "@/pages/EnhancedOnboarding";
 import AuthPage from "@/pages/auth-page";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import BusinessDashboard from "@/pages/BusinessDashboard";
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/find-athlete-match" component={RegistrationWizard} />
           <Route path="/personalized-onboarding" component={PersonalizedWizard} />
           <Route path="/dynamic-onboarding" component={DynamicOnboarding} />
+          <Route path="/enhanced-onboarding" component={EnhancedOnboarding} />
 
           {/* Marketing Pages */}
           <Route path="/solutions" component={Solutions} />

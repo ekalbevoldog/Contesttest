@@ -733,8 +733,7 @@ export default function EnhancedOnboardingForm({
       // Prepare data for submission based on user type
       const submissionData = {
         sessionId: activeSessionId,
-        userType,
-        ...formData
+        ...formData  // formData already contains userType
       };
 
       // Submit to personalized onboarding endpoint

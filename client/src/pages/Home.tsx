@@ -42,8 +42,9 @@ export default function Home() {
                   className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                   asChild
                 >
-                  <Link to="/dynamic-onboarding">Get Started</Link>
+                  <Link to="/enhanced-onboarding">Get Started</Link>
                 </Button>
+                <Badge className="ml-2 bg-amber-600 hover:bg-amber-700 text-white">NEW</Badge>
                 <Button 
                   size="lg" 
                   variant="outline" 
