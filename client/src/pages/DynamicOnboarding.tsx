@@ -16,7 +16,7 @@ export default function DynamicOnboarding() {
       try {
         const response = await fetch("/api/chat/session", {
           method: "POST",
-          credentials: "include"
+          credentials: "include",
         });
         const data = await response.json();
         setSessionId(data.sessionId);
@@ -25,32 +25,37 @@ export default function DynamicOnboarding() {
         toast({
           title: "Connection Error",
           description: "Failed to start onboarding session. Please try again.",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     }
-    
+
     if (!sessionId) {
       createSession();
     }
   }, [toast, sessionId]);
 
   // If user is logged in, use their user type as initial selection
-  const initialUserType = user ? user.userType as 'athlete' | 'business' | null : null;
+  const initialUserType = user
+    ? (user.userType as "athlete" | "business" | null)
+    : null;
 
   const handleOnboardingComplete = (data: any) => {
     // Store any relevant data in local storage for dashboard display
     if (data.aiInsights) {
-      localStorage.setItem('aiInsights', JSON.stringify(data.aiInsights));
+      localStorage.setItem("aiInsights", JSON.stringify(data.aiInsights));
     }
-    
+
     if (data.recommendations) {
-      localStorage.setItem('recommendations', JSON.stringify(data.recommendations));
+      localStorage.setItem(
+        "recommendations",
+        JSON.stringify(data.recommendations),
+      );
     }
-    
+
     // If there's a generated campaign for a business account, store it
-    if (user?.userType === 'business' && data.campaign) {
-      localStorage.setItem('campaign', JSON.stringify(data.campaign));
+    if (user?.userType === "business" && data.campaign) {
+      localStorage.setItem("campaign", JSON.stringify(data.campaign));
     }
 
     // Show success message
@@ -61,11 +66,11 @@ export default function DynamicOnboarding() {
 
     // Navigate to the dashboard based on user type from auth context
     setTimeout(() => {
-      if (user?.userType === 'athlete') {
+      if (user?.userType === "athlete") {
         navigate("/athlete/dashboard");
-      } else if (user?.userType === 'business') {
+      } else if (user?.userType === "business") {
         navigate("/business/dashboard");
-      } else if (user?.userType === 'compliance') {
+      } else if (user?.userType === "compliance") {
         navigate("/compliance/dashboard");
       } else {
         navigate("/dashboard");
@@ -81,13 +86,13 @@ export default function DynamicOnboarding() {
             Personalized Onboarding
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Tell us about yourself so we can create a tailored experience that 
+            Tell us about yourself so we can create a tailored experience that
             helps you find the perfect partnerships
           </p>
         </div>
 
         <div className="flex justify-center">
-          <DynamicOnboardingForm 
+          <DynamicOnboardingForm
             initialUserType={initialUserType}
             onComplete={handleOnboardingComplete}
             sessionId={sessionId}

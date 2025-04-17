@@ -11,7 +11,7 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import connectPg from "connect-pg-simple";
 import session from "express-session";
-import { neon } from "@neondatabase/serverless";
+// Standard PostgreSQL module imported in db.ts
 
 const scryptAsync = promisify(scrypt);
 
@@ -91,7 +91,7 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // Create session store for Express sessions using memorystore for now due to Neon compatibility issues
+    // Use memory store for simplicity after removing Neon database
     import('memorystore').then(memorystore => {
       const MemoryStore = memorystore.default(session);
       this.sessionStore = new MemoryStore({
