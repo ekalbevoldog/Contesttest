@@ -801,33 +801,45 @@ export default function Home() {
       
       {/* CTA Section */}
       <section className="py-20 bg-zinc-950 text-white relative overflow-hidden border-t border-zinc-800">
+        <AnimatedGradient 
+          className="absolute inset-0 opacity-20" 
+          colors={['hsl(345, 90%, 55%, 0.1)', 'hsl(235, 100%, 50%, 0.1)']} 
+          blur={120}
+          duration={15}
+        />
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to create winning partnerships?</h2>
-            <p className="text-xl text-zinc-400 mb-8">
-              Whether you're an athlete looking to monetize your influence or a business seeking authentic brand ambassadors, Contested makes it easy to find your perfect match.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-                asChild
-              >
-                <Link to="/dynamic-onboarding">Find Your Athlete Match Now</Link>
-              </Button>
-              
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-red-500 text-white hover:bg-red-500/10"
-                onClick={() => setShowChat(true)}
-              >
-                Chat with AI Assistant
-              </Button>
-            </div>
+        <Parallax direction="up" speed={0.05} className="relative z-10">
+          <div className="container mx-auto px-4">
+            <ScrollReveal className="max-w-3xl mx-auto text-center" threshold={0.1}>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to create winning partnerships?</h2>
+              <p className="text-xl text-zinc-400 mb-8">
+                Whether you're an athlete looking to monetize your influence or a business seeking authentic brand ambassadors, Contested makes it easy to find your perfect match.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <FadeIn delay={0.2} direction="up">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
+                    asChild
+                  >
+                    <Link to="/dynamic-onboarding">Find Your Athlete Match Now</Link>
+                  </Button>
+                </FadeIn>
+                
+                <FadeIn delay={0.4} direction="up">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-red-500 text-white hover:bg-red-500/10"
+                    onClick={() => setShowChat(true)}
+                  >
+                    Chat with AI Assistant
+                  </Button>
+                </FadeIn>
+              </div>
+            </ScrollReveal>
           </div>
-        </div>
+        </Parallax>
       </section>
       
       {/* Chat Interface */}
