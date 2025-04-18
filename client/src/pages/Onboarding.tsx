@@ -30,7 +30,16 @@ type OnboardingStep =
   | "operating-location"
   | "contact-info"
   | "business-size"
-  | "create-password";
+  | "create-password"
+  // Athlete-specific steps
+  | "athlete-basic-info"
+  | "athlete-academic-info"
+  | "athlete-sport-info"
+  | "athlete-eligibility-check"
+  | "athlete-social-media"
+  | "athlete-content-style"
+  | "athlete-compensation"
+  | "athlete-brand-values";
 
 // Form data type
 interface BusinessFormData {
@@ -76,6 +85,60 @@ interface BusinessFormData {
   // User info
   name: string;
   email: string;
+  
+  // Athlete-specific fields
+  // Basic Information
+  phone: string;
+  birthdate: string;
+  gender: string;
+  bio: string;
+  
+  // Academic Information
+  school: string;
+  division: string;
+  graduationYear: number | null;
+  major: string;
+  gpa: number | null;
+  academicHonors: string;
+  
+  // Athletic Information
+  sport: string;
+  position: string;
+  sportAchievements: string;
+  stats: Record<string, any>;
+  
+  // Social Media
+  socialHandles: {
+    instagram?: string;
+    tiktok?: string;
+    twitter?: string;
+    youtube?: string;
+    facebook?: string;
+    other?: string;
+  };
+  followerCount: number | null;
+  averageEngagementRate: number | null;
+  
+  // Content Creation
+  contentStyle: string;
+  contentTypes: string[];
+  
+  // Brand Preferences
+  compensationGoals: string;
+  preferredProductCategories: string[];
+  previousBrandDeals: any[];
+  
+  // Personal Brand
+  personalValues: string[];
+  causes: string[];
+  
+  // Availability & Requirements
+  availabilityTimeframe: string;
+  minimumCompensation: string;
+  
+  // Eligibility status (for verification)
+  eligibilityStatus: "pending" | "verified" | "rejected" | "";
+  eligibilityMessage: string;
 }
 
 // Initial form data
