@@ -833,7 +833,7 @@ export default function Onboarding() {
       case "budget":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-3xl mx-auto">
               <StaggerItem>
                 <motion.h2 
                   className="text-2xl font-bold mb-4"
@@ -894,12 +894,12 @@ export default function Onboarding() {
                       <motion.div 
                         className="absolute h-full bg-gradient-to-r from-red-600/30 to-amber-600/30"
                         style={{ 
-                          left: `${Math.min(Math.max(formData.budgetMin / 100, 0), 100)}%`,
-                          right: `${100 - Math.min(Math.max(formData.budgetMax / 100, 0), 100)}%`
+                          left: '10%',
+                          right: '20%'
                         }}
                         animate={{ 
-                          left: `${Math.min(Math.max(formData.budgetMin / 100, 0), 100)}%`,
-                          right: `${100 - Math.min(Math.max(formData.budgetMax / 100, 0), 100)}%`
+                          left: '10%',
+                          right: '20%'
                         }}
                         transition={{ type: "spring", stiffness: 100, damping: 15 }}
                       />
@@ -937,7 +937,7 @@ export default function Onboarding() {
       case "zip-code":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-3xl mx-auto">
               <StaggerItem>
                 <motion.h2 
                   className="text-2xl font-bold mb-4"
@@ -1004,7 +1004,7 @@ export default function Onboarding() {
       case "operating-location":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-3xl mx-auto">
               <StaggerItem>
                 <motion.h2 
                   className="text-2xl font-bold mb-4"
@@ -1100,7 +1100,7 @@ export default function Onboarding() {
       case "contact-info":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-3xl mx-auto">
               <StaggerItem>
                 <motion.h2 
                   className="text-2xl font-bold mb-4"
@@ -1207,7 +1207,7 @@ export default function Onboarding() {
       case "business-size":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-3xl mx-auto">
               <StaggerItem>
                 <motion.h2 
                   className="text-2xl font-bold mb-4"
@@ -1297,7 +1297,7 @@ export default function Onboarding() {
       case "create-password":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-3xl mx-auto">
               <StaggerItem>
                 <motion.h2 
                   className="text-2xl font-bold mb-4"
