@@ -625,33 +625,55 @@ export default function Onboarding() {
           case "user-type":
             nextStep = "athlete-category";
             break;
+            
           case "athlete-category":
             nextStep = "athlete-basic-info";
             break;
+            
           case "athlete-basic-info":
-            nextStep = "athlete-academic-info";
+            // Skip academic info for professional, influencer, esports athletes
+            if (formData.athleteCategory === "professional" || 
+                formData.athleteCategory === "influencer" || 
+                formData.athleteCategory === "esports") {
+              nextStep = "athlete-sport-info";
+            } else {
+              nextStep = "athlete-academic-info";
+            }
             break;
+            
           case "athlete-academic-info":
             nextStep = "athlete-sport-info";
             break;
+            
           case "athlete-sport-info":
-            nextStep = "athlete-eligibility-check";
+            // Skip eligibility check for non-college athletes
+            if (formData.athleteCategory !== "college") {
+              nextStep = "athlete-social-media";
+            } else {
+              nextStep = "athlete-eligibility-check";
+            }
             break;
+            
           case "athlete-eligibility-check":
             nextStep = "athlete-social-media";
             break;
+            
           case "athlete-social-media":
             nextStep = "athlete-content-style";
             break;
+            
           case "athlete-content-style":
             nextStep = "athlete-compensation";
             break;
+            
           case "athlete-compensation":
             nextStep = "athlete-brand-values";
             break;
+            
           case "athlete-brand-values":
             nextStep = "create-password";
             break;
+            
           default:
             nextStep = "create-password";
         }
@@ -717,13 +739,25 @@ export default function Onboarding() {
           prevStep = "athlete-basic-info";
           break;
         case "athlete-sport-info":
-          prevStep = "athlete-academic-info";
+          // For professional, influencer, esports athletes, skip academic info
+          if (formData.athleteCategory === "professional" || 
+              formData.athleteCategory === "influencer" || 
+              formData.athleteCategory === "esports") {
+            prevStep = "athlete-basic-info";
+          } else {
+            prevStep = "athlete-academic-info";
+          }
           break;
         case "athlete-eligibility-check":
           prevStep = "athlete-sport-info";
           break;
         case "athlete-social-media":
-          prevStep = "athlete-eligibility-check";
+          // For non-college athletes, skip eligibility check
+          if (formData.athleteCategory !== "college") {
+            prevStep = "athlete-sport-info";
+          } else {
+            prevStep = "athlete-eligibility-check";
+          }
           break;
         case "athlete-content-style":
           prevStep = "athlete-social-media";
