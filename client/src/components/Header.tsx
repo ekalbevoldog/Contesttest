@@ -27,15 +27,318 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import React, { useState, ReactNode } from "react"; // Added ReactNode
+import { Link, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Menu,
+  BarChart,
+  Trophy,
+  LogIn,
+  LogOut,
+  UserCircle,
+  Briefcase,
+  Settings,
+  Webhook,
+  User,
+  MessageSquare,
+  Shield,
+  ExternalLink,
+  ChevronDown, // Added for dropdown indicator
+  Info, // Example for Solutions
+  DollarSign, // Example for Pricing
+  BookOpen, // Example for Case Studies
+  Zap, // Example for Get Started / AI Assistant
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils"; // Import cn for conditional classes
+
+// --- Types ---
+type UserType = "athlete" | "business" | "compliance" | "admin" | null;
+
+interface NavItem {
+  label: string;
+  href?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  onClick?: () => void;
+  condition?: (user: any, userType: UserType) => boolean; // Condition to display the item
+  isDropdown?: boolean;
+  dropdownItems?: NavItem[]; // Sub-items for dropdowns
+  isButton?: boolean; // For special buttons like AI Assistant / Get Started
+  buttonVariant?: "default" | "outline" | "ghost" | "secondary" | "destructive" | "link"; // shadcn button variants
+  buttonClassName?: string;
+  hideInMobile?: boolean; // Option to hide certain items in mobile drawer
+  hideInDesktop?: boolean; // Option to hide certain items in desktop nav
+  mobileOnly?: boolean; // Only show in mobile
+  desktopOnly?: boolean; // Only show in desktop
+}
+
+// --- Helper Components ---
+
+// Reusable Nav Link Item
+const NavLinkItem: React.FC<{
+  item: NavItem;
+  isActive: boolean;
+  isMobile?: boolean;
+  closeSheet?: () => void;
+}> = ({ item, isActive, isMobile = false, closeSheet }) => {
+  const commonClasses = `px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center`;
+  const mobileBaseClasses = `block text-base`;
+  const desktopBaseClasses = `text-sm`;
+  const activeBg = isMobile ? "bg-primary/25" : "bg-primary/15"; // Use theme colors
+  const hoverBg = isMobile ? "hover:bg-primary/15" : "hover:bg-primary/10"; // Use theme colors
+  const activeText = "text-white";
+  const inactiveText = "text-gray-300 hover:text-white";
+
+  const className = cn(
+    commonClasses,
+    isMobile ? mobileBaseClasses : desktopBaseClasses,
+    isActive ? `${activeBg} ${activeText}` : `${inactiveText} ${hoverBg}`
+  );
+
+  const content = (
+    <>
+      {item.icon && <item.icon className={cn("mr-2 h-4 w-4", isActive ? "text-primary-foreground" : "text-primary")} />}
+      <span>{item.label}</span>
+    </>
+  );
+
+  const handleClick = () => {
+    if (item.onClick) item.onClick();
+    if (closeSheet) closeSheet();
+  };
+
+  if (item.href) {
+    return (
+      <Link href={item.href} onClick={handleClick}>
+        <span className={className}>{content}</span>
+      </Link>
+    );
+  }
+
+  if (item.onClick) {
+    return (
+      <button className={cn(className, "w-full text-left")} onClick={handleClick}>
+        {content}
+      </button>
+    );
+  }
+
+  return <span className={className}>{content}</span>; // Fallback for non-interactive items if needed
+};
+
+// Reusable Dropdown Menu
+const NavDropdown: React.FC<{
+  triggerItem: NavItem;
+  items: NavItem[];
+  isActive: boolean;
+  isMobile?: boolean;
+  closeSheet?: () => void;
+  user: any;
+  userType: UserType;
+}> = ({ triggerItem, items, isActive, isMobile = false, closeSheet, user, userType }) => {
+  const triggerClasses = cn(
+    "px-3 py-2 rounded-md text-sm font-medium cursor-pointer flex items-center",
+    isActive ? "bg-primary/15 text-white" : "text-gray-300 hover:text-white hover:bg-primary/10"
+  );
+
+  const filteredItems = items.filter(subItem => !subItem.condition || subItem.condition(user, userType));
+
+  if (isMobile) {
+    // Render as expandable section in mobile sheet
+    return (
+      <div>
+        <div className="border-b border-gray-700 pb-2 mb-2">
+          <p className="px-3 py-1 text-sm text-gray-400 flex items-center">
+            {triggerItem.icon && <triggerItem.icon className="mr-2 h-4 w-4 text-primary" />}
+            {triggerItem.label}
+          </p>
+        </div>
+        {filteredItems.map((subItem, index) => (
+          <NavLinkItem
+            key={index}
+            item={subItem}
+            isActive={false} // Active state handled by parent link in mobile for simplicity
+            isMobile={true}
+            closeSheet={closeSheet}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Render as DropdownMenu on desktop
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <span className={triggerClasses}>
+          {triggerItem.icon && <triggerItem.icon className="mr-1 h-4 w-4 text-primary" />}
+          {triggerItem.label}
+          <ChevronDown className="ml-1 h-4 w-4" />
+        </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56 bg-gray-900 border-primary/50 text-white">
+        {filteredItems.map((subItem, index) => (
+          <DropdownMenuItem key={index} asChild className="hover:bg-primary/15 focus:bg-primary/15 cursor-pointer">
+            {subItem.href ? (
+              <Link href={subItem.href} className="w-full flex items-center">
+                {subItem.icon && <subItem.icon className="mr-2 h-4 w-4 text-primary" />}
+                <span>{subItem.label}</span>
+              </Link>
+            ) : subItem.onClick ? (
+              <button onClick={subItem.onClick} className="w-full flex items-center text-left">
+                {subItem.icon && <subItem.icon className="mr-2 h-4 w-4 text-primary" />}
+                <span>{subItem.label}</span>
+              </button>
+            ) : (
+               <span className="w-full flex items-center"> {/* Fallback for non-interactive */}
+                 {subItem.icon && <subItem.icon className="mr-2 h-4 w-4 text-primary" />}
+                 <span>{subItem.label}</span>
+               </span>
+            )}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 
 export default function Header() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const { user, logoutMutation } = useAuth();
+  const userType = user?.userType as UserType || null;
 
-  // Extract user type from user object if available
-  const userType = user?.userType || null;
+  const handleLogout = () => {
+    logoutMutation.mutate();
+    setOpen(false); // Close sheet on logout
+  };
+
+  // --- Navigation Data ---
+  const navItems: NavItem[] = [
+    // --- Marketing Links (Not Logged In) ---
+    { label: "Solutions", href: "/solutions", icon: Info, condition: (user) => !user, desktopOnly: true },
+    { label: "Pricing", href: "/pricing", icon: DollarSign, condition: (user) => !user, desktopOnly: true },
+    { label: "Case Studies", href: "/case-studies", icon: BookOpen, condition: (user) => !user, desktopOnly: true },
+
+    // --- App Navigation (Logged In) ---
+    // Dashboard Links (Conditional)
+    { label: "Athlete Dashboard", href: "/athlete/dashboard", icon: BarChart, condition: (_, userType) => userType === 'athlete' },
+    { label: "Business Dashboard", href: "/business/dashboard", icon: BarChart, condition: (_, userType) => userType === 'business' },
+    { label: "Compliance Dashboard", href: "/compliance", icon: Shield, condition: (_, userType) => userType === 'compliance' },
+    // Admin Dashboard Dropdown
+    {
+      label: "Dashboards", icon: BarChart, isDropdown: true, condition: (_, userType) => userType === 'admin',
+      dropdownItems: [
+        { label: "Admin Dashboard", href: "/admin/dashboard", icon: Settings },
+        { label: "Athlete Dashboard", href: "/athlete/dashboard", icon: Trophy },
+        { label: "Business Dashboard", href: "/business/dashboard", icon: Briefcase },
+        { label: "Compliance Dashboard", href: "/compliance", icon: Shield },
+      ]
+    },
+    // Messages Link
+    { label: "Messages", href: "/messages", icon: MessageSquare, condition: (user) => !!user },
+
+    // --- Admin Section (Admin Only) ---
+    {
+      label: "Admin", icon: Settings, isDropdown: true, condition: (_, userType) => userType === 'admin', desktopOnly: true, // Desktop only for this specific trigger style
+      dropdownItems: [
+        { label: "n8n Webhook Config", href: "/admin/n8n-config", icon: Webhook },
+      ]
+    },
+    // Mobile Admin Section Header
+    { label: "Admin", condition: (_, userType) => userType === 'admin', mobileOnly: true, isButton: false }, // Just a header for mobile
+    { label: "n8n Webhook Config", href: "/admin/n8n-config", icon: Webhook, condition: (_, userType) => userType === 'admin', mobileOnly: true },
+
+
+    // --- Profile / Auth Section ---
+    {
+      label: "Profile", icon: User, isDropdown: true, condition: (user) => !!user, desktopOnly: true, // Desktop only for this specific trigger style
+      dropdownItems: [
+        { label: "My Profile", href: "/profile", icon: UserCircle },
+        { label: "Messages", href: "/messages", icon: MessageSquare },
+        { label: "My Public Profile", href: "/athlete/profile-link", icon: ExternalLink, condition: (_, userType) => userType === 'athlete' },
+        { label: "Settings", href: "/settings", icon: Settings },
+        { label: "Sign Out", icon: LogOut, onClick: handleLogout },
+      ]
+    },
+    {
+      label: "Sign In", icon: LogIn, isDropdown: true, condition: (user) => !user, desktopOnly: true, // Desktop only for this specific trigger style
+      dropdownItems: [
+        { label: "Sign in or Register", href: "/auth", icon: UserCircle },
+      ]
+    },
+
+    // Mobile Account Section Header
+    { label: "Account", condition: () => true, mobileOnly: true, isButton: false }, // Header for mobile
+    // Mobile Account Links (Logged In)
+    { label: "My Profile", href: "/profile", icon: UserCircle, condition: (user) => !!user, mobileOnly: true },
+    { label: "Messages", href: "/messages", icon: MessageSquare, condition: (user) => !!user, mobileOnly: true },
+    { label: "My Public Profile", href: "/athlete/profile-link", icon: ExternalLink, condition: (user, userType) => !!user && userType === 'athlete', mobileOnly: true },
+    { label: "Settings", href: "/settings", icon: Settings, condition: (user) => !!user, mobileOnly: true },
+    { label: "Sign Out", icon: LogOut, onClick: handleLogout, condition: (user) => !!user, mobileOnly: true },
+    // Mobile Account Links (Logged Out)
+    { label: "Sign in or Register", href: "/auth", icon: UserCircle, condition: (user) => !user, mobileOnly: true },
+    { label: "Get Started", href: "/dynamic-onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
+
+    // --- Special Buttons ---
+    {
+      label: "AI Assistant", icon: Zap, isButton: true, buttonVariant: 'default',
+      buttonClassName: "bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium",
+      onClick: () => window.dispatchEvent(new CustomEvent('toggle-ai-assistant')),
+      condition: () => true, // Always show AI assistant button? Adjust if needed
+      desktopOnly: true, // Specific styling for desktop button
+    },
+    {
+      label: "Get Started", isButton: true, buttonVariant: 'default',
+      buttonClassName: "bg-destructive hover:bg-destructive/90 text-white font-medium ml-2", // Use theme color
+      href: "/dynamic-onboarding",
+      condition: (user) => !user, // Only show when not logged in
+      desktopOnly: true, // Specific styling for desktop button
+    },
+    // Mobile AI Assistant Button
+    {
+      label: "Chat with AI Assistant", icon: Zap, isButton: true, buttonVariant: 'default',
+      buttonClassName: "w-full mt-6 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium",
+      onClick: () => {
+        setOpen(false);
+        window.dispatchEvent(new CustomEvent('toggle-ai-assistant'));
+      },
+      condition: () => true, // Always show
+      mobileOnly: true,
+    },
+  ];
+
+  // Filter items based on conditions and context (desktop/mobile)
+  const getVisibleItems = (isMobile: boolean) => {
+    return navItems.filter(item => {
+      const conditionMet = !item.condition || item.condition(user, userType);
+      const contextMatch = isMobile
+        ? (!item.desktopOnly && !item.hideInMobile)
+        : (!item.mobileOnly && !item.hideInDesktop);
+      return conditionMet && contextMatch;
+    });
+  };
+
+  const desktopNavItems = getVisibleItems(false);
+  const mobileNavItems = getVisibleItems(true);
+
+  // Helper to check if a dropdown trigger path is active
+  const isDropdownActive = (item: NavItem) => {
+    return item.isDropdown && item.dropdownItems?.some(sub => sub.href && location.startsWith(sub.href));
+  };
 
   return (
     <header className="bg-[#111111] border-b border-zinc-800 shadow-md backdrop-blur-md">
