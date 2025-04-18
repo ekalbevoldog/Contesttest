@@ -236,7 +236,7 @@ export class SupabaseStorage implements IStorage {
   // Business operations
   async getBusiness(id: number): Promise<Business | undefined> {
     const { data, error } = await supabase
-      .from('businesses')
+      .from('business_profiles')
       .select('*')
       .eq('id', id)
       .single();
@@ -252,13 +252,13 @@ export class SupabaseStorage implements IStorage {
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
     // First get the user ID from the session
     const session = await this.getSession(sessionId);
-    if (!session || !session.userId) return undefined;
+    if (!session) return undefined;
     
-    // Then get the business by user ID
+    // Then get the business directly by sessionId
     const { data, error } = await supabase
-      .from('businesses')
+      .from('business_profiles')
       .select('*')
-      .eq('userId', session.userId)
+      .eq('sessionId', sessionId)
       .single();
       
     if (error) {
@@ -271,7 +271,7 @@ export class SupabaseStorage implements IStorage {
 
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
     const { data, error } = await supabase
-      .from('businesses')
+      .from('business_profiles')
       .insert(business)
       .select()
       .single();
@@ -286,7 +286,7 @@ export class SupabaseStorage implements IStorage {
 
   async getAllBusinesses(): Promise<Business[]> {
     const { data, error } = await supabase
-      .from('businesses')
+      .from('business_profiles')
       .select('*');
       
     if (error) {
