@@ -821,11 +821,85 @@ export default function EnhancedOnboardingForm({
     setIsSubmitting(true);
 
     try {
+      // Extract data from formData
+      const {
+        userType,
+        basicProfile,
+        athleteDetails,
+        businessDetails,
+        brandValues,
+        goals,
+        audienceInfo,
+        compensation
+      } = formData;
+
       // Prepare data for submission based on user type
-      const submissionData = {
+      let submissionData: Record<string, any> = {
         sessionId: activeSessionId,
-        ...formData  // formData already contains userType
+        userType
       };
+
+      // Process business type data
+      if (userType === 'business') {
+        // Extract key business fields from form data sections
+        const businessData = {
+          ...basicProfile,
+          ...businessDetails,
+          ...brandValues,
+          ...goals,
+          ...audienceInfo,
+          ...compensation
+        };
+
+        // Rename field names to match API expectations
+        submissionData = {
+          ...submissionData,
+          name: businessData.company_name || businessData.business_name,
+          businessType: businessDetails?.business_type || 'product',
+          industry: businessDetails?.industry,
+          accessRestriction: businessDetails?.access_restriction || 'unrestricted',
+          goalIdentification: businessDetails?.goal_identification || [],
+          hasPastPartnership: businessDetails?.has_past_partnership || false,
+          budget: businessDetails?.budget || 0,
+          zipCode: businessDetails?.zip_code,
+          operatingLocation: businessDetails?.operating_location || [],
+          contactName: businessDetails?.contact_info?.contact_name,
+          contactTitle: businessDetails?.contact_info?.contact_title,
+          contactEmail: businessDetails?.contact_info?.contact_email,
+          contactPhone: businessDetails?.contact_info?.contact_phone,
+          businessSize: businessDetails?.business_size,
+          values: brandValues?.values || [],
+          audienceGoals: audienceInfo?.audience_goals || [],
+          campaignVibe: audienceInfo?.campaign_vibe,
+          budgetRange: compensation?.budget_range,
+          email: basicProfile?.email
+        };
+      } else {
+        // Process athlete data
+        const athleteData = {
+          ...basicProfile,
+          ...athleteDetails,
+          ...brandValues,
+          ...goals,
+          ...audienceInfo,
+          ...compensation
+        };
+
+        submissionData = {
+          ...submissionData,
+          name: `${athleteData.first_name || ''} ${athleteData.last_name || ''}`.trim(),
+          sport: athleteDetails?.sport,
+          position: athleteDetails?.position,
+          school: athleteDetails?.university,
+          division: athleteDetails?.eligibility_status,
+          values: brandValues?.values || [],
+          preferredIndustries: goals?.preferred_industries || [],
+          audienceSize: audienceInfo?.audience_size,
+          socialLinks: audienceInfo?.social_links,
+          compensationGoals: compensation?.compensation_goals,
+          email: basicProfile?.email
+        };
+      }
 
       // Submit to personalized onboarding endpoint
       const response = await apiRequest("POST", "/api/personalized-onboarding", submissionData);
@@ -839,10 +913,16 @@ export default function EnhancedOnboardingForm({
       // Move to complete step
       setCurrentStep(WizardStep.Complete);
       
-      // Notify success
+      // Notify success with appropriate message
+      const successMessage = userType === 'business' ? 
+        (businessDetails?.access_restriction === 'restricted' ? 
+          "Business profile created! Your account is pending compliance review." : 
+          "Business profile successfully created!") :
+        "Athlete profile successfully created!";
+      
       toast({
         title: "Profile Submitted",
-        description: "Your profile has been successfully created!",
+        description: successMessage,
         variant: "default"
       });
       
@@ -1188,6 +1268,43 @@ export default function EnhancedOnboardingForm({
                 onChange={(e) => handleInputChange(field.id, parseInt(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+        );
+        
+      case 'slider_float':
+        return (
+          <div className="space-y-4">
+            {fieldLabel}
+            {field.description && (
+              <p className="text-sm text-muted-foreground">{field.description}</p>
+            )}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">
+                  ${field.min?.toLocaleString() || '0'}
+                </span>
+                <span className="text-sm font-medium">
+                  ${value ? value.toLocaleString() : '0'}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  ${field.max?.toLocaleString() || '100,000'}
+                </span>
+              </div>
+              <Slider
+                defaultValue={[value || 0]}
+                max={field.max || 100000}
+                min={field.min || 0}
+                step={500}
+                onValueChange={(vals) => handleInputChange(field.id, vals[0])}
+                className="w-full"
+              />
+              <div className="text-center py-2">
+                <span className="text-sm text-zinc-500">
+                  Drag the slider to set your monthly budget
+                </span>
+              </div>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
           </div>
