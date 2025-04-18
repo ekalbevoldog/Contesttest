@@ -257,7 +257,7 @@ export default function Solutions() {
               className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
               asChild
             >
-              <Link to="/dynamic-onboarding">Start Your Partnership Journey</Link>
+              <Link to="/enhanced-onboarding">Start Your Partnership Journey</Link>
             </Button>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function Solutions() {
                 </li>
               </ul>
               <Button variant="outline" className="border-red-500 text-white hover:bg-red-500/10" asChild>
-                <Link to="/dynamic-onboarding">Athlete Sign Up</Link>
+                <Link to="/enhanced-onboarding">Athlete Sign Up</Link>
               </Button>
             </div>
 
@@ -389,7 +389,7 @@ export default function Solutions() {
                 </li>
               </ul>
               <Button variant="outline" className="border-red-500 text-white hover:bg-red-500/10" asChild>
-                <Link to="/dynamic-onboarding">Business Sign Up</Link>
+                <Link to="/enhanced-onboarding">Business Sign Up</Link>
               </Button>
             </div>
           </div>

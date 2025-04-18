@@ -430,7 +430,7 @@ export default function Pricing() {
               className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-700 hover:to-amber-700 transition-all shadow-md"
               asChild
             >
-              <Link to="/dynamic-onboarding">Get Started Now</Link>
+              <Link to="/enhanced-onboarding">Get Started Now</Link>
             </Button>
           </div>
         </div>

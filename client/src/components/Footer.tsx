@@ -62,7 +62,7 @@ export default function Footer() {
                 <Link href="/find-athlete-match" className="text-gray-400 hover:text-white transition-colors">Find Brand Matches</Link>
               </li>
               <li>
-                <Link href="/dynamic-onboarding" className="text-gray-400 hover:text-white transition-colors">Create Profile</Link>
+                <Link href="/enhanced-onboarding" className="text-gray-400 hover:text-white transition-colors">Create Profile</Link>
               </li>
             </ul>
           </div>
