@@ -469,25 +469,25 @@ export default function Onboarding() {
           newErrors.socialHandles = "Please provide at least one social media handle";
         }
         break;
-      
+        
       case "athlete-content-style":
         if (!formData.contentStyle) {
           newErrors.contentStyle = "Please describe your content style";
         }
         if (formData.contentTypes.length === 0) {
-          newErrors.contentTypes = "Please select at least one content type";
+          newErrors.contentTypes = "Please select at least one type of content you create";
         }
         break;
-      
+        
       case "athlete-compensation":
         if (!formData.compensationGoals) {
-          newErrors.compensationGoals = "Please indicate your compensation expectations";
+          newErrors.compensationGoals = "Please select your compensation preference";
         }
         if (!formData.minimumCompensation) {
-          newErrors.minimumCompensation = "Please enter your minimum compensation expectations";
+          newErrors.minimumCompensation = "Please provide your minimum compensation expectation";
         }
         break;
-      
+        
       case "athlete-brand-values":
         if (formData.personalValues.length === 0) {
           newErrors.personalValues = "Please select at least one personal value";
