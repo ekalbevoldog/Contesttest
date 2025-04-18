@@ -2,10 +2,29 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-// Temporarily use mock service to debug server startup issues
-import { geminiService } from "./services/mockGeminiService";
-import { bigQueryService } from "./services/bigQueryService";
+// Use services
+import { geminiService } from "./services/geminiService";
 import { sessionService } from "./services/sessionService";
+
+// Mock service for BigQuery
+const bigQueryService = {
+  insertAthleteProfile: async (data: any) => {
+    console.log("BigQuery: Inserted athlete profile", data);
+    return true;
+  },
+  insertBusinessProfile: async (data: any) => {
+    console.log("BigQuery: Inserted business profile", data);
+    return true;
+  },
+  insertCampaign: async (data: any) => {
+    console.log("BigQuery: Inserted campaign", data);
+    return true;
+  },
+  insertMatchScore: async (data: any) => {
+    console.log("BigQuery: Inserted match score", data);
+    return true;
+  }
+};
 import { z } from "zod";
 import { createHash } from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
@@ -55,11 +74,22 @@ const profileSchema = z.object({
     // Business specific fields
     z.object({
       userType: z.literal("business"),
-      productType: z.string().min(2, "Product type is required"),
-      audienceGoals: z.string().min(10, "Audience goals are required"),
-      campaignVibe: z.string().min(10, "Campaign vibe is required"),
-      values: z.string().min(10, "Brand values are required"),
-      targetSchoolsSports: z.string().min(5, "Target schools/sports are required"),
+      businessType: z.string().optional(),
+      industry: z.string().optional(),
+      goals: z.array(z.string()).optional().or(z.string()),
+      hasPreviousPartnerships: z.boolean().optional(),
+      zipCode: z.string().optional(),
+      budgetMin: z.number().optional().or(z.string().transform(Number)),
+      budgetMax: z.number().optional().or(z.string().transform(Number)),
+      contactName: z.string().optional(),
+      contactTitle: z.string().optional(),
+      businessSize: z.string().optional(),
+      // Keep backward compatibility with old fields
+      productType: z.string().optional(),
+      audienceGoals: z.string().optional(),
+      campaignVibe: z.string().optional(),
+      values: z.string().optional(),
+      targetSchoolsSports: z.string().optional(),
       budget: z.string().optional(),
     })
   ])
@@ -334,15 +364,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
           reply,
         });
       } else if (userType === "business") {
+        // Create business profile from form data with backward compatibility
         const businessData = {
           sessionId,
           name: profileData.name,
-          productType: profileData.productType,
-          audienceGoals: profileData.audienceGoals,
-          campaignVibe: profileData.campaignVibe,
-          values: profileData.values,
-          targetSchoolsSports: profileData.targetSchoolsSports,
-          budget: profileData.budget || "",
+          // New fields from our form
+          businessType: profileData.businessType || "product", // "product" or "service"
+          industry: profileData.industry || "",
+          goals: profileData.goals || [],
+          hasPreviousPartnerships: profileData.hasPreviousPartnerships || false,
+          // Old fields for compatibility
+          productType: profileData.productType || profileData.businessType || "product",
+          audienceGoals: profileData.audienceGoals || (Array.isArray(profileData.goals) ? profileData.goals.join(", ") : String(profileData.goals || "")),
+          campaignVibe: profileData.campaignVibe || "Professional",
+          values: profileData.values || "Quality, Authenticity",
+          targetSchoolsSports: profileData.targetSchoolsSports || "All schools",
+          budget: profileData.budget || `$${profileData.budgetMin || 0}-$${profileData.budgetMax || 5000}`,
+          // Additional data in preferences JSON
+          preferences: JSON.stringify({
+            zipCode: profileData.zipCode || "",
+            budgetMin: profileData.budgetMin || 0,
+            budgetMax: profileData.budgetMax || 0,
+            contactName: profileData.contactName || "",
+            contactTitle: profileData.contactTitle || "",
+            businessSize: profileData.businessSize || ""
+          })
         };
         
         // Store in local storage
@@ -438,8 +484,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             data: {
               businessId: business.id,
               name: profileData.name,
-              productType: profileData.productType,
-              audienceGoals: profileData.audienceGoals,
+              businessType: profileData.businessType || "product",
+              industry: profileData.industry || "",
+              goals: profileData.goals || [],
+              hasPreviousPartnerships: profileData.hasPreviousPartnerships || false,
               campaign: {
                 title: campaign.title,
                 description: campaign.description
