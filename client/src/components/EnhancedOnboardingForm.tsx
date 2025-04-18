@@ -1100,31 +1100,58 @@ export default function EnhancedOnboardingForm({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
       className="space-y-8 text-center"
     >
-      <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-        <Sparkles className="h-10 w-10 text-primary" />
-      </div>
+      {/* Apple-like floating icon with gradient */}
+      <motion.div 
+        className="mx-auto w-28 h-28 relative"
+        animate={{ 
+          y: [0, -8, 0], 
+        }}
+        transition={{
+          repeat: Infinity,
+          duration: 3,
+          ease: "easeInOut"
+        }}
+      >
+        <div className="absolute inset-0 rounded-[32px] bg-gradient-to-br from-red-500/80 via-amber-500/80 to-red-500/80 blur-[20px] opacity-30 -z-10"></div>
+        <div className="w-full h-full rounded-[32px] backdrop-blur-md bg-gradient-to-br from-red-500/20 via-amber-500/20 to-red-600/20 border border-white/10 flex items-center justify-center shadow-lg">
+          <Sparkles className="h-12 w-12 text-white" />
+        </div>
+      </motion.div>
+      
       <div className="space-y-3">
-        <h2 className="text-3xl font-bold">Welcome to Contested</h2>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+        <motion.h2 
+          className="text-4xl font-bold text-white tracking-tight"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          Welcome to Contested
+        </motion.h2>
+        <motion.p 
+          className="text-zinc-400 text-lg max-w-2xl mx-auto font-light leading-relaxed"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
           Let's personalize your experience to help you find the perfect athlete-brand 
           partnerships that match your specific goals and values.
-        </p>
+        </motion.p>
       </div>
+      
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
+        transition={{ delay: 0.5, duration: 0.6, type: "spring" }}
       >
         <Button 
-          size="lg"
-          className="mt-6 px-8 py-6 text-lg"
           onClick={() => {
             setAnimationDirection('forward');
             handleNext();
           }}
+          className="mt-8 px-10 h-14 rounded-full text-lg font-medium bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white shadow-lg transition-all duration-300 hover:scale-[1.03] hover:shadow-xl"
         >
           Get Started <ChevronRight className="ml-2 h-5 w-5" />
         </Button>
