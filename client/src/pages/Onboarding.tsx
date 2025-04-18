@@ -16,7 +16,7 @@ import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRi
 import SliderWithInput from "@/components/SliderWithInput";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { industries, restrictedIndustries } from "../../../shared/industries";
+import { industries, restrictedIndustries } from "@shared/industries";
 
 // Step types
 type OnboardingStep = 
