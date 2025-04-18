@@ -78,7 +78,7 @@ export default function Home() {
                       className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                       asChild
                     >
-                      <Link to="/onboarding">For Athletes</Link>
+                      <Link to="/athlete-onboarding">For Athletes</Link>
                     </Button>
                     <Button 
                       size="lg" 
@@ -248,7 +248,7 @@ export default function Home() {
                     
                     <div className="flex items-center justify-center">
                       <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                        <Link to="/onboarding">Find Your Perfect Match</Link>
+                        <Link to="/athlete-onboarding">Find Your Perfect Match</Link>
                       </Button>
                     </div>
                   </div>
@@ -329,7 +329,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-center">
                     <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                      <Link to="/onboarding">Find Your Perfect Match</Link>
+                      <Link to="/business-onboarding">Find Your Perfect Match</Link>
                     </Button>
                   </div>
                 </div>
