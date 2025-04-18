@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import SimpleOnboarding from "@/pages/SimpleOnboarding";
+import BusinessOnboarding from "@/pages/BusinessOnboarding";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -19,6 +20,8 @@ function Router() {
           <Route path="/enhanced-onboarding" component={SimpleOnboarding} />
           <Route path="/dynamic-onboarding" component={SimpleOnboarding} />
           <Route path="/explore-matches" component={SimpleOnboarding} />
+          <Route path="/business-onboarding" component={BusinessOnboarding} />
+          <Route path="/business/sign-up" component={BusinessOnboarding} />
           {/* All other routes temporarily point to our simple components */}
           <Route component={Home} />
         </Switch>
