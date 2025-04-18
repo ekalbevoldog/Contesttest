@@ -360,12 +360,12 @@ const handleFileUpload = async (files: FileList) => {
   }, [lastMessage, toast]);
   
   return (
-    <div className="flex flex-col bg-white h-full">
+    <div className="flex flex-col bg-zinc-900 h-full text-white">
       {/* Fixed height wrapper */}
       <div className="flex flex-col h-full">
         {/* Messages container with fixed height - adjusting to leave room for input area */}
-        <div className="h-[calc(100%-80px)] overflow-y-auto p-4">
-          <div className="space-y-4">
+        <div className="h-[calc(100%-80px)] overflow-y-auto p-5 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
+          <div className="space-y-5">
             {messages.map((message) => (
               <div key={message.id}>
                 {message.type === 'assistant' ? (

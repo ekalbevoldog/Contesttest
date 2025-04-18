@@ -127,30 +127,44 @@ export default function AIAssistantDrawer() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-      <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-xl overflow-hidden flex flex-col h-[80vh] max-h-[800px]">
-        {/* Single Header with Controls */}
-        <div className="bg-[#0c1e36] p-4 text-white">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-bold">Contested Assistant</h2>
-            <button 
-              onClick={() => setIsOpen(false)} 
-              className="text-white hover:text-white/80 transition"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center transition-all duration-300">
+      <div className="w-full max-w-md mx-auto bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[80vh] max-h-[800px] border border-zinc-800">
+        {/* Premium Gradient Header with Controls */}
+        <div className="relative bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 p-5 text-white">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/10 to-amber-500/0 opacity-50"></div>
           
-          <p className="text-sm text-gray-300">Connecting SMBs with mid-tier athletes</p>
-          
-          <div className="flex mt-3 space-x-3">
-            <div className="flex items-center px-3 py-1.5 rounded-full text-xs bg-[rgba(0,255,204,0.15)] border border-[rgba(0,255,204,0.5)] text-white">
-              <div className="h-3 w-3 rounded-full mr-2 bg-[#00ffcc]"></div>
-              <span className="font-medium">Live Updates</span>
+          <div className="flex justify-between items-center mb-2 relative z-10">
+            <div className="flex items-center">
+              <div className="mr-3 h-8 w-8 rounded-full bg-gradient-to-r from-red-500 to-amber-500 flex items-center justify-center text-white shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                  <path d="M15.5 2H8.6c-.4 0-.8.2-1.1.5-.3.3-.5.7-.5 1.1v16.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h12.8c.4 0 .8-.2 1.1-.5.3-.3.5-.7.5-1.1V7.5L15.5 2z"></path>
+                  <path d="M3 7.6v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h12.8"></path>
+                  <path d="M15 2v5.4c0 .4.2.8.5 1.1.3.3.7.5 1.1.5H22"></path>
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Contested AI</h2>
+                <p className="text-xs text-zinc-300 font-light mt-0.5">Personalized NIL partnership advisor</p>
+              </div>
             </div>
             
             <button 
-              className="flex items-center gap-1 bg-[#243b5e] hover:bg-[#304d77] text-white px-3 py-1.5 rounded-full text-xs font-medium"
+              onClick={() => setIsOpen(false)} 
+              className="relative overflow-hidden group h-8 w-8 rounded-full bg-zinc-800/70 hover:bg-zinc-700/80 border border-zinc-700/50 flex items-center justify-center transition-all duration-200"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/30 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm"></span>
+              <X className="h-4 w-4 text-zinc-300 group-hover:text-white relative z-10" />
+            </button>
+          </div>
+          
+          <div className="flex mt-4 space-x-3 relative z-10">
+            <div className="flex items-center px-3 py-1.5 rounded-full text-xs bg-zinc-800/80 border border-zinc-700/50 text-white">
+              <div className="h-2 w-2 rounded-full mr-2 bg-green-400 animate-pulse"></div>
+              <span className="font-medium text-xs">Live Updates</span>
+            </div>
+            
+            <button 
+              className="flex items-center gap-1.5 bg-gradient-to-r from-red-500/80 to-amber-500/80 hover:from-red-500 hover:to-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 shadow-lg hover:shadow-red-500/20"
               onClick={testMatchNotification}
             >
               <svg
@@ -171,7 +185,7 @@ export default function AIAssistantDrawer() {
             </button>
             
             <button 
-              className="flex items-center gap-1 border border-[#3a5a88] text-white hover:bg-[rgba(58,90,136,0.2)] px-3 py-1.5 rounded-full text-xs font-medium"
+              className="flex items-center gap-1.5 bg-zinc-800/80 border border-zinc-700/50 text-white hover:bg-zinc-700/80 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300"
               onClick={handleResetChat}
             >
               <svg
@@ -195,7 +209,7 @@ export default function AIAssistantDrawer() {
         </div>
 
         {/* Chat content */}
-        <div className="flex-grow overflow-hidden flex flex-col">
+        <div className="flex-grow overflow-hidden flex flex-col border-t border-zinc-800">
           <ChatInterface />
         </div>
       </div>
