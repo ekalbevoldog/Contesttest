@@ -989,19 +989,29 @@ export default function Onboarding() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
                   >
-                    <AnimatedFormField
-                      type="text"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleChange}
-                      label="ZIP Code"
-                      placeholder="Enter your ZIP code"
-                      required={true}
-                      pattern="^\d{5}(-\d{4})?$"
-                      errorMessage={errors.zipCode}
-                      icon={<MapPin size={18} />}
-                      className="w-full text-xl" 
-                    />
+                    <div className="relative rounded-lg bg-zinc-800 border border-zinc-700 focus-within:border-red-500 transition-colors duration-200">
+                      <label 
+                        className="absolute top-0 left-0 px-3 py-2 text-sm font-medium text-zinc-400 transform -translate-y-1/2 bg-zinc-800 border border-zinc-700 rounded-md"
+                      >
+                        ZIP Code <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="zipCode"
+                        value={formData.zipCode}
+                        onChange={handleChange}
+                        placeholder="Enter your 5-digit ZIP code"
+                        required
+                        pattern="^\d{5}(-\d{4})?$"
+                        className="w-full px-4 pt-6 pb-3 bg-transparent text-xl font-medium tracking-wide text-white focus:outline-none"
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-400">
+                        <MapPin size={18} />
+                      </div>
+                      {errors.zipCode && (
+                        <div className="text-red-500 text-sm mt-1 ml-1">{errors.zipCode}</div>
+                      )}
+                    </div>
                     
                     <motion.p 
                       className="text-sm text-zinc-400 mt-2"
