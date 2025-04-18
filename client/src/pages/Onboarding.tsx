@@ -505,52 +505,95 @@ export default function Onboarding() {
       case "user-type":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-8">
-              <StaggerItem>
-                <motion.h2 
-                  className="text-3xl font-bold mb-4"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  Welcome to Contested! I'm here to help you get started
-                </motion.h2>
-                <motion.p 
-                  className="text-zinc-400 mb-8"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                >
-                  Let me guide you through our platform based on your needs. First, tell me which best describes you:
-                </motion.p>
+            <div className="space-y-8 relative">
+              {/* Add floating elements for visual interest */}
+              <FloatingElement
+                className="absolute top-[-20px] right-[-10px] text-red-500/20 z-0"
+                floatIntensity={10}
+                duration={7}
+              >
+                <Trophy size={60} />
+              </FloatingElement>
+              
+              <FloatingElement
+                className="absolute bottom-[-60px] left-[-30px] text-amber-500/20 z-0"
+                floatIntensity={8}
+                duration={8}
+                delay={1}
+              >
+                <Target size={80} />
+              </FloatingElement>
+              
+              <StaggerContainer>
+                <StaggerItem>
+                  <AnimeText
+                    className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500"
+                    duration={800}
+                    staggerDelay={20}
+                  >
+                    Welcome to Contested!
+                  </AnimeText>
+                  <motion.h3
+                    className="text-xl font-medium mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.8 }}
+                  >
+                    I'm here to help you get started
+                  </motion.h3>
+                  <motion.p 
+                    className="text-zinc-400 mb-8"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 1 }}
+                  >
+                    Let me guide you through our platform based on your needs. First, tell me which best describes you:
+                  </motion.p>
+                </StaggerItem>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <AnimatedSelectionField
-                    type="radio"
-                    name="userType"
-                    selectedValues={formData.userType}
-                    onChange={(e) => handleRadioChange(e, e.target.value)}
-                    options={[
-                      {
-                        value: "business",
-                        label: "I'm a Business",
-                        description: "Looking to partner with college athletes for marketing and promotion",
-                        icon: <Building className="h-10 w-10 text-amber-500" />
+                <StaggerItem
+                  customVariants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: {
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 24,
+                        delay: 0.4,
                       },
-                      {
-                        value: "athlete",
-                        label: "I'm an Athlete",
-                        description: "Looking to monetize my brand and find business partnerships", 
-                        icon: <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><path d="M6.5 6.5 12 12l5.5 5.5"></path><circle cx="5" cy="5" r="1"></circle><circle cx="19" cy="19" r="1"></circle><path d="M10 5H5v5"></path><path d="M14 19h5v-5"></path></svg>
-                      }
-                    ]}
-                    cardStyle={true}
-                    required={true}
-                    errorMessage={errors.userType}
-                    isTouched={!!errors.userType}
-                  />
-                </div>
-              </StaggerItem>
+                    },
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                    <AnimatedSelectionField
+                      type="radio"
+                      name="userType"
+                      selectedValues={formData.userType}
+                      onChange={(e) => handleRadioChange(e, e.target.value)}
+                      options={[
+                        {
+                          value: "business",
+                          label: "I'm a Business",
+                          description: "Looking to partner with college athletes for marketing and promotion",
+                          icon: <Building className="h-12 w-12 text-amber-500" />
+                        },
+                        {
+                          value: "athlete",
+                          label: "I'm an Athlete",
+                          description: "Looking to monetize my brand and find business partnerships", 
+                          icon: <Trophy className="h-12 w-12 text-red-500" />
+                        }
+                      ]}
+                      cardStyle={true}
+                      required={true}
+                      errorMessage={errors.userType}
+                      isTouched={!!errors.userType}
+                    />
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
             </div>
           </AnimatedFormTransition>
         );
@@ -558,39 +601,107 @@ export default function Onboarding() {
       case "business-type":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6">
-              <StaggerItem>
-                <motion.h2 
-                  className="text-2xl font-bold mb-4"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  What type of business are you?
-                </motion.h2>
+            <div className="space-y-6 relative">
+              {/* Floating decorative elements */}
+              <FloatingElement
+                className="absolute top-[20px] right-[-20px] text-amber-500/20 z-0"
+                floatIntensity={8}
+                duration={7}
+              >
+                <Building size={50} />
+              </FloatingElement>
+              
+              <StaggerContainer>
+                <StaggerItem>
+                  <AnimeText
+                    className="text-2xl font-bold mb-4 text-white"
+                    duration={600}
+                    staggerDelay={15}
+                  >
+                    What type of business are you?
+                  </AnimeText>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    This helps us tailor athlete matches that align with your specific business model.
+                  </motion.p>
+                </StaggerItem>
                 
-                <AnimatedSelectionField
-                  type="radio"
-                  name="businessType"
-                  selectedValues={formData.businessType}
-                  onChange={(e) => handleRadioChange(e, e.target.value)}
-                  options={[
-                    {
-                      value: "product",
-                      label: "Product Business",
-                      description: "We sell physical or digital products to consumers"
+                <StaggerItem
+                  customVariants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: {
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 24,
+                        delay: 0.3,
+                      },
                     },
-                    {
-                      value: "service",
-                      label: "Service Business",
-                      description: "We provide services to consumers or other businesses"
-                    }
-                  ]}
-                  required={true}
-                  errorMessage={errors.businessType}
-                  isTouched={!!errors.businessType}
-                />
-              </StaggerItem>
+                  }}
+                >
+                  <div className="relative z-10">
+                    <AnimatedSelectionField
+                      type="radio"
+                      name="businessType"
+                      selectedValues={formData.businessType}
+                      onChange={(e) => handleRadioChange(e, e.target.value)}
+                      options={[
+                        {
+                          value: "product",
+                          label: "Product Business",
+                          description: "We sell physical or digital products to consumers",
+                          icon: <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500"><path d="m7.5 4.27 9 5.15"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>
+                        },
+                        {
+                          value: "service",
+                          label: "Service Business",
+                          description: "We provide services to consumers or other businesses",
+                          icon: <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500"><circle cx="12" cy="12" r="10"></circle><path d="m4.9 4.9 14.2 14.2"></path><path d="M12 2v20"></path><path d="M2 12h20"></path></svg>
+                        }
+                      ]}
+                      required={true}
+                      errorMessage={errors.businessType}
+                      isTouched={!!errors.businessType}
+                      cardStyle={true}
+                    />
+                  </div>
+                </StaggerItem>
+                
+                <StaggerItem
+                  customVariants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: {
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 24,
+                        delay: 0.6,
+                      },
+                    },
+                  }}
+                >
+                  <motion.div 
+                    className="mt-8 p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-lg"
+                    transition={{ duration: 0.5 }}
+                  >
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                      <p className="text-sm text-zinc-400">
+                        Your business type helps us match you with athletes who can best represent your products or services
+                        to their audience in the most authentic way.
+                      </p>
+                    </div>
+                  </motion.div>
+                </StaggerItem>
+              </StaggerContainer>
             </div>
           </AnimatedFormTransition>
         );
