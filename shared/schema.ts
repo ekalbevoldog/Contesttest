@@ -146,12 +146,13 @@ export const businesses = pgTable("business_profiles", {
   // Basic Information
   name: text("name").notNull(),
   email: text("email"),
-  phone: text("phone"),
   industry: text("industry"),
+  businessType: text("business_type"),
   companySize: text("company_size"),
   foundedYear: integer("founded_year"),
   website: text("website"),
-  logo: text("logo_url"),
+  logo: text("logo"),
+  zipCode: text("zipCode"),
   
   // Product Information
   productType: text("product_type").notNull(),
@@ -177,7 +178,7 @@ export const businesses = pgTable("business_profiles", {
   values: text("values").notNull(),
   brandVoice: text("brand_voice"),
   brandColors: jsonb("brand_colors"),
-  brandGuidelines: text("brand_guidelines_url"),
+  brandGuidelines: text("brand_guidelines"),
   sustainabilityFocus: boolean("sustainability_focus"),
   
   // Athletic Targeting
@@ -188,12 +189,18 @@ export const businesses = pgTable("business_profiles", {
   
   // Budget and Compensation
   budget: text("budget"),
+  budgetMin: integer("budgetMin"),
+  budgetMax: integer("budgetMax"),
   compensationModel: text("compensation_model"), // monetary, product, affiliate, etc.
   budgetPerAthlete: text("budget_per_athlete"),
   
   // Previous Experience
+  hasPreviousPartnerships: boolean("hasPreviousPartnerships"),
   previousInfluencerCampaigns: jsonb("previous_influencer_campaigns"),
   campaignSuccessMetrics: jsonb("campaign_success_metrics"),
+  
+  // Goals
+  goals: jsonb("goals"),
   
   // Preferences and Algorithm Data
   preferences: jsonb("preferences"),
