@@ -78,7 +78,14 @@ export default function Home() {
                       className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                       asChild
                     >
-                      <Link to="/dynamic-onboarding">Get Started</Link>
+                      <Link to="/dynamic-onboarding">For Athletes</Link>
+                    </Button>
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-amber-500 to-red-500 text-white font-bold hover:from-amber-600 hover:to-red-600 transition-all shadow-md"
+                      asChild
+                    >
+                      <Link to="/business-onboarding">For Businesses</Link>
                     </Button>
                     <Button 
                       size="lg" 
