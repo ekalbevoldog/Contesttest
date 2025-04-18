@@ -138,68 +138,68 @@ export const insertAthleteSchema = createInsertSchema(athletes).omit({
 });
 
 // Business Profiles
-export const businesses = pgTable("businesses", {
+export const businesses = pgTable("business_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("userId"),
-  sessionId: text("sessionId").notNull(),
+  userId: integer("user_id"),
+  sessionId: text("session_id").notNull(),
   
   // Basic Information
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
   industry: text("industry"),
-  companySize: text("companySize"),
-  foundedYear: integer("foundedYear"),
+  companySize: text("company_size"),
+  foundedYear: integer("founded_year"),
   website: text("website"),
-  logo: text("logo"),
+  logo: text("logo_url"),
   
   // Product Information
-  productType: text("productType").notNull(),
-  productDescription: text("productDescription"),
-  productImages: jsonb("productImages"),
-  pricingTier: text("pricingTier"), // premium, mid-range, budget
+  productType: text("product_type").notNull(),
+  productDescription: text("product_description"),
+  productImages: jsonb("product_images"),
+  pricingTier: text("pricing_tier"), // premium, mid-range, budget
   
   // Marketing Information
-  audienceGoals: text("audienceGoals").notNull(),
-  audienceDemographics: jsonb("audienceDemographics"),
-  primaryAudienceAgeRange: text("primaryAudienceAgeRange"),
-  secondaryAudienceAgeRange: text("secondaryAudienceAgeRange"),
+  audienceGoals: text("audience_goals").notNull(),
+  audienceDemographics: jsonb("audience_demographics"),
+  primaryAudienceAgeRange: text("primary_audience_age_range"),
+  secondaryAudienceAgeRange: text("secondary_audience_age_range"),
   
   // Campaign Details
-  campaignVibe: text("campaignVibe").notNull(),
-  campaignGoals: jsonb("campaignGoals"),
-  campaignFrequency: text("campaignFrequency"),
-  campaignDuration: text("campaignDuration"),
-  campaignSeasonality: text("campaignSeasonality"),
-  campaignTimeline: text("campaignTimeline"),
+  campaignVibe: text("campaign_vibe").notNull(),
+  campaignGoals: jsonb("campaign_goals"),
+  campaignFrequency: text("campaign_frequency"),
+  campaignDuration: text("campaign_duration"),
+  campaignSeasonality: text("campaign_seasonality"),
+  campaignTimeline: text("campaign_timeline"),
   
   // Brand Information
   values: text("values").notNull(),
-  brandVoice: text("brandVoice"),
-  brandColors: jsonb("brandColors"),
-  brandGuidelines: text("brandGuidelines"),
-  sustainabilityFocus: boolean("sustainabilityFocus"),
+  brandVoice: text("brand_voice"),
+  brandColors: jsonb("brand_colors"),
+  brandGuidelines: text("brand_guidelines_url"),
+  sustainabilityFocus: boolean("sustainability_focus"),
   
   // Athletic Targeting
-  targetSchoolsSports: text("targetSchoolsSports").notNull(),
-  preferredSports: jsonb("preferredSports"),
-  preferredDivisions: jsonb("preferredDivisions"),
-  preferredRegions: jsonb("preferredRegions"),
+  targetSchoolsSports: text("target_schools_sports").notNull(),
+  preferredSports: jsonb("preferred_sports"),
+  preferredDivisions: jsonb("preferred_divisions"),
+  preferredRegions: jsonb("preferred_regions"),
   
   // Budget and Compensation
   budget: text("budget"),
-  compensationModel: text("compensationModel"), // monetary, product, affiliate, etc.
-  budgetPerAthlete: text("budgetPerAthlete"),
+  compensationModel: text("compensation_model"), // monetary, product, affiliate, etc.
+  budgetPerAthlete: text("budget_per_athlete"),
   
   // Previous Experience
-  previousInfluencerCampaigns: jsonb("previousInfluencerCampaigns"),
-  campaignSuccessMetrics: jsonb("campaignSuccessMetrics"),
+  previousInfluencerCampaigns: jsonb("previous_influencer_campaigns"),
+  campaignSuccessMetrics: jsonb("campaign_success_metrics"),
   
   // Preferences and Algorithm Data
   preferences: jsonb("preferences"),
   
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertBusinessSchema = createInsertSchema(businesses).omit({
