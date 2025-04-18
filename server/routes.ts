@@ -373,6 +373,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           industry: profileData.industry || "",
           goals: profileData.goals || [],
           hasPreviousPartnerships: profileData.hasPreviousPartnerships || false,
+          budgetMin: profileData.budgetMin || 0,
+          budgetMax: profileData.budgetMax || 5000,
+          zipCode: profileData.zipCode || "",
           // Old fields for compatibility
           productType: profileData.productType || profileData.businessType || "product",
           audienceGoals: profileData.audienceGoals || (Array.isArray(profileData.goals) ? profileData.goals.join(", ") : String(profileData.goals || "")),
@@ -382,9 +385,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           budget: profileData.budget || `$${profileData.budgetMin || 0}-$${profileData.budgetMax || 5000}`,
           // Additional data in preferences JSON
           preferences: JSON.stringify({
-            zipCode: profileData.zipCode || "",
-            budgetMin: profileData.budgetMin || 0,
-            budgetMax: profileData.budgetMax || 0,
             contactName: profileData.contactName || "",
             contactTitle: profileData.contactTitle || "",
             businessSize: profileData.businessSize || ""
@@ -488,6 +488,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               industry: profileData.industry || "",
               goals: profileData.goals || [],
               hasPreviousPartnerships: profileData.hasPreviousPartnerships || false,
+              budgetMin: profileData.budgetMin || 0,
+              budgetMax: profileData.budgetMax || 5000,
+              zipCode: profileData.zipCode || "",
               campaign: {
                 title: campaign.title,
                 description: campaign.description
