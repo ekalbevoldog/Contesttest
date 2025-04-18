@@ -274,19 +274,20 @@ export default function EnhancedOnboardingForm({
         if (userType !== 'business') return [];
         return [
           {
-            id: 'account_type',
+            id: 'business_type',
             type: 'radio',
-            label: 'Product or Service?',
+            label: 'What type of business are you?',
             required: true,
             options: [
-              { id: 'product', label: 'Product-based Business', description: 'We sell physical or digital products' },
-              { id: 'service', label: 'Service-based Business', description: 'We provide services to customers' }
+              { id: 'product', label: 'Product', description: 'We sell physical or digital products' },
+              { id: 'service', label: 'Service', description: 'We provide services to customers' },
+              { id: 'hybrid', label: 'Hybrid', description: 'We offer both products and services' }
             ]
           },
           {
             id: 'industry',
             type: 'select',
-            label: 'Industry',
+            label: 'What industry are you in?',
             required: true,
             options: [
               { id: 'retail', label: 'Retail' },
@@ -305,25 +306,83 @@ export default function EnhancedOnboardingForm({
             tooltip: 'Some industries have special regulations for NIL partnerships'
           },
           {
-            id: 'business_size',
-            type: 'select',
-            label: 'Business Size',
+            id: 'goal_identification',
+            type: 'multi_select',
+            label: 'What are your goals with athlete partnerships?',
+            description: 'Select all that apply',
             required: true,
             options: [
-              { id: '1-10', label: '1-10 employees' },
-              { id: '11-50', label: '11-50 employees' },
-              { id: '51-200', label: '51-200 employees' },
-              { id: '201-500', label: '201-500 employees' },
-              { id: '500+', label: '500+ employees' }
+              { id: 'awareness', label: 'Awareness' },
+              { id: 'sales', label: 'Sales / Conversions' },
+              { id: 'launch_product', label: 'Launch new product' },
+              { id: 'ambassadors', label: 'Athlete ambassadors' },
+              { id: 'other', label: 'Other' }
             ]
+          },
+          {
+            id: 'has_past_partnership',
+            type: 'boolean',
+            label: 'Have you partnered with athletes before?',
+            required: true
+          },
+          {
+            id: 'budget',
+            type: 'slider_float',
+            label: 'What is your estimated monthly budget?',
+            required: true,
+            min: 0,
+            max: 100000
           },
           {
             id: 'zip_code',
             type: 'text',
-            label: 'Zip Code',
+            label: 'What is your business\'s zip code?',
             required: true,
             pattern: '\\d{5}',
             placeholder: '12345'
+          },
+          {
+            id: 'operating_location',
+            type: 'multi_select',
+            label: 'Where do you operate?',
+            description: 'Select all that apply',
+            required: true,
+            options: [
+              { id: 'neighborhood', label: 'Neighborhood / Zip' },
+              { id: 'city', label: 'City' },
+              { id: 'region', label: 'Region' },
+              { id: 'statewide', label: 'Statewide' },
+              { id: 'national', label: 'National' },
+              { id: 'remote', label: 'Remote / Online' }
+            ],
+            conditional: {
+              field: 'business_type',
+              value: 'service'
+            }
+          },
+          {
+            id: 'contact_info',
+            type: 'multi_text',
+            label: 'Who is the primary contact?',
+            required: true,
+            fields: [
+              { id: 'contact_name', label: 'Name', required: true },
+              { id: 'contact_title', label: 'Title', required: true },
+              { id: 'contact_email', label: 'Email', required: true },
+              { id: 'contact_phone', label: 'Phone', required: false }
+            ]
+          },
+          {
+            id: 'business_size',
+            type: 'radio',
+            label: 'What is your business size?',
+            required: true,
+            options: [
+              { id: 'sole_proprietor', label: 'Sole Proprietor' },
+              { id: 'small_team', label: 'Small Team' },
+              { id: 'medium', label: 'Medium' },
+              { id: 'enterprise', label: 'Enterprise' }
+            ]
           }
         ];
 
@@ -590,16 +649,45 @@ export default function EnhancedOnboardingForm({
   const handleInputChange = (fieldId: string, value: any) => {
     const currentSection = getCurrentSection();
     
-    setFormData(prev => {
-      const sectionData = prev[currentSection] as Record<string, any> || {};
-      return {
-        ...prev,
-        [currentSection]: {
-          ...sectionData,
-          [fieldId]: value
-        }
-      };
-    });
+    // Special handling for industry selection in business details
+    if (currentSection === 'businessDetails' && fieldId === 'industry') {
+      const restrictedIndustries = ['cannabis', 'gambling', 'alcohol', 'tobacco', 'adult'];
+      const isRestricted = restrictedIndustries.includes(value);
+      
+      setFormData(prev => {
+        const sectionData = prev[currentSection] as Record<string, any> || {};
+        return {
+          ...prev,
+          [currentSection]: {
+            ...sectionData,
+            [fieldId]: value,
+            // Set access restriction field
+            access_restriction: isRestricted ? 'restricted' : 'unrestricted'
+          }
+        };
+      });
+      
+      // Show warning toast for restricted industries
+      if (isRestricted) {
+        toast({
+          title: "Restricted Industry Detected",
+          description: "Your account will need review by a compliance officer before full access is granted.",
+          variant: "warning"
+        });
+      }
+    } else {
+      // Normal field handling
+      setFormData(prev => {
+        const sectionData = prev[currentSection] as Record<string, any> || {};
+        return {
+          ...prev,
+          [currentSection]: {
+            ...sectionData,
+            [fieldId]: value
+          }
+        };
+      });
+    }
     
     // Clear error for this field if it exists
     if (fieldErrors[fieldId]) {
@@ -1035,6 +1123,40 @@ export default function EnhancedOnboardingForm({
               onChange={(e) => handleInputChange(field.id, e.target.value)}
               className={error ? 'border-red-500' : ''}
             />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+        );
+      
+      case 'multi_text':
+        return (
+          <div className="space-y-3">
+            {fieldLabel}
+            {field.description && (
+              <p className="text-sm text-muted-foreground">{field.description}</p>
+            )}
+            <div className="space-y-4 p-4 border rounded-md">
+              {field.fields?.map((subfield) => (
+                <div key={subfield.id} className="space-y-2">
+                  <Label 
+                    htmlFor={`${field.id}-${subfield.id}`}
+                    className={`${subfield.required ? 'after:content-["*"] after:ml-0.5 after:text-red-500' : ''}`}
+                  >
+                    {subfield.label}
+                  </Label>
+                  <Input
+                    id={`${field.id}-${subfield.id}`}
+                    type={subfield.type || 'text'}
+                    value={(value && value[subfield.id]) || ''}
+                    onChange={(e) => {
+                      const updatedValue = { ...(value || {}) };
+                      updatedValue[subfield.id] = e.target.value;
+                      handleInputChange(field.id, updatedValue);
+                    }}
+                    placeholder={subfield.placeholder}
+                  />
+                </div>
+              ))}
+            </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
           </div>
         );
