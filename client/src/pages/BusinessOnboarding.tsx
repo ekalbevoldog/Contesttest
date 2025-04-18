@@ -324,6 +324,9 @@ export default function BusinessOnboarding() {
     let prevStep: OnboardingStep;
     
     switch (currentStep) {
+      case "business-type":
+        prevStep = "user-type";
+        break;
       case "industry":
         prevStep = "business-type";
         break;
@@ -500,6 +503,59 @@ export default function BusinessOnboarding() {
   // Render the current step content
   const renderStepContent = () => {
     switch (currentStep) {
+      case "user-type":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-8">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-3xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Welcome to Contested! I'm here to help you get started
+                </motion.h2>
+                <motion.p 
+                  className="text-zinc-400 mb-8"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  Let me guide you through our platform based on your needs. First, tell me which best describes you:
+                </motion.p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <AnimatedSelectionField
+                    type="radio"
+                    name="userType"
+                    selectedValues={formData.userType}
+                    onChange={(e) => handleRadioChange(e, e.target.value)}
+                    options={[
+                      {
+                        value: "business",
+                        label: "I'm a Business",
+                        description: "Looking to partner with college athletes for marketing and promotion",
+                        icon: <Building className="h-10 w-10 text-amber-500" />
+                      },
+                      {
+                        value: "athlete",
+                        label: "I'm an Athlete",
+                        description: "Looking to monetize my brand and find business partnerships", 
+                        icon: <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><path d="M6.5 6.5 12 12l5.5 5.5"></path><circle cx="5" cy="5" r="1"></circle><circle cx="19" cy="19" r="1"></circle><path d="M10 5H5v5"></path><path d="M14 19h5v-5"></path></svg>
+                      }
+                    ]}
+                    cardStyle={true}
+                    required={true}
+                    errorMessage={errors.userType}
+                    isTouched={!!errors.userType}
+                  />
+                </div>
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
+        );
+        
       case "business-type":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
