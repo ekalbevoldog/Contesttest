@@ -1165,88 +1165,163 @@ export default function EnhancedOnboardingForm({
       initial={{ opacity: 0, y: animationDirection === 'forward' ? 20 : -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: animationDirection === 'forward' ? -20 : 20 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-6"
+      transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+      className="space-y-8"
     >
-      <div className="text-center space-y-3 mb-6">
-        <h2 className="text-2xl font-bold">Who are you?</h2>
-        <p className="text-muted-foreground">
+      <motion.div 
+        className="text-center space-y-3 mb-8"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <h2 className="text-3xl font-bold text-white tracking-tight">Who are you?</h2>
+        <p className="text-zinc-400 text-lg">
           Select your account type to customize your experience
         </p>
-      </div>
+      </motion.div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, duration: 0.3 }}
-          className={`border-2 rounded-xl p-6 cursor-pointer transition-all hover:border-primary hover:shadow-md
-            ${userType === 'athlete' ? 'border-primary bg-primary/5 shadow-md' : 'border-border'}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
+          className={`relative overflow-hidden backdrop-blur-sm rounded-3xl cursor-pointer transition-all duration-300 
+            ${userType === 'athlete' 
+              ? 'ring-2 ring-red-500/70 shadow-lg shadow-red-500/10 bg-gradient-to-br from-zinc-900/90 to-zinc-800/90' 
+              : 'bg-zinc-900/40 hover:bg-zinc-800/70 border border-white/5'}`}
           onClick={() => handleUserTypeSelect('athlete')}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
         >
-          <div className="flex flex-col items-center text-center space-y-5">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <UserCircle className="h-10 w-10 text-primary" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold">I'm an Athlete</h3>
-              <p className="text-muted-foreground">
+          {/* Background gradient effect */}
+          {userType === 'athlete' && (
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-br from-red-500/20 via-amber-500/10 to-red-600/5 opacity-70"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.7 }}
+              transition={{ duration: 0.3 }}
+            />
+          )}
+          
+          <div className="flex flex-col items-center text-center space-y-6 p-8 relative z-10">
+            <motion.div 
+              className="w-24 h-24 relative"
+              animate={{ 
+                y: userType === 'athlete' ? [0, -5, 0] : 0,
+              }}
+              transition={{
+                repeat: userType === 'athlete' ? Infinity : 0,
+                duration: 3,
+                ease: "easeInOut"
+              }}
+            >
+              <div className={`absolute inset-0 rounded-2xl ${userType === 'athlete' ? 'bg-gradient-to-br from-red-500 to-amber-500 blur-[20px] opacity-30' : 'bg-zinc-700/30 blur-[10px] opacity-0'} -z-10`}></div>
+              <div className={`w-full h-full rounded-2xl border backdrop-blur-md flex items-center justify-center 
+                ${userType === 'athlete' 
+                  ? 'bg-gradient-to-br from-red-500/20 to-amber-500/20 border-white/20 shadow-lg' 
+                  : 'bg-zinc-800/50 border-white/5'}`}>
+                <UserCircle className={`h-12 w-12 ${userType === 'athlete' ? 'text-white' : 'text-zinc-400'}`} />
+              </div>
+            </motion.div>
+            
+            <div className="space-y-3">
+              <h3 className={`text-2xl font-bold ${userType === 'athlete' ? 'text-white' : 'text-zinc-200'}`}>I'm an Athlete</h3>
+              <p className={`${userType === 'athlete' ? 'text-zinc-300' : 'text-zinc-400'} text-base`}>
                 I'm a college athlete looking to partner with brands for NIL deals
               </p>
               
-              <div className="pt-2 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span className="text-left">Find brand partnerships</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span className="text-left">Monetize your influence</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span className="text-left">Stay NCAA compliant</span>
-                </div>
+              <div className="pt-3 space-y-3">
+                {[
+                  "Find brand partnerships",
+                  "Monetize your influence", 
+                  "Stay NCAA compliant"
+                ].map((feature, i) => (
+                  <motion.div 
+                    key={i}
+                    className="flex items-center gap-3"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + (i * 0.1), duration: 0.5 }}
+                  >
+                    <div className={`flex items-center justify-center w-5 h-5 rounded-full ${userType === 'athlete' ? 'bg-red-500/20 text-red-500' : 'bg-zinc-700/50 text-zinc-400'}`}>
+                      <Check className="h-3 w-3" />
+                    </div>
+                    <span className={`text-left text-sm ${userType === 'athlete' ? 'text-zinc-300' : 'text-zinc-400'}`}>{feature}</span>
+                  </motion.div>
+                ))}
               </div>
             </div>
           </div>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
-          className={`border-2 rounded-xl p-6 cursor-pointer transition-all hover:border-primary hover:shadow-md
-            ${userType === 'business' ? 'border-primary bg-primary/5 shadow-md' : 'border-border'}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
+          className={`relative overflow-hidden backdrop-blur-sm rounded-3xl cursor-pointer transition-all duration-300
+            ${userType === 'business' 
+              ? 'ring-2 ring-amber-500/70 shadow-lg shadow-amber-500/10 bg-gradient-to-br from-zinc-900/90 to-zinc-800/90' 
+              : 'bg-zinc-900/40 hover:bg-zinc-800/70 border border-white/5'}`}
           onClick={() => handleUserTypeSelect('business')}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           whileTap={{ scale: 0.98 }}
         >
-          <div className="flex flex-col items-center text-center space-y-5">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-10 w-10 text-primary" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold">I'm a Business</h3>
-              <p className="text-muted-foreground">
+          {/* Background gradient effect */}
+          {userType === 'business' && (
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-red-500/10 to-amber-600/5 opacity-70"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.7 }}
+              transition={{ duration: 0.3 }}
+            />
+          )}
+          
+          <div className="flex flex-col items-center text-center space-y-6 p-8 relative z-10">
+            <motion.div 
+              className="w-24 h-24 relative"
+              animate={{ 
+                y: userType === 'business' ? [0, -5, 0] : 0,
+              }}
+              transition={{
+                repeat: userType === 'business' ? Infinity : 0,
+                duration: 3,
+                ease: "easeInOut"
+              }}
+            >
+              <div className={`absolute inset-0 rounded-2xl ${userType === 'business' ? 'bg-gradient-to-br from-amber-500 to-red-500 blur-[20px] opacity-30' : 'bg-zinc-700/30 blur-[10px] opacity-0'} -z-10`}></div>
+              <div className={`w-full h-full rounded-2xl border backdrop-blur-md flex items-center justify-center 
+                ${userType === 'business' 
+                  ? 'bg-gradient-to-br from-amber-500/20 to-red-500/20 border-white/20 shadow-lg' 
+                  : 'bg-zinc-800/50 border-white/5'}`}>
+                <Building2 className={`h-12 w-12 ${userType === 'business' ? 'text-white' : 'text-zinc-400'}`} />
+              </div>
+            </motion.div>
+            
+            <div className="space-y-3">
+              <h3 className={`text-2xl font-bold ${userType === 'business' ? 'text-white' : 'text-zinc-200'}`}>I'm a Business</h3>
+              <p className={`${userType === 'business' ? 'text-zinc-300' : 'text-zinc-400'} text-base`}>
                 I represent a brand looking to connect with college athletes
               </p>
               
-              <div className="pt-2 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span className="text-left">Access athlete talent</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span className="text-left">Create authentic campaigns</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
-                  <span className="text-left">Measure marketing ROI</span>
-                </div>
+              <div className="pt-3 space-y-3">
+                {[
+                  "Access athlete talent", 
+                  "Create authentic campaigns", 
+                  "Measure marketing ROI"
+                ].map((feature, i) => (
+                  <motion.div 
+                    key={i}
+                    className="flex items-center gap-3"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + (i * 0.1), duration: 0.5 }}
+                  >
+                    <div className={`flex items-center justify-center w-5 h-5 rounded-full ${userType === 'business' ? 'bg-amber-500/20 text-amber-500' : 'bg-zinc-700/50 text-zinc-400'}`}>
+                      <Check className="h-3 w-3" />
+                    </div>
+                    <span className={`text-left text-sm ${userType === 'business' ? 'text-zinc-300' : 'text-zinc-400'}`}>{feature}</span>
+                  </motion.div>
+                ))}
               </div>
             </div>
           </div>
@@ -1258,22 +1333,68 @@ export default function EnhancedOnboardingForm({
   // Render form fields
   const renderFormFields = () => {
     const fields = getFieldsForCurrentStep();
+    let stepTitle = ""; 
+    
+    // Determine step title based on current step
+    switch (currentStep) {
+      case WizardStep.BasicProfile:
+        stepTitle = "Basic Profile";
+        break;
+      case WizardStep.AthleteDetails:
+        stepTitle = "Your Athletic Profile";
+        break;
+      case WizardStep.BusinessDetails:
+        stepTitle = "Business Details";
+        break;
+      case WizardStep.BrandValues:
+        stepTitle = "Your Values";
+        break;
+      case WizardStep.Goals:
+        stepTitle = "Partnership Goals";
+        break; 
+      case WizardStep.AudienceInfo:
+        stepTitle = "Audience Information";
+        break;
+      case WizardStep.Compensation:
+        stepTitle = "Compensation Preferences";
+        break;
+      default:
+        stepTitle = "Profile Information";
+    }
     
     return (
       <motion.div
         initial={{ opacity: 0, y: animationDirection === 'forward' ? 20 : -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: animationDirection === 'forward' ? -20 : 20 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-6"
+        transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+        className="space-y-8"
       >
-        <div className="space-y-6">
+        <motion.div 
+          className="text-center mb-4"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <h2 className="text-3xl font-bold text-white tracking-tight">{stepTitle}</h2>
+          <p className="text-zinc-400 mt-2">
+            {currentStep === WizardStep.BasicProfile && "Let's get to know you better"}
+            {currentStep === WizardStep.AthleteDetails && "Tell us about your athletic journey"}
+            {currentStep === WizardStep.BusinessDetails && "Tell us about your business"}
+            {currentStep === WizardStep.BrandValues && "What matters most to you?"}
+            {currentStep === WizardStep.Goals && "What do you hope to achieve?"}
+            {currentStep === WizardStep.AudienceInfo && "Tell us about your audience"}
+            {currentStep === WizardStep.Compensation && "Let's talk about compensation"}
+          </p>
+        </motion.div>
+        
+        <div className="space-y-6 backdrop-blur-sm bg-zinc-900/30 rounded-3xl border border-white/5 p-6">
           {fields.map((field, index) => (
             <motion.div 
               key={field.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + (index * 0.05), duration: 0.3 }}
+              transition={{ delay: 0.2 + (index * 0.08), duration: 0.5, type: "spring" }}
               className="space-y-4"
             >
               {renderField(field)}
@@ -1287,28 +1408,61 @@ export default function EnhancedOnboardingForm({
   // Render review screen
   const renderReviewScreen = () => {
     // Format data for display
-    const getSectionData = (section: keyof FormData) => {
+    const getSectionData = (section: keyof FormData, index: number) => {
       const data = formData[section];
       if (!data || Object.keys(data).length === 0) return null;
       
+      // Get an icon based on section type
+      const getSectionIcon = () => {
+        switch(section) {
+          case 'basicProfile': return <UserCircle className="h-5 w-5 text-white" />;
+          case 'athleteDetails': return <Award className="h-5 w-5 text-white" />;
+          case 'businessDetails': return <Building2 className="h-5 w-5 text-white" />;
+          case 'brandValues': return <Heart className="h-5 w-5 text-white" />;
+          case 'goals': return <Target className="h-5 w-5 text-white" />;
+          case 'audienceInfo': return <Users className="h-5 w-5 text-white" />;
+          case 'compensation': return <DollarSign className="h-5 w-5 text-white" />;
+          default: return <Info className="h-5 w-5 text-white" />;
+        }
+      };
+      
       return (
-        <div className="space-y-2">
-          <h3 className="text-lg font-bold capitalize">{section.replace(/([A-Z])/g, ' $1').trim()}</h3>
-          <div className="bg-accent/50 rounded-md p-3 space-y-2">
-            {Object.entries(data).map(([key, value]) => (
-              <div key={key} className="grid grid-cols-2 gap-2">
-                <div className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</div>
-                <div>
+        <motion.div 
+          className="space-y-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 + (index * 0.1), type: "spring" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-amber-500">
+              {getSectionIcon()}
+            </div>
+            <h3 className="text-lg font-bold text-white capitalize">
+              {section.replace(/([A-Z])/g, ' $1').trim()}
+            </h3>
+          </div>
+          
+          <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-white/5 p-4 space-y-3">
+            {Object.entries(data).map(([key, value], i) => (
+              <motion.div 
+                key={key} 
+                className="flex justify-between items-start py-2 border-b border-white/5 last:border-0"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + (i * 0.05), duration: 0.3 }}
+              >
+                <div className="text-zinc-400 capitalize text-sm">{key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                <div className="text-white font-medium text-right">
                   {Array.isArray(value) 
                     ? value.join(', ') 
                     : typeof value === 'boolean'
                       ? value ? 'Yes' : 'No'
                       : value || '-'}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       );
     };
     
@@ -1317,30 +1471,62 @@ export default function EnhancedOnboardingForm({
         initial={{ opacity: 0, y: animationDirection === 'forward' ? 20 : -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: animationDirection === 'forward' ? -20 : 20 }}
-        transition={{ duration: 0.4 }}
-        className="space-y-6"
+        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+        className="space-y-8"
       >
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-bold">Review Your Profile</h2>
-          <p className="text-muted-foreground">Please check your information before submitting</p>
-        </div>
+        <motion.div 
+          className="text-center mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 bg-gradient-to-br from-red-500 to-amber-500">
+            <CheckCircle className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-white tracking-tight">Review Your Profile</h2>
+          <p className="text-zinc-400 mt-2">
+            Please check your information before submitting
+          </p>
+        </motion.div>
         
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="h-[480px] pr-4">
           <div className="space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold">Account Type</h3>
-              <div className="bg-accent/50 rounded-md p-3">
-                <div className="font-medium capitalize">{userType}</div>
+            <motion.div 
+              className="space-y-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-amber-500">
+                  {userType === 'athlete' ? (
+                    <UserCircle className="h-5 w-5 text-white" />
+                  ) : (
+                    <Building2 className="h-5 w-5 text-white" />
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-white">Account Type</h3>
               </div>
-            </div>
+              
+              <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-white/5 p-4">
+                <div className="font-medium text-white capitalize flex items-center gap-2">
+                  <motion.div 
+                    className="h-3 w-3 rounded-full bg-gradient-to-br from-green-400 to-green-500"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                  />
+                  {userType}
+                </div>
+              </div>
+            </motion.div>
             
-            {getSectionData('basicProfile')}
-            {userType === 'athlete' && getSectionData('athleteDetails')}
-            {userType === 'business' && getSectionData('businessDetails')}
-            {getSectionData('brandValues')}
-            {getSectionData('goals')}
-            {getSectionData('audienceInfo')}
-            {getSectionData('compensation')}
+            {getSectionData('basicProfile', 0)}
+            {userType === 'athlete' && getSectionData('athleteDetails', 1)}
+            {userType === 'business' && getSectionData('businessDetails', 1)}
+            {getSectionData('brandValues', 2)}
+            {getSectionData('goals', 3)}
+            {getSectionData('audienceInfo', 4)}
+            {getSectionData('compensation', 5)}
           </div>
         </ScrollArea>
       </motion.div>
@@ -1352,45 +1538,97 @@ export default function EnhancedOnboardingForm({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-8 text-center"
+      transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+      className="space-y-10 text-center"
     >
-      <motion.div 
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, delay: 0.1 }}
-        className="mx-auto w-24 h-24 rounded-full bg-green-100 flex items-center justify-center"
-      >
-        <Check className="h-12 w-12 text-green-600" />
-      </motion.div>
+      {/* Success icon with gradient animation */}
+      <div className="relative mx-auto w-32 h-32">
+        <motion.div 
+          className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 blur-[30px] opacity-40"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.4, 0.6, 0.4]
+          }}
+          transition={{ 
+            repeat: Infinity, 
+            duration: 3,
+            ease: "easeInOut" 
+          }}
+        />
+        
+        <motion.div 
+          className="absolute inset-0 rounded-full"
+          initial={{ borderWidth: 0, borderColor: "rgba(255,255,255,0)" }}
+          animate={{ 
+            borderWidth: [0, 4, 0],
+            borderColor: ["rgba(255,255,255,0)", "rgba(255,255,255,0.2)", "rgba(255,255,255,0)"],
+            scale: [0.9, 1.1, 0.9]
+          }}
+          transition={{ 
+            repeat: Infinity, 
+            duration: 4,
+            ease: "easeInOut" 
+          }}
+        />
+        
+        <motion.div 
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 200, 
+            delay: 0.2, 
+            duration: 0.8 
+          }}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-600/20">
+            <Check className="h-16 w-16 text-white" />
+          </div>
+        </motion.div>
+      </div>
       
-      <div className="space-y-3">
-        <h2 className="text-3xl font-bold">Profile Complete!</h2>
-        <p className="text-lg text-muted-foreground">
+      <div className="space-y-4">
+        <motion.h2 
+          className="text-4xl font-bold text-white tracking-tight"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          Profile Complete!
+        </motion.h2>
+        <motion.p 
+          className="text-xl text-zinc-400 font-light max-w-2xl mx-auto leading-relaxed"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
           Thank you for completing your profile. We'll use this information to
-          find the best partnerships for you.
-        </p>
+          find the perfect partnerships that match your goals and values.
+        </motion.p>
       </div>
       
       {recommendations.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="mt-8 text-left"
+          transition={{ duration: 0.6, delay: 0.5, type: "spring" }}
+          className="mt-10 text-left"
         >
-          <h3 className="font-semibold text-xl mb-4">Personalized Recommendations</h3>
-          <div className="space-y-3">
+          <h3 className="font-semibold text-2xl mb-4 text-white">Personalized Recommendations</h3>
+          <div className="space-y-4">
             {recommendations.map((rec, index) => (
               <motion.div 
                 key={index}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 + (index * 0.1) }}
-                className="flex items-start space-x-3 bg-accent/40 p-4 rounded-md"
+                transition={{ duration: 0.5, type: "spring", delay: 0.6 + (index * 0.1) }}
+                className="flex items-start gap-4 backdrop-blur-sm bg-zinc-900/30 p-5 rounded-xl border border-white/5"
               >
-                <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <p>{rec}</p>
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shrink-0 mt-0.5 shadow-md shadow-emerald-600/20">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-zinc-300">{rec}</p>
               </motion.div>
             ))}
           </div>
@@ -1398,14 +1636,14 @@ export default function EnhancedOnboardingForm({
       )}
       
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.6 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.7, type: "spring" }}
+        className="pt-4"
       >
         <Button 
-          size="lg"
-          className="mt-6"
           onClick={() => onComplete(formData)}
+          className="px-10 h-14 rounded-full text-lg font-medium bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg transition-all duration-300 hover:scale-[1.03] hover:shadow-xl"
         >
           Go to Dashboard
         </Button>
@@ -1438,42 +1676,65 @@ export default function EnhancedOnboardingForm({
     }
     
     return (
-      <div className="flex justify-between pt-6">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          disabled={isSubmitting}
-          className="flex items-center"
+      <div className="flex justify-between pt-6 gap-4">
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back
-        </Button>
+          <button
+            onClick={handleBack}
+            disabled={isSubmitting}
+            className="flex items-center justify-center h-12 px-6 rounded-full backdrop-blur-sm bg-zinc-900/50 text-white border border-white/10 transition-all hover:bg-zinc-800/70 hover:border-white/20 disabled:opacity-50"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </button>
+        </motion.div>
         
         {currentStep === WizardStep.ReviewSubmit ? (
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="flex items-center"
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative"
           >
-            {isSubmitting ? (
-              <>
-                <LoadingSpinner className="mr-2 h-4 w-4" />
-                Submitting...
-              </>
-            ) : (
-              <>
-                Submit Profile
-                <CheckCircle className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
+            <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-red-500 to-amber-500 opacity-70 blur-sm group-hover:opacity-100 animate-tilt"></div>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="relative flex items-center justify-center h-12 px-8 rounded-full bg-gradient-to-r from-red-500 to-amber-500 text-white font-medium shadow-md transition-all hover:shadow-lg hover:from-red-600 hover:to-amber-600 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center">
+                  <LoadingSpinner className="mr-2 h-5 w-5 text-white" />
+                  <span>Submitting...</span>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <span>Submit Profile</span>
+                  <div className="ml-2 h-5 w-5 rounded-full bg-white/20 flex items-center justify-center">
+                    <CheckCircle className="h-3 w-3 text-white" />
+                  </div>
+                </div>
+              )}
+            </button>
+          </motion.div>
         ) : (
-          <Button
-            onClick={handleNext}
-            disabled={isSubmitting}
-            className="flex items-center"
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative"
           >
-            Next <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+            <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-red-500 to-amber-500 opacity-0 blur-sm group-hover:opacity-70 transition-opacity"></div>
+            <button
+              onClick={handleNext}
+              disabled={isSubmitting}
+              className="relative flex items-center justify-center h-12 px-8 rounded-full bg-gradient-to-r from-red-500 to-amber-500 text-white font-medium shadow-md transition-all hover:shadow-lg hover:from-red-600 hover:to-amber-600 disabled:opacity-50"
+            >
+              <span>Next</span>
+              <div className="ml-2 h-5 w-5 rounded-full bg-white/20 flex items-center justify-center">
+                <ArrowRight className="h-3 w-3 text-white" />
+              </div>
+            </button>
+          </motion.div>
         )}
       </div>
     );
@@ -1482,73 +1743,90 @@ export default function EnhancedOnboardingForm({
   const { title, description, icon } = getSectionInfo();
 
   return (
-    <Card className="w-full max-w-4xl shadow-lg border-2">
-      {/* Header with step information */}
-      <CardHeader className="pb-4 border-b">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            {icon && (
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                {icon}
+    <div className="w-full max-w-4xl">
+      <div className="absolute inset-0 bg-gradient-to-b from-red-600/20 via-amber-600/10 to-transparent w-full h-[500px] blur-3xl opacity-20 -z-10"></div>
+      
+      <Card className="w-full overflow-hidden backdrop-blur-lg bg-zinc-900/70 border border-white/5 shadow-2xl rounded-3xl">
+        {/* Header with step information */}
+        <CardHeader className="pb-6 border-b border-white/5">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              {icon && (
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500/20 to-amber-500/20 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-md">
+                  <div className="text-white">{icon}</div>
+                </div>
+              )}
+              <div>
+                <CardTitle className="text-2xl font-bold text-white tracking-tight">{title}</CardTitle>
+                <CardDescription className="text-lg text-zinc-400 font-light mt-1">{description}</CardDescription>
+              </div>
+            </div>
+            
+            {/* Show user info if logged in */}
+            {user && (
+              <div className="hidden md:flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                  <div className="font-medium text-white">{user.username}</div>
+                  <div className="text-xs text-zinc-400 capitalize">{user.userType}</div>
+                </div>
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-red-500/10 to-amber-500/10 backdrop-blur-md border border-white/10 text-white">
+                  {user.userType === 'athlete' ? (
+                    <UserCircle className="h-5 w-5" />
+                  ) : (
+                    <Building2 className="h-5 w-5" />
+                  )}
+                </div>
               </div>
             )}
-            <div>
-              <CardTitle className="text-2xl">{title}</CardTitle>
-              <CardDescription className="text-lg">{description}</CardDescription>
-            </div>
           </div>
-          
-          {/* Show user info if logged in */}
-          {user && (
-            <div className="hidden md:flex items-center space-x-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary">
-                {user.userType === 'athlete' ? (
-                  <UserCircle className="h-4 w-4" />
-                ) : (
-                  <Building2 className="h-4 w-4" />
-                )}
-              </div>
-              <div className="text-sm">
-                <div className="font-medium">{user.username}</div>
-                <div className="text-xs text-muted-foreground capitalize">{user.userType}</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      
-      {/* Progress indicator */}
-      {currentStep > 0 && currentStep < (Object.keys(WizardStep).length / 2 - 1) && (
-        <div className="px-6 pt-4">
-          <Progress value={progress} className="h-2" />
-          <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-            <span>Step {currentStep} of {Math.floor(Object.keys(WizardStep).length / 2) - 2}</span>
-            <span>{Math.round(progress)}% complete</span>
-          </div>
-        </div>
-      )}
-      
-      {/* Main content area */}
-      <CardContent className="pt-6 pb-2" ref={formContainerRef}>
-        <AnimatePresence mode="wait">
-          {renderCurrentStep()}
-        </AnimatePresence>
-      </CardContent>
-      
-      {/* Footer with navigation */}
-      <CardFooter className="border-t mt-6 py-4">
-        {getButtonActions()}
+        </CardHeader>
         
-        {currentStep === WizardStep.Complete && (
-          <Button 
-            className="w-full"
-            size="lg"
-            onClick={() => onComplete(formData)}
-          >
-            Continue to Dashboard
-          </Button>
+        {/* Progress indicator */}
+        {currentStep > 0 && currentStep < (Object.keys(WizardStep).length / 2 - 1) && (
+          <div className="px-8 pt-6">
+            <div className="relative h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+              <motion.div 
+                className="absolute h-full bg-gradient-to-r from-red-500 to-amber-500 rounded-full"
+                style={{ width: `${progress}%` }}
+                initial={{ width: "0%" }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+            </div>
+            <div className="flex justify-between mt-2 text-xs text-zinc-400">
+              <span>Step {currentStep} of {Math.floor(Object.keys(WizardStep).length / 2) - 2}</span>
+              <span>{Math.round(progress)}% complete</span>
+            </div>
+          </div>
         )}
-      </CardFooter>
-    </Card>
+        
+        {/* Main content area */}
+        <CardContent className="pt-8 pb-4" ref={formContainerRef}>
+          <AnimatePresence mode="wait">
+            {renderCurrentStep()}
+          </AnimatePresence>
+        </CardContent>
+        
+        {/* Footer with navigation */}
+        <CardFooter className="border-t border-white/5 mt-6 py-6">
+          {getButtonActions()}
+          
+          {currentStep === WizardStep.Complete && (
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full"
+            >
+              <button 
+                onClick={() => onComplete(formData)}
+                className="w-full h-14 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white font-medium shadow-lg transition-all hover:shadow-xl hover:from-emerald-600 hover:to-green-600"
+              >
+                Continue to Dashboard
+              </button>
+            </motion.div>
+          )}
+        </CardFooter>
+      </Card>
+    </div>
   );
 }
