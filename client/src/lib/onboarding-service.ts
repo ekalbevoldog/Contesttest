@@ -83,23 +83,10 @@ const athleteSteps = [
 
 const businessSteps = [
   {
-    "step": "Account Type Selection",
-    "field": "account_type_selection",
-    "type": "single_select",
-    "options": ["Athlete", "Business"],
-    "required": true
-  },
-  {
-    "step": "Business Name",
-    "field": "business_name",
-    "type": "text",
-    "required": true
-  },
-  {
     "step": "What type of business are you?",
     "field": "business_type",
     "type": "radio",
-    "options": ["Product", "Service"],
+    "options": ["Product", "Service", "Hybrid"],
     "required": true,
     "description": "Select the primary focus of your business"
   },
@@ -110,9 +97,10 @@ const businessSteps = [
     "description": "Select your industry",
     "restricted_industries": ["Cannabis", "Gambling", "Alcohol", "Adult", "Tobacco"],
     "tag_if_restricted": true,
+    "result_field": "access_restriction",
     "conditional": {
       "field": "business_type",
-      "value": ["Product", "Service"]
+      "value": ["Product", "Service", "Hybrid"]
     }
   },
   {
@@ -124,7 +112,7 @@ const businessSteps = [
     "description": "What are you hoping to achieve? (Select all that apply)",
     "conditional": {
       "field": "business_type",
-      "value": ["Product", "Service"]
+      "value": ["Product", "Service", "Hybrid"]
     }
   },
   {
@@ -135,7 +123,7 @@ const businessSteps = [
     "required": true,
     "conditional": {
       "field": "business_type",
-      "value": ["Product", "Service"]
+      "value": ["Product", "Service", "Hybrid"]
     }
   },
   {
@@ -148,7 +136,7 @@ const businessSteps = [
     "description": "What is your estimated monthly budget?",
     "conditional": {
       "field": "business_type",
-      "value": ["Product", "Service"]
+      "value": ["Product", "Service", "Hybrid"]
     }
   },
   {
@@ -160,7 +148,7 @@ const businessSteps = [
     "description": "What is your business's zip code?",
     "conditional": {
       "field": "business_type",
-      "value": ["Product", "Service"]
+      "value": ["Product", "Service", "Hybrid"]
     }
   },
   {
@@ -186,7 +174,7 @@ const businessSteps = [
     "description": "Who is the primary contact?",
     "conditional": {
       "field": "business_type",
-      "value": ["Product", "Service"]
+      "value": ["Product", "Service", "Hybrid"]
     }
   },
   {
@@ -197,8 +185,14 @@ const businessSteps = [
     "required": true,
     "conditional": {
       "field": "business_type",
-      "value": ["Product", "Service"]
+      "value": ["Product", "Service", "Hybrid"]
     }
+  },
+  {
+    "step": "Business Name",
+    "field": "name",
+    "type": "text",
+    "required": true
   },
   {
     "step": "Create Password",
@@ -227,6 +221,7 @@ export interface OnboardingStep {
   pattern?: string;
   restricted_industries?: string[];
   tag_if_restricted?: boolean;
+  result_field?: string; // Field to store the result of an evaluation (like checking restricted industries)
   conditional?: {
     field: string;
     value: string | string[];
@@ -278,6 +273,24 @@ export function normalizeSteps(steps: OnboardingStep[]): OnboardingStep[] {
 // Helper function to check if an industry is restricted
 export function isRestrictedIndustry(industry: string, step: OnboardingStep): boolean {
   return step.restricted_industries?.includes(industry) || false;
+}
+
+// Process industry selection and set access_restriction
+export function processIndustrySelection(industry: string, formData: any, step: OnboardingStep): any {
+  const isRestricted = isRestrictedIndustry(industry, step);
+  
+  // Clone the formData to avoid direct mutation
+  const updatedFormData = { ...formData };
+  
+  // Store the industry selection
+  updatedFormData[step.field as string] = industry;
+  
+  // If this step defines a result field (e.g., access_restriction), set its value
+  if (step.result_field) {
+    updatedFormData[step.result_field] = isRestricted ? 'restricted' : 'unrestricted';
+  }
+  
+  return updatedFormData;
 }
 
 // Generate validation schema for a step
