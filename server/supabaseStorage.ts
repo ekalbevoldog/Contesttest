@@ -270,18 +270,26 @@ export class SupabaseStorage implements IStorage {
   }
 
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
-    const { data, error } = await supabase
-      .from('business_profiles')
-      .insert(business)
-      .select()
-      .single();
-      
-    if (error) {
-      console.error('Error storing business profile:', JSON.stringify(error, null, 2));
-      throw new Error(`Failed to store business profile: ${error.message}`);
-    }
+    console.log('Attempting to store business profile with data:', JSON.stringify(business, null, 2));
     
-    return data as Business;
+    try {
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .insert(business)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error storing business profile:', JSON.stringify(error, null, 2));
+        throw new Error(`Failed to store business profile: ${error.message}`);
+      }
+      
+      console.log('Successfully stored business profile:', JSON.stringify(data, null, 2));
+      return data as Business;
+    } catch (e) {
+      console.error('Exception in storeBusinessProfile:', e);
+      throw new Error(`Failed to store business profile: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
 
   async getAllBusinesses(): Promise<Business[]> {
