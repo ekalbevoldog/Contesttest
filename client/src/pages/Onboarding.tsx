@@ -1000,6 +1000,7 @@ export default function Onboarding() {
                       pattern="^\d{5}(-\d{4})?$"
                       errorMessage={errors.zipCode}
                       icon={<MapPin size={18} />}
+                      className="w-full text-xl" 
                     />
                     
                     <motion.p 
@@ -1024,6 +1025,11 @@ export default function Onboarding() {
                         <div className="bg-zinc-900/80 backdrop-blur-sm p-3 rounded-lg inline-flex items-center space-x-2 border border-zinc-700 w-auto self-start">
                           <MapPin size={16} className="text-red-500" />
                           <span className="text-white font-medium">{formData.zipCode}</span>
+                        </div>
+                        
+                        <div className="bg-zinc-900/90 backdrop-blur-sm px-3 py-2 rounded-lg mt-2 inline-flex items-center space-x-2 border border-zinc-700 w-auto self-start text-sm">
+                          <Info size={14} className="text-blue-400" />
+                          <span className="text-zinc-300">Location confirmed - We'll use this area for local athlete matching</span>
                         </div>
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent opacity-50" />
