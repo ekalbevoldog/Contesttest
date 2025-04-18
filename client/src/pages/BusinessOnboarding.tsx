@@ -352,31 +352,55 @@ export default function BusinessOnboarding() {
           username: formData.email,
           email: formData.email,
           password: formData.password,
+          fullName: formData.name, // Backend expects fullName, not name
           userType: "business"
         };
         
         const userResponse = await apiRequest("POST", "/api/auth/register", userData);
+        let userResponseData;
+        
+        try {
+          userResponseData = await userResponse.json();
+        } catch (error) {
+          console.error("Error parsing response:", error);
+          throw new Error("Failed to parse server response");
+        }
         
         if (!userResponse.ok) {
-          const errorData = await userResponse.json();
-          throw new Error(errorData.message || "Failed to create account");
+          throw new Error(userResponseData.message || userResponseData.error || "Failed to create account");
+        }
+        
+        // Extract the session ID from the response
+        const sessionId = userResponseData.sessionId;
+        
+        if (!sessionId) {
+          throw new Error("No session ID returned from registration");
         }
         
         // Create business profile
+        // Make sure to match the exact schema expected by the backend
         const businessData = {
           name: formData.name,
-          email: formData.email,
-          industry: formData.industry,
-          productType: formData.businessType,
-          companySize: formData.businessSize,
-          audienceGoals: formData.goalIdentification.join(", "),
-          campaignVibe: "standard", // Default value
-          values: "standard", // Default value
-          targetSchoolsSports: "all", // Default value
-          sessionId: "temp-session-id", // Will be replaced by server
+          userType: "business",
+          sessionId: sessionId, // Use the session ID from registration
           
-          // Additional fields from the flow
-          preferences: {
+          // Required by the business schema with minimum length requirements
+          productType: formData.businessType || "product",
+          audienceGoals: formData.goalIdentification.length > 0 
+            ? formData.goalIdentification.join(", ") 
+            : "Increasing brand awareness and driving sales through authentic athlete partnerships",
+          campaignVibe: "Premium professional brand representation with authentic content creation",
+          values: "Quality, authenticity, trust, and exceptional customer satisfaction for all partnerships",
+          targetSchoolsSports: "All relevant college sports programs that align with our brand values",
+          
+          // Optional fields that still need to be present
+          budget: `$${formData.budgetMin} - $${formData.budgetMax} per month`,
+          industry: formData.industry,
+          email: formData.email,
+          
+          // Store detailed preferences as JSON
+          preferences: JSON.stringify({
+            accessRestriction: formData.accessRestriction,
             hasPastPartnership: formData.hasPastPartnership,
             budget: {
               min: formData.budgetMin,
@@ -384,21 +408,30 @@ export default function BusinessOnboarding() {
             },
             zipCode: formData.zipCode,
             operatingLocation: formData.operatingLocation,
+            companySize: formData.businessSize,
             contactInfo: {
               name: formData.contactName,
               title: formData.contactTitle,
               email: formData.contactEmail,
               phone: formData.contactPhone
-            },
-            accessRestriction: formData.accessRestriction
-          }
+            }
+          })
         };
         
         const businessResponse = await apiRequest("POST", "/api/profile", businessData);
         
+        let businessResponseData;
+        try {
+          businessResponseData = await businessResponse.json();
+        } catch (error) {
+          console.error("Error parsing profile response:", error);
+        }
+        
         if (!businessResponse.ok) {
-          const errorData = await businessResponse.json();
-          throw new Error(errorData.message || "Failed to create business profile");
+          const errorMessage = businessResponseData?.message || 
+                             businessResponseData?.error || 
+                             "Failed to create business profile";
+          throw new Error(errorMessage);
         }
         
         toast({
