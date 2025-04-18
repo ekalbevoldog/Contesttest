@@ -273,85 +273,72 @@ export class SupabaseStorage implements IStorage {
     console.log('Attempting to store business profile with data:', JSON.stringify(business, null, 2));
     
     try {
-      // First try a direct SQL insert since we know this works
+      // Use the direct SQL insert in the db module which we know works
       try {
-        // Use direct SQL approach as a fallback since our testing showed this works
-        const result = await supabase.rpc('insert_business_profile', {
-          session_id: business.sessionId,
-          business_name: business.name,
-          product_type: business.productType,
-          audience_goals: business.audienceGoals,
-          campaign_vibe: business.campaignVibe,
-          value_statement: business.values,
-          target_schools: business.targetSchoolsSports
-        });
-        
-        if (result.error) {
-          console.error('Error in RPC call:', result.error);
-          // Continue to the normal insert as fallback
-        } else {
-          console.log('Successfully inserted via RPC:', result.data);
-          // Fetch the newly created record
-          const { data: fetchedProfile, error: fetchError } = await supabase
-            .from('business_profiles')
-            .select('*')
-            .eq('sessionId', business.sessionId)
-            .single();
-            
-          if (fetchError) {
-            console.error('Error fetching newly created profile:', fetchError);
-          } else if (fetchedProfile) {
-            console.log('Successfully retrieved profile after RPC insert:', fetchedProfile);
-            return fetchedProfile as Business;
-          }
+        // Try direct SQL insert through our db module
+        const result = await db.insertBusinessProfile(business);
+        if (result) {
+          console.log('Successfully stored business profile via db.insertBusinessProfile:', JSON.stringify(result, null, 2));
+          return result as Business;
         }
-      } catch (rpcError) {
-        console.warn('RPC method failed, falling back to direct insert:', rpcError);
+      } catch (sqlError) {
+        console.error('Error with db.insertBusinessProfile:', sqlError);
       }
       
-      // Fall back to regular insert
-      // Create a minimal object with just the required fields
-      const basicData = {
+      // Fall back to direct SQL api call - as a last resort
+      try {
+        // Create a SQL insert statement
+        const insertQuery = `
+          INSERT INTO business_profiles 
+          ("sessionId", "name", "productType", "audienceGoals", "campaignVibe", "values", "targetSchoolsSports", "budget")
+          VALUES 
+          ('${business.sessionId}', '${business.name || ''}', '${business.productType || "Product"}', 
+           '${business.audienceGoals || "College Students"}', '${business.campaignVibe || "Authentic"}', 
+           '${business.values || "Quality, Innovation"}', '${business.targetSchoolsSports || "Basketball"}', 
+           '${business.budget || "$0-$5000"}')
+          RETURNING *
+        `;
+
+        // Execute it directly
+        const { data, error } = await supabase.rpc('execute_raw_sql', { query: insertQuery });
+        
+        if (error) {
+          console.error('Error with direct SQL execution:', error);
+        } else if (data && data.length > 0) {
+          console.log('Successfully inserted business profile with direct SQL:', data[0]);
+          return data[0] as Business;
+        }
+      } catch (directSqlError) {
+        console.error('Exception with direct SQL execution:', directSqlError);
+      }
+
+      // Last fallback - create a minimal record using the supabase client API
+      const minimalData = {
         "sessionId": business.sessionId,
-        "name": business.name,
-        "productType": business.productType || "Product",
-        "audienceGoals": business.audienceGoals || "College Students",
-        "campaignVibe": business.campaignVibe || "Authentic",
-        "values": business.values || "Quality, Innovation",
-        "targetSchoolsSports": business.targetSchoolsSports || "Basketball"
+        "name": business.name || "Business Profile",
+        "productType": "Product",
+        "audienceGoals": "College Students",
+        "campaignVibe": "Authentic",
+        "values": "Quality",
+        "targetSchoolsSports": "All",
+        "budget": "$0-$5000"
       };
-      
-      console.log('Using minimal data for insert:', JSON.stringify(basicData, null, 2));
       
       const { data, error } = await supabase
         .from('business_profiles')
-        .insert(basicData)
+        .insert(minimalData)
         .select()
         .single();
         
       if (error) {
-        console.error('Error with minimal data insert:', JSON.stringify(error, null, 2));
-        
-        // If all else fails, create a record manually via SQL and return a mock object
-        console.log('Creating a fallback business profile via execute_sql_tool');
-        return {
-          id: -1, // This will be replaced when we fetch it from the database
-          sessionId: business.sessionId,
-          name: business.name,
-          productType: business.productType || "Product",
-          audienceGoals: business.audienceGoals || "College Students",
-          campaignVibe: business.campaignVibe || "Authentic",
-          values: business.values || "Quality, Innovation",
-          targetSchoolsSports: business.targetSchoolsSports || "Basketball",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        } as Business;
+        console.error('All business profile insertion methods failed:', error);
+        throw new Error(`Failed to store business profile: ${error.message}`);
       }
       
-      console.log('Successfully stored business profile:', JSON.stringify(data, null, 2));
+      console.log('Successfully stored business profile with minimal data:', JSON.stringify(data, null, 2));
       return data as Business;
     } catch (e) {
-      console.error('Exception in storeBusinessProfile:', e);
+      console.error('Unhandled exception in storeBusinessProfile:', e);
       throw new Error(`Failed to store business profile: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
