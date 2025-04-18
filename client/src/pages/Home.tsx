@@ -9,6 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { FadeIn } from "@/components/animations/FadeIn";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
+import { Parallax } from "@/components/animations/Parallax";
+import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
+import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
+import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 
 
 export default function Home() {
@@ -34,54 +40,79 @@ export default function Home() {
       
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-black">
+        <AnimatedGradient 
+          className="absolute inset-0" 
+          colors={['hsl(345, 90%, 55%, 0.15)', 'hsl(35, 100%, 50%, 0.15)', 'hsl(235, 100%, 50%, 0.15)']} 
+          blur={100}
+          duration={15}
+        />
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                  Connecting Athletes & Brands
-                </span>
-                <br /> 
-                For Authentic Partnerships
-              </h1>
-              <p className="text-xl text-zinc-400 max-w-xl">
-                Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-2">
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-                  asChild
-                >
-                  <Link to="/dynamic-onboarding">Get Started</Link>
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-red-500 text-white hover:bg-red-500/10"
-                  asChild
-                >
-                  <Link to="/dynamic-onboarding">Personalized Onboarding</Link>
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-amber-500 text-white hover:bg-amber-500/10"
-                  onClick={() => setShowChat(true)}
-                >
-                  Chat with AI Assistant
-                </Button>
-              </div>
-              <div className="flex items-center gap-4 pt-4">
-                <div className="text-zinc-400 text-sm flex items-center">
-                  <span className="text-xl font-bold text-red-500 mr-2">500+</span>
-                  <span>successful partnerships created this year</span>
-                </div>
-              </div>
-            </div>
-            <div className="relative h-72 md:h-96 hidden lg:block">
+            <StaggerContainer className="space-y-6">
+              <StaggerItem>
+                <FadeIn delay={0.2} direction="up">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                      Connecting Athletes & Brands
+                    </span>
+                    <br /> 
+                    For Authentic Partnerships
+                  </h1>
+                </FadeIn>
+              </StaggerItem>
+              
+              <StaggerItem>
+                <FadeIn delay={0.4} direction="up">
+                  <p className="text-xl text-zinc-400 max-w-xl">
+                    Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
+                  </p>
+                </FadeIn>
+              </StaggerItem>
+              
+              <StaggerItem>
+                <FadeIn delay={0.6} direction="up">
+                  <div className="flex flex-wrap gap-4 pt-2">
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
+                      asChild
+                    >
+                      <Link to="/dynamic-onboarding">Get Started</Link>
+                    </Button>
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="border-red-500 text-white hover:bg-red-500/10"
+                      asChild
+                    >
+                      <Link to="/dynamic-onboarding">Personalized Onboarding</Link>
+                    </Button>
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="border-amber-500 text-white hover:bg-amber-500/10"
+                      onClick={() => setShowChat(true)}
+                    >
+                      Chat with AI Assistant
+                    </Button>
+                  </div>
+                </FadeIn>
+              </StaggerItem>
+              
+              <StaggerItem>
+                <FadeIn delay={0.8} direction="up">
+                  <div className="flex items-center gap-4 pt-4">
+                    <div className="text-zinc-400 text-sm flex items-center">
+                      <span className="text-xl font-bold text-red-500 mr-2">500+</span>
+                      <span>successful partnerships created this year</span>
+                    </div>
+                  </div>
+                </FadeIn>
+              </StaggerItem>
+            </StaggerContainer>
+            
+            <FadeIn delay={0.5} direction="left" className="relative h-72 md:h-96 hidden lg:block">
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
               <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
                 <video 
@@ -95,7 +126,7 @@ export default function Home() {
                   Your browser does not support the video tag.
                 </video>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
         
@@ -104,9 +135,15 @@ export default function Home() {
       </section>
       
       {/* Benefits Section */}
-      <section className="py-20 bg-[#111]">
+      <section className="py-20 bg-[#111] relative overflow-hidden">
+        <AnimatedGradient 
+          className="absolute inset-0" 
+          colors={['hsl(235, 100%, 50%, 0.05)', 'hsl(345, 90%, 55%, 0.05)']} 
+          blur={120}
+          duration={20}
+        />
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16" threshold={0.2}>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 The Contested Advantage
@@ -116,7 +153,7 @@ export default function Home() {
               Our AI-powered platform creates perfect matches between athletes and businesses, 
               delivering authentic partnerships that drive real results.
             </p>
-          </div>
+          </ScrollReveal>
           
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
             <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
@@ -126,82 +163,90 @@ export default function Home() {
             
             <TabsContent value="athletes" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
-                    <p className="text-zinc-400">
-                      Turn your social media presence and athletic achievements into income with partnerships that respect your personal brand.
-                    </p>
-                  </CardContent>
-                </Card>
+                <ScrollReveal delay={0.1} direction="up" distance={20}>
+                  <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none h-full">
+                    <CardContent className="p-6">
+                      <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
+                      <p className="text-zinc-400">
+                        Turn your social media presence and athletic achievements into income with partnerships that respect your personal brand.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </ScrollReveal>
                 
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
-                    <p className="text-zinc-400">
-                      Access quality partnership opportunities specifically matched to your sport, values, content style, and audience.
-                    </p>
-                  </CardContent>
-                </Card>
+                <ScrollReveal delay={0.2} direction="up" distance={20}>
+                  <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none h-full">
+                    <CardContent className="p-6">
+                      <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
+                      <p className="text-zinc-400">
+                        Access quality partnership opportunities specifically matched to your sport, values, content style, and audience.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </ScrollReveal>
                 
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Career Growth</h3>
-                    <p className="text-zinc-400">
-                      Build a portfolio of professional collaborations that can lead to bigger opportunities throughout your career.
-                    </p>
-                  </CardContent>
-                </Card>
+                <ScrollReveal delay={0.3} direction="up" distance={20}>
+                  <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none h-full">
+                    <CardContent className="p-6">
+                      <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2 text-white">Career Growth</h3>
+                      <p className="text-zinc-400">
+                        Build a portfolio of professional collaborations that can lead to bigger opportunities throughout your career.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </ScrollReveal>
               </div>
               
-              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-black p-5 rounded-lg shadow-md">
-                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <span>$250</span>
+              <ScrollReveal delay={0.4} direction="up" distance={20} className="w-full">
+                <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-black p-5 rounded-lg shadow-md">
+                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
+                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                        <span>$250</span>
+                      </div>
+                      <p className="text-xs text-zinc-500">per campaign</p>
                     </div>
-                    <p className="text-xs text-zinc-500">per campaign</p>
-                  </div>
-                  
-                  <div className="bg-black p-5 rounded-lg shadow-md">
-                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <span>92%</span>
+                    
+                    <div className="bg-black p-5 rounded-lg shadow-md">
+                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
+                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                        <span>92%</span>
+                      </div>
+                      <p className="text-xs text-zinc-500">of athletes find matches</p>
                     </div>
-                    <p className="text-xs text-zinc-500">of athletes find matches</p>
-                  </div>
-                  
-                  <div className="bg-black p-5 rounded-lg shadow-md">
-                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
-                      <span>48hrs</span>
+                    
+                    <div className="bg-black p-5 rounded-lg shadow-md">
+                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
+                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                        <span>48hrs</span>
+                      </div>
+                      <p className="text-xs text-zinc-500">average timeframe</p>
                     </div>
-                    <p className="text-xs text-zinc-500">average timeframe</p>
-                  </div>
-                  
-                  <div className="flex items-center justify-center">
-                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                      <Link to="/dynamic-onboarding">Find Your Perfect Match</Link>
-                    </Button>
+                    
+                    <div className="flex items-center justify-center">
+                      <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
+                        <Link to="/dynamic-onboarding">Find Your Perfect Match</Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             </TabsContent>
             
             <TabsContent value="businesses" className="space-y-8">
