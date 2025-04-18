@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { getOnboardingSteps, normalizeSteps, isRestrictedIndustry, OnboardingStep } from '@/lib/onboarding-service';
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -84,8 +85,11 @@ interface FormData {
   compensation?: Record<string, any>;
 }
 
+// Import from onboarding service
+import { getOnboardingSteps, normalizeSteps, isRestrictedIndustry, OnboardingStep } from '@/lib/onboarding-service';
+
 // Field type definitions
-type FieldType = 'text' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'boolean' | 'slider' | 'multi_select' | 'date' | 'tel' | 'email' | 'password';
+type FieldType = 'text' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'boolean' | 'slider' | 'multi_select' | 'date' | 'tel' | 'email' | 'password' | 'dropdown' | 'slider_float';
 
 interface FormField {
   id: string;
