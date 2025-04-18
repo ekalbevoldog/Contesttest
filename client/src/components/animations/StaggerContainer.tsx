@@ -14,24 +14,20 @@ export const StaggerContainer: React.FC<StaggerContainerProps> = ({
   delayChildren = 0.15,
   staggerChildren = 0.1,
 }) => {
+  // Using a more reliable approach for staggered animations
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: {
-            delayChildren,
-            staggerChildren,
-          },
-        },
-      }}
-      className={className}
-    >
-      {children}
-    </motion.div>
+    <div className={className}>
+      {React.Children.map(children, (child, index) => {
+        if (React.isValidElement(child)) {
+          // Apply delay based on child index
+          return React.cloneElement(child, {
+            ...child.props,
+            customDelay: delayChildren + (index * staggerChildren)
+          });
+        }
+        return child;
+      })}
+    </div>
   );
 };
 
@@ -39,30 +35,26 @@ interface StaggerItemProps {
   children: ReactNode;
   className?: string;
   customVariants?: any;
+  customDelay?: number;
 }
 
 export const StaggerItem: React.FC<StaggerItemProps> = ({
   children,
   className = '',
   customVariants,
+  customDelay = 0,
 }) => {
-  const defaultVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
         type: 'spring',
         stiffness: 300,
         damping: 24,
-      },
-    },
-  };
-
-  return (
-    <motion.div
-      variants={customVariants || defaultVariants}
-      className={className}
+        delay: customDelay,
+      }}
     >
       {children}
     </motion.div>

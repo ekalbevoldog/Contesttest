@@ -526,13 +526,14 @@ export default function Onboarding() {
               
               <StaggerContainer>
                 <StaggerItem>
-                  <AnimeText
+                  <motion.h2 
                     className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500"
-                    duration={800}
-                    staggerDelay={20}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                   >
                     Welcome to Contested!
-                  </AnimeText>
+                  </motion.h2>
                   <motion.h3
                     className="text-xl font-medium mb-4 text-white"
                     initial={{ opacity: 0, y: -10 }}
@@ -613,13 +614,14 @@ export default function Onboarding() {
               
               <StaggerContainer>
                 <StaggerItem>
-                  <AnimeText
+                  <motion.h2 
                     className="text-2xl font-bold mb-4 text-white"
-                    duration={600}
-                    staggerDelay={15}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                   >
                     What type of business are you?
-                  </AnimeText>
+                  </motion.h2>
                   <motion.p 
                     className="text-zinc-400 mb-6"
                     initial={{ opacity: 0, y: 5 }}
