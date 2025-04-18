@@ -78,14 +78,14 @@ export default function Home() {
                       className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                       asChild
                     >
-                      <Link to="/dynamic-onboarding">For Athletes</Link>
+                      <Link to="/onboarding">For Athletes</Link>
                     </Button>
                     <Button 
                       size="lg" 
                       className="bg-gradient-to-r from-amber-500 to-red-500 text-white font-bold hover:from-amber-600 hover:to-red-600 transition-all shadow-md"
                       asChild
                     >
-                      <Link to="/business-onboarding">For Businesses</Link>
+                      <Link to="/onboarding">For Businesses</Link>
                     </Button>
                     <Button 
                       size="lg" 
@@ -93,7 +93,7 @@ export default function Home() {
                       className="border-red-500 text-white hover:bg-red-500/10"
                       asChild
                     >
-                      <Link to="/dynamic-onboarding">Personalized Onboarding</Link>
+                      <Link to="/onboarding">Personalized Onboarding</Link>
                     </Button>
                     <Button 
                       size="lg" 
@@ -248,7 +248,7 @@ export default function Home() {
                     
                     <div className="flex items-center justify-center">
                       <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                        <Link to="/dynamic-onboarding">Find Your Perfect Match</Link>
+                        <Link to="/onboarding">Find Your Perfect Match</Link>
                       </Button>
                     </div>
                   </div>
@@ -329,7 +329,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-center">
                     <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                      <Link to="/dynamic-onboarding">Find Your Perfect Match</Link>
+                      <Link to="/onboarding">Find Your Perfect Match</Link>
                     </Button>
                   </div>
                 </div>
@@ -439,7 +439,7 @@ export default function Home() {
                   className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 px-8 py-6 text-lg"
                   asChild
                 >
-                  <Link to="/dynamic-onboarding">Start Your Journey</Link>
+                  <Link to="/onboarding">Start Your Journey</Link>
                 </Button>
               </div>
             </ScrollReveal>
@@ -567,7 +567,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/dynamic-onboarding">Find Your Match</Link>
+                  <Link to="/onboarding">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
@@ -617,7 +617,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/dynamic-onboarding">Find Your Match</Link>
+                  <Link to="/onboarding">Find Your Match</Link>
                 </Button>
               </div>
             </Card>
@@ -664,7 +664,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/dynamic-onboarding">Contact Sales</Link>
+                  <Link to="/onboarding">Contact Sales</Link>
                 </Button>
               </div>
             </Card>
@@ -829,7 +829,7 @@ export default function Home() {
                     className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
                     asChild
                   >
-                    <Link to="/dynamic-onboarding">Find Your Athlete Match Now</Link>
+                    <Link to="/onboarding">Find Your Athlete Match Now</Link>
                   </Button>
                 </FadeIn>
                 

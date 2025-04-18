@@ -265,7 +265,7 @@ export default function Header() {
     { label: "Sign Out", icon: LogOut, onClick: handleLogout, condition: (user) => !!user, mobileOnly: true },
     // Mobile Account Links (Logged Out)
     { label: "Sign in or Register", href: "/auth", icon: UserCircle, condition: (user) => !user, mobileOnly: true },
-    { label: "Get Started", href: "/enhanced-onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
+    { label: "Get Started", href: "/onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
 
     // --- Special Buttons ---
     {
@@ -278,7 +278,7 @@ export default function Header() {
     {
       label: "Get Started", icon: ArrowRight, isButton: true, buttonVariant: 'default',
       buttonClassName: "relative overflow-hidden ml-2 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-xl",
-      href: "/enhanced-onboarding",
+      href: "/onboarding",
       condition: (user) => !user, // Only show when not logged in
       desktopOnly: true, // Specific styling for desktop button
     },
