@@ -12,7 +12,29 @@ import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart, Info as InfoIcon, ChevronLeft } from "lucide-react";
+import { 
+  DollarSign, 
+  MapPin, 
+  Building, 
+  Mail, 
+  Phone, 
+  User, 
+  CheckCircle, 
+  ChevronRight, 
+  Zap, 
+  Trophy, 
+  Target, 
+  BarChart, 
+  Info as InfoIcon, 
+  ChevronLeft,
+  GraduationCap,
+  Award,
+  Gamepad2,
+  Users,
+  Dumbbell,
+  ArrowLeft,
+  ArrowRight
+} from "lucide-react";
 
 // Import UI components
 interface FormFieldProps {
@@ -35,6 +57,62 @@ interface FormFieldProps {
 // FormField component
 // Fix Info reference for InfoIcon
 const Info = InfoIcon;
+
+// RadioCardOption component for styled radio selection
+interface RadioCardOptionProps {
+  name: string;
+  value: string;
+  checked: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+}
+
+const RadioCardOption: React.FC<RadioCardOptionProps> = ({
+  name,
+  value,
+  checked,
+  onChange,
+  title,
+  description,
+  icon
+}) => {
+  return (
+    <label 
+      className={`relative block cursor-pointer rounded-lg border p-4 ${
+        checked 
+          ? 'border-primary bg-primary bg-opacity-10' 
+          : 'border-zinc-700 bg-zinc-800 hover:border-zinc-600'
+      }`}
+    >
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        checked={checked}
+        onChange={onChange}
+        className="sr-only"
+      />
+      <div className="flex items-center">
+        {icon && <div className="flex items-center text-primary">{icon}</div>}
+        <div className="ml-2">
+          <h3 className={`text-base font-medium ${checked ? 'text-primary' : 'text-white'}`}>
+            {title}
+          </h3>
+          <p className="text-sm text-zinc-400">{description}</p>
+        </div>
+      </div>
+      <div 
+        className={`absolute top-2 right-2 h-4 w-4 rounded-full flex items-center justify-center ${
+          checked ? 'bg-primary' : 'bg-zinc-700'
+        }`}
+      >
+        {checked && <CheckCircle className="h-3 w-3 text-white" />}
+      </div>
+    </label>
+  );
+};
 
 const FormField: React.FC<FormFieldProps> = ({
   label,
@@ -96,6 +174,7 @@ const FormField: React.FC<FormFieldProps> = ({
 };
 import SliderWithInput from "@/components/SliderWithInput";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { industries, restrictedIndustries } from "@shared/industries";
 
@@ -942,7 +1021,7 @@ export default function Onboarding() {
                   </motion.p>
                 </StaggerItem>
                 
-                <StaggerItem delay={0.1}>
+                <StaggerItem>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <RadioCardOption
                       name="athleteCategory"
