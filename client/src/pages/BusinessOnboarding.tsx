@@ -1389,6 +1389,11 @@ export default function BusinessOnboarding() {
   
   // Render progress indicator
   const renderProgress = () => {
+    // Only show progress bar after user-type step
+    if (currentStep === "user-type") {
+      return null; // Don't show progress bar on the first step
+    }
+    
     const steps = [
       "business-type",
       "industry",
@@ -1439,7 +1444,7 @@ export default function BusinessOnboarding() {
               {renderStepContent()}
               
               <div className="flex justify-between mt-8">
-                {currentStep !== "business-type" && (
+                {currentStep !== "user-type" && (
                   <button
                     type="button"
                     onClick={handlePrevStep}
