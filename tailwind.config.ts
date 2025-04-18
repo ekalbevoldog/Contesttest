@@ -107,6 +107,32 @@ export default {
             opacity: "1",
           },
         },
+        "orbit-slow": {
+          "0%": {
+            transform: "rotate(0deg) translateX(10px) rotate(0deg)",
+          },
+          "100%": {
+            transform: "rotate(360deg) translateX(10px) rotate(-360deg)",
+          },
+        },
+        "orbit-reverse-slow": {
+          "0%": {
+            transform: "rotate(0deg) translateX(20px) rotate(0deg)",
+          },
+          "100%": {
+            transform: "rotate(-360deg) translateX(20px) rotate(360deg)",
+          },
+        },
+        "gradient-x": {
+          "0%, 100%": {
+            "background-size": "200% 200%",
+            "background-position": "left center",
+          },
+          "50%": {
+            "background-size": "200% 200%",
+            "background-position": "right center",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -114,6 +140,9 @@ export default {
         "flip-pulse": "flip-pulse 0.75s ease-in-out infinite",
         "flip-down": "flip-down 0.25s ease-in forwards",
         "flip-up": "flip-up 0.25s ease-out forwards 0.25s",
+        "orbit-slow": "orbit-slow 25s linear infinite",
+        "orbit-reverse-slow": "orbit-reverse-slow 30s linear infinite",
+        "gradient-x": "gradient-x 15s ease infinite",
       },
     },
   },
