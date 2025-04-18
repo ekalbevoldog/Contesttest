@@ -12,7 +12,7 @@ import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart } from "lucide-react";
+import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart, Info, ChevronLeft } from "lucide-react";
 import SliderWithInput from "@/components/SliderWithInput";
 import { Slider } from "@/components/ui/slider";
 
@@ -1014,26 +1014,31 @@ export default function Onboarding() {
                   </motion.div>
                   
                   {/* Map visualization placeholder that appears when ZIP is valid */}
-                  {/^\d{5}(-\d{4})?$/.test(formData.zipCode) && (
+                  {formData.zipCode && /^\d{5}(-\d{4})?$/.test(formData.zipCode) && (
                     <motion.div
-                      className="mt-6 h-48 bg-zinc-800 rounded-lg overflow-hidden relative"
+                      className="mt-6 bg-zinc-800 rounded-lg overflow-hidden relative"
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 200 }}
+                      animate={{ opacity: 1, height: 'auto' }}
                       transition={{ duration: 0.5 }}
                     >
-                      <div className="absolute inset-0 p-4 flex flex-col justify-end">
-                        <div className="bg-zinc-900/80 backdrop-blur-sm p-3 rounded-lg inline-flex items-center space-x-2 border border-zinc-700 w-auto self-start">
-                          <MapPin size={16} className="text-red-500" />
-                          <span className="text-white font-medium">{formData.zipCode}</span>
+                      <div className="p-4 flex flex-col space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="bg-zinc-900/80 backdrop-blur-sm p-3 rounded-lg flex items-center space-x-2 border border-zinc-700">
+                            <MapPin size={16} className="text-red-500" />
+                            <span className="text-white font-medium">{formData.zipCode}</span>
+                          </div>
+                          
+                          <div className="text-green-400 flex items-center">
+                            <CheckCircle size={16} className="mr-1" />
+                            <span className="text-sm">Valid location</span>
+                          </div>
                         </div>
                         
-                        <div className="bg-zinc-900/90 backdrop-blur-sm px-3 py-2 rounded-lg mt-2 inline-flex items-center space-x-2 border border-zinc-700 w-auto self-start text-sm">
-                          <Info size={14} className="text-blue-400" />
+                        <div className="bg-zinc-900/90 backdrop-blur-sm px-3 py-2 rounded-lg flex items-center space-x-2 border border-zinc-700 text-sm">
+                          <Info size={14} className="text-blue-400 flex-shrink-0" />
                           <span className="text-zinc-300">Location confirmed - We'll use this area for local athlete matching</span>
                         </div>
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent opacity-50" />
-                      <div className="h-full w-full bg-gradient-to-br from-zinc-700/30 to-zinc-900/90" />
                     </motion.div>
                   )}
                 </div>

@@ -141,9 +141,9 @@ export const AnimatedFormField: React.FC<AnimatedFormFieldProps> = ({
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               placeholder={isFocused ? placeholder : ''}
-              className={`w-full p-3 bg-zinc-800/90 rounded-lg transition-colors ${
+              className={`w-full p-3 bg-zinc-800/90 rounded-lg transition-colors text-base ${
                 prefix ? 'pl-8' : ''
-              }`}
+              } ${name === 'zipCode' ? 'text-lg font-medium tracking-wide' : ''}`}
               style={{ borderWidth: 0 }}  // Border is handled by AnimatedInput
               required={required}
               minLength={minLength}
