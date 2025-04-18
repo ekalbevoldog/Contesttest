@@ -25,6 +25,7 @@ import {
   DollarSign, // Example for Pricing
   BookOpen, // Example for Case Studies
   Zap, // Example for Get Started / AI Assistant
+  ArrowRight, // For Get Started button
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -269,14 +270,14 @@ export default function Header() {
     // --- Special Buttons ---
     {
       label: "AI Assistant", icon: Zap, isButton: true, buttonVariant: 'default',
-      buttonClassName: "bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium",
+      buttonClassName: "relative overflow-hidden bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 hover:border-red-500/50 hover:bg-zinc-900 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-red-500/20",
       onClick: () => window.dispatchEvent(new CustomEvent('toggle-ai-assistant')),
-      condition: () => true, // Always show AI assistant button? Adjust if needed
+      condition: () => true, // Always show AI assistant button
       desktopOnly: true, // Specific styling for desktop button
     },
     {
-      label: "Get Started", isButton: true, buttonVariant: 'default',
-      buttonClassName: "bg-destructive hover:bg-destructive/90 text-white font-medium ml-2", // Use theme color
+      label: "Get Started", icon: ArrowRight, isButton: true, buttonVariant: 'default',
+      buttonClassName: "relative overflow-hidden ml-2 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-xl",
       href: "/enhanced-onboarding",
       condition: (user) => !user, // Only show when not logged in
       desktopOnly: true, // Specific styling for desktop button
@@ -284,7 +285,7 @@ export default function Header() {
     // Mobile AI Assistant Button
     {
       label: "Chat with AI Assistant", icon: Zap, isButton: true, buttonVariant: 'default',
-      buttonClassName: "w-full mt-6 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium",
+      buttonClassName: "w-full mt-6 relative overflow-hidden border border-zinc-800 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-red-500/20",
       onClick: () => {
         setOpen(false);
         window.dispatchEvent(new CustomEvent('toggle-ai-assistant'));
@@ -314,13 +315,16 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-[#111111] border-b border-zinc-800 shadow-md backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-black/50 border-b border-zinc-800/50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="flex items-center">
-                <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
+              <Link href="/" className="flex items-center group">
+                <div className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/30 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                  <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto relative z-10" />
+                </div>
               </Link>
             </div>
           </div>
@@ -425,16 +429,18 @@ export default function Header() {
              {/* Consider if a dedicated AI button is needed here or just in the sheet */}
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="border-[#f03c3c] bg-transparent">
-                  <Menu className="h-6 w-6 text-[#f03c3c]" />
+                <Button variant="outline" size="icon" className="border border-zinc-800 hover:border-red-500/50 bg-zinc-900/40 backdrop-blur-sm hover:bg-zinc-900/60 relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-red-500/20">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/10 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-md"></div>
+                  <Menu className="h-5 w-5 text-white" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent className="border-l-primary bg-black/95 text-white w-[280px] sm:w-[320px]"> {/* Use theme color */}
+              <SheetContent className="border-l border-zinc-800/50 bg-gradient-to-b from-black/95 to-zinc-900/95 text-white w-[280px] sm:w-[320px] shadow-2xl backdrop-blur-xl">
                 <div className="pt-6 pb-3 space-y-1 flex flex-col h-full">
-                  {/* Header */}
-                  <div className="flex items-center mb-6 px-3">
-                    <Link href="/" onClick={() => setOpen(false)}>
+                  {/* Header with subtle gradient background */}
+                  <div className="flex items-center mb-6 px-3 relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/30 via-red-500/10 to-black/0 opacity-70"></div>
+                    <Link href="/" onClick={() => setOpen(false)} className="relative z-10">
                       <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
                     </Link>
                   </div>
@@ -449,9 +455,10 @@ export default function Header() {
 
                       if (isDivider) {
                         return (
-                          <div key={index} className="border-t border-gray-700 my-3 pt-3">
-                            <div className="px-3 py-1 text-sm font-medium text-gray-400 flex items-center">
-                              {item.icon && <item.icon className="mr-2 h-4 w-4 text-primary" />}
+                          <div key={index} className="relative my-5 pt-4">
+                            <div className="absolute top-0 left-3 right-3 h-px bg-gradient-to-r from-zinc-800/50 via-red-500/30 to-zinc-800/50"></div>
+                            <div className="px-3 py-1 text-sm font-semibold text-red-400/90 flex items-center">
+                              {item.icon && <item.icon className="mr-2 h-4 w-4 text-red-400/90" />}
                               {item.label}
                             </div>
                           </div>
