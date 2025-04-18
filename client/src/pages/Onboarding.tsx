@@ -12,7 +12,88 @@ import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart, Info, ChevronLeft } from "lucide-react";
+import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart, Info as InfoIcon, ChevronLeft } from "lucide-react";
+
+// Import UI components
+interface FormFieldProps {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  type?: string;
+  required?: boolean;
+  errorMessage?: string;
+  isTouched?: boolean;
+  rows?: number;
+  maxLength?: number;
+  min?: string;
+  max?: string;
+  step?: string;
+}
+
+// FormField component
+// Fix Info reference for InfoIcon
+const Info = InfoIcon;
+
+const FormField: React.FC<FormFieldProps> = ({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  required,
+  errorMessage,
+  isTouched,
+  rows,
+  maxLength,
+  min,
+  max,
+  step
+}) => {
+  return (
+    <div>
+      <div className="mb-2">
+        <label htmlFor={name} className="block text-sm font-medium text-white">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+      </div>
+      
+      {type === 'textarea' ? (
+        <textarea
+          id={name}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={rows || 4}
+          maxLength={maxLength}
+          className={`w-full rounded-md bg-zinc-800 border ${isTouched && errorMessage ? 'border-red-500' : 'border-zinc-700'} py-2 px-3 text-white`}
+          required={required}
+        />
+      ) : (
+        <input
+          id={name}
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={`w-full rounded-md bg-zinc-800 border ${isTouched && errorMessage ? 'border-red-500' : 'border-zinc-700'} py-2 px-3 text-white`}
+          required={required}
+          min={min}
+          max={max}
+          step={step}
+        />
+      )}
+      
+      {isTouched && errorMessage && (
+        <p className="text-red-500 text-xs mt-1">{errorMessage}</p>
+      )}
+    </div>
+  );
+};
 import SliderWithInput from "@/components/SliderWithInput";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -161,7 +242,45 @@ const initialFormData: BusinessFormData = {
   password: "",
   confirmPassword: "",
   name: "",
-  email: ""
+  email: "",
+  
+  // Athlete-specific fields with default values
+  phone: "",
+  birthdate: "",
+  gender: "",
+  bio: "",
+  
+  school: "",
+  division: "",
+  graduationYear: null,
+  major: "",
+  gpa: null,
+  academicHonors: "",
+  
+  sport: "",
+  position: "",
+  sportAchievements: "",
+  stats: {},
+  
+  socialHandles: {},
+  followerCount: null,
+  averageEngagementRate: null,
+  
+  contentStyle: "",
+  contentTypes: [],
+  
+  compensationGoals: "",
+  preferredProductCategories: [],
+  previousBrandDeals: [],
+  
+  personalValues: [],
+  causes: [],
+  
+  availabilityTimeframe: "",
+  minimumCompensation: "",
+  
+  eligibilityStatus: "",
+  eligibilityMessage: ""
 };
 
 // Using restrictedIndustries imported from shared/industries.ts
@@ -232,12 +351,14 @@ export default function Onboarding() {
     const newErrors: Record<string, string> = {};
     
     switch (currentStep) {
+      // Common validation
       case "user-type":
         if (!formData.userType) {
           newErrors.userType = "Please select whether you're an athlete or a business";
         }
         break;
-        
+     
+      // Business-specific validation   
       case "business-type":
         if (!formData.businessType) {
           newErrors.businessType = "Please select your business type";
@@ -298,6 +419,82 @@ export default function Onboarding() {
         }
         break;
         
+      // Athlete-specific validation
+      case "athlete-basic-info":
+        if (!formData.name) {
+          newErrors.name = "Please enter your full name";
+        }
+        if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          newErrors.email = "Please enter a valid email address";
+        }
+        if (!formData.phone) {
+          newErrors.phone = "Please enter your phone number";
+        }
+        if (!formData.birthdate) {
+          newErrors.birthdate = "Please enter your date of birth";
+        }
+        break;
+      
+      case "athlete-academic-info":
+        if (!formData.school) {
+          newErrors.school = "Please enter your school name";
+        }
+        if (!formData.division) {
+          newErrors.division = "Please select your division";
+        }
+        break;
+      
+      case "athlete-sport-info":
+        if (!formData.sport) {
+          newErrors.sport = "Please select your primary sport";
+        }
+        if (!formData.position) {
+          newErrors.position = "Please enter your position";
+        }
+        break;
+      
+      case "athlete-eligibility-check":
+        // Eligibility check would typically query the database
+        // For now, we'll just make sure we have the minimum required data
+        if (!formData.school || !formData.sport || !formData.division) {
+          newErrors.eligibility = "We need your school, sport, and division to verify eligibility";
+        }
+        break;
+      
+      case "athlete-social-media":
+        if (!formData.followerCount || formData.followerCount <= 0) {
+          newErrors.followerCount = "Please provide your total follower count";
+        }
+        if (Object.keys(formData.socialHandles).length === 0) {
+          newErrors.socialHandles = "Please provide at least one social media handle";
+        }
+        break;
+      
+      case "athlete-content-style":
+        if (!formData.contentStyle) {
+          newErrors.contentStyle = "Please describe your content style";
+        }
+        if (formData.contentTypes.length === 0) {
+          newErrors.contentTypes = "Please select at least one content type";
+        }
+        break;
+      
+      case "athlete-compensation":
+        if (!formData.compensationGoals) {
+          newErrors.compensationGoals = "Please indicate your compensation expectations";
+        }
+        if (!formData.minimumCompensation) {
+          newErrors.minimumCompensation = "Please enter your minimum compensation expectations";
+        }
+        break;
+      
+      case "athlete-brand-values":
+        if (formData.personalValues.length === 0) {
+          newErrors.personalValues = "Please select at least one personal value";
+        }
+        break;
+        
+      // Common endpoint
       case "create-password":
         // We already have name and email at this point, just validate password
         if (!formData.password) {
@@ -328,44 +525,80 @@ export default function Onboarding() {
         }));
       }
       
-      // Determine next step based on current step and business type
+      // Determine next step based on current step, user type, and business type
       let nextStep: OnboardingStep;
       
-      switch (currentStep) {
-        case "user-type":
-          // For both user types, proceed to the business type selection step
-          // The user type is stored in formData for later use
-          nextStep = "business-type";
-          break;
-        case "business-type":
-          nextStep = "industry";
-          break;
-        case "industry":
-          nextStep = "goals";
-          break;
-        case "goals":
-          nextStep = "past-partnerships";
-          break;
-        case "past-partnerships":
-          nextStep = "budget";
-          break;
-        case "budget":
-          nextStep = "zip-code";
-          break;
-        case "zip-code":
-          nextStep = formData.businessType === "service" ? "operating-location" : "contact-info";
-          break;
-        case "operating-location":
-          nextStep = "contact-info";
-          break;
-        case "contact-info":
-          nextStep = "business-size";
-          break;
-        case "business-size":
-          nextStep = "create-password";
-          break;
-        default:
-          nextStep = "create-password";
+      // Branch flow based on user type
+      if (formData.userType === "athlete") {
+        // Athlete-specific flow
+        switch (currentStep) {
+          case "user-type":
+            nextStep = "athlete-basic-info";
+            break;
+          case "athlete-basic-info":
+            nextStep = "athlete-academic-info";
+            break;
+          case "athlete-academic-info":
+            nextStep = "athlete-sport-info";
+            break;
+          case "athlete-sport-info":
+            nextStep = "athlete-eligibility-check";
+            break;
+          case "athlete-eligibility-check":
+            nextStep = "athlete-social-media";
+            break;
+          case "athlete-social-media":
+            nextStep = "athlete-content-style";
+            break;
+          case "athlete-content-style":
+            nextStep = "athlete-compensation";
+            break;
+          case "athlete-compensation":
+            nextStep = "athlete-brand-values";
+            break;
+          case "athlete-brand-values":
+            nextStep = "create-password";
+            break;
+          default:
+            nextStep = "create-password";
+        }
+      } else {
+        // Business flow (existing flow)
+        switch (currentStep) {
+          case "user-type":
+            // For businesses, proceed to the business type selection step
+            nextStep = "business-type";
+            break;
+          case "business-type":
+            nextStep = "industry";
+            break;
+          case "industry":
+            nextStep = "goals";
+            break;
+          case "goals":
+            nextStep = "past-partnerships";
+            break;
+          case "past-partnerships":
+            nextStep = "budget";
+            break;
+          case "budget":
+            nextStep = "zip-code";
+            break;
+          case "zip-code":
+            nextStep = formData.businessType === "service" ? "operating-location" : "contact-info";
+            break;
+          case "operating-location":
+            nextStep = "contact-info";
+            break;
+          case "contact-info":
+            nextStep = "business-size";
+            break;
+          case "business-size":
+            nextStep = "create-password";
+            break;
+          default:
+            nextStep = "create-password";
+        }
       }
       
       setCurrentStep(nextStep);
@@ -377,39 +610,76 @@ export default function Onboarding() {
   const handlePrevStep = () => {
     let prevStep: OnboardingStep;
     
-    switch (currentStep) {
-      case "business-type":
-        prevStep = "user-type";
-        break;
-      case "industry":
-        prevStep = "business-type";
-        break;
-      case "goals":
-        prevStep = "industry";
-        break;
-      case "past-partnerships":
-        prevStep = "goals";
-        break;
-      case "budget":
-        prevStep = "past-partnerships";
-        break;
-      case "zip-code":
-        prevStep = "budget";
-        break;
-      case "operating-location":
-        prevStep = "zip-code";
-        break;
-      case "contact-info":
-        prevStep = formData.businessType === "service" ? "operating-location" : "zip-code";
-        break;
-      case "business-size":
-        prevStep = "contact-info";
-        break;
-      case "create-password":
-        prevStep = "business-size";
-        break;
-      default:
-        prevStep = "business-type";
+    // Branch flow based on user type
+    if (formData.userType === "athlete") {
+      // Athlete-specific back navigation
+      switch (currentStep) {
+        case "athlete-basic-info":
+          prevStep = "user-type";
+          break;
+        case "athlete-academic-info":
+          prevStep = "athlete-basic-info";
+          break;
+        case "athlete-sport-info":
+          prevStep = "athlete-academic-info";
+          break;
+        case "athlete-eligibility-check":
+          prevStep = "athlete-sport-info";
+          break;
+        case "athlete-social-media":
+          prevStep = "athlete-eligibility-check";
+          break;
+        case "athlete-content-style":
+          prevStep = "athlete-social-media";
+          break;
+        case "athlete-compensation":
+          prevStep = "athlete-content-style";
+          break;
+        case "athlete-brand-values":
+          prevStep = "athlete-compensation";
+          break;
+        case "create-password":
+          prevStep = "athlete-brand-values";
+          break;
+        default:
+          prevStep = "user-type";
+      }
+    } else {
+      // Business flow (existing flow)
+      switch (currentStep) {
+        case "business-type":
+          prevStep = "user-type";
+          break;
+        case "industry":
+          prevStep = "business-type";
+          break;
+        case "goals":
+          prevStep = "industry";
+          break;
+        case "past-partnerships":
+          prevStep = "goals";
+          break;
+        case "budget":
+          prevStep = "past-partnerships";
+          break;
+        case "zip-code":
+          prevStep = "budget";
+          break;
+        case "operating-location":
+          prevStep = "zip-code";
+          break;
+        case "contact-info":
+          prevStep = formData.businessType === "service" ? "operating-location" : "zip-code";
+          break;
+        case "business-size":
+          prevStep = "contact-info";
+          break;
+        case "create-password":
+          prevStep = "business-size";
+          break;
+        default:
+          prevStep = "business-type";
+      }
     }
     
     setCurrentStep(prevStep);
@@ -468,44 +738,113 @@ export default function Onboarding() {
         
         // Create profile based on selected user type
         // Make sure to match the exact schema expected by the backend
-        const profileData = {
-          name: formData.name,
-          userType: formData.userType, // Use the selected user type from form
-          sessionId: sessionId, // Use the session ID from registration
-          
-          // Required by the business schema with minimum length requirements
-          productType: formData.businessType || "product",
-          audienceGoals: formData.goalIdentification.length > 0 
-            ? formData.goalIdentification.join(", ") 
-            : "Increasing brand awareness and driving sales through authentic athlete partnerships",
-          campaignVibe: "Premium professional brand representation with authentic content creation",
-          values: "Quality, authenticity, trust, and exceptional customer satisfaction for all partnerships",
-          targetSchoolsSports: "All relevant college sports programs that align with our brand values",
-          
-          // Optional fields that still need to be present
-          budget: `$${formData.budgetMin} - $${formData.budgetMax} per month`,
-          industry: formData.industry,
-          email: formData.email,
-          
-          // Store detailed preferences as JSON
-          preferences: JSON.stringify({
-            accessRestriction: formData.accessRestriction,
-            hasPastPartnership: formData.hasPastPartnership,
-            budget: {
-              min: formData.budgetMin,
-              max: formData.budgetMax
-            },
-            zipCode: formData.zipCode,
-            operatingLocation: formData.operatingLocation,
-            companySize: formData.businessSize,
-            contactInfo: {
-              name: formData.name,
-              title: formData.contactTitle,
-              email: formData.email,
-              phone: formData.contactPhone
-            }
-          })
-        };
+        let profileData;
+        
+        if (formData.userType === "athlete") {
+          // Create athlete profile with required fields from schema.ts
+          profileData = {
+            name: formData.name,
+            userType: formData.userType,
+            sessionId: sessionId,
+            
+            // Required fields for athlete_profiles table
+            school: formData.school,
+            division: formData.division,
+            sport: formData.sport,
+            followerCount: formData.followerCount || 0,
+            contentStyle: formData.contentStyle || "Authentic and engaging content that resonates with my audience",
+            compensationGoals: formData.compensationGoals || "Fair compensation that reflects my value and engagement",
+            
+            // Optional fields
+            email: formData.email,
+            phone: formData.phone,
+            birthdate: formData.birthdate,
+            gender: formData.gender,
+            bio: formData.bio,
+            
+            // Academic Information
+            graduationYear: formData.graduationYear,
+            major: formData.major,
+            gpa: formData.gpa,
+            academicHonors: formData.academicHonors,
+            
+            // Athletic Information
+            position: formData.position,
+            sportAchievements: formData.sportAchievements,
+            
+            // Social and content information
+            socialHandles: JSON.stringify(formData.socialHandles),
+            averageEngagementRate: formData.averageEngagementRate,
+            contentTypes: JSON.stringify(formData.contentTypes),
+            preferredProductCategories: JSON.stringify(formData.preferredProductCategories),
+            personalValues: JSON.stringify(formData.personalValues),
+            causes: JSON.stringify(formData.causes),
+            
+            // Availability & Requirements
+            availabilityTimeframe: formData.availabilityTimeframe,
+            minimumCompensation: formData.minimumCompensation,
+            
+            // Eligibility status 
+            eligibilityStatus: "pending", // Will be verified by admin/compliance officer
+            
+            // Store detailed preferences as JSON
+            preferences: JSON.stringify({
+              eligibilityDetails: {
+                school: formData.school,
+                sport: formData.sport,
+                division: formData.division
+              },
+              contactInfo: {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone
+              },
+              socialMedia: formData.socialHandles,
+              brandValues: formData.personalValues,
+              contentPreferences: formData.contentTypes
+            })
+          };
+        } else {
+          // Create business profile (existing functionality)
+          profileData = {
+            name: formData.name,
+            userType: formData.userType, // Use the selected user type from form
+            sessionId: sessionId, // Use the session ID from registration
+            
+            // Required by the business schema with minimum length requirements
+            productType: formData.businessType || "product",
+            audienceGoals: formData.goalIdentification.length > 0 
+              ? formData.goalIdentification.join(", ") 
+              : "Increasing brand awareness and driving sales through authentic athlete partnerships",
+            campaignVibe: "Premium professional brand representation with authentic content creation",
+            values: "Quality, authenticity, trust, and exceptional customer satisfaction for all partnerships",
+            targetSchoolsSports: "All relevant college sports programs that align with our brand values",
+            
+            // Optional fields that still need to be present
+            budget: `$${formData.budgetMin} - $${formData.budgetMax} per month`,
+            industry: formData.industry,
+            email: formData.email,
+            
+            // Store detailed preferences as JSON
+            preferences: JSON.stringify({
+              accessRestriction: formData.accessRestriction,
+              hasPastPartnership: formData.hasPastPartnership,
+              budget: {
+                min: formData.budgetMin,
+                max: formData.budgetMax
+              },
+              zipCode: formData.zipCode,
+              operatingLocation: formData.operatingLocation,
+              companySize: formData.businessSize,
+              contactInfo: {
+                name: formData.name,
+                title: formData.contactTitle,
+                email: formData.email,
+                phone: formData.contactPhone
+              }
+            })
+          };
+        }
         
         // Submit profile data
         const profileResponse = await apiRequest("POST", "/api/profile", profileData);
@@ -557,6 +896,854 @@ export default function Onboarding() {
   // Render the current step content
   const renderStepContent = () => {
     switch (currentStep) {
+      // Athlete-specific steps
+      case "athlete-basic-info":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Basic Information
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Let's get to know you better. This information helps us create your profile and verify your eligibility.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="Full Name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder="Your full name"
+                        required={true}
+                        errorMessage={errors.name}
+                        isTouched={!!errors.name}
+                      />
+                      
+                      <FormField
+                        label="Email Address"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="Your email address"
+                        required={true}
+                        errorMessage={errors.email}
+                        isTouched={!!errors.email}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="Phone Number"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="Your contact number"
+                        required={true}
+                        errorMessage={errors.phone}
+                        isTouched={!!errors.phone}
+                      />
+                      
+                      <FormField
+                        label="Date of Birth"
+                        name="birthdate"
+                        type="date"
+                        value={formData.birthdate}
+                        onChange={handleChange}
+                        required={true}
+                        errorMessage={errors.birthdate}
+                        isTouched={!!errors.birthdate}
+                      />
+                    </div>
+                    
+                    <div>
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-white">Gender</label>
+                      </div>
+                      <div className="flex space-x-4">
+                        {['Male', 'Female', 'Non-binary', 'Prefer not to say'].map(gender => (
+                          <div key={gender} className="flex items-center">
+                            <input
+                              type="radio"
+                              id={`gender-${gender}`}
+                              name="gender"
+                              value={gender}
+                              checked={formData.gender === gender}
+                              onChange={handleChange}
+                              className="mr-2"
+                            />
+                            <label htmlFor={`gender-${gender}`} className="text-white text-sm">{gender}</label>
+                          </div>
+                        ))}
+                      </div>
+                      {errors.gender && (
+                        <p className="text-red-500 text-xs mt-1">{errors.gender}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <FormField
+                        label="Bio"
+                        name="bio"
+                        type="textarea"
+                        value={formData.bio}
+                        onChange={handleChange}
+                        placeholder="Tell us a bit about yourself (max 300 characters)"
+                        rows={3}
+                        maxLength={300}
+                      />
+                    </div>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+        
+      case "athlete-academic-info":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Academic Information
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    This will help verify your eligibility as a collegiate athlete.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="School"
+                        name="school"
+                        value={formData.school}
+                        onChange={handleChange}
+                        placeholder="Enter your college/university name"
+                        required={true}
+                        errorMessage={errors.school}
+                        isTouched={!!errors.school}
+                      />
+                      
+                      <div>
+                        <div className="mb-2">
+                          <label className="block text-sm font-medium text-white">Division <span className="text-red-500">*</span></label>
+                        </div>
+                        <select 
+                          name="division" 
+                          value={formData.division} 
+                          onChange={handleChange}
+                          className="w-full rounded-md bg-zinc-800 border border-zinc-700 py-2 px-3 text-white"
+                          required
+                        >
+                          <option value="">Select Division</option>
+                          <option value="NCAA Division I">NCAA Division I</option>
+                          <option value="NCAA Division II">NCAA Division II</option>
+                          <option value="NCAA Division III">NCAA Division III</option>
+                          <option value="NAIA">NAIA</option>
+                          <option value="NJCAA">NJCAA</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        {errors.division && (
+                          <p className="text-red-500 text-xs mt-1">{errors.division}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="Major"
+                        name="major"
+                        value={formData.major}
+                        onChange={handleChange}
+                        placeholder="Your field of study"
+                      />
+                      
+                      <FormField
+                        label="Expected Graduation Year"
+                        name="graduationYear"
+                        type="number"
+                        value={formData.graduationYear ? formData.graduationYear.toString() : ""}
+                        onChange={(e) => {
+                          if (e.target.value === "" || isNaN(Number(e.target.value))) {
+                            setFormData(prev => ({ ...prev, graduationYear: null }));
+                          } else {
+                            setFormData(prev => ({ ...prev, graduationYear: Number(e.target.value) }));
+                          }
+                        }}
+                        placeholder="YYYY"
+                        min="2023"
+                        max="2030"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="GPA (Optional)"
+                        name="gpa"
+                        type="number"
+                        value={formData.gpa ? formData.gpa.toString() : ""}
+                        onChange={(e) => {
+                          if (e.target.value === "" || isNaN(Number(e.target.value))) {
+                            setFormData(prev => ({ ...prev, gpa: null }));
+                          } else {
+                            setFormData(prev => ({ ...prev, gpa: Number(e.target.value) }));
+                          }
+                        }}
+                        placeholder="0.0 - 4.0"
+                        min="0"
+                        max="4.0"
+                        step="0.1"
+                      />
+                      
+                      <FormField
+                        label="Academic Honors (Optional)"
+                        name="academicHonors"
+                        value={formData.academicHonors}
+                        onChange={handleChange}
+                        placeholder="e.g., Dean's List, Honor Roll"
+                      />
+                    </div>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+      
+      case "athlete-sport-info":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Sport Information
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Tell us about your collegiate athletic career.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <div className="mb-2">
+                          <label className="block text-sm font-medium text-white">Sport <span className="text-red-500">*</span></label>
+                        </div>
+                        <select 
+                          name="sport" 
+                          value={formData.sport} 
+                          onChange={handleChange}
+                          className="w-full rounded-md bg-zinc-800 border border-zinc-700 py-2 px-3 text-white"
+                          required
+                        >
+                          <option value="">Select Sport</option>
+                          <option value="Football">Football</option>
+                          <option value="Basketball">Basketball</option>
+                          <option value="Baseball">Baseball</option>
+                          <option value="Softball">Softball</option>
+                          <option value="Soccer">Soccer</option>
+                          <option value="Volleyball">Volleyball</option>
+                          <option value="Track & Field">Track & Field</option>
+                          <option value="Swimming & Diving">Swimming & Diving</option>
+                          <option value="Tennis">Tennis</option>
+                          <option value="Golf">Golf</option>
+                          <option value="Wrestling">Wrestling</option>
+                          <option value="Gymnastics">Gymnastics</option>
+                          <option value="Ice Hockey">Ice Hockey</option>
+                          <option value="Lacrosse">Lacrosse</option>
+                          <option value="Field Hockey">Field Hockey</option>
+                          <option value="Rugby">Rugby</option>
+                          <option value="Water Polo">Water Polo</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        {errors.sport && (
+                          <p className="text-red-500 text-xs mt-1">{errors.sport}</p>
+                        )}
+                      </div>
+                      
+                      <FormField
+                        label="Position"
+                        name="position"
+                        value={formData.position}
+                        onChange={handleChange}
+                        placeholder="Your position or specialty"
+                        required={true}
+                        errorMessage={errors.position}
+                        isTouched={!!errors.position}
+                      />
+                    </div>
+                    
+                    <div>
+                      <FormField
+                        label="Athletic Achievements"
+                        name="sportAchievements"
+                        type="textarea"
+                        value={formData.sportAchievements}
+                        onChange={handleChange}
+                        placeholder="List your key athletic achievements, awards, or recognition"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+        
+      case "athlete-eligibility-check":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Eligibility Verification
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    We'll verify your eligibility based on your school, division, and sport.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="bg-zinc-800/50 border border-zinc-700 rounded-md p-5 mb-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="bg-amber-500/20 p-2 rounded-full">
+                        <InfoIcon className="h-6 w-6 text-amber-500" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-white">Eligibility Information</h3>
+                    </div>
+                    
+                    <div className="space-y-2 mb-4">
+                      <p className="text-zinc-300">
+                        Your eligibility will be verified before you can accept partnerships. We'll review:
+                      </p>
+                      <ul className="list-disc pl-5 text-zinc-300 space-y-1">
+                        <li>Your status as a current student-athlete</li>
+                        <li>Your school's specific NIL policies</li>
+                        <li>Compliance with NCAA, NAIA, or other governing body regulations</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-zinc-900/50 p-4 rounded-md">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-white font-medium">School</span>
+                        <span className="text-zinc-300">{formData.school || '-'}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-white font-medium">Division</span>
+                        <span className="text-zinc-300">{formData.division || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-white font-medium">Sport</span>
+                        <span className="text-zinc-300">{formData.sport || '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-zinc-800/50 border border-zinc-700 rounded-md p-5">
+                    <h3 className="text-lg font-semibold text-white mb-4">Confirmation</h3>
+                    <div className="flex items-start mb-4">
+                      <input 
+                        type="checkbox" 
+                        id="eligibility-confirmation" 
+                        className="mt-1 mr-3"
+                        checked={formData.eligibilityStatus === "pending"}
+                        onChange={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            eligibilityStatus: prev.eligibilityStatus === "pending" ? "" : "pending"
+                          }));
+                        }}
+                      />
+                      <label htmlFor="eligibility-confirmation" className="text-zinc-300">
+                        I confirm that I am currently enrolled and eligible to participate in collegiate athletics at the school I've indicated.
+                      </label>
+                    </div>
+                    {errors.eligibility && (
+                      <p className="text-red-500 text-xs">{errors.eligibility}</p>
+                    )}
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+        
+      case "athlete-social-media":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Social Media Presence
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Your social media accounts are crucial for businesses looking to partner with you.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="Instagram"
+                        name="instagram"
+                        value={formData.socialHandles?.instagram || ""}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            socialHandles: {
+                              ...prev.socialHandles,
+                              instagram: e.target.value
+                            }
+                          }));
+                        }}
+                        placeholder="@username"
+                      />
+                      
+                      <FormField
+                        label="TikTok"
+                        name="tiktok"
+                        value={formData.socialHandles?.tiktok || ""}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            socialHandles: {
+                              ...prev.socialHandles,
+                              tiktok: e.target.value
+                            }
+                          }));
+                        }}
+                        placeholder="@username"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="Twitter/X"
+                        name="twitter"
+                        value={formData.socialHandles?.twitter || ""}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            socialHandles: {
+                              ...prev.socialHandles,
+                              twitter: e.target.value
+                            }
+                          }));
+                        }}
+                        placeholder="@username"
+                      />
+                      
+                      <FormField
+                        label="YouTube"
+                        name="youtube"
+                        value={formData.socialHandles?.youtube || ""}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            socialHandles: {
+                              ...prev.socialHandles,
+                              youtube: e.target.value
+                            }
+                          }));
+                        }}
+                        placeholder="Channel name or URL"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        label="Total Follower Count"
+                        name="followerCount"
+                        type="number"
+                        value={formData.followerCount ? formData.followerCount.toString() : ""}
+                        onChange={(e) => {
+                          if (e.target.value === "" || isNaN(Number(e.target.value))) {
+                            setFormData(prev => ({ ...prev, followerCount: null }));
+                          } else {
+                            setFormData(prev => ({ ...prev, followerCount: Number(e.target.value) }));
+                          }
+                        }}
+                        placeholder="Approximate total across all platforms"
+                        min="0"
+                        required={true}
+                        errorMessage={errors.followerCount}
+                        isTouched={!!errors.followerCount}
+                      />
+                      
+                      <FormField
+                        label="Average Engagement Rate (%)"
+                        name="averageEngagementRate"
+                        type="number"
+                        value={formData.averageEngagementRate ? formData.averageEngagementRate.toString() : ""}
+                        onChange={(e) => {
+                          if (e.target.value === "" || isNaN(Number(e.target.value))) {
+                            setFormData(prev => ({ ...prev, averageEngagementRate: null }));
+                          } else {
+                            setFormData(prev => ({ ...prev, averageEngagementRate: Number(e.target.value) }));
+                          }
+                        }}
+                        placeholder="e.g., 2.5"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                      />
+                    </div>
+                    
+                    {errors.socialHandles && (
+                      <p className="text-red-500 text-xs">{errors.socialHandles}</p>
+                    )}
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+      
+      case "athlete-content-style":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Content Creation
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Describe your content style and the types of content you're comfortable creating.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="space-y-6">
+                    <div>
+                      <FormField
+                        label="Your Content Style"
+                        name="contentStyle"
+                        type="textarea"
+                        value={formData.contentStyle}
+                        onChange={handleChange}
+                        placeholder="Describe your aesthetic, tone, and style of content creation (e.g., energetic and vibrant, professional and polished, casual and authentic, etc.)"
+                        rows={3}
+                        required={true}
+                        errorMessage={errors.contentStyle}
+                        isTouched={!!errors.contentStyle}
+                      />
+                    </div>
+                    
+                    <div>
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-white">Content Types <span className="text-red-500">*</span></label>
+                        <p className="text-zinc-400 text-xs">Select all types of content you're comfortable creating</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          'Photos', 'Videos', 'Reels/TikToks', 'Stories', 'Live Videos', 
+                          'Product Reviews', 'Testimonials', 'Unboxing', 'Tutorials', 
+                          'Behind-the-Scenes', 'Day-in-the-Life', 'Training Content'
+                        ].map(type => (
+                          <div key={type} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`content-type-${type}`}
+                              name="contentTypes"
+                              value={type}
+                              checked={formData.contentTypes.includes(type)}
+                              onChange={(e) => handleCheckboxChange(e, 'contentTypes')}
+                              className="mr-2"
+                            />
+                            <label htmlFor={`content-type-${type}`} className="text-white text-sm">{type}</label>
+                          </div>
+                        ))}
+                      </div>
+                      {errors.contentTypes && (
+                        <p className="text-red-500 text-xs mt-1">{errors.contentTypes}</p>
+                      )}
+                    </div>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+      
+      case "athlete-compensation":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Compensation Expectations
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Let businesses know what you're looking for in terms of compensation.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-white">Compensation Preferences <span className="text-red-500">*</span></label>
+                      </div>
+                      <select 
+                        name="compensationGoals" 
+                        value={formData.compensationGoals} 
+                        onChange={handleChange}
+                        className="w-full rounded-md bg-zinc-800 border border-zinc-700 py-2 px-3 text-white"
+                        required
+                      >
+                        <option value="">Select Preference</option>
+                        <option value="Money Only">Money Only</option>
+                        <option value="Products/Services Only">Products/Services Only</option>
+                        <option value="Combination of Money and Products">Combination of Money and Products</option>
+                        <option value="Flexible (Depends on Brand)">Flexible (Depends on Brand)</option>
+                      </select>
+                      {errors.compensationGoals && (
+                        <p className="text-red-500 text-xs mt-1">{errors.compensationGoals}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <FormField
+                        label="Minimum Compensation Expectation"
+                        name="minimumCompensation"
+                        value={formData.minimumCompensation}
+                        onChange={handleChange}
+                        placeholder="e.g., $300 per post, $500 minimum for partnerships"
+                        required={true}
+                        errorMessage={errors.minimumCompensation}
+                        isTouched={!!errors.minimumCompensation}
+                      />
+                      <p className="text-zinc-400 text-xs mt-1">
+                        This helps us match you with appropriate opportunities. You can always negotiate specific deals later.
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-white">Preferred Product Categories</label>
+                        <p className="text-zinc-400 text-xs">Select categories of products you'd be interested in promoting</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          'Athletic Apparel', 'Footwear', 'Equipment', 'Nutrition/Supplements', 
+                          'Food & Beverage', 'Technology', 'Lifestyle Brands', 'Fashion', 
+                          'Health & Wellness', 'Financial Services', 'Entertainment', 'Travel'
+                        ].map(category => (
+                          <div key={category} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`product-category-${category}`}
+                              name="preferredProductCategories"
+                              value={category}
+                              checked={formData.preferredProductCategories.includes(category)}
+                              onChange={(e) => handleCheckboxChange(e, 'preferredProductCategories')}
+                              className="mr-2"
+                            />
+                            <label htmlFor={`product-category-${category}`} className="text-white text-sm">{category}</label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+      
+      case "athlete-brand-values":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Personal Brand & Values
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Help us match you with brands that align with your values and personal brand.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-white">Your Personal Values <span className="text-red-500">*</span></label>
+                        <p className="text-zinc-400 text-xs">Select values that are most important to you</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          'Authenticity', 'Excellence', 'Innovation', 'Diversity & Inclusion', 
+                          'Environmental Sustainability', 'Health & Wellbeing', 'Education', 
+                          'Community Service', 'Leadership', 'Integrity', 'Teamwork', 'Perseverance'
+                        ].map(value => (
+                          <div key={value} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`value-${value}`}
+                              name="personalValues"
+                              value={value}
+                              checked={formData.personalValues.includes(value)}
+                              onChange={(e) => handleCheckboxChange(e, 'personalValues')}
+                              className="mr-2"
+                            />
+                            <label htmlFor={`value-${value}`} className="text-white text-sm">{value}</label>
+                          </div>
+                        ))}
+                      </div>
+                      {errors.personalValues && (
+                        <p className="text-red-500 text-xs mt-1">{errors.personalValues}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <div className="mb-2">
+                        <label className="block text-sm font-medium text-white">Causes You Care About</label>
+                        <p className="text-zinc-400 text-xs">Select causes that are important to you</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          'Youth Sports', 'Education', 'Health Research', 'Environmental Protection', 
+                          'Social Justice', 'Mental Health', 'Poverty Relief', 'Animal Welfare', 
+                          'Racial Equality', 'Women in Sports', 'LGBTQ+ Rights', 'Disability Rights'
+                        ].map(cause => (
+                          <div key={cause} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`cause-${cause}`}
+                              name="causes"
+                              value={cause}
+                              checked={formData.causes.includes(cause)}
+                              onChange={(e) => handleCheckboxChange(e, 'causes')}
+                              className="mr-2"
+                            />
+                            <label htmlFor={`cause-${cause}`} className="text-white text-sm">{cause}</label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <FormField
+                        label="Availability Timeframe"
+                        name="availabilityTimeframe"
+                        value={formData.availabilityTimeframe}
+                        onChange={handleChange}
+                        placeholder="e.g., Available year-round, Limited during season (Aug-Mar)"
+                      />
+                    </div>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
+            </div>
+          </AnimatedFormTransition>
+        );
+
+      // Common steps
       case "user-type":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
