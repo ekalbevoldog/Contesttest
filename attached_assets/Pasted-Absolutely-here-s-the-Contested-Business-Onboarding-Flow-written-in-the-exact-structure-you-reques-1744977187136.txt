@@ -1,0 +1,165 @@
+Absolutely — here’s the Contested Business Onboarding Flow written in the exact structure you requested, with logic separated by Product and Service types, and outcomes branching accordingly.
+
+⸻
+
+Contested Business Onboarding Flow (Logic Tree Format)
+
+⸻
+
+Decision: What type of business are you?
+
+├─ Option 1: Product
+│  ├─ Outcome A: Continue to product-specific onboarding steps
+│  └─ Outcome B: N/A
+├─ Option 2: Service
+│  ├─ Outcome A: Continue to service-specific onboarding steps
+│  └─ Outcome B: N/A
+└─ Option 3: Hybrid (optional future)
+└─ Outcome: Could fork into both flows or request primary function
+
+⸻
+
+If Option = Product
+
+Decision: What industry are you in?
+
+├─ Option 1: Industry is in restricted list
+│  └─ Outcome: Set access_restriction = 'restricted'
+├─ Option 2: Industry is not in restricted list
+│  └─ Outcome: Set access_restriction = 'unrestricted'
+
+⸻
+
+Decision: What are your goals with athlete partnerships?
+
+├─ Option 1: Awareness
+│  └─ Outcome: Add to goal_identification array
+├─ Option 2: Sales / Conversions
+│  └─ Outcome: Add to goal_identification array
+├─ Option 3: Launch new product
+│  └─ Outcome: Add to goal_identification array
+├─ Option 4: Athlete ambassadors
+│  └─ Outcome: Add to goal_identification array
+└─ Option 5: Other
+└─ Outcome: Add to goal_identification array
+
+(Multi-select – all chosen options stored)
+
+⸻
+
+Decision: Have you partnered with athletes before?
+
+├─ Option 1: Yes
+│  └─ Outcome: Set has_past_partnership = TRUE
+└─ Option 2: No
+└─ Outcome: Set has_past_partnership = FALSE
+
+⸻
+
+Decision: What is your estimated monthly budget?
+
+└─ Outcome: Store budget_min and budget_max via slider
+
+⸻
+
+Decision: What is your business’s zip code?
+
+└─ Outcome: Store zip_code
+
+⸻
+
+Decision: Who is the primary contact?
+
+└─ Outcome: Store contact_name, contact_title, contact_email, contact_phone
+
+⸻
+
+Decision: What is your business size?
+
+├─ Option 1: Sole Proprietor
+│  └─ Outcome: Set business_size = 'sole_proprietor'
+├─ Option 2: Small Team
+│  └─ Outcome: Set business_size = 'small_team'
+├─ Option 3: Medium
+│  └─ Outcome: Set business_size = 'medium'
+└─ Option 4: Enterprise
+└─ Outcome: Set business_size = 'enterprise'
+
+⸻
+
+If Option = Service
+
+Decision: What industry are you in?
+
+├─ Option 1: Industry is in restricted list
+│  └─ Outcome: Set access_restriction = 'restricted'
+├─ Option 2: Industry is not in restricted list
+│  └─ Outcome: Set access_restriction = 'unrestricted'
+
+⸻
+
+Decision: What are your goals with athlete partnerships?
+
+(Same as product flow – multi-select)
+└─ Outcome: Store selected goals in goal_identification
+
+⸻
+
+Decision: Have you partnered with athletes before?
+
+└─ Outcome: Set has_past_partnership as TRUE or FALSE
+
+⸻
+
+Decision: What is your estimated monthly budget?
+
+└─ Outcome: Store budget_min and budget_max
+
+⸻
+
+Decision: What is your business’s zip code?
+
+└─ Outcome: Store zip_code
+
+⸻
+
+Decision: Where do you operate?
+
+├─ Option 1: Neighborhood / Zip
+│  └─ Outcome: Add to operating_location array
+├─ Option 2: City
+│  └─ Outcome: Add to operating_location array
+├─ Option 3: Region
+│  └─ Outcome: Add to operating_location array
+├─ Option 4: Statewide
+│  └─ Outcome: Add to operating_location array
+├─ Option 5: National
+│  └─ Outcome: Add to operating_location array
+└─ Option 6: Remote / Online
+└─ Outcome: Add to operating_location array
+
+⸻
+
+Decision: Who is the primary contact?
+
+└─ Outcome: Store contact_name, contact_title, contact_email, contact_phone
+
+⸻
+
+Decision: What is your business size?
+
+(Same as product flow)
+└─ Outcome: Set business_size
+
+⸻
+
+Final Step (All flows): Create password to complete account
+
+└─ Outcome:
+	•	Save login via Supabase Auth
+	•	Trigger free trial
+	•	Set role = business_user
+
+⸻
+
+Let me know if you want this converted to a graph, Framer logic blocks, or automated N8N nodes next.
