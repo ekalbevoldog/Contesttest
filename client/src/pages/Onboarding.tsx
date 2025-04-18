@@ -408,11 +408,11 @@ export default function Onboarding() {
           throw new Error("No session ID returned from registration");
         }
         
-        // Create business profile
+        // Create profile based on selected user type
         // Make sure to match the exact schema expected by the backend
-        const businessData = {
+        const profileData = {
           name: formData.name,
-          userType: "business",
+          userType: formData.userType, // Use the selected user type from form
           sessionId: sessionId, // Use the session ID from registration
           
           // Required by the business schema with minimum length requirements
@@ -449,29 +449,29 @@ export default function Onboarding() {
           })
         };
         
-        // Submit business profile data
-        const businessResponse = await apiRequest("POST", "/api/profile", businessData);
+        // Submit profile data
+        const profileResponse = await apiRequest("POST", "/api/profile", profileData);
         
-        if (!businessResponse.ok) {
+        if (!profileResponse.ok) {
           // Handle error response
-          let errorMessage = "Failed to create business profile";
+          let errorMessage = `Failed to create ${formData.userType} profile`;
           try {
-            const errorData = await businessResponse.json();
+            const errorData = await profileResponse.json();
             errorMessage = errorData.message || errorData.error || errorMessage;
-            console.error("Business profile creation error:", errorData);
+            console.error("Profile creation error:", errorData);
           } catch (e) {
-            console.error("Error parsing business error response:", e);
+            console.error("Error parsing profile response:", e);
           }
           throw new Error(errorMessage);
         }
         
         // Parse successful response
-        let businessResponseData;
+        let profileResponseData;
         try {
-          businessResponseData = await businessResponse.json();
-          console.log("Business profile created successfully:", businessResponseData);
+          profileResponseData = await profileResponse.json();
+          console.log("Profile created successfully:", profileResponseData);
         } catch (error) {
-          console.error("Error parsing business success response:", error);
+          console.error("Error parsing profile success response:", error);
           // Don't throw here - the profile was created, we just couldn't parse response
         }
         
