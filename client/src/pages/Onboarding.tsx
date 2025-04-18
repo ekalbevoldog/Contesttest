@@ -861,12 +861,12 @@ export default function Onboarding() {
                       <p className="text-zinc-400 text-sm">per month</p>
                     </div>
                     
-                    {/* Minimum Budget Slider */}
-                    <div className="px-4 py-6 space-y-12">
-                      <div className="space-y-4">
+                    {/* Budget Range Slider with two thumbs */}
+                    <div className="px-4 py-6 space-y-6">
+                      <div className="space-y-8">
                         <div className="flex justify-between items-center">
-                          <label className="text-sm text-zinc-400">Minimum Budget</label>
-                          <span className="text-sm font-medium">
+                          <div className="flex items-center">
+                            <label className="text-sm text-zinc-400 mr-2">Min</label>
                             <div className="flex items-center px-2 py-1 bg-zinc-800 rounded border border-zinc-700">
                               <DollarSign className="h-3 w-3 text-zinc-400 mr-1" />
                               <input
@@ -874,7 +874,7 @@ export default function Onboarding() {
                                 value={formData.budgetMin}
                                 onChange={(e) => {
                                   const value = parseInt(e.target.value);
-                                  if (!isNaN(value)) {
+                                  if (!isNaN(value) && value < formData.budgetMax) {
                                     setFormData(prev => ({
                                       ...prev,
                                       budgetMin: value
@@ -883,37 +883,14 @@ export default function Onboarding() {
                                 }}
                                 className="w-20 bg-transparent border-0 p-0 focus:outline-none text-right"
                                 min={0}
-                                max={formData.budgetMax}
+                                max={formData.budgetMax - 100}
                                 step={100}
                               />
                             </div>
-                          </span>
-                        </div>
-                        <Slider 
-                          value={[formData.budgetMin]}
-                          min={0}
-                          max={10000}
-                          step={100}
-                          onValueChange={(values) => {
-                            const [value] = values;
-                            setFormData(prev => ({
-                              ...prev,
-                              budgetMin: value
-                            }));
-                          }}
-                          className="my-4"
-                        />
-                        <div className="flex justify-between text-xs text-zinc-500">
-                          <span>$0</span>
-                          <span>$10,000</span>
-                        </div>
-                      </div>
-
-                      {/* Maximum Budget Slider */}
-                      <div className="space-y-4 pt-4 border-t border-zinc-800">
-                        <div className="flex justify-between items-center">
-                          <label className="text-sm text-zinc-400">Maximum Budget</label>
-                          <span className="text-sm font-medium">
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <label className="text-sm text-zinc-400 mr-2">Max</label>
                             <div className="flex items-center px-2 py-1 bg-zinc-800 rounded border border-zinc-700">
                               <DollarSign className="h-3 w-3 text-zinc-400 mr-1" />
                               <input
@@ -921,7 +898,7 @@ export default function Onboarding() {
                                 value={formData.budgetMax}
                                 onChange={(e) => {
                                   const value = parseInt(e.target.value);
-                                  if (!isNaN(value)) {
+                                  if (!isNaN(value) && value > formData.budgetMin) {
                                     setFormData(prev => ({
                                       ...prev,
                                       budgetMax: value
@@ -929,30 +906,39 @@ export default function Onboarding() {
                                   }
                                 }}
                                 className="w-20 bg-transparent border-0 p-0 focus:outline-none text-right"
-                                min={formData.budgetMin}
+                                min={formData.budgetMin + 100}
                                 max={20000}
                                 step={100}
                               />
                             </div>
-                          </span>
+                          </div>
                         </div>
-                        <Slider 
-                          value={[formData.budgetMax]}
-                          min={formData.budgetMin || 100}
-                          max={20000}
-                          step={100}
-                          onValueChange={(values) => {
-                            const [value] = values;
-                            setFormData(prev => ({
-                              ...prev,
-                              budgetMax: value
-                            }));
-                          }}
-                          className="my-4"
-                        />
-                        <div className="flex justify-between text-xs text-zinc-500">
-                          <span>${formData.budgetMin}</span>
-                          <span>$20,000</span>
+                        
+                        {/* Single slider with two thumbs/handles */}
+                        <div className="pt-6">
+                          <Slider 
+                            value={[formData.budgetMin, formData.budgetMax]}
+                            min={0}
+                            max={20000}
+                            step={100}
+                            minStepsBetweenThumbs={1}
+                            onValueChange={(values) => {
+                              const [min, max] = values;
+                              setFormData(prev => ({
+                                ...prev,
+                                budgetMin: min,
+                                budgetMax: max
+                              }));
+                            }}
+                            className="my-6"
+                          />
+                          <div className="flex justify-between text-xs text-zinc-500 pt-2">
+                            <span>$0</span>
+                            <span>$5,000</span>
+                            <span>$10,000</span>
+                            <span>$15,000</span>
+                            <span>$20,000</span>
+                          </div>
                         </div>
                       </div>
                     </div>
