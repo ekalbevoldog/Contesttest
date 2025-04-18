@@ -55,6 +55,7 @@ import React, { ReactNode } from "react"; // Removed duplicate useState import
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils"; // Import cn for conditional classes
 
+// Remove duplicate imports block
 // --- Types ---
 type UserType = "athlete" | "business" | "compliance" | "admin" | null;
 
