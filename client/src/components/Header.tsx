@@ -32,26 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import React, { ReactNode } from "react"; // Removed duplicate useState import
-// Removed duplicate wouter imports
-// Removed duplicate Button import
-// Removed duplicate Sheet imports
-// Removed duplicate lucide-react imports
-// Removed duplicate dropdown-menu imports
-  LogIn,
-  LogOut,
-  UserCircle,
-  Briefcase,
-  Settings,
-  Webhook,
-  User,
-  MessageSquare,
-  Shield,
-  ExternalLink,
-  ChevronDown, // Added for dropdown indicator
-  Info, // Example for Solutions
-  DollarSign, // Example for Pricing
-} from "lucide-react";
+import React, { ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils"; // Import cn for conditional classes
 
@@ -283,7 +264,7 @@ export default function Header() {
     { label: "Sign Out", icon: LogOut, onClick: handleLogout, condition: (user) => !!user, mobileOnly: true },
     // Mobile Account Links (Logged Out)
     { label: "Sign in or Register", href: "/auth", icon: UserCircle, condition: (user) => !user, mobileOnly: true },
-    { label: "Get Started", href: "/dynamic-onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
+    { label: "Get Started", href: "/enhanced-onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
 
     // --- Special Buttons ---
     {
@@ -296,7 +277,7 @@ export default function Header() {
     {
       label: "Get Started", isButton: true, buttonVariant: 'default',
       buttonClassName: "bg-destructive hover:bg-destructive/90 text-white font-medium ml-2", // Use theme color
-      href: "/dynamic-onboarding",
+      href: "/enhanced-onboarding",
       condition: (user) => !user, // Only show when not logged in
       desktopOnly: true, // Specific styling for desktop button
     },

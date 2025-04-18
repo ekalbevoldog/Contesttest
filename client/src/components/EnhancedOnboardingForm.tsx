@@ -85,8 +85,7 @@ interface FormData {
   compensation?: Record<string, any>;
 }
 
-// Import from onboarding service
-import { getOnboardingSteps, normalizeSteps, isRestrictedIndustry, OnboardingStep } from '@/lib/onboarding-service';
+// Import already added at the top of the file
 
 // Field type definitions
 type FieldType = 'text' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'boolean' | 'slider' | 'multi_select' | 'date' | 'tel' | 'email' | 'password' | 'dropdown' | 'slider_float';
