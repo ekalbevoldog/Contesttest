@@ -6,6 +6,7 @@ import Home from "@/pages/Home";
 import SimpleOnboarding from "@/pages/SimpleOnboarding";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AuthProvider } from "@/hooks/use-auth";
 
 function Router() {
   return (
@@ -28,8 +29,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <Router />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
