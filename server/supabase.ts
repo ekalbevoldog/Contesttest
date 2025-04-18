@@ -4,55 +4,29 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Using a mock Supabase client with dummy URL and key
-// This is a temporary solution until we get the correct Supabase credentials
-console.log('Using mock Supabase client (not connected to any Supabase project)');
+// Hard-coded Supabase credentials from the user-provided details
+const supabaseUrl = 'https://yfkqvuevaykxizpndhke.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlma3F2dWV2YXlreGl6cG5kaGtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3NTExNDMsImV4cCI6MjA2MDMyNzE0M30.fWogNLRxTPk8uEYA8bh3SoeiZoyrpPlv5zt0pSVJu4s';
 
-// Create a mock Supabase client
-const mockSupabaseClient = {
-  auth: {
-    getSession: async () => ({ data: null, error: null }),
-    signInWithPassword: async () => ({ data: null, error: null }),
-    signUp: async () => ({ data: null, error: null }),
-    signOut: async () => ({ error: null })
-  },
-  from: (table: string) => ({
-    select: (columns: string) => ({
-      eq: (column: string, value: any) => ({
-        single: () => ({ data: null, error: null })
-      }),
-      limit: (limit: number) => ({ data: null, error: null }),
-      order: (column: string, { ascending }: { ascending: boolean }) => ({
-        limit: (limit: number) => ({
-          offset: (offset: number) => ({ data: null, error: null })
-        })
-      })
-    }),
-    insert: (data: any) => ({
-      select: () => ({
-        single: () => ({ data: null, error: null })
-      })
-    }),
-    update: (data: any) => ({
-      eq: (column: string, value: any) => ({
-        select: () => ({
-          single: () => ({ data: null, error: null })
-        })
-      })
-    }),
-    delete: () => ({
-      eq: (column: string, value: any) => ({ error: null })
-    })
-  })
-};
+// Create the Supabase client
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Export the mock client instead of a real one
-export const supabase = mockSupabaseClient as any;
+console.log('Supabase client initialized with provided credentials');
 
-console.log('Mock Supabase client initialized.');
-
-// Test connection - always returns true for the mock
+// Test connection
 export const testSupabaseConnection = async () => {
-  console.log('Mock Supabase connection test - always succeeds');
-  return true;
+  try {
+    const { data, error } = await supabase.from('sessions').select('count').limit(1);
+    
+    if (error && error.code !== '42P01') { // Ignore table not found errors
+      console.error('Error connecting to Supabase:', error.message);
+      return false;
+    }
+    
+    console.log('Successfully connected to Supabase');
+    return true;
+  } catch (err) {
+    console.error('Error connecting to Supabase:', err);
+    return false;
+  }
 };
