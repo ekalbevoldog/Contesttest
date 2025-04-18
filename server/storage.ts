@@ -8,6 +8,7 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
 import { SupabaseStorage } from "./supabaseStorage";
+import { DrizzleStorage } from "./drizzleStorage";
 import { supabase } from "./supabase";
 import { db } from "./db";
 
