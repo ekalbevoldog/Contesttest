@@ -13,6 +13,7 @@ import { DollarSign, MapPin, Building, Mail, Phone, User } from "lucide-react";
 
 // Step types
 type OnboardingStep = 
+  | "user-type"
   | "business-type"
   | "industry"
   | "goals"
@@ -26,6 +27,9 @@ type OnboardingStep =
 
 // Form data type
 interface BusinessFormData {
+  // User type
+  userType: "athlete" | "business" | "";
+  
   // Type
   businessType: "product" | "service" | "hybrid" | "";
   
@@ -69,6 +73,7 @@ interface BusinessFormData {
 
 // Initial form data
 const initialFormData: BusinessFormData = {
+  userType: "",
   businessType: "",
   industry: "",
   accessRestriction: "",
@@ -102,7 +107,7 @@ const restrictedIndustries = [
 ];
 
 export default function BusinessOnboarding() {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>("business-type");
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("user-type");
   const [formData, setFormData] = useState<BusinessFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,6 +172,12 @@ export default function BusinessOnboarding() {
     const newErrors: Record<string, string> = {};
     
     switch (currentStep) {
+      case "user-type":
+        if (!formData.userType) {
+          newErrors.userType = "Please select whether you're an athlete or a business";
+        }
+        break;
+        
       case "business-type":
         if (!formData.businessType) {
           newErrors.businessType = "Please select your business type";
@@ -263,6 +274,15 @@ export default function BusinessOnboarding() {
       let nextStep: OnboardingStep;
       
       switch (currentStep) {
+        case "user-type":
+          // If they select athlete, redirect to a different onboarding flow
+          if (formData.userType === "athlete") {
+            setLocation("/enhanced-onboarding");
+            return; // Exit early to prevent further processing
+          }
+          // Otherwise, proceed with business onboarding
+          nextStep = "business-type";
+          break;
         case "business-type":
           nextStep = "industry";
           break;
