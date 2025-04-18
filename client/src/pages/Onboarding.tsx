@@ -855,50 +855,105 @@ export default function Onboarding() {
                   >
                     {/* Budget range display */}
                     <div className="text-center px-4 py-6 bg-zinc-800/40 rounded-lg border border-zinc-700">
-                      <h3 className="text-2xl font-bold mb-2 text-gradient bg-gradient-to-r from-red-500 to-amber-500">
+                      <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-red-500 to-amber-500 bg-clip-text text-transparent">
                         ${formData.budgetMin} - ${formData.budgetMax}
                       </h3>
                       <p className="text-zinc-400 text-sm">per month</p>
                     </div>
                     
-                    {/* Custom Slider Component */}
+                    {/* Minimum Budget Slider */}
                     <div className="px-4 py-6 space-y-12">
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <label className="text-sm text-zinc-400">Minimum Budget</label>
-                          <span className="text-sm font-medium">${formData.budgetMin}</span>
+                          <span className="text-sm font-medium">
+                            <div className="flex items-center px-2 py-1 bg-zinc-800 rounded border border-zinc-700">
+                              <DollarSign className="h-3 w-3 text-zinc-400 mr-1" />
+                              <input
+                                type="number" 
+                                value={formData.budgetMin}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value);
+                                  if (!isNaN(value)) {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      budgetMin: value
+                                    }));
+                                  }
+                                }}
+                                className="w-20 bg-transparent border-0 p-0 focus:outline-none text-right"
+                                min={0}
+                                max={formData.budgetMax}
+                                step={100}
+                              />
+                            </div>
+                          </span>
                         </div>
-                        <SliderWithInput 
-                          value={formData.budgetMin}
-                          max={formData.budgetMax || 5000}
-                          onChange={(value) => {
+                        <Slider 
+                          value={[formData.budgetMin]}
+                          min={0}
+                          max={10000}
+                          step={100}
+                          onValueChange={(values) => {
+                            const [value] = values;
                             setFormData(prev => ({
                               ...prev,
                               budgetMin: value
                             }));
                           }}
-                          min={0}
-                          step={100}
+                          className="my-4"
                         />
+                        <div className="flex justify-between text-xs text-zinc-500">
+                          <span>$0</span>
+                          <span>$10,000</span>
+                        </div>
                       </div>
 
-                      <div className="space-y-2">
+                      {/* Maximum Budget Slider */}
+                      <div className="space-y-4 pt-4 border-t border-zinc-800">
                         <div className="flex justify-between items-center">
                           <label className="text-sm text-zinc-400">Maximum Budget</label>
-                          <span className="text-sm font-medium">${formData.budgetMax}</span>
+                          <span className="text-sm font-medium">
+                            <div className="flex items-center px-2 py-1 bg-zinc-800 rounded border border-zinc-700">
+                              <DollarSign className="h-3 w-3 text-zinc-400 mr-1" />
+                              <input
+                                type="number" 
+                                value={formData.budgetMax}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value);
+                                  if (!isNaN(value)) {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      budgetMax: value
+                                    }));
+                                  }
+                                }}
+                                className="w-20 bg-transparent border-0 p-0 focus:outline-none text-right"
+                                min={formData.budgetMin}
+                                max={20000}
+                                step={100}
+                              />
+                            </div>
+                          </span>
                         </div>
-                        <SliderWithInput 
-                          value={formData.budgetMax}
+                        <Slider 
+                          value={[formData.budgetMax]}
                           min={formData.budgetMin || 100}
-                          onChange={(value) => {
+                          max={20000}
+                          step={100}
+                          onValueChange={(values) => {
+                            const [value] = values;
                             setFormData(prev => ({
                               ...prev,
                               budgetMax: value
                             }));
                           }}
-                          max={10000}
-                          step={100}
+                          className="my-4"
                         />
+                        <div className="flex justify-between text-xs text-zinc-500">
+                          <span>${formData.budgetMin}</span>
+                          <span>$20,000</span>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
