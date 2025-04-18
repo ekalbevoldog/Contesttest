@@ -38,6 +38,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize Supabase tables first
+  try {
+    const { setupSupabase } = await import('./supabaseSetup');
+    await setupSupabase();
+  } catch (error) {
+    console.error('Error setting up Supabase:', error);
+    // Continue with server startup even if Supabase setup fails
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
