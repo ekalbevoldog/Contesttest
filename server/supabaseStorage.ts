@@ -4,6 +4,7 @@ import {
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
 } from "@shared/schema";
 import { supabase } from "./supabase";
+import { db } from "./db";
 import session from "express-session";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -186,15 +187,11 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
-    // First get the user ID from the session
-    const session = await this.getSession(sessionId);
-    if (!session || !session.userId) return undefined;
-    
-    // Then get the athlete by user ID
+    // Try to get the athlete directly by sessionId
     const { data, error } = await supabase
       .from('athletes')
       .select('*')
-      .eq('userId', session.userId)
+      .eq('sessionId', sessionId)
       .single();
       
     if (error) {
@@ -250,11 +247,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
-    // First get the user ID from the session
-    const session = await this.getSession(sessionId);
-    if (!session) return undefined;
-    
-    // Then get the business directly by sessionId
+    // Get the business directly by sessionId
     const { data, error } = await supabase
       .from('business_profiles')
       .select('*')
@@ -601,21 +594,43 @@ export class SupabaseStorage implements IStorage {
   // Message operations
   async getMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: false })
-        .limit(limit)
-        .offset(offset);
-        
+      // Use SQL directly since offset isn't working in this version of Supabase client
+      const query = `
+        SELECT * FROM messages
+        WHERE session_id = '${sessionId}'
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      
+      const { data, error } = await supabase.rpc('execute_raw_sql', { query });
+      
       if (error) {
-        console.error('Error getting messages from Supabase:', error);
-        return [];
+        console.error('Error executing raw SQL for messages:', error);
+        
+        // Try without offset as fallback
+        const fallbackResult = await supabase
+          .from('messages')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+          
+        if (fallbackResult.error) {
+          console.error('Error in fallback messages query:', fallbackResult.error);
+          return [];
+        }
+        
+        return (fallbackResult.data || []).map((msg: any) => ({
+          id: msg.id,
+          sessionId: msg.session_id,
+          role: msg.role,
+          content: msg.content,
+          createdAt: new Date(msg.created_at)
+        })) as Message[];
       }
       
       // Map from snake_case to camelCase for consistency
-      return data.map(msg => ({
+      return (data || []).map((msg: any) => ({
         id: msg.id,
         sessionId: msg.session_id,
         role: msg.role,

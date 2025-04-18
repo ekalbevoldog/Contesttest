@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart, Info, ChevronLeft } from "lucide-react";
 import SliderWithInput from "@/components/SliderWithInput";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { industries, restrictedIndustries } from "../../../shared/industries";
 
 // Step types
 type OnboardingStep = 
@@ -99,17 +101,7 @@ const initialFormData: BusinessFormData = {
   email: ""
 };
 
-// Restricted industries list
-const restrictedIndustries = [
-  "Alcohol/Spirits",
-  "Tobacco",
-  "Vaping/E-cigarettes",
-  "Adult Entertainment",
-  "Gambling/Sports Betting",
-  "Firearms/Weapons",
-  "Pharmaceuticals (non-FDA approved)",
-  "Controversial Political Organizations"
-];
+// Using restrictedIndustries imported from shared/industries.ts
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("user-type");
@@ -265,9 +257,7 @@ export default function Onboarding() {
     if (validateCurrentStep()) {
       // Set access restriction based on industry (Logic tree step)
       if (currentStep === "industry") {
-        const isRestricted = restrictedIndustries.some(industry => 
-          formData.industry.toLowerCase().includes(industry.toLowerCase())
-        );
+        const isRestricted = restrictedIndustries.includes(formData.industry);
         
         setFormData(prev => ({
           ...prev,
@@ -698,20 +688,42 @@ export default function Onboarding() {
                   What industry are you in?
                 </motion.h2>
                 <div className="space-y-4">
-                  <AnimatedFormField
-                    type="text"
-                    name="industry"
-                    value={formData.industry}
-                    onChange={handleChange}
-                    placeholder="e.g., Apparel, Food & Beverage, Technology"
-                    required={true}
-                    errorMessage={errors.industry}
-                    icon={<Building size={18} />}
-                  />
+                  <div className="relative mb-4">
+                    <div className={`relative rounded-lg ${errors.industry ? 'ring-2 ring-red-500' : ''}`}>
+                      <Select
+                        onValueChange={(value) => {
+                          setFormData(prev => ({ ...prev, industry: value }));
+                          if (errors.industry) {
+                            setErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors.industry;
+                              return newErrors;
+                            });
+                          }
+                        }}
+                        value={formData.industry}
+                      >
+                        <SelectTrigger className="w-full h-[52px] bg-zinc-800/90 border-none rounded-lg text-white">
+                          <SelectValue placeholder="Select your industry" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-80 bg-zinc-800 text-white border-zinc-700">
+                          {industries.map((industry) => (
+                            <SelectItem key={industry.id} value={industry.id} className="focus:bg-zinc-700 focus:text-white">
+                              {industry.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-400">
+                        <Building size={18} />
+                      </div>
+                    </div>
+                    {errors.industry && (
+                      <p className="text-red-500 text-sm mt-1">{errors.industry}</p>
+                    )}
+                  </div>
                   
-                  {restrictedIndustries.some(industry => 
-                    formData.industry.toLowerCase().includes(industry.toLowerCase())
-                  ) && (
+                  {restrictedIndustries.includes(formData.industry) && (
                     <motion.div 
                       className="p-4 bg-amber-900/30 border border-amber-700/50 rounded-lg mt-4"
                       initial={{ opacity: 0, height: 0 }}
