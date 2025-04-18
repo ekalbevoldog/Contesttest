@@ -14,8 +14,13 @@ import {
   ScrollReveal, 
   Parallax, 
   FloatingElement,
-  AnimatedGradient 
+  AnimatedGradient
 } from "@/components/animations";
+import {
+  SimpleCounter,
+  SimpleScrambleText,
+  SimpleStaggerText
+} from "@/components/animations/SimpleAnimations";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { ChevronRight, ArrowRight, CheckCircle, Star, Trophy, DollarSign, PieChart, Users, Zap, ArrowUpRight } from "lucide-react";
 
@@ -57,7 +62,7 @@ export default function Home() {
           />
         </div>
         
-        {/* Orbiting blurred circles in background */}
+        {/* Animated blurred circles in background */}
         <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-red-500/20 blur-3xl animate-orbit-slow pointer-events-none"></div>
         <div className="absolute bottom-1/4 left-1/4 w-80 h-80 rounded-full bg-amber-500/20 blur-3xl animate-orbit-reverse-slow pointer-events-none"></div>
         <div className="absolute top-1/2 right-1/2 w-64 h-64 rounded-full bg-blue-500/10 blur-3xl animate-pulse pointer-events-none"></div>
@@ -83,10 +88,17 @@ export default function Home() {
           <FadeIn direction="up" duration={0.8}>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-none tracking-tight max-w-5xl mx-auto mb-6">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-amber-500 to-red-500 animate-gradient-x">
-                Connecting Elite Athletes & Brands
+                <SimpleScrambleText
+                  text="Connecting Elite Athletes & Brands"
+                  duration={1800}
+                  characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ&"
+                />
               </span>{" "}
               <span className="block mt-2 text-5xl md:text-6xl">
-                Through AI-Powered Partnerships
+                <SimpleStaggerText
+                  text="Through AI-Powered Partnerships"
+                  direction="up"
+                />
               </span>
             </h1>
           </FadeIn>
@@ -124,23 +136,50 @@ export default function Home() {
             </FadeIn>
           </div>
           
-          {/* Metrics banner with glass effect */}
+          {/* Metrics banner with glass effect and AnimeCounter */}
           <FadeIn direction="up" delay={0.5} duration={0.8}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-4xl mx-auto w-full backdrop-blur-md bg-zinc-900/20 border border-zinc-800/50 rounded-xl overflow-hidden">
               <div className="p-4 md:p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1">5.7x</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                  <SimpleCounter 
+                    end={5.7} 
+                    suffix="x"
+                    decimals={1}
+                    duration={2500}
+                  />
+                </div>
                 <div className="text-zinc-400 text-sm">Average ROI</div>
               </div>
               <div className="p-4 md:p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1">2.8M+</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                  <SimpleCounter 
+                    end={2.8} 
+                    suffix="M+"
+                    decimals={1}
+                    duration={2500}
+                  />
+                </div>
                 <div className="text-zinc-400 text-sm">Monthly Impressions</div>
               </div>
               <div className="p-4 md:p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1">92%</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                  <SimpleCounter 
+                    end={92} 
+                    suffix="%"
+                    duration={2500}
+                  />
+                </div>
                 <div className="text-zinc-400 text-sm">Match Success</div>
               </div>
               <div className="p-4 md:p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1">3.4k</div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                  <SimpleCounter 
+                    end={3.4} 
+                    suffix="k"
+                    decimals={1}
+                    duration={2500}
+                  />
+                </div>
                 <div className="text-zinc-400 text-sm">Athletes Onboarded</div>
               </div>
             </div>
@@ -210,8 +249,8 @@ export default function Home() {
       <section className="py-24 md:py-32 bg-[#080808] relative overflow-hidden">
         {/* Abstract background elements */}
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5 z-0"></div>
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-blue-500/5 blur-3xl animate-pulse pointer-events-none"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 rounded-full bg-red-500/5 blur-3xl animate-pulse pointer-events-none"></div>
+        <div className="absolute top-1/3 left-1/4 w-72 h-72 rounded-full bg-blue-500/5 blur-3xl animate-pulse-slow pointer-events-none"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 rounded-full bg-red-500/5 blur-3xl animate-pulse-slow pointer-events-none"></div>
         
         <div className="container mx-auto px-4 relative z-10">
           <ScrollReveal className="text-center mb-16 max-w-3xl mx-auto">
