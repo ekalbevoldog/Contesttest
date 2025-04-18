@@ -1,0 +1,64 @@
+import React, { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+
+interface BentoGridProps {
+  className?: string;
+  children: ReactNode;
+}
+
+export const BentoGrid = ({ className, children }: BentoGridProps) => {
+  return (
+    <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}>
+      {children}
+    </div>
+  );
+};
+
+interface BentoGridItemProps {
+  className?: string;
+  title: string;
+  description: string;
+  header?: ReactNode;
+  icon?: ReactNode;
+  delay?: number;
+}
+
+export const BentoGridItem = ({
+  className,
+  title,
+  description,
+  header,
+  icon,
+  delay = 0,
+}: BentoGridItemProps) => {
+  return (
+    <motion.div
+      className={cn(
+        "row-span-1 rounded-xl group/bento hover:shadow-xl transition-all duration-200 shadow-input dark:shadow-none",
+        className
+      )}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: delay,
+        duration: 0.4,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      viewport={{ once: true }}
+    >
+      <div className="bg-zinc-900 h-full w-full p-6 rounded-xl overflow-hidden">
+        {header}
+        <div className="flex items-center gap-3 mt-4">
+          {icon && (
+            <div className="rounded-full bg-red-500/20 p-3 text-red-500">
+              {icon}
+            </div>
+          )}
+          <h3 className="text-xl font-semibold text-white">{title}</h3>
+        </div>
+        <div className="mt-2 text-zinc-400 text-sm">{description}</div>
+      </div>
+    </motion.div>
+  );
+};

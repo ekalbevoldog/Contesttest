@@ -7,29 +7,41 @@ interface FloatingElementProps {
   floatIntensity?: number;
   duration?: number;
   hoverScale?: number;
+  disabled?: boolean; // Option to disable the floating animation
+  delay?: number;
 }
 
 export const FloatingElement: React.FC<FloatingElementProps> = ({
   children,
   className = '',
-  floatIntensity = 10,
-  duration = 5,
-  hoverScale = 1.02,
+  floatIntensity = 2.5, // Reduced default intensity for subtlety
+  duration = 4,
+  hoverScale = 1.01, // More subtle hover effect
+  disabled = false,
+  delay = 0,
 }) => {
-  const floatingAnimation = {
+  // More subtle animation
+  const floatingAnimation = disabled ? {} : {
     y: [-floatIntensity, floatIntensity],
     transition: {
       duration,
       repeat: Infinity,
       repeatType: 'reverse' as const,
-      ease: 'easeInOut',
+      ease: [0.33, 1, 0.68, 1], // Custom cubic-bezier for smoother motion
+      delay,
     },
   };
 
   return (
     <motion.div
       animate={floatingAnimation}
-      whileHover={{ scale: hoverScale, transition: { duration: 0.2 } }}
+      whileHover={{ 
+        scale: hoverScale, 
+        transition: { 
+          duration: 0.3, 
+          ease: [0.22, 1, 0.36, 1] // Smooth cubic-bezier curve
+        } 
+      }}
       className={className}
     >
       {children}
