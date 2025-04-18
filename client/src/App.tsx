@@ -17,6 +17,8 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/onboarding" component={SimpleOnboarding} />
           <Route path="/enhanced-onboarding" component={SimpleOnboarding} />
+          <Route path="/dynamic-onboarding" component={SimpleOnboarding} />
+          <Route path="/explore-matches" component={SimpleOnboarding} />
           {/* All other routes temporarily point to our simple components */}
           <Route component={Home} />
         </Switch>
