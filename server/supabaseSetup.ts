@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
+`;
 
+const CREATE_MESSAGES_TABLE = `
 CREATE TABLE IF NOT EXISTS messages (
   id SERIAL PRIMARY KEY,
   session_id TEXT NOT NULL,
@@ -21,38 +23,56 @@ CREATE TABLE IF NOT EXISTS messages (
   content TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
+`;
 
+const CREATE_INDEXES = `
 CREATE INDEX IF NOT EXISTS sessions_session_id_idx ON sessions(session_id);
 CREATE INDEX IF NOT EXISTS messages_session_id_idx ON messages(session_id);
 `;
+
+// Function to create a table via direct REST API if it doesn't exist
+async function createTableIfNotExists(tableName: string, createSQL: string) {
+  try {
+    // First check if the table exists by querying it
+    const { error: checkError } = await supabase
+      .from(tableName)
+      .select('count(*)')
+      .limit(1);
+    
+    if (checkError && checkError.code === '42P01') {
+      console.log(`${tableName} table does not exist, attempting to create it`);
+      
+      // Table doesn't exist, try to create it with a direct REST query
+      // This is a workaround since we can't use the RPC or SQL functions directly
+      // We output the SQL for manual execution
+      console.log(`Please run this SQL in Supabase SQL Editor to create the ${tableName} table:`);
+      console.log(createSQL);
+      
+      return false;
+    } else {
+      console.log(`${tableName} table already exists`);
+      return true;
+    }
+  } catch (error) {
+    console.error(`Error checking/creating ${tableName} table:`, error);
+    return false;
+  }
+}
 
 // Function to initialize Supabase database structure
 export async function initializeSupabaseTables() {
   try {
     console.log('Starting Supabase database initialization...');
     
-    // Try to create tables directly with Supabase's SQL query capability
-    const { error } = await supabase.rpc('pgql', { query: CREATE_SESSIONS_TABLE });
+    // Try to create tables one by one
+    const sessionsExists = await createTableIfNotExists('sessions', CREATE_SESSIONS_TABLE);
+    const messagesExists = await createTableIfNotExists('messages', CREATE_MESSAGES_TABLE);
     
-    if (error) {
-      console.error('Error initializing Supabase tables using RPC:', error);
-      console.log('Checking if tables exist by querying them...');
-      
-      // Try to query tables to see if they exist
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from('sessions')
-        .select('id')
-        .limit(1);
-        
-      if (sessionsError && sessionsError.code === '42P01') {
-        console.log('Sessions table does not exist. Manual creation required.');
-        console.log('Please run this SQL in Supabase SQL Editor:');
-        console.log(CREATE_SESSIONS_TABLE);
-      } else {
-        console.log('Sessions table exists.');
-      }
-    } else {
-      console.log('Supabase tables initialized successfully.');
+    if (sessionsExists && messagesExists) {
+      // If both tables exist, try to create indexes
+      console.log('Tables exist, ensuring indexes are created...');
+      console.log('Please run this SQL in Supabase SQL Editor if needed:');
+      console.log(CREATE_INDEXES);
     }
   } catch (err) {
     console.error('Exception during Supabase initialization:', err);
