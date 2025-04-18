@@ -277,8 +277,8 @@ export class SupabaseStorage implements IStorage {
       .single();
       
     if (error) {
-      console.error('Error storing business profile:', error);
-      throw new Error('Failed to store business profile');
+      console.error('Error storing business profile:', JSON.stringify(error, null, 2));
+      throw new Error(`Failed to store business profile: ${error.message}`);
     }
     
     return data as Business;
