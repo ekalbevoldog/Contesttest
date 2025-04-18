@@ -51,6 +51,7 @@ import React, { ReactNode } from "react"; // Removed duplicate useState import
   ChevronDown, // Added for dropdown indicator
   Info, // Example for Solutions
   DollarSign, // Example for Pricing
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils"; // Import cn for conditional classes
 

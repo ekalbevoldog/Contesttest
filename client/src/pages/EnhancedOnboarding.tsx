@@ -54,7 +54,7 @@ export default function EnhancedOnboarding() {
   const initialUserType = user ? user.userType as 'athlete' | 'business' | null : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black py-12 px-4">
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 to-black py-12 px-4">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
