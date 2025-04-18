@@ -670,350 +670,640 @@ export default function BusinessOnboarding() {
         
       case "budget":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">What is your estimated monthly budget?</h2>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-1/2">
-                    <label htmlFor="budgetMin" className="block text-sm font-medium text-gray-300 mb-2">
-                      Minimum
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">$</span>
-                      <input
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  What is your estimated monthly budget?
+                </motion.h2>
+                
+                <div className="space-y-4">
+                  <motion.div 
+                    className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                  >
+                    <div className="w-full md:w-1/2">
+                      <AnimatedFormField
                         type="number"
-                        id="budgetMin"
                         name="budgetMin"
                         value={formData.budgetMin}
                         onChange={handleChange}
-                        className="w-full pl-8 p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                        min="0"
-                        step="100"
+                        label="Minimum Budget"
+                        required={true}
+                        min={0}
+                        step={100}
+                        prefix="$"
+                        icon={<DollarSign size={18} />}
                       />
                     </div>
-                  </div>
-                  
-                  <div className="w-1/2">
-                    <label htmlFor="budgetMax" className="block text-sm font-medium text-gray-300 mb-2">
-                      Maximum
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400">$</span>
-                      <input
+                    
+                    <div className="w-full md:w-1/2">
+                      <AnimatedFormField
                         type="number"
-                        id="budgetMax"
                         name="budgetMax"
                         value={formData.budgetMax}
                         onChange={handleChange}
-                        className="w-full pl-8 p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                        min="0"
-                        step="100"
+                        label="Maximum Budget"
+                        required={true}
+                        min={formData.budgetMin}
+                        step={100}
+                        prefix="$"
+                        icon={<DollarSign size={18} />}
                       />
                     </div>
-                  </div>
+                  </motion.div>
+                  
+                  {/* Budget Range Visualization */}
+                  <motion.div
+                    className="mt-8 mb-4"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}
+                  >
+                    <p className="text-sm font-medium text-zinc-400 mb-2">Your budget range:</p>
+                    <div className="relative h-10 bg-zinc-800 rounded-lg overflow-hidden">
+                      <motion.div 
+                        className="absolute h-full bg-gradient-to-r from-red-600/30 to-amber-600/30"
+                        style={{ 
+                          left: `${Math.min(Math.max(formData.budgetMin / 100, 0), 100)}%`,
+                          right: `${100 - Math.min(Math.max(formData.budgetMax / 100, 0), 100)}%`
+                        }}
+                        animate={{ 
+                          left: `${Math.min(Math.max(formData.budgetMin / 100, 0), 100)}%`,
+                          right: `${100 - Math.min(Math.max(formData.budgetMax / 100, 0), 100)}%`
+                        }}
+                        transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center text-white font-medium">
+                        ${formData.budgetMin} - ${formData.budgetMax} per month
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.p 
+                    className="text-sm text-zinc-400 mt-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.4 }}
+                  >
+                    This helps us match you with athletes within your budget range.
+                  </motion.p>
+                  
+                  {errors.budget && (
+                    <motion.p 
+                      className="text-red-500 text-sm mt-2"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {errors.budget}
+                    </motion.p>
+                  )}
                 </div>
-                
-                <p className="text-sm text-zinc-400 mt-1">
-                  This helps us match you with athletes within your budget range.
-                </p>
-                
-                {errors.budget && <p className="text-red-500 text-sm mt-2">{errors.budget}</p>}
-              </div>
-            </StaggerItem>
-          </div>
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "zip-code":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">What is your business's zip code?</h2>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  name="zipCode"
-                  value={formData.zipCode}
-                  onChange={handleChange}
-                  placeholder="Enter your ZIP code"
-                  className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                  maxLength={10}
-                  required
-                />
-                <p className="text-sm text-zinc-400">
-                  This helps us match you with athletes in your relevant geographic area.
-                </p>
-                {errors.zipCode && <p className="text-red-500 text-sm mt-2">{errors.zipCode}</p>}
-              </div>
-            </StaggerItem>
-          </div>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  What is your business's zip code?
+                </motion.h2>
+                
+                <div className="space-y-4">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                  >
+                    <AnimatedFormField
+                      type="text"
+                      name="zipCode"
+                      value={formData.zipCode}
+                      onChange={handleChange}
+                      label="ZIP Code"
+                      placeholder="Enter your ZIP code"
+                      required={true}
+                      pattern="^\d{5}(-\d{4})?$"
+                      errorMessage={errors.zipCode}
+                      icon={<MapPin size={18} />}
+                    />
+                    
+                    <motion.p 
+                      className="text-sm text-zinc-400 mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                    >
+                      This helps us match you with athletes in your relevant geographic area.
+                    </motion.p>
+                  </motion.div>
+                  
+                  {/* Map visualization placeholder that appears when ZIP is valid */}
+                  {/^\d{5}(-\d{4})?$/.test(formData.zipCode) && (
+                    <motion.div
+                      className="mt-6 h-48 bg-zinc-800 rounded-lg overflow-hidden relative"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 200 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                        <div className="bg-zinc-900/80 backdrop-blur-sm p-3 rounded-lg inline-flex items-center space-x-2 border border-zinc-700 w-auto self-start">
+                          <MapPin size={16} className="text-red-500" />
+                          <span className="text-white font-medium">{formData.zipCode}</span>
+                        </div>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent opacity-50" />
+                      <div className="h-full w-full bg-gradient-to-br from-zinc-700/30 to-zinc-900/90" />
+                    </motion.div>
+                  )}
+                </div>
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "operating-location":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">Where do you operate?</h2>
-              <p className="text-zinc-400 mb-4">Select all that apply</p>
-              <div className="space-y-3">
-                {[
-                  "Neighborhood / Zip",
-                  "City",
-                  "Region",
-                  "Statewide",
-                  "National",
-                  "Remote / Online"
-                ].map((location) => (
-                  <label key={location} className="flex items-start p-3 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                    <input
-                      type="checkbox"
-                      value={location}
-                      checked={formData.operatingLocation.includes(location)}
-                      onChange={(e) => handleCheckboxChange(e, "operatingLocation")}
-                      className="mt-1 mr-3"
-                    />
-                    <span className="font-medium">{location}</span>
-                  </label>
-                ))}
-              </div>
-              {errors.operatingLocation && <p className="text-red-500 text-sm mt-2">{errors.operatingLocation}</p>}
-            </StaggerItem>
-          </div>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Where do you operate?
+                </motion.h2>
+                
+                <motion.p 
+                  className="text-zinc-400 mb-4"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  Select all that apply
+                </motion.p>
+                
+                <AnimatedSelectionField
+                  type="checkbox"
+                  name="operatingLocation"
+                  selectedValues={formData.operatingLocation}
+                  onChange={(e) => handleCheckboxChange(e, "operatingLocation")}
+                  options={[
+                    {
+                      value: "Neighborhood / Zip",
+                      label: "Neighborhood / Zip",
+                      description: "Local area surrounding your business"
+                    },
+                    {
+                      value: "City",
+                      label: "City",
+                      description: "Within city limits"
+                    },
+                    {
+                      value: "Region",
+                      label: "Region",
+                      description: "Multiple cities or counties"
+                    },
+                    {
+                      value: "Statewide",
+                      label: "Statewide",
+                      description: "Throughout your entire state"
+                    },
+                    {
+                      value: "National",
+                      label: "National",
+                      description: "Multiple states across the country"
+                    },
+                    {
+                      value: "Remote / Online",
+                      label: "Remote / Online",
+                      description: "Services delivered digitally or remotely"
+                    }
+                  ]}
+                  required={true}
+                  errorMessage={errors.operatingLocation}
+                  isTouched={!!errors.operatingLocation}
+                />
+                
+                {/* Visual representation of reach - shows when at least one is selected */}
+                {formData.operatingLocation.length > 0 && (
+                  <motion.div
+                    className="mt-6 rounded-lg overflow-hidden"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    <div className="p-4 border border-zinc-700 rounded-lg bg-zinc-800/50">
+                      <p className="font-medium text-zinc-200 mb-2">Your operating reach:</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.operatingLocation.map(location => (
+                          <motion.span
+                            key={location}
+                            className="inline-flex items-center px-3 py-1 rounded-full bg-red-600/20 text-red-200 border border-red-500/30 text-sm"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <MapPin size={14} className="mr-1" /> {location}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "contact-info":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">Who is the primary contact?</h2>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                    required
-                  />
-                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-                </div>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Who is the primary contact?
+                </motion.h2>
                 
-                <div>
-                  <label htmlFor="contactTitle" className="block text-sm font-medium text-gray-300 mb-2">
-                    Job Title
-                  </label>
-                  <input
-                    type="text"
-                    id="contactTitle"
-                    name="contactTitle"
-                    value={formData.contactTitle}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                  />
+                <div className="space-y-5">
+                  <motion.div
+                    className="space-y-5"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                  >
+                    <AnimatedFormField
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      label="Full Name"
+                      placeholder="Enter your full name"
+                      required={true}
+                      errorMessage={errors.name}
+                      icon={<User size={18} />}
+                    />
+                    
+                    <AnimatedFormField
+                      type="text"
+                      name="contactTitle"
+                      value={formData.contactTitle}
+                      onChange={handleChange}
+                      label="Job Title"
+                      placeholder="e.g., Marketing Manager, CEO"
+                      icon={<Building size={18} />}
+                    />
+                    
+                    <AnimatedFormField
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      label="Email Address"
+                      placeholder="your.email@example.com"
+                      required={true}
+                      errorMessage={errors.email}
+                      icon={<Mail size={18} />}
+                    />
+                    
+                    <AnimatedFormField
+                      type="tel"
+                      name="contactPhone"
+                      value={formData.contactPhone}
+                      onChange={handleChange}
+                      label="Phone Number"
+                      placeholder="(555) 555-5555"
+                      required={true}
+                      errorMessage={errors.contactPhone}
+                      icon={<Phone size={18} />}
+                    />
+                  </motion.div>
+                  
+                  {/* Contact card preview - shows when fields are filled */}
+                  {formData.name && formData.email && (
+                    <motion.div
+                      className="mt-6 p-4 border border-zinc-700 rounded-lg bg-zinc-800/70 backdrop-blur-sm"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                    >
+                      <div className="flex items-start">
+                        <div className="bg-gradient-to-br from-red-500 to-amber-500 h-12 w-12 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">
+                          {formData.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-white">{formData.name}</h3>
+                          {formData.contactTitle && (
+                            <p className="text-zinc-400 text-sm">{formData.contactTitle}</p>
+                          )}
+                          <div className="flex flex-col sm:flex-row sm:items-center mt-2 gap-2 sm:gap-4">
+                            <div className="flex items-center text-sm text-zinc-300">
+                              <Mail size={14} className="mr-1 text-red-400" />
+                              {formData.email}
+                            </div>
+                            {formData.contactPhone && (
+                              <div className="flex items-center text-sm text-zinc-300">
+                                <Phone size={14} className="mr-1 text-amber-400" />
+                                {formData.contactPhone}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                    required
-                  />
-                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                </div>
-                
-                <div>
-                  <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-300 mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="contactPhone"
-                    name="contactPhone"
-                    value={formData.contactPhone}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                    required
-                  />
-                  {errors.contactPhone && <p className="text-red-500 text-sm mt-1">{errors.contactPhone}</p>}
-                </div>
-              </div>
-            </StaggerItem>
-          </div>
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "business-size":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">What is your business size?</h2>
-              <div className="space-y-4">
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="businessSize"
-                    value="sole_proprietor"
-                    checked={formData.businessSize === "sole_proprietor"}
-                    onChange={e => handleRadioChange(e, "sole_proprietor")}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">Sole Proprietor</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">One-person business</p>
-                </label>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  What is your business size?
+                </motion.h2>
                 
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="businessSize"
-                    value="small_team"
-                    checked={formData.businessSize === "small_team"}
-                    onChange={e => handleRadioChange(e, "small_team")}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">Small Team</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">2-10 employees</p>
-                </label>
+                <AnimatedSelectionField
+                  type="radio"
+                  name="businessSize"
+                  selectedValues={formData.businessSize}
+                  onChange={(e) => handleRadioChange(e, e.target.value)}
+                  options={[
+                    {
+                      value: "sole_proprietor",
+                      label: "Sole Proprietor",
+                      description: "One-person business"
+                    },
+                    {
+                      value: "small_team",
+                      label: "Small Team",
+                      description: "2-10 employees"
+                    },
+                    {
+                      value: "medium",
+                      label: "Medium",
+                      description: "11-100 employees"
+                    },
+                    {
+                      value: "enterprise",
+                      label: "Enterprise",
+                      description: "100+ employees"
+                    }
+                  ]}
+                  required={true}
+                  errorMessage={errors.businessSize}
+                  isTouched={!!errors.businessSize}
+                />
                 
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="businessSize"
-                    value="medium"
-                    checked={formData.businessSize === "medium"}
-                    onChange={e => handleRadioChange(e, "medium")}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">Medium</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">11-100 employees</p>
-                </label>
-                
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="businessSize"
-                    value="enterprise"
-                    checked={formData.businessSize === "enterprise"}
-                    onChange={e => handleRadioChange(e, "enterprise")}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">Enterprise</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">100+ employees</p>
-                </label>
-              </div>
-              {errors.businessSize && <p className="text-red-500 text-sm mt-2">{errors.businessSize}</p>}
-            </StaggerItem>
-          </div>
+                {/* Business size visualization - appears when option is selected */}
+                {formData.businessSize && (
+                  <motion.div
+                    className="mt-6 p-4 border border-zinc-700 rounded-lg bg-zinc-800/70 backdrop-blur-sm"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    <p className="font-medium text-zinc-200 mb-3">Employee Size Range:</p>
+                    <div className="relative h-8 bg-zinc-900 rounded-lg overflow-hidden">
+                      <motion.div 
+                        className="absolute h-full bg-gradient-to-r from-red-600 to-amber-600"
+                        initial={{ width: 0 }}
+                        animate={{ 
+                          width: formData.businessSize === "sole_proprietor" ? "10%" : 
+                                 formData.businessSize === "small_team" ? "30%" :
+                                 formData.businessSize === "medium" ? "60%" : "90%"
+                        }}
+                        transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                      />
+                      <div className="absolute inset-0 flex items-center px-4">
+                        <span className="text-white font-medium text-sm">
+                          {formData.businessSize === "sole_proprietor" ? "1 employee" : 
+                           formData.businessSize === "small_team" ? "2-10 employees" :
+                           formData.businessSize === "medium" ? "11-100 employees" : "100+ employees"}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-zinc-400 mt-3">
+                      {formData.businessSize === "sole_proprietor" ? 
+                        "As a sole proprietor, you'll get personalized athlete recommendations that fit your individual business needs." : 
+                       formData.businessSize === "small_team" ? 
+                        "Small teams often benefit from micro-influencers and local athletes to build community connections." :
+                       formData.businessSize === "medium" ? 
+                        "Medium-sized businesses typically work with a mix of emerging and established athlete talent." : 
+                        "Enterprise organizations can leverage our platform for large-scale campaigns with multiple tiers of athlete partnerships."}
+                    </p>
+                  </motion.div>
+                )}
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "create-password":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">Create your password</h2>
-              <p className="text-zinc-400 mb-6">Final step to complete your registration</p>
-              
-              <div className="space-y-4">
-                {/* Enhanced Account Information Summary */}
-                <div className="p-5 rounded-lg bg-zinc-800/50 border border-zinc-700 mb-4">
-                  <h3 className="font-semibold text-lg mb-3 text-red-400">Account Summary</h3>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Create your password
+                </motion.h2>
+                
+                <motion.p 
+                  className="text-zinc-400 mb-6"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  Final step to complete your registration
+                </motion.p>
+                
+                <div className="space-y-5">
+                  {/* Enhanced Account Information Summary */}
+                  <motion.div 
+                    className="p-5 rounded-lg bg-zinc-800/50 border border-zinc-700 mb-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                  >
+                    <h3 className="font-semibold text-lg mb-3 text-red-400">Account Summary</h3>
+                    
+                    <div className="grid gap-3">
+                      <div className="grid md:grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-zinc-400 text-sm">Name</p>
+                          <p className="text-zinc-200 font-medium">{formData.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-zinc-400 text-sm">Email</p>
+                          <p className="text-zinc-200 font-medium">{formData.email}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-zinc-400 text-sm">Business Type</p>
+                          <p className="text-zinc-200 font-medium capitalize">{formData.businessType || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="text-zinc-400 text-sm">Industry</p>
+                          <p className="text-zinc-200 font-medium">{formData.industry || 'Not specified'}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <p className="text-zinc-400 text-sm">Budget Range</p>
+                        <p className="text-zinc-200 font-medium">${formData.budgetMin} - ${formData.budgetMax} per month</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-zinc-400 text-sm">Marketing Goals</p>
+                        <p className="text-zinc-200 font-medium">
+                          {formData.goalIdentification.length > 0 
+                            ? formData.goalIdentification.join(', ') 
+                            : 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                
+                  <motion.div
+                    className="space-y-5"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.4 }}
+                  >
+                    <AnimatedFormField
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      label="Create Password"
+                      placeholder="Minimum 8 characters"
+                      required={true}
+                      minLength={8}
+                      errorMessage={errors.password}
+                    />
+                    
+                    <AnimatedFormField
+                      type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      label="Confirm Password"
+                      placeholder="Re-enter your password"
+                      required={true}
+                      errorMessage={errors.confirmPassword}
+                    />
+                  </motion.div>
                   
-                  <div className="grid gap-3">
-                    <div className="grid md:grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-zinc-400 text-sm">Name</p>
-                        <p className="text-zinc-200 font-medium">{formData.name}</p>
+                  {/* Password strength indicator */}
+                  {formData.password && (
+                    <motion.div
+                      className="mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <p className="text-sm text-zinc-400 mb-1">Password strength:</p>
+                      <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                        <motion.div 
+                          className={`h-full ${
+                            formData.password.length < 6 ? 'bg-red-500' :
+                            formData.password.length < 8 ? 'bg-amber-500' :
+                            formData.password.length < 10 ? 'bg-green-500' :
+                            'bg-emerald-500'
+                          }`}
+                          initial={{ width: 0 }}
+                          animate={{ 
+                            width: 
+                              formData.password.length === 0 ? '0%' :
+                              formData.password.length < 6 ? '25%' :
+                              formData.password.length < 8 ? '50%' :
+                              formData.password.length < 10 ? '75%' : '100%'
+                          }}
+                          transition={{ duration: 0.3 }}
+                        />
                       </div>
-                      <div>
-                        <p className="text-zinc-400 text-sm">Email</p>
-                        <p className="text-zinc-200 font-medium">{formData.email}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid md:grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-zinc-400 text-sm">Business Type</p>
-                        <p className="text-zinc-200 font-medium capitalize">{formData.businessType || 'Not specified'}</p>
-                      </div>
-                      <div>
-                        <p className="text-zinc-400 text-sm">Industry</p>
-                        <p className="text-zinc-200 font-medium">{formData.industry || 'Not specified'}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-zinc-400 text-sm">Budget Range</p>
-                      <p className="text-zinc-200 font-medium">${formData.budgetMin} - ${formData.budgetMax} per month</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-zinc-400 text-sm">Marketing Goals</p>
-                      <p className="text-zinc-200 font-medium">
-                        {formData.goalIdentification.length > 0 
-                          ? formData.goalIdentification.join(', ') 
-                          : 'Not specified'}
+                      <p className="text-xs text-zinc-500 mt-1">
+                        {formData.password.length === 0 ? 'Enter your password' :
+                         formData.password.length < 6 ? 'Weak - Add more characters' :
+                         formData.password.length < 8 ? 'Fair - Getting better' :
+                         formData.password.length < 10 ? 'Good - Almost there' : 'Strong - Excellent choice'}
                       </p>
-                    </div>
-                  </div>
+                    </motion.div>
+                  )}
+                  
+                  {/* Password match indicator */}
+                  {formData.password && formData.confirmPassword && (
+                    <motion.div
+                      className="flex items-center mt-4 text-sm"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {formData.password === formData.confirmPassword ? (
+                        <p className="text-green-400">✓ Passwords match</p>
+                      ) : (
+                        <p className="text-red-400">✗ Passwords don't match</p>
+                      )}
+                    </motion.div>
+                  )}
+                  
+                  <motion.div 
+                    className="pt-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.5 }}
+                  >
+                    <p className="text-sm text-zinc-400">
+                      By creating an account, you agree to our{" "}
+                      <a href="/terms" className="text-red-400 hover:text-red-300">Terms of Service</a>{" "}
+                      and{" "}
+                      <a href="/privacy" className="text-red-400 hover:text-red-300">Privacy Policy</a>
+                    </p>
+                  </motion.div>
                 </div>
-              
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                    Create Password
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                    minLength={8}
-                    required
-                    placeholder="Minimum 8 characters"
-                  />
-                  {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-                  <p className="text-zinc-500 text-xs mt-1">Password must be at least 8 characters long</p>
-                </div>
-                
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                    required
-                    placeholder="Re-enter your password"
-                  />
-                  {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
-                </div>
-                
-                <div className="pt-2">
-                  <p className="text-sm text-zinc-400">
-                    By creating an account, you agree to our{" "}
-                    <a href="/terms" className="text-red-400 hover:text-red-300">Terms of Service</a>{" "}
-                    and{" "}
-                    <a href="/privacy" className="text-red-400 hover:text-red-300">Privacy Policy</a>
-                  </p>
-                </div>
-              </div>
-            </StaggerItem>
-          </div>
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       default:
