@@ -369,18 +369,20 @@ const handleFileUpload = async (files: FileList) => {
             {messages.map((message) => (
               <div key={message.id}>
                 {message.type === 'assistant' ? (
-                  <div className="flex items-start mb-4">
+                  <div className="flex items-start mb-5">
                     <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-[#0c1e36] flex items-center justify-center text-white">
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-r from-red-500 to-amber-500 flex items-center justify-center text-white shadow-md">
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.5 2H8.6c-.4 0-.8.2-1.1.5-.3.3-.5.7-.5 1.1v16.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h12.8c.4 0 .8-.2 1.1-.5.3-.3.5-.7.5-1.1V7.5L15.5 2z" />
+                          <path d="M3 7.6v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h12.8" />
+                          <path d="M15 2v5.4c0 .4.2.8.5 1.1.3.3.7.5 1.1.5H22" />
                         </svg>
                       </div>
                     </div>
-                    <div className="ml-2 bg-gray-100 rounded-lg py-2 px-3 max-w-[85%] shadow-sm border border-gray-200">
-                      <div className="text-sm text-gray-900">
-                        <p className="font-semibold mb-1 text-sm text-gray-800">Contested Assistant</p>
-                        <p className="whitespace-pre-line">{message.content}</p>
+                    <div className="ml-3 bg-zinc-800/80 backdrop-blur-sm rounded-2xl rounded-tl-none py-3 px-4 max-w-[85%] shadow-md border border-zinc-700/50">
+                      <div className="text-sm text-zinc-100">
+                        <p className="font-semibold mb-1 text-sm text-amber-500/90">Contested AI</p>
+                        <p className="whitespace-pre-line leading-relaxed">{message.content}</p>
                         
                         {/* Show athlete form if needed */}
                         {message.showAthleteForm && (
@@ -410,14 +412,14 @@ const handleFileUpload = async (files: FileList) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-start mb-4 justify-end">
-                    <div className="mr-2 bg-[#0c1e36] text-white rounded-lg py-2 px-3 max-w-[85%] shadow-sm">
+                  <div className="flex items-start mb-5 justify-end">
+                    <div className="mr-3 bg-gradient-to-r from-red-500/90 to-amber-500/90 text-white rounded-2xl rounded-tr-none py-3 px-4 max-w-[85%] shadow-md">
                       <div className="text-sm">
-                        <p>{message.content}</p>
+                        <p className="leading-relaxed">{message.content}</p>
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
+                      <div className="h-9 w-9 rounded-full bg-zinc-800 border border-zinc-700/50 flex items-center justify-center text-zinc-300">
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -430,19 +432,21 @@ const handleFileUpload = async (files: FileList) => {
             
             {/* Show typing indicator while waiting for response */}
             {isTyping && (
-              <div className="flex items-start mb-4">
+              <div className="flex items-start mb-5">
                 <div className="flex-shrink-0">
-                  <div className="h-8 w-8 rounded-full bg-[#0c1e36] flex items-center justify-center text-white">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-r from-red-500 to-amber-500 flex items-center justify-center text-white shadow-md">
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.5 2H8.6c-.4 0-.8.2-1.1.5-.3.3-.5.7-.5 1.1v16.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h12.8c.4 0 .8-.2 1.1-.5.3-.3.5-.7.5-1.1V7.5L15.5 2z" />
+                      <path d="M3 7.6v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h12.8" />
+                      <path d="M15 2v5.4c0 .4.2.8.5 1.1.3.3.7.5 1.1.5H22" />
                     </svg>
                   </div>
                 </div>
-                <div className="ml-2 bg-gray-100 rounded-lg py-2 px-3 shadow-sm border border-gray-200">
+                <div className="ml-3 bg-zinc-800/80 backdrop-blur-sm rounded-2xl rounded-tl-none py-3 px-5 shadow-md border border-zinc-700/50">
                   <div className="flex space-x-2">
-                    <div className="h-2.5 w-2.5 bg-[#0c1e36]/70 rounded-full animate-bounce"></div>
-                    <div className="h-2.5 w-2.5 bg-[#0c1e36]/70 rounded-full animate-bounce delay-75"></div>
-                    <div className="h-2.5 w-2.5 bg-[#0c1e36]/70 rounded-full animate-bounce delay-150"></div>
+                    <div className="h-2.5 w-2.5 bg-amber-500 rounded-full animate-pulse" style={{animationDelay: '0ms'}}></div>
+                    <div className="h-2.5 w-2.5 bg-amber-500/80 rounded-full animate-pulse" style={{animationDelay: '300ms'}}></div>
+                    <div className="h-2.5 w-2.5 bg-amber-500/60 rounded-full animate-pulse" style={{animationDelay: '600ms'}}></div>
                   </div>
                 </div>
               </div>
@@ -453,9 +457,10 @@ const handleFileUpload = async (files: FileList) => {
         </div>
 
         {/* Chat input area - fixed height */}
-        <div className="px-4 py-3 bg-[#f5f7fa] border-t border-gray-200">
+        <div className="p-4 border-t border-zinc-800 bg-gradient-to-r from-zinc-900 to-zinc-800">
           <div className="flex space-x-3">
-            <div className="flex-grow">
+            <div className="flex-grow relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/5 to-amber-500/0 rounded-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 -m-0.5"></div>
               <Input
                 ref={inputRef}
                 type="text"
@@ -464,20 +469,19 @@ const handleFileUpload = async (files: FileList) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
                 disabled={isTyping || isProcessingForm}
-                className="border-gray-300 focus-visible:ring-[#0c1e36] focus:border-[#0c1e36]"
+                className="bg-zinc-800/80 text-white border-zinc-700 placeholder:text-zinc-500 focus-visible:ring-amber-500/50 focus-visible:ring-offset-0 focus-visible:ring-2 group"
               />
             </div>
             <Button
               type="button"
               onClick={handleSendMessage}
               disabled={!input.trim() || isTyping || isProcessingForm}
-              className="flex items-center bg-[#0c1e36] hover:bg-[#1a3151] text-white"
+              className="bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white shadow-md hover:shadow-amber-500/20 transition-all duration-300"
             >
-              <Send className="h-5 w-5 mr-1" />
-              Send
+              <Send className="h-4 w-4" />
             </Button>
           </div>
-          <p className="mt-2 text-xs text-gray-500">Pioneering AI-powered athlete-brand partnerships. <span className="font-semibold text-[#0c1e36]">Contested</span> © 2025</p>
+          <p className="mt-2 text-xs text-zinc-500 text-center">Connecting athletes with brands <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">Contested</span> © 2025</p>
         </div>
       </div>
     </div>
