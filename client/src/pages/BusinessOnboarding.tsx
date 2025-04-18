@@ -3,8 +3,13 @@ import { useLocation } from "wouter";
 import { FadeIn } from "@/components/animations/FadeIn";
 import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
 import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
+import { AnimatedFormField } from "@/components/animations/AnimatedFormField";
+import { AnimatedSelectionField } from "@/components/animations/AnimatedSelectionField";
+import { AnimatedFormTransition, AnimatedProgressBar } from "@/components/animations/AnimatedFormTransition";
+import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { DollarSign, MapPin, Building, Mail, Phone, User } from "lucide-react";
 
 // Step types
 type OnboardingStep = 
@@ -477,145 +482,190 @@ export default function BusinessOnboarding() {
     switch (currentStep) {
       case "business-type":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">What type of business are you?</h2>
-              <div className="space-y-4">
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="businessType"
-                    value="product"
-                    checked={formData.businessType === "product"}
-                    onChange={e => handleRadioChange(e, "product")}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">Product Business</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">We sell physical or digital products to consumers</p>
-                </label>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  What type of business are you?
+                </motion.h2>
                 
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="businessType"
-                    value="service"
-                    checked={formData.businessType === "service"}
-                    onChange={e => handleRadioChange(e, "service")}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">Service Business</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">We provide services to consumers or other businesses</p>
-                </label>
-              </div>
-              {errors.businessType && <p className="text-red-500 text-sm mt-2">{errors.businessType}</p>}
-            </StaggerItem>
-          </div>
+                <AnimatedSelectionField
+                  type="radio"
+                  name="businessType"
+                  selectedValues={formData.businessType}
+                  onChange={(e) => handleRadioChange(e, e.target.value)}
+                  options={[
+                    {
+                      value: "product",
+                      label: "Product Business",
+                      description: "We sell physical or digital products to consumers"
+                    },
+                    {
+                      value: "service",
+                      label: "Service Business",
+                      description: "We provide services to consumers or other businesses"
+                    }
+                  ]}
+                  required={true}
+                  errorMessage={errors.businessType}
+                  isTouched={!!errors.businessType}
+                />
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "industry":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">What industry are you in?</h2>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  name="industry"
-                  value={formData.industry}
-                  onChange={handleChange}
-                  placeholder="e.g., Apparel, Food & Beverage, Technology"
-                  className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                  required
-                />
-                {errors.industry && <p className="text-red-500 text-sm mt-2">{errors.industry}</p>}
-                
-                {restrictedIndustries.some(industry => 
-                  formData.industry.toLowerCase().includes(industry.toLowerCase())
-                ) && (
-                  <div className="p-4 bg-amber-900/30 border border-amber-700/50 rounded-lg mt-4">
-                    <p className="text-amber-300 font-medium">Note about your industry</p>
-                    <p className="text-amber-200/80 text-sm mt-1">
-                      Your industry may have additional compliance requirements. Our compliance team will review your account.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </StaggerItem>
-          </div>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  What industry are you in?
+                </motion.h2>
+                <div className="space-y-4">
+                  <AnimatedFormField
+                    type="text"
+                    name="industry"
+                    value={formData.industry}
+                    onChange={handleChange}
+                    placeholder="e.g., Apparel, Food & Beverage, Technology"
+                    required={true}
+                    errorMessage={errors.industry}
+                    icon={<Building size={18} />}
+                  />
+                  
+                  {restrictedIndustries.some(industry => 
+                    formData.industry.toLowerCase().includes(industry.toLowerCase())
+                  ) && (
+                    <motion.div 
+                      className="p-4 bg-amber-900/30 border border-amber-700/50 rounded-lg mt-4"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <p className="text-amber-300 font-medium">Note about your industry</p>
+                      <p className="text-amber-200/80 text-sm mt-1">
+                        Your industry may have additional compliance requirements. Our compliance team will review your account.
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "goals":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">What are your goals with athlete partnerships?</h2>
-              <p className="text-zinc-400 mb-4">Select all that apply</p>
-              <div className="space-y-3">
-                {["Awareness", "Sales / Conversions", "Launch new product", "Athlete ambassadors", "Other"].map((goal) => (
-                  <label key={goal} className="flex items-start p-3 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                    <input
-                      type="checkbox"
-                      value={goal}
-                      checked={formData.goalIdentification.includes(goal)}
-                      onChange={(e) => handleCheckboxChange(e, "goalIdentification")}
-                      className="mt-1 mr-3"
-                    />
-                    <div>
-                      <span className="font-medium">{goal}</span>
-                      {goal === "Awareness" && (
-                        <p className="text-sm text-zinc-400 mt-1">Increase brand visibility and recognition</p>
-                      )}
-                      {goal === "Sales / Conversions" && (
-                        <p className="text-sm text-zinc-400 mt-1">Drive direct sales through athlete promotion</p>
-                      )}
-                      {goal === "Launch new product" && (
-                        <p className="text-sm text-zinc-400 mt-1">Use athletes to promote a new product release</p>
-                      )}
-                      {goal === "Athlete ambassadors" && (
-                        <p className="text-sm text-zinc-400 mt-1">Build long-term relationships with athletes as brand representatives</p>
-                      )}
-                    </div>
-                  </label>
-                ))}
-              </div>
-              {errors.goalIdentification && <p className="text-red-500 text-sm mt-2">{errors.goalIdentification}</p>}
-            </StaggerItem>
-          </div>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  What are your goals with athlete partnerships?
+                </motion.h2>
+                <motion.p 
+                  className="text-zinc-400 mb-4"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                >
+                  Select all that apply
+                </motion.p>
+                
+                <AnimatedSelectionField
+                  type="checkbox"
+                  name="goalIdentification"
+                  selectedValues={formData.goalIdentification}
+                  onChange={(e) => handleCheckboxChange(e, "goalIdentification")}
+                  options={[
+                    {
+                      value: "Awareness",
+                      label: "Awareness",
+                      description: "Increase brand visibility and recognition"
+                    },
+                    {
+                      value: "Sales / Conversions",
+                      label: "Sales / Conversions",
+                      description: "Drive direct sales through athlete promotion"
+                    },
+                    {
+                      value: "Launch new product",
+                      label: "Launch new product",
+                      description: "Use athletes to promote a new product release"
+                    },
+                    {
+                      value: "Athlete ambassadors",
+                      label: "Athlete ambassadors",
+                      description: "Build long-term relationships with athletes as brand representatives"
+                    },
+                    {
+                      value: "Other",
+                      label: "Other"
+                    }
+                  ]}
+                  required={true}
+                  errorMessage={errors.goalIdentification}
+                  isTouched={!!errors.goalIdentification}
+                />
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "past-partnerships":
         return (
-          <div className="space-y-6">
-            <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">Have you partnered with athletes before?</h2>
-              <div className="space-y-4">
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="hasPastPartnership"
-                    checked={formData.hasPastPartnership === true}
-                    onChange={e => handleRadioChange(e, true)}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">Yes</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">We have worked with athletes in the past</p>
-                </label>
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6">
+              <StaggerItem>
+                <motion.h2 
+                  className="text-2xl font-bold mb-4"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  Have you partnered with athletes before?
+                </motion.h2>
                 
-                <label className="block p-4 rounded-lg border border-zinc-700 bg-zinc-800/50 cursor-pointer hover:bg-zinc-800 transition-colors">
-                  <input
-                    type="radio"
-                    name="hasPastPartnership"
-                    checked={formData.hasPastPartnership === false}
-                    onChange={e => handleRadioChange(e, false)}
-                    className="mr-2"
-                  />
-                  <span className="font-medium">No</span>
-                  <p className="text-sm text-zinc-400 mt-1 ml-5">This will be our first time working with athletes</p>
-                </label>
-              </div>
-              {errors.hasPastPartnership && <p className="text-red-500 text-sm mt-2">{errors.hasPastPartnership}</p>}
-            </StaggerItem>
-          </div>
+                <AnimatedSelectionField
+                  type="radio"
+                  name="hasPastPartnership"
+                  selectedValues={formData.hasPastPartnership === null ? "" : formData.hasPastPartnership.toString()}
+                  onChange={(e) => handleRadioChange(e, e.target.value === "true")}
+                  options={[
+                    {
+                      value: "true",
+                      label: "Yes",
+                      description: "We have worked with athletes in the past"
+                    },
+                    {
+                      value: "false",
+                      label: "No",
+                      description: "This will be our first time working with athletes"
+                    }
+                  ]}
+                  required={true}
+                  errorMessage={errors.hasPastPartnership}
+                  isTouched={!!errors.hasPastPartnership}
+                />
+              </StaggerItem>
+            </div>
+          </AnimatedFormTransition>
         );
         
       case "budget":
@@ -987,21 +1037,13 @@ export default function BusinessOnboarding() {
     ];
     
     const currentIndex = steps.indexOf(currentStep);
-    const progress = Math.floor((currentIndex / (steps.length - 1)) * 100);
     
     return (
-      <div className="mb-6">
-        <div className="flex items-center justify-between text-sm text-zinc-500 mb-2">
-          <span>Step {currentIndex + 1} of {steps.length}</span>
-          <span>{progress}% Complete</span>
-        </div>
-        <div className="w-full h-1 bg-zinc-800 rounded-full">
-          <div 
-            className="h-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+      <AnimatedProgressBar
+        currentStep={currentIndex}
+        totalSteps={steps.length}
+        className="mb-6"
+      />
     );
   };
   
