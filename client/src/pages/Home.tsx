@@ -332,6 +332,114 @@ export default function Home() {
         </div>
       </section>
       
+      {/* How It Works Section */}
+      <section className="py-24 bg-[#080808] relative overflow-hidden">
+        <AnimatedGradient 
+          className="absolute inset-0 opacity-30" 
+          colors={['hsl(345, 90%, 55%, 0.05)', 'hsl(235, 100%, 50%, 0.05)']} 
+          blur={150}
+          duration={25}
+        />
+        <Parallax direction="up" speed={0.1} className="relative z-10">
+          <div className="container mx-auto px-4">
+            <ScrollReveal className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                  How Contested Works
+                </span>
+              </h2>
+              <p className="text-zinc-400 max-w-2xl mx-auto">
+                Our intelligent platform makes the connection process seamless for both athletes and businesses
+              </p>
+            </ScrollReveal>
+            
+            <BentoGrid className="max-w-6xl mx-auto mb-16">
+              <BentoGridItem
+                title="Create Your Profile"
+                description="Athletes and businesses build detailed profiles highlighting unique strengths, preferences, and campaign goals."
+                className="col-span-1 row-span-1 border border-zinc-800"
+                header={
+                  <div className="bg-gradient-to-br from-red-600/20 to-amber-500/20 w-full h-40 rounded-t-lg flex items-center justify-center">
+                    <svg className="h-16 w-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                  </div>
+                }
+                delay={0.1}
+              />
+              
+              <BentoGridItem
+                title="AI-Powered Matching"
+                description="Our intelligent algorithm analyzes profiles to suggest perfect partnerships that align with values, goals, and audience demographics."
+                className="col-span-2 row-span-1 border border-zinc-800"
+                header={
+                  <div className="bg-gradient-to-br from-indigo-600/20 to-purple-500/20 w-full h-40 rounded-t-lg flex items-center justify-center">
+                    <svg className="h-16 w-16 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"></path>
+                    </svg>
+                  </div>
+                }
+                delay={0.2}
+              />
+              
+              <BentoGridItem
+                title="Review & Connect"
+                description="Browse partnership opportunities, review detailed matches, and initiate conversations with potential partners."
+                className="col-span-2 row-span-1 border border-zinc-800"
+                header={
+                  <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 w-full h-40 rounded-t-lg flex items-center justify-center">
+                    <svg className="h-16 w-16 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"></path>
+                    </svg>
+                  </div>
+                }
+                delay={0.3}
+              />
+              
+              <BentoGridItem
+                title="Campaign Collaboration"
+                description="Design and execute campaigns with all tools needed for successful partnerships, from content planning to performance tracking."
+                className="col-span-1 row-span-1 border border-zinc-800"
+                header={
+                  <div className="bg-gradient-to-br from-green-600/20 to-teal-500/20 w-full h-40 rounded-t-lg flex items-center justify-center">
+                    <svg className="h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"></path>
+                    </svg>
+                  </div>
+                }
+                delay={0.4}
+              />
+              
+              <BentoGridItem
+                title="Payment & Compliance"
+                description="Secure, transparent payment processing and built-in compliance assistance to navigate NIL regulations with confidence."
+                className="col-span-3 row-span-1 border border-zinc-800"
+                header={
+                  <div className="bg-gradient-to-br from-blue-600/20 to-cyan-500/20 w-full h-40 rounded-t-lg flex items-center justify-center">
+                    <svg className="h-16 w-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"></path>
+                    </svg>
+                  </div>
+                }
+                delay={0.5}
+              />
+            </BentoGrid>
+            
+            <ScrollReveal delay={0.3} direction="up">
+              <div className="text-center">
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 px-8 py-6 text-lg"
+                  asChild
+                >
+                  <Link to="/dynamic-onboarding">Start Your Journey</Link>
+                </Button>
+              </div>
+            </ScrollReveal>
+          </div>
+        </Parallax>
+      </section>
+      
       {/* Budget Exploration Section */}
       <section className="py-24 bg-[#0a0a0a]">
         <div className="container mx-auto px-4 max-w-5xl">
@@ -562,17 +670,25 @@ export default function Home() {
       </section>
       
       {/* Testimonials / Success Stories */}
-      <section className="py-20 bg-black">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                Success Stories
-              </span>
-            </h2>
-            <p className="text-zinc-400 max-w-2xl mx-auto">
-              See how athletes and businesses are creating winning partnerships with Contested.
-            </p>
+      <section className="py-20 bg-black relative overflow-hidden">
+        <AnimatedGradient 
+          className="absolute inset-0 opacity-20" 
+          colors={['hsl(345, 90%, 55%, 0.05)', 'hsl(35, 100%, 50%, 0.05)', 'hsl(235, 100%, 50%, 0.05)']} 
+          blur={120}
+          duration={20}
+        />
+        <Parallax direction="up" speed={0.15} className="relative z-10">
+          <div className="container mx-auto px-4">
+            <ScrollReveal className="text-center mb-16" threshold={0.1}>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                  Success Stories
+                </span>
+              </h2>
+              <p className="text-zinc-400 max-w-2xl mx-auto">
+                See how athletes and businesses are creating winning partnerships with Contested.
+              </p>
+            </ScrollReveal>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -680,7 +796,7 @@ export default function Home() {
               View More Success Stories
             </Button>
           </div>
-        </div>
+        </Parallax>
       </section>
       
       {/* CTA Section */}
