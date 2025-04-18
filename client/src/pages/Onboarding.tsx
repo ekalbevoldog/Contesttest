@@ -5,11 +5,14 @@ import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
 import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
 import { AnimatedFormField } from "@/components/animations/AnimatedFormField";
 import { AnimatedSelectionField } from "@/components/animations/AnimatedSelectionField";
-import { AnimatedFormTransition, AnimatedProgressBar } from "@/components/animations/AnimatedFormTransition";
+import { AnimatedFormTransition, AnimatedProgressBar, StepIndicator } from "@/components/animations/AnimatedFormTransition";
+import { ValidationFeedback, AnimatedInput, FormFieldTransition } from "@/components/animations/ValidationFeedback";
+import { AnimeText, AnimeBlob, AnimeScrambleText } from "@/components/animations/AnimeEffects";
+import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, MapPin, Building, Mail, Phone, User } from "lucide-react";
+import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart } from "lucide-react";
 
 // Step types
 type OnboardingStep = 
