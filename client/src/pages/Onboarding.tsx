@@ -113,6 +113,7 @@ type OnboardingStep =
   | "business-size"
   | "create-password"
   // Athlete-specific steps
+  | "athlete-category"
   | "athlete-basic-info"
   | "athlete-academic-info"
   | "athlete-sport-info"
@@ -129,6 +130,9 @@ interface BusinessFormData {
   
   // Type
   businessType: "product" | "service" | "hybrid" | "";
+  
+  // Athlete category type
+  athleteCategory: "college" | "professional" | "semi_professional" | "esports" | "influencer" | "other" | "";
   
   // Industry
   industry: string;
@@ -226,6 +230,7 @@ interface BusinessFormData {
 const initialFormData: BusinessFormData = {
   userType: "",
   businessType: "",
+  athleteCategory: "",
   industry: "",
   accessRestriction: "",
   goalIdentification: [],
@@ -420,6 +425,12 @@ export default function Onboarding() {
         break;
         
       // Athlete-specific validation
+      case "athlete-category":
+        if (!formData.athleteCategory) {
+          newErrors.athleteCategory = "Please select your athlete category";
+        }
+        break;
+        
       case "athlete-basic-info":
         if (!formData.name) {
           newErrors.name = "Please enter your full name";
@@ -533,6 +544,9 @@ export default function Onboarding() {
         // Athlete-specific flow
         switch (currentStep) {
           case "user-type":
+            nextStep = "athlete-category";
+            break;
+          case "athlete-category":
             nextStep = "athlete-basic-info";
             break;
           case "athlete-basic-info":
@@ -614,8 +628,11 @@ export default function Onboarding() {
     if (formData.userType === "athlete") {
       // Athlete-specific back navigation
       switch (currentStep) {
-        case "athlete-basic-info":
+        case "athlete-category":
           prevStep = "user-type";
+          break;
+        case "athlete-basic-info":
+          prevStep = "athlete-category";
           break;
         case "athlete-academic-info":
           prevStep = "athlete-basic-info";
@@ -762,6 +779,9 @@ export default function Onboarding() {
             gender: formData.gender,
             bio: formData.bio,
             
+            // Athlete category
+            athleteCategory: formData.athleteCategory,
+            
             // Academic Information
             graduationYear: formData.graduationYear,
             major: formData.major,
@@ -789,6 +809,7 @@ export default function Onboarding() {
             
             // Store detailed preferences as JSON
             preferences: JSON.stringify({
+              athleteCategory: formData.athleteCategory,
               eligibilityDetails: {
                 school: formData.school,
                 sport: formData.sport,
@@ -897,6 +918,120 @@ export default function Onboarding() {
   const renderStepContent = () => {
     switch (currentStep) {
       // Athlete-specific steps
+      case "athlete-category":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Athlete Category
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Select which category best describes you as an athlete.
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem delay={0.1}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <RadioCardOption
+                      name="athleteCategory"
+                      value="college"
+                      checked={formData.athleteCategory === "college"}
+                      onChange={handleChange}
+                      title="College Athlete"
+                      description="Currently enrolled student competing at collegiate level"
+                      icon={<GraduationCap className="h-5 w-5 mr-2" />}
+                    />
+                    
+                    <RadioCardOption
+                      name="athleteCategory"
+                      value="professional"
+                      checked={formData.athleteCategory === "professional"}
+                      onChange={handleChange}
+                      title="Professional Athlete"
+                      description="Competing at the highest level in your sport"
+                      icon={<Trophy className="h-5 w-5 mr-2" />}
+                    />
+                    
+                    <RadioCardOption
+                      name="athleteCategory"
+                      value="semi_professional"
+                      checked={formData.athleteCategory === "semi_professional"}
+                      onChange={handleChange}
+                      title="Semi-Professional"
+                      description="Competing at developmental or minor league level"
+                      icon={<Award className="h-5 w-5 mr-2" />}
+                    />
+                    
+                    <RadioCardOption
+                      name="athleteCategory"
+                      value="esports"
+                      checked={formData.athleteCategory === "esports"}
+                      onChange={handleChange}
+                      title="Esports Athlete"
+                      description="Competitive gamer or esports professional"
+                      icon={<Gamepad2 className="h-5 w-5 mr-2" />}
+                    />
+                    
+                    <RadioCardOption
+                      name="athleteCategory"
+                      value="influencer"
+                      checked={formData.athleteCategory === "influencer"}
+                      onChange={handleChange}
+                      title="Sports Influencer"
+                      description="Content creator with sports focus"
+                      icon={<Users className="h-5 w-5 mr-2" />}
+                    />
+                    
+                    <RadioCardOption
+                      name="athleteCategory"
+                      value="other"
+                      checked={formData.athleteCategory === "other"}
+                      onChange={handleChange}
+                      title="Other"
+                      description="Doesn't fit in the categories above"
+                      icon={<Dumbbell className="h-5 w-5 mr-2" />}
+                    />
+                  </div>
+                  
+                  {errors.athleteCategory && (
+                    <p className="text-red-500 text-sm mt-1">{errors.athleteCategory}</p>
+                  )}
+                </StaggerItem>
+              </StaggerContainer>
+              
+              <div className="flex justify-between mt-8 pt-4 border-t border-zinc-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrevStep}
+                  disabled={isSubmitting}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  disabled={isSubmitting}
+                >
+                  Next <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </AnimatedFormTransition>
+        );
+        
       case "athlete-basic-info":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
