@@ -13,6 +13,8 @@ import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, MapPin, Building, Mail, Phone, User, CheckCircle, ChevronRight, Zap, Trophy, Target, BarChart } from "lucide-react";
+import SliderWithInput from "@/components/SliderWithInput";
+import { Slider } from "@/components/ui/slider";
 
 // Step types
 type OnboardingStep = 
@@ -844,67 +846,59 @@ export default function Onboarding() {
                   What is your estimated monthly budget?
                 </motion.h2>
                 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <motion.div 
-                    className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0"
+                    className="space-y-10"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
                   >
-                    <div className="w-full md:w-1/2">
-                      <AnimatedFormField
-                        type="number"
-                        name="budgetMin"
-                        value={formData.budgetMin}
-                        onChange={handleChange}
-                        label="Minimum Budget"
-                        required={true}
-                        min={0}
-                        step={100}
-                        prefix="$"
-                        icon={<DollarSign size={18} />}
-                      />
+                    {/* Budget range display */}
+                    <div className="text-center px-4 py-6 bg-zinc-800/40 rounded-lg border border-zinc-700">
+                      <h3 className="text-2xl font-bold mb-2 text-gradient bg-gradient-to-r from-red-500 to-amber-500">
+                        ${formData.budgetMin} - ${formData.budgetMax}
+                      </h3>
+                      <p className="text-zinc-400 text-sm">per month</p>
                     </div>
                     
-                    <div className="w-full md:w-1/2">
-                      <AnimatedFormField
-                        type="number"
-                        name="budgetMax"
-                        value={formData.budgetMax}
-                        onChange={handleChange}
-                        label="Maximum Budget"
-                        required={true}
-                        min={formData.budgetMin}
-                        step={100}
-                        prefix="$"
-                        icon={<DollarSign size={18} />}
-                      />
-                    </div>
-                  </motion.div>
-                  
-                  {/* Budget Range Visualization */}
-                  <motion.div
-                    className="mt-8 mb-4"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: 0.3 }}
-                  >
-                    <p className="text-sm font-medium text-zinc-400 mb-2">Your budget range:</p>
-                    <div className="relative h-10 bg-zinc-800 rounded-lg overflow-hidden">
-                      <motion.div 
-                        className="absolute h-full bg-gradient-to-r from-red-600/30 to-amber-600/30"
-                        style={{ 
-                          left: '10%',
-                          right: '20%'
-                        }}
-                        animate={{ 
-                          left: '10%',
-                          right: '20%'
-                        }}
-                        transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center text-white font-medium">
-                        ${formData.budgetMin} - ${formData.budgetMax} per month
+                    {/* Custom Slider Component */}
+                    <div className="px-4 py-6 space-y-12">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <label className="text-sm text-zinc-400">Minimum Budget</label>
+                          <span className="text-sm font-medium">${formData.budgetMin}</span>
+                        </div>
+                        <SliderWithInput 
+                          value={formData.budgetMin}
+                          max={formData.budgetMax || 5000}
+                          onChange={(value) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              budgetMin: value
+                            }));
+                          }}
+                          min={0}
+                          step={100}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <label className="text-sm text-zinc-400">Maximum Budget</label>
+                          <span className="text-sm font-medium">${formData.budgetMax}</span>
+                        </div>
+                        <SliderWithInput 
+                          value={formData.budgetMax}
+                          min={formData.budgetMin || 100}
+                          onChange={(value) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              budgetMax: value
+                            }));
+                          }}
+                          max={10000}
+                          step={100}
+                        />
                       </div>
                     </div>
                   </motion.div>
