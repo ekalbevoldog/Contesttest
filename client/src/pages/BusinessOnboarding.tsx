@@ -351,24 +351,36 @@ export default function BusinessOnboarding() {
           userType: "business"
         };
         
+        // Register user with the API
         const userResponse = await apiRequest("POST", "/api/auth/register", userData);
-        let userResponseData;
-        
-        try {
-          userResponseData = await userResponse.json();
-        } catch (error) {
-          console.error("Error parsing response:", error);
-          throw new Error("Failed to parse server response");
-        }
         
         if (!userResponse.ok) {
-          throw new Error(userResponseData.message || userResponseData.error || "Failed to create account");
+          // Handle error response
+          let errorMessage = "Failed to create account";
+          try {
+            const errorData = await userResponse.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (e) {
+            console.error("Error parsing error response:", e);
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Parse successful response
+        let userResponseData;
+        try {
+          userResponseData = await userResponse.json();
+          console.log("Registration successful:", userResponseData);
+        } catch (error) {
+          console.error("Error parsing success response:", error);
+          throw new Error("Registration succeeded but unable to process server response");
         }
         
         // Extract the session ID from the response
-        const sessionId = userResponseData.sessionId;
+        const sessionId = userResponseData?.sessionId;
         
         if (!sessionId) {
+          console.error("Registration response missing sessionId:", userResponseData);
           throw new Error("No session ID returned from registration");
         }
         
@@ -413,20 +425,30 @@ export default function BusinessOnboarding() {
           })
         };
         
+        // Submit business profile data
         const businessResponse = await apiRequest("POST", "/api/profile", businessData);
         
+        if (!businessResponse.ok) {
+          // Handle error response
+          let errorMessage = "Failed to create business profile";
+          try {
+            const errorData = await businessResponse.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+            console.error("Business profile creation error:", errorData);
+          } catch (e) {
+            console.error("Error parsing business error response:", e);
+          }
+          throw new Error(errorMessage);
+        }
+        
+        // Parse successful response
         let businessResponseData;
         try {
           businessResponseData = await businessResponse.json();
+          console.log("Business profile created successfully:", businessResponseData);
         } catch (error) {
-          console.error("Error parsing profile response:", error);
-        }
-        
-        if (!businessResponse.ok) {
-          const errorMessage = businessResponseData?.message || 
-                             businessResponseData?.error || 
-                             "Failed to create business profile";
-          throw new Error(errorMessage);
+          console.error("Error parsing business success response:", error);
+          // Don't throw here - the profile was created, we just couldn't parse response
         }
         
         toast({
@@ -852,10 +874,47 @@ export default function BusinessOnboarding() {
               <p className="text-zinc-400 mb-6">Final step to complete your registration</p>
               
               <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-zinc-800/50 border border-zinc-700 mb-4">
-                  <p className="font-medium mb-1">Account Information:</p>
-                  <p className="text-zinc-300">Name: {formData.name}</p>
-                  <p className="text-zinc-300">Email: {formData.email}</p>
+                {/* Enhanced Account Information Summary */}
+                <div className="p-5 rounded-lg bg-zinc-800/50 border border-zinc-700 mb-4">
+                  <h3 className="font-semibold text-lg mb-3 text-red-400">Account Summary</h3>
+                  
+                  <div className="grid gap-3">
+                    <div className="grid md:grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-zinc-400 text-sm">Name</p>
+                        <p className="text-zinc-200 font-medium">{formData.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 text-sm">Email</p>
+                        <p className="text-zinc-200 font-medium">{formData.email}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-2">
+                      <div>
+                        <p className="text-zinc-400 text-sm">Business Type</p>
+                        <p className="text-zinc-200 font-medium capitalize">{formData.businessType || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <p className="text-zinc-400 text-sm">Industry</p>
+                        <p className="text-zinc-200 font-medium">{formData.industry || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-zinc-400 text-sm">Budget Range</p>
+                      <p className="text-zinc-200 font-medium">${formData.budgetMin} - ${formData.budgetMax} per month</p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-zinc-400 text-sm">Marketing Goals</p>
+                      <p className="text-zinc-200 font-medium">
+                        {formData.goalIdentification.length > 0 
+                          ? formData.goalIdentification.join(', ') 
+                          : 'Not specified'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               
                 <div>
@@ -871,6 +930,7 @@ export default function BusinessOnboarding() {
                     className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
                     minLength={8}
                     required
+                    placeholder="Minimum 8 characters"
                   />
                   {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
                   <p className="text-zinc-500 text-xs mt-1">Password must be at least 8 characters long</p>
@@ -888,8 +948,18 @@ export default function BusinessOnboarding() {
                     onChange={handleChange}
                     className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
                     required
+                    placeholder="Re-enter your password"
                   />
                   {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+                </div>
+                
+                <div className="pt-2">
+                  <p className="text-sm text-zinc-400">
+                    By creating an account, you agree to our{" "}
+                    <a href="/terms" className="text-red-400 hover:text-red-300">Terms of Service</a>{" "}
+                    and{" "}
+                    <a href="/privacy" className="text-red-400 hover:text-red-300">Privacy Policy</a>
+                  </p>
                 </div>
               </div>
             </StaggerItem>
