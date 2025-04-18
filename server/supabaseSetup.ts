@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { pool } from './db';
 
 const CREATE_SESSIONS_TABLE = `
 CREATE TABLE IF NOT EXISTS sessions (
@@ -30,31 +31,75 @@ CREATE INDEX IF NOT EXISTS sessions_session_id_idx ON sessions(session_id);
 CREATE INDEX IF NOT EXISTS messages_session_id_idx ON messages(session_id);
 `;
 
-// Function to create a table via direct REST API if it doesn't exist
-async function createTableIfNotExists(tableName: string, createSQL: string) {
+// Function to check if a table exists
+async function tableExists(tableName: string): Promise<boolean> {
   try {
-    // First check if the table exists by querying it
-    const { error: checkError } = await supabase
-      .from(tableName)
-      .select('count(*)')
-      .limit(1);
+    const result = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = $1
+      );
+    `, [tableName]);
     
-    if (checkError && checkError.code === '42P01') {
-      console.log(`${tableName} table does not exist, attempting to create it`);
+    return result.rows[0].exists;
+  } catch (error) {
+    console.error(`Error checking if table ${tableName} exists:`, error);
+    return false;
+  }
+}
+
+// Function to execute SQL
+async function executeSql(sql: string): Promise<boolean> {
+  try {
+    await pool.query(sql);
+    return true;
+  } catch (error) {
+    console.error(`Error executing SQL:`, error);
+    return false;
+  }
+}
+
+// Function to create a table if it doesn't exist
+async function createTableIfNotExists(tableName: string, createSQL: string): Promise<boolean> {
+  try {
+    const exists = await tableExists(tableName);
+    
+    if (!exists) {
+      console.log(`${tableName} table does not exist, creating it...`);
+      const created = await executeSql(createSQL);
       
-      // Table doesn't exist, try to create it with a direct REST query
-      // This is a workaround since we can't use the RPC or SQL functions directly
-      // We output the SQL for manual execution
-      console.log(`Please run this SQL in Supabase SQL Editor to create the ${tableName} table:`);
-      console.log(createSQL);
-      
-      return false;
+      if (created) {
+        console.log(`${tableName} table created successfully`);
+        return true;
+      } else {
+        console.error(`Failed to create ${tableName} table`);
+        return false;
+      }
     } else {
       console.log(`${tableName} table already exists`);
       return true;
     }
   } catch (error) {
-    console.error(`Error checking/creating ${tableName} table:`, error);
+    console.error(`Error creating ${tableName} table:`, error);
+    return false;
+  }
+}
+
+// Function to create indexes
+async function createIndexes(): Promise<boolean> {
+  try {
+    const created = await executeSql(CREATE_INDEXES);
+    
+    if (created) {
+      console.log('Indexes created successfully');
+      return true;
+    } else {
+      console.error('Failed to create indexes');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error creating indexes:', error);
     return false;
   }
 }
@@ -71,8 +116,7 @@ export async function initializeSupabaseTables() {
     if (sessionsExists && messagesExists) {
       // If both tables exist, try to create indexes
       console.log('Tables exist, ensuring indexes are created...');
-      console.log('Please run this SQL in Supabase SQL Editor if needed:');
-      console.log(CREATE_INDEXES);
+      await createIndexes();
     }
   } catch (err) {
     console.error('Exception during Supabase initialization:', err);
@@ -81,6 +125,10 @@ export async function initializeSupabaseTables() {
 
 // Export a function to initialize everything at once
 export async function setupSupabase() {
-  await initializeSupabaseTables();
-  console.log('Supabase setup completed');
+  try {
+    await initializeSupabaseTables();
+    console.log('Supabase setup completed');
+  } catch (error) {
+    console.error('Error in Supabase setup:', error);
+  }
 }
