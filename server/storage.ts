@@ -1063,4 +1063,5 @@ export class MemStorage implements IStorage {
 
 // Create and export storage instance
 // Temporarily using MemStorage until database connection issue is fixed
-export const storage = new MemStorage();
+// Export Supabase storage implementation (replacing in-memory storage)
+export const storage = new SupabaseStorage();
