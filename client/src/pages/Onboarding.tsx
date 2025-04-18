@@ -505,24 +505,7 @@ export default function Onboarding() {
       case "user-type":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-8 relative">
-              {/* Add floating elements for visual interest */}
-              <FloatingElement
-                className="absolute top-[-20px] right-[-10px] text-red-500/20 z-0"
-                floatIntensity={10}
-                duration={7}
-              >
-                <Trophy size={60} />
-              </FloatingElement>
-              
-              <FloatingElement
-                className="absolute bottom-[-60px] left-[-30px] text-amber-500/20 z-0"
-                floatIntensity={8}
-                duration={8}
-                delay={1}
-              >
-                <Target size={80} />
-              </FloatingElement>
+            <div className="space-y-8 relative max-w-3xl mx-auto">
               
               <StaggerContainer>
                 <StaggerItem>
@@ -602,16 +585,7 @@ export default function Onboarding() {
       case "business-type":
         return (
           <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-6 relative">
-              {/* Floating decorative elements */}
-              <FloatingElement
-                className="absolute top-[20px] right-[-20px] text-amber-500/20 z-0"
-                floatIntensity={8}
-                duration={7}
-              >
-                <Building size={50} />
-              </FloatingElement>
-              
+            <div className="space-y-6 relative max-w-3xl mx-auto">
               <StaggerContainer>
                 <StaggerItem>
                   <motion.h2 
