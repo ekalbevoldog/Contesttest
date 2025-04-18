@@ -153,35 +153,20 @@ export const businesses = pgTable("business_profiles", {
   website: text("website"),
   logo: text("logo_url"),
   
-  // Onboarding Specific Fields
-  businessType: text("business_type", { enum: ["product", "service", "hybrid"] }).notNull(),
-  accessRestriction: text("access_restriction", { enum: ["restricted", "unrestricted"] }).default("unrestricted"),
-  goalIdentification: jsonb("goal_identification"), // Array of goals: Awareness, Sales, etc.
-  hasPastPartnership: boolean("has_past_partnership").default(false),
-  budgetMin: real("budget_min"),
-  budgetMax: real("budget_max"),
-  zipCode: text("zip_code"),
-  operatingLocation: jsonb("operating_location"), // Array of locations
-  contactName: text("contact_name"),
-  contactTitle: text("contact_title"),
-  contactEmail: text("contact_email"),
-  contactPhone: text("contact_phone"),
-  businessSize: text("business_size", { enum: ["sole_proprietor", "small_team", "medium", "enterprise"] }),
-  
   // Product Information
-  productType: text("product_type"), // Now optional as it depends on businessType
+  productType: text("product_type").notNull(),
   productDescription: text("product_description"),
   productImages: jsonb("product_images"),
   pricingTier: text("pricing_tier"), // premium, mid-range, budget
   
   // Marketing Information
-  audienceGoals: text("audience_goals"),
+  audienceGoals: text("audience_goals").notNull(),
   audienceDemographics: jsonb("audience_demographics"),
   primaryAudienceAgeRange: text("primary_audience_age_range"),
   secondaryAudienceAgeRange: text("secondary_audience_age_range"),
   
   // Campaign Details
-  campaignVibe: text("campaign_vibe"),
+  campaignVibe: text("campaign_vibe").notNull(),
   campaignGoals: jsonb("campaign_goals"),
   campaignFrequency: text("campaign_frequency"),
   campaignDuration: text("campaign_duration"),
@@ -189,14 +174,14 @@ export const businesses = pgTable("business_profiles", {
   campaignTimeline: text("campaign_timeline"),
   
   // Brand Information
-  values: text("values"),
+  values: text("values").notNull(),
   brandVoice: text("brand_voice"),
   brandColors: jsonb("brand_colors"),
   brandGuidelines: text("brand_guidelines_url"),
   sustainabilityFocus: boolean("sustainability_focus"),
   
   // Athletic Targeting
-  targetSchoolsSports: text("target_schools_sports"),
+  targetSchoolsSports: text("target_schools_sports").notNull(),
   preferredSports: jsonb("preferred_sports"),
   preferredDivisions: jsonb("preferred_divisions"),
   preferredRegions: jsonb("preferred_regions"),

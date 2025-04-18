@@ -274,20 +274,19 @@ export default function EnhancedOnboardingForm({
         if (userType !== 'business') return [];
         return [
           {
-            id: 'business_type',
+            id: 'account_type',
             type: 'radio',
-            label: 'What type of business are you?',
+            label: 'Product or Service?',
             required: true,
             options: [
-              { id: 'product', label: 'Product', description: 'We sell physical or digital products' },
-              { id: 'service', label: 'Service', description: 'We provide services to customers' },
-              { id: 'hybrid', label: 'Hybrid', description: 'We offer both products and services' }
+              { id: 'product', label: 'Product-based Business', description: 'We sell physical or digital products' },
+              { id: 'service', label: 'Service-based Business', description: 'We provide services to customers' }
             ]
           },
           {
             id: 'industry',
             type: 'select',
-            label: 'What industry are you in?',
+            label: 'Industry',
             required: true,
             options: [
               { id: 'retail', label: 'Retail' },
@@ -306,83 +305,25 @@ export default function EnhancedOnboardingForm({
             tooltip: 'Some industries have special regulations for NIL partnerships'
           },
           {
-            id: 'goal_identification',
-            type: 'multi_select',
-            label: 'What are your goals with athlete partnerships?',
-            description: 'Select all that apply',
+            id: 'business_size',
+            type: 'select',
+            label: 'Business Size',
             required: true,
             options: [
-              { id: 'awareness', label: 'Awareness' },
-              { id: 'sales', label: 'Sales / Conversions' },
-              { id: 'launch_product', label: 'Launch new product' },
-              { id: 'ambassadors', label: 'Athlete ambassadors' },
-              { id: 'other', label: 'Other' }
+              { id: '1-10', label: '1-10 employees' },
+              { id: '11-50', label: '11-50 employees' },
+              { id: '51-200', label: '51-200 employees' },
+              { id: '201-500', label: '201-500 employees' },
+              { id: '500+', label: '500+ employees' }
             ]
-          },
-          {
-            id: 'has_past_partnership',
-            type: 'boolean',
-            label: 'Have you partnered with athletes before?',
-            required: true
-          },
-          {
-            id: 'budget',
-            type: 'slider_float',
-            label: 'What is your estimated monthly budget?',
-            required: true,
-            min: 0,
-            max: 100000
           },
           {
             id: 'zip_code',
             type: 'text',
-            label: 'What is your business\'s zip code?',
+            label: 'Zip Code',
             required: true,
             pattern: '\\d{5}',
             placeholder: '12345'
-          },
-          {
-            id: 'operating_location',
-            type: 'multi_select',
-            label: 'Where do you operate?',
-            description: 'Select all that apply',
-            required: true,
-            options: [
-              { id: 'neighborhood', label: 'Neighborhood / Zip' },
-              { id: 'city', label: 'City' },
-              { id: 'region', label: 'Region' },
-              { id: 'statewide', label: 'Statewide' },
-              { id: 'national', label: 'National' },
-              { id: 'remote', label: 'Remote / Online' }
-            ],
-            conditional: {
-              field: 'business_type',
-              value: 'service'
-            }
-          },
-          {
-            id: 'contact_info',
-            type: 'multi_text',
-            label: 'Who is the primary contact?',
-            required: true,
-            fields: [
-              { id: 'contact_name', label: 'Name', required: true },
-              { id: 'contact_title', label: 'Title', required: true },
-              { id: 'contact_email', label: 'Email', required: true },
-              { id: 'contact_phone', label: 'Phone', required: false }
-            ]
-          },
-          {
-            id: 'business_size',
-            type: 'radio',
-            label: 'What is your business size?',
-            required: true,
-            options: [
-              { id: 'sole_proprietor', label: 'Sole Proprietor' },
-              { id: 'small_team', label: 'Small Team' },
-              { id: 'medium', label: 'Medium' },
-              { id: 'enterprise', label: 'Enterprise' }
-            ]
           }
         ];
 
@@ -649,45 +590,16 @@ export default function EnhancedOnboardingForm({
   const handleInputChange = (fieldId: string, value: any) => {
     const currentSection = getCurrentSection();
     
-    // Special handling for industry selection in business details
-    if (currentSection === 'businessDetails' && fieldId === 'industry') {
-      const restrictedIndustries = ['cannabis', 'gambling', 'alcohol', 'tobacco', 'adult'];
-      const isRestricted = restrictedIndustries.includes(value);
-      
-      setFormData(prev => {
-        const sectionData = prev[currentSection] as Record<string, any> || {};
-        return {
-          ...prev,
-          [currentSection]: {
-            ...sectionData,
-            [fieldId]: value,
-            // Set access restriction field
-            access_restriction: isRestricted ? 'restricted' : 'unrestricted'
-          }
-        };
-      });
-      
-      // Show warning toast for restricted industries
-      if (isRestricted) {
-        toast({
-          title: "Restricted Industry Detected",
-          description: "Your account will need review by a compliance officer before full access is granted.",
-          variant: "warning"
-        });
-      }
-    } else {
-      // Normal field handling
-      setFormData(prev => {
-        const sectionData = prev[currentSection] as Record<string, any> || {};
-        return {
-          ...prev,
-          [currentSection]: {
-            ...sectionData,
-            [fieldId]: value
-          }
-        };
-      });
-    }
+    setFormData(prev => {
+      const sectionData = prev[currentSection] as Record<string, any> || {};
+      return {
+        ...prev,
+        [currentSection]: {
+          ...sectionData,
+          [fieldId]: value
+        }
+      };
+    });
     
     // Clear error for this field if it exists
     if (fieldErrors[fieldId]) {
@@ -821,85 +733,11 @@ export default function EnhancedOnboardingForm({
     setIsSubmitting(true);
 
     try {
-      // Extract data from formData
-      const {
-        userType,
-        basicProfile,
-        athleteDetails,
-        businessDetails,
-        brandValues,
-        goals,
-        audienceInfo,
-        compensation
-      } = formData;
-
       // Prepare data for submission based on user type
-      let submissionData: Record<string, any> = {
+      const submissionData = {
         sessionId: activeSessionId,
-        userType
+        ...formData  // formData already contains userType
       };
-
-      // Process business type data
-      if (userType === 'business') {
-        // Extract key business fields from form data sections
-        const businessData = {
-          ...basicProfile,
-          ...businessDetails,
-          ...brandValues,
-          ...goals,
-          ...audienceInfo,
-          ...compensation
-        };
-
-        // Rename field names to match API expectations
-        submissionData = {
-          ...submissionData,
-          name: businessData.company_name || businessData.business_name,
-          businessType: businessDetails?.business_type || 'product',
-          industry: businessDetails?.industry,
-          accessRestriction: businessDetails?.access_restriction || 'unrestricted',
-          goalIdentification: businessDetails?.goal_identification || [],
-          hasPastPartnership: businessDetails?.has_past_partnership || false,
-          budget: businessDetails?.budget || 0,
-          zipCode: businessDetails?.zip_code,
-          operatingLocation: businessDetails?.operating_location || [],
-          contactName: businessDetails?.contact_info?.contact_name,
-          contactTitle: businessDetails?.contact_info?.contact_title,
-          contactEmail: businessDetails?.contact_info?.contact_email,
-          contactPhone: businessDetails?.contact_info?.contact_phone,
-          businessSize: businessDetails?.business_size,
-          values: brandValues?.values || [],
-          audienceGoals: audienceInfo?.audience_goals || [],
-          campaignVibe: audienceInfo?.campaign_vibe,
-          budgetRange: compensation?.budget_range,
-          email: basicProfile?.email
-        };
-      } else {
-        // Process athlete data
-        const athleteData = {
-          ...basicProfile,
-          ...athleteDetails,
-          ...brandValues,
-          ...goals,
-          ...audienceInfo,
-          ...compensation
-        };
-
-        submissionData = {
-          ...submissionData,
-          name: `${athleteData.first_name || ''} ${athleteData.last_name || ''}`.trim(),
-          sport: athleteDetails?.sport,
-          position: athleteDetails?.position,
-          school: athleteDetails?.university,
-          division: athleteDetails?.eligibility_status,
-          values: brandValues?.values || [],
-          preferredIndustries: goals?.preferred_industries || [],
-          audienceSize: audienceInfo?.audience_size,
-          socialLinks: audienceInfo?.social_links,
-          compensationGoals: compensation?.compensation_goals,
-          email: basicProfile?.email
-        };
-      }
 
       // Submit to personalized onboarding endpoint
       const response = await apiRequest("POST", "/api/personalized-onboarding", submissionData);
@@ -913,16 +751,10 @@ export default function EnhancedOnboardingForm({
       // Move to complete step
       setCurrentStep(WizardStep.Complete);
       
-      // Notify success with appropriate message
-      const successMessage = userType === 'business' ? 
-        (businessDetails?.access_restriction === 'restricted' ? 
-          "Business profile created! Your account is pending compliance review." : 
-          "Business profile successfully created!") :
-        "Athlete profile successfully created!";
-      
+      // Notify success
       toast({
         title: "Profile Submitted",
-        description: successMessage,
+        description: "Your profile has been successfully created!",
         variant: "default"
       });
       
@@ -1206,40 +1038,6 @@ export default function EnhancedOnboardingForm({
             {error && <p className="text-sm text-red-500">{error}</p>}
           </div>
         );
-      
-      case 'multi_text':
-        return (
-          <div className="space-y-3">
-            {fieldLabel}
-            {field.description && (
-              <p className="text-sm text-muted-foreground">{field.description}</p>
-            )}
-            <div className="space-y-4 p-4 border rounded-md">
-              {field.fields?.map((subfield) => (
-                <div key={subfield.id} className="space-y-2">
-                  <Label 
-                    htmlFor={`${field.id}-${subfield.id}`}
-                    className={`${subfield.required ? 'after:content-["*"] after:ml-0.5 after:text-red-500' : ''}`}
-                  >
-                    {subfield.label}
-                  </Label>
-                  <Input
-                    id={`${field.id}-${subfield.id}`}
-                    type={subfield.type || 'text'}
-                    value={(value && value[subfield.id]) || ''}
-                    onChange={(e) => {
-                      const updatedValue = { ...(value || {}) };
-                      updatedValue[subfield.id] = e.target.value;
-                      handleInputChange(field.id, updatedValue);
-                    }}
-                    placeholder={subfield.placeholder}
-                  />
-                </div>
-              ))}
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-          </div>
-        );
         
       case 'slider':
         return (
@@ -1268,43 +1066,6 @@ export default function EnhancedOnboardingForm({
                 onChange={(e) => handleInputChange(field.id, parseInt(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-          </div>
-        );
-        
-      case 'slider_float':
-        return (
-          <div className="space-y-4">
-            {fieldLabel}
-            {field.description && (
-              <p className="text-sm text-muted-foreground">{field.description}</p>
-            )}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  ${field.min?.toLocaleString() || '0'}
-                </span>
-                <span className="text-sm font-medium">
-                  ${value ? value.toLocaleString() : '0'}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  ${field.max?.toLocaleString() || '100,000'}
-                </span>
-              </div>
-              <Slider
-                defaultValue={[value || 0]}
-                max={field.max || 100000}
-                min={field.min || 0}
-                step={500}
-                onValueChange={(vals) => handleInputChange(field.id, vals[0])}
-                className="w-full"
-              />
-              <div className="text-center py-2">
-                <span className="text-sm text-zinc-500">
-                  Drag the slider to set your monthly budget
-                </span>
-              </div>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
           </div>

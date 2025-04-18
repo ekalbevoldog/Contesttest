@@ -83,48 +83,45 @@ const athleteSteps = [
 
 const businessSteps = [
   {
-    "step": "What type of business are you?",
-    "field": "business_type",
+    "step": "Account Type Selection",
+    "field": "account_type_selection",
+    "type": "single_select",
+    "options": ["Athlete", "Business"],
+    "required": true
+  },
+  {
+    "step": "Business Name",
+    "field": "business_name",
+    "type": "text",
+    "required": true
+  },
+  {
+    "step": "Product or Service?",
+    "field": "account_type",
     "type": "radio",
-    "options": ["Product", "Service", "Hybrid"],
-    "required": true,
-    "description": "Select the primary focus of your business"
+    "options": ["Product", "Service"],
+    "required": true
   },
   {
     "step": "Industry",
     "field": "industry",
     "type": "dropdown",
-    "description": "Select your industry",
     "restricted_industries": ["Cannabis", "Gambling", "Alcohol", "Adult", "Tobacco"],
-    "tag_if_restricted": true,
-    "result_field": "access_restriction",
-    "conditional": {
-      "field": "business_type",
-      "value": ["Product", "Service", "Hybrid"]
-    }
+    "tag_if_restricted": true
   },
   {
-    "step": "Goals with athlete partnerships",
-    "field": "goal_identification",
+    "step": "Goal Identification",
+    "field": "goals",
     "type": "multi_select",
-    "options": ["Awareness", "Sales / Conversions", "Launch new product", "Athlete ambassadors", "Other"],
-    "required": true,
-    "description": "What are you hoping to achieve? (Select all that apply)",
-    "conditional": {
-      "field": "business_type",
-      "value": ["Product", "Service", "Hybrid"]
-    }
+    "options": ["Brand Awareness", "Content Creation", "Local Activation", "Event Presence", "Conversion Performance"],
+    "required": true
   },
   {
     "step": "Past Partnerships",
-    "field": "has_past_partnership",
+    "field": "has_partnered_before",
     "type": "boolean",
     "label": "Have you partnered with athletes before?",
-    "required": true,
-    "conditional": {
-      "field": "business_type",
-      "value": ["Product", "Service", "Hybrid"]
-    }
+    "required": true
   },
   {
     "step": "Budget Range",
@@ -132,74 +129,28 @@ const businessSteps = [
     "type": "slider_float",
     "min_value": 0,
     "max_value": 100000,
-    "required": true,
-    "description": "What is your estimated monthly budget?",
-    "conditional": {
-      "field": "business_type",
-      "value": ["Product", "Service", "Hybrid"]
-    }
-  },
-  {
-    "step": "Business Location",
-    "field": "zip_code",
-    "type": "text",
-    "pattern": "\\d{5}",
-    "required": true,
-    "description": "What is your business's zip code?",
-    "conditional": {
-      "field": "business_type",
-      "value": ["Product", "Service", "Hybrid"]
-    }
-  },
-  {
-    "step": "Operating Locations",
-    "field": "operating_location",
-    "type": "multi_select",
-    "options": ["Neighborhood / Zip", "City", "Region", "Statewide", "National", "Remote / Online"],
-    "required": true,
-    "description": "Where do you operate? (Select all that apply)",
-    "conditional": {
-      "field": "business_type",
-      "value": "Service"
-    }
-  },
-  {
-    "step": "Primary Contact",
-    "fields": [
-      { "name": "contact_name", "type": "text", "required": true, "label": "Name" },
-      { "name": "contact_title", "type": "text", "required": true, "label": "Title" },
-      { "name": "contact_email", "type": "email", "required": true, "label": "Email" },
-      { "name": "contact_phone", "type": "tel", "required": false, "label": "Phone" }
-    ],
-    "description": "Who is the primary contact?",
-    "conditional": {
-      "field": "business_type",
-      "value": ["Product", "Service", "Hybrid"]
-    }
-  },
-  {
-    "step": "Business Size",
-    "field": "business_size",
-    "type": "radio",
-    "options": ["Sole Proprietor", "Small Team", "Medium", "Enterprise"],
-    "required": true,
-    "conditional": {
-      "field": "business_type",
-      "value": ["Product", "Service", "Hybrid"]
-    }
-  },
-  {
-    "step": "Business Name",
-    "field": "name",
-    "type": "text",
     "required": true
   },
   {
-    "step": "Create Password",
+    "step": "Zip Code",
+    "field": "zip_code",
+    "type": "text",
+    "pattern": "\\d{5}",
+    "required": true
+  },
+  {
+    "step": "Contact Info",
     "fields": [
+      { "name": "contact_name", "type": "text", "required": true },
+      { "name": "contact_title", "type": "text", "required": true },
+      { "name": "contact_email", "type": "email", "required": true },
+      { "name": "business_size", "type": "dropdown", "options": ["1-10", "11-50", "51-200", "201-500", "500+"], "required": true },
+      { "name": "phone_number", "type": "tel", "required": false },
       { "name": "password", "type": "password", "required": true }
-    ],
-    "description": "Create a password to complete your account",
+    ]
+  },
+  {
+    "step": "Start Trial",
     "action": "register_user",
     "integration": "Supabase Auth",
     "redirect": "/account-completion"
@@ -221,16 +172,10 @@ export interface OnboardingStep {
   pattern?: string;
   restricted_industries?: string[];
   tag_if_restricted?: boolean;
-  result_field?: string; // Field to store the result of an evaluation (like checking restricted industries)
-  conditional?: {
-    field: string;
-    value: string | string[];
-  };
   fields?: Array<{
     name: string;
     type: string;
     required: boolean;
-    label?: string;
     options?: string[] | Array<{id: string, label: string}>;
   }>;
   action?: string;
@@ -273,24 +218,6 @@ export function normalizeSteps(steps: OnboardingStep[]): OnboardingStep[] {
 // Helper function to check if an industry is restricted
 export function isRestrictedIndustry(industry: string, step: OnboardingStep): boolean {
   return step.restricted_industries?.includes(industry) || false;
-}
-
-// Process industry selection and set access_restriction
-export function processIndustrySelection(industry: string, formData: any, step: OnboardingStep): any {
-  const isRestricted = isRestrictedIndustry(industry, step);
-  
-  // Clone the formData to avoid direct mutation
-  const updatedFormData = { ...formData };
-  
-  // Store the industry selection
-  updatedFormData[step.field as string] = industry;
-  
-  // If this step defines a result field (e.g., access_restriction), set its value
-  if (step.result_field) {
-    updatedFormData[step.result_field] = isRestricted ? 'restricted' : 'unrestricted';
-  }
-  
-  return updatedFormData;
 }
 
 // Generate validation schema for a step
