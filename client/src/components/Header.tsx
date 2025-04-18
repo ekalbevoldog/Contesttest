@@ -19,35 +19,6 @@ import {
   User,
   MessageSquare,
   Shield,
-  ExternalLink
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import React, { useState, ReactNode } from "react"; // Added ReactNode
-import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  Menu,
-  BarChart,
-  Trophy,
-  LogIn,
-  LogOut,
-  UserCircle,
-  Briefcase,
-  Settings,
-  Webhook,
-  User,
-  MessageSquare,
-  Shield,
   ExternalLink,
   ChevronDown, // Added for dropdown indicator
   Info, // Example for Solutions
@@ -61,6 +32,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import React, { ReactNode } from "react"; // Removed duplicate useState import
+// Removed duplicate wouter imports
+// Removed duplicate Button import
+// Removed duplicate Sheet imports
+// Removed duplicate lucide-react imports
+// Removed duplicate dropdown-menu imports
+  LogIn,
+  LogOut,
+  UserCircle,
+  Briefcase,
+  Settings,
+  Webhook,
+  User,
+  MessageSquare,
+  Shield,
+  ExternalLink,
+  ChevronDown, // Added for dropdown indicator
+  Info, // Example for Solutions
+  DollarSign, // Example for Pricing
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils"; // Import cn for conditional classes
 

@@ -4,10 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
-
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import Dashboard from "@/pages/Dashboard";
+// import Dashboard from "@/pages/Dashboard"; // Removed unused import
 import Onboarding from "@/pages/Onboarding";
 import RegistrationWizard from "@/pages/RegistrationWizard";
 import PersonalizedWizard from "@/pages/PersonalizedWizard";
@@ -55,7 +54,7 @@ function Router() {
           {/* Protected Dashboard Routes */}
           <ProtectedRoute path="/athlete/dashboard" component={AthleteDashboard} requiredUserType="athlete" />
           <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} requiredUserType="business" />
-          <ProtectedRoute path="/compliance/dashboard" component={ComplianceDashboard} requiredUserType="compliance" />
+          <ProtectedRoute path="/compliance" component={ComplianceDashboard} requiredUserType="compliance" /> {/* Corrected path */}
 
           {/* Message Center - available to all logged in users */}
           <ProtectedRoute path="/messages" component={() => <MessageCenter />} />
