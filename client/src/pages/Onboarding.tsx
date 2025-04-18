@@ -2788,20 +2788,44 @@ export default function Onboarding() {
       return null; // Don't show progress bar on the first step
     }
     
-    const steps = [
-      "business-type",
-      "industry",
-      "goals",
-      "past-partnerships",
-      "budget",
-      "zip-code",
-      ...(formData.businessType === "service" ? ["operating-location"] : []),
-      "contact-info",
-      "business-size",
-      "create-password"
-    ];
+    // Different steps based on user type
+    let steps: OnboardingStep[] = [];
     
-    const currentIndex = steps.indexOf(currentStep);
+    if (formData.userType === "athlete") {
+      // Athlete-specific steps
+      steps = [
+        "athlete-basic-info",
+        "athlete-academic-info",
+        "athlete-sport-info",
+        "athlete-eligibility-check",
+        "athlete-social-media",
+        "athlete-content-style",
+        "athlete-compensation",
+        "athlete-brand-values",
+        "create-password"
+      ];
+    } else {
+      // Business steps
+      steps = [
+        "business-type",
+        "industry",
+        "goals",
+        "past-partnerships",
+        "budget",
+        "zip-code",
+        ...(formData.businessType === "service" ? ["operating-location"] : []),
+        "contact-info",
+        "business-size",
+        "create-password"
+      ] as OnboardingStep[];
+    }
+    
+    const currentIndex = steps.indexOf(currentStep as OnboardingStep);
+    
+    // If the current step is not found in the steps array, don't render a progress bar
+    if (currentIndex === -1) {
+      return null;
+    }
     
     return (
       <AnimatedProgressBar
