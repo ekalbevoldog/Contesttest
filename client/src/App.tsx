@@ -4,10 +4,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import SimpleOnboarding from "@/pages/SimpleOnboarding";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
+      <Header />
       <main className="flex-grow">
         <Switch>
           <Route path="/" component={Home} />
@@ -17,6 +20,7 @@ function Router() {
           <Route component={Home} />
         </Switch>
       </main>
+      <Footer />
     </div>
   );
 }
