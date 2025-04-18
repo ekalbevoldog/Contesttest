@@ -96,32 +96,47 @@ const businessSteps = [
     "required": true
   },
   {
-    "step": "Product or Service?",
-    "field": "account_type",
+    "step": "What type of business are you?",
+    "field": "business_type",
     "type": "radio",
     "options": ["Product", "Service"],
-    "required": true
+    "required": true,
+    "description": "Select the primary focus of your business"
   },
   {
     "step": "Industry",
     "field": "industry",
     "type": "dropdown",
+    "description": "Select your industry",
     "restricted_industries": ["Cannabis", "Gambling", "Alcohol", "Adult", "Tobacco"],
-    "tag_if_restricted": true
+    "tag_if_restricted": true,
+    "conditional": {
+      "field": "business_type",
+      "value": ["Product", "Service"]
+    }
   },
   {
-    "step": "Goal Identification",
-    "field": "goals",
+    "step": "Goals with athlete partnerships",
+    "field": "goal_identification",
     "type": "multi_select",
-    "options": ["Brand Awareness", "Content Creation", "Local Activation", "Event Presence", "Conversion Performance"],
-    "required": true
+    "options": ["Awareness", "Sales / Conversions", "Launch new product", "Athlete ambassadors", "Other"],
+    "required": true,
+    "description": "What are you hoping to achieve? (Select all that apply)",
+    "conditional": {
+      "field": "business_type",
+      "value": ["Product", "Service"]
+    }
   },
   {
     "step": "Past Partnerships",
-    "field": "has_partnered_before",
+    "field": "has_past_partnership",
     "type": "boolean",
     "label": "Have you partnered with athletes before?",
-    "required": true
+    "required": true,
+    "conditional": {
+      "field": "business_type",
+      "value": ["Product", "Service"]
+    }
   },
   {
     "step": "Budget Range",
@@ -129,28 +144,68 @@ const businessSteps = [
     "type": "slider_float",
     "min_value": 0,
     "max_value": 100000,
-    "required": true
+    "required": true,
+    "description": "What is your estimated monthly budget?",
+    "conditional": {
+      "field": "business_type",
+      "value": ["Product", "Service"]
+    }
   },
   {
-    "step": "Zip Code",
+    "step": "Business Location",
     "field": "zip_code",
     "type": "text",
     "pattern": "\\d{5}",
-    "required": true
+    "required": true,
+    "description": "What is your business's zip code?",
+    "conditional": {
+      "field": "business_type",
+      "value": ["Product", "Service"]
+    }
   },
   {
-    "step": "Contact Info",
+    "step": "Operating Locations",
+    "field": "operating_location",
+    "type": "multi_select",
+    "options": ["Neighborhood / Zip", "City", "Region", "Statewide", "National", "Remote / Online"],
+    "required": true,
+    "description": "Where do you operate? (Select all that apply)",
+    "conditional": {
+      "field": "business_type",
+      "value": "Service"
+    }
+  },
+  {
+    "step": "Primary Contact",
     "fields": [
-      { "name": "contact_name", "type": "text", "required": true },
-      { "name": "contact_title", "type": "text", "required": true },
-      { "name": "contact_email", "type": "email", "required": true },
-      { "name": "business_size", "type": "dropdown", "options": ["1-10", "11-50", "51-200", "201-500", "500+"], "required": true },
-      { "name": "phone_number", "type": "tel", "required": false },
-      { "name": "password", "type": "password", "required": true }
-    ]
+      { "name": "contact_name", "type": "text", "required": true, "label": "Name" },
+      { "name": "contact_title", "type": "text", "required": true, "label": "Title" },
+      { "name": "contact_email", "type": "email", "required": true, "label": "Email" },
+      { "name": "contact_phone", "type": "tel", "required": false, "label": "Phone" }
+    ],
+    "description": "Who is the primary contact?",
+    "conditional": {
+      "field": "business_type",
+      "value": ["Product", "Service"]
+    }
   },
   {
-    "step": "Start Trial",
+    "step": "Business Size",
+    "field": "business_size",
+    "type": "radio",
+    "options": ["Sole Proprietor", "Small Team", "Medium", "Enterprise"],
+    "required": true,
+    "conditional": {
+      "field": "business_type",
+      "value": ["Product", "Service"]
+    }
+  },
+  {
+    "step": "Create Password",
+    "fields": [
+      { "name": "password", "type": "password", "required": true }
+    ],
+    "description": "Create a password to complete your account",
     "action": "register_user",
     "integration": "Supabase Auth",
     "redirect": "/account-completion"
@@ -172,10 +227,15 @@ export interface OnboardingStep {
   pattern?: string;
   restricted_industries?: string[];
   tag_if_restricted?: boolean;
+  conditional?: {
+    field: string;
+    value: string | string[];
+  };
   fields?: Array<{
     name: string;
     type: string;
     required: boolean;
+    label?: string;
     options?: string[] | Array<{id: string, label: string}>;
   }>;
   action?: string;
