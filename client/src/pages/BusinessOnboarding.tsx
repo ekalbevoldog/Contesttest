@@ -205,11 +205,11 @@ export default function BusinessOnboarding() {
         break;
         
       case "contact-info":
-        if (!formData.contactName) {
-          newErrors.contactName = "Please enter a contact name";
+        if (!formData.name) {
+          newErrors.name = "Please enter your name";
         }
-        if (!formData.contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
-          newErrors.contactEmail = "Please enter a valid email address";
+        if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+          newErrors.email = "Please enter a valid email address";
         }
         if (!formData.contactPhone) {
           newErrors.contactPhone = "Please enter a contact phone number";
@@ -223,12 +223,7 @@ export default function BusinessOnboarding() {
         break;
         
       case "create-password":
-        if (!formData.name) {
-          newErrors.name = "Please enter your name";
-        }
-        if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = "Please enter a valid email address";
-        }
+        // We already have name and email at this point, just validate password
         if (!formData.password) {
           newErrors.password = "Please enter a password";
         } else if (formData.password.length < 8) {
@@ -410,9 +405,9 @@ export default function BusinessOnboarding() {
             operatingLocation: formData.operatingLocation,
             companySize: formData.businessSize,
             contactInfo: {
-              name: formData.contactName,
+              name: formData.name,
               title: formData.contactTitle,
-              email: formData.contactEmail,
+              email: formData.email,
               phone: formData.contactPhone
             }
           })
@@ -721,19 +716,19 @@ export default function BusinessOnboarding() {
               <h2 className="text-2xl font-bold mb-4">Who is the primary contact?</h2>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="contactName" className="block text-sm font-medium text-gray-300 mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
                     Full Name
                   </label>
                   <input
                     type="text"
-                    id="contactName"
-                    name="contactName"
-                    value={formData.contactName}
+                    id="name"
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
                     className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
                     required
                   />
-                  {errors.contactName && <p className="text-red-500 text-sm mt-1">{errors.contactName}</p>}
+                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
                 
                 <div>
@@ -751,19 +746,19 @@ export default function BusinessOnboarding() {
                 </div>
                 
                 <div>
-                  <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-300 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                     Email Address
                   </label>
                   <input
                     type="email"
-                    id="contactEmail"
-                    name="contactEmail"
-                    value={formData.contactEmail}
+                    id="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
                     className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
                     required
                   />
-                  {errors.contactEmail && <p className="text-red-500 text-sm mt-1">{errors.contactEmail}</p>}
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                 </div>
                 
                 <div>
@@ -853,45 +848,19 @@ export default function BusinessOnboarding() {
         return (
           <div className="space-y-6">
             <StaggerItem>
-              <h2 className="text-2xl font-bold mb-4">Create your account</h2>
+              <h2 className="text-2xl font-bold mb-4">Create your password</h2>
               <p className="text-zinc-400 mb-6">Final step to complete your registration</p>
               
               <div className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                    required
-                  />
-                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                <div className="p-4 rounded-lg bg-zinc-800/50 border border-zinc-700 mb-4">
+                  <p className="font-medium mb-1">Account Information:</p>
+                  <p className="text-zinc-300">Name: {formData.name}</p>
+                  <p className="text-zinc-300">Email: {formData.email}</p>
                 </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full p-3 bg-zinc-800/90 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 transition-colors"
-                    required
-                  />
-                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                </div>
-                
+              
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                    Password
+                    Create Password
                   </label>
                   <input
                     type="password"
@@ -904,6 +873,7 @@ export default function BusinessOnboarding() {
                     required
                   />
                   {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                  <p className="text-zinc-500 text-xs mt-1">Password must be at least 8 characters long</p>
                 </div>
                 
                 <div>
