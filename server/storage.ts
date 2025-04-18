@@ -2,12 +2,14 @@ import {
   InsertSession, InsertAthlete, InsertBusiness, 
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer,
-  users
+  users, sessions, athletes, businesses, campaigns, matches, messages, partnershipOffers, feedbacks
 } from "@shared/schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
 import { SupabaseStorage } from "./supabaseStorage";
+import { supabase } from "./supabase";
+import { db } from "./db";
 
 const scryptAsync = promisify(scrypt);
 
@@ -217,44 +219,55 @@ export class DatabaseStorage implements IStorage {
   async getMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
     return await db.select().from(messages)
       .where(eq(messages.sessionId, sessionId))
-      .orderBy(desc(messages.createdAt))
       .limit(limit)
       .offset(offset);
   }
 
-  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message> {
-    const message = await db.insert(messages).values({
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> {
+    const [message] = await db.insert(messages).values({
       sessionId,
       role,
-      content,
-      metadata: metadata ? JSON.stringify(metadata) : null,
-      unread: true
-    }).returning().get();
+      content
+    }).returning();
 
     return message;
   }
 
   async getUnreadMessageCounts(sessionId: string): Promise<number> {
-    const result = await db.select({
-      count: sql`count(*)`
-    })
-    .from(messages)
-    .where(and(
-      eq(messages.sessionId, sessionId),
-      eq(messages.unread, true)
-    ))
-    .get();
-
-    return result?.count || 0;
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('count')
+        .eq('session_id', sessionId);
+        
+      if (error) {
+        console.error("Error getting unread message count:", error);
+        return 0;
+      }
+      
+      return data && data.length > 0 ? parseInt(data[0].count, 10) : 0;
+    } catch (error) {
+      console.error("Error getting unread message count:", error);
+      return 0;
+    }
   }
 
   async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
-    await db.update(messages)
-      .set({ unread: false })
-      .where(and(
-        eq(messages.sessionId, sessionId),
-        inArray(messages.id, messageIds)
-      ));
+    if (messageIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ unread: false })
+        .eq('session_id', sessionId)
+        .in('id', messageIds);
+        
+      if (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
   }
 
 

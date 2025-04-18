@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { pool } from "./db";
 
 const CREATE_SESSIONS_TABLE = `
 CREATE TABLE IF NOT EXISTS sessions (
@@ -30,22 +30,14 @@ CREATE INDEX IF NOT EXISTS sessions_session_id_idx ON sessions(session_id);
 CREATE INDEX IF NOT EXISTS messages_session_id_idx ON messages(session_id);
 `;
 
-// Function to check if a table exists
+// Function to check if a table exists using a simple query
 async function tableExists(tableName: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .eq('table_name', tableName)
-      .single();
+    const result = await pool.query(`
+      SELECT to_regclass('public.${tableName}') IS NOT NULL as exists;
+    `);
     
-    if (error && error.code !== 'PGRST116') { // Not found error
-      console.error(`Error checking if table ${tableName} exists:`, error);
-      return false;
-    }
-    
-    return !!data;
+    return result.rows[0].exists;
   } catch (error) {
     console.error(`Error checking if table ${tableName} exists:`, error);
     return false;
@@ -55,13 +47,7 @@ async function tableExists(tableName: string): Promise<boolean> {
 // Function to execute SQL
 async function executeSql(sql: string): Promise<boolean> {
   try {
-    const { error } = await supabase.rpc('exec_sql', { sql });
-    
-    if (error) {
-      console.error(`Error executing SQL:`, error);
-      return false;
-    }
-    
+    await pool.query(sql);
     return true;
   } catch (error) {
     console.error(`Error executing SQL:`, error);
@@ -72,22 +58,15 @@ async function executeSql(sql: string): Promise<boolean> {
 // Function to create a table if it doesn't exist
 async function createTableIfNotExists(tableName: string, createSQL: string): Promise<boolean> {
   try {
-    const exists = await tableExists(tableName);
+    // We'll just try to create the table directly with "IF NOT EXISTS" clause
+    const created = await executeSql(createSQL);
     
-    if (!exists) {
-      console.log(`${tableName} table does not exist, creating it...`);
-      const created = await executeSql(createSQL);
-      
-      if (created) {
-        console.log(`${tableName} table created successfully`);
-        return true;
-      } else {
-        console.error(`Failed to create ${tableName} table`);
-        return false;
-      }
-    } else {
-      console.log(`${tableName} table already exists`);
+    if (created) {
+      console.log(`${tableName} table created or already exists`);
       return true;
+    } else {
+      console.error(`Failed to create ${tableName} table`);
+      return false;
     }
   } catch (error) {
     console.error(`Error creating ${tableName} table:`, error);
@@ -113,10 +92,10 @@ async function createIndexes(): Promise<boolean> {
   }
 }
 
-// Function to initialize Supabase database structure
-export async function initializeSupabaseTables() {
+// Function to initialize database structure
+export async function initializeTables() {
   try {
-    console.log('Starting Supabase database initialization...');
+    console.log('Starting database initialization...');
     
     // Try to create tables one by one
     const sessionsExists = await createTableIfNotExists('sessions', CREATE_SESSIONS_TABLE);
@@ -128,16 +107,26 @@ export async function initializeSupabaseTables() {
       await createIndexes();
     }
   } catch (err) {
-    console.error('Exception during Supabase initialization:', err);
+    console.error('Exception during database initialization:', err);
   }
 }
 
 // Export a function to initialize everything at once
-export async function setupSupabase() {
+export async function setupDatabase() {
   try {
-    await initializeSupabaseTables();
-    console.log('Supabase setup completed');
+    // Test connection first
+    const client = await pool.connect();
+    try {
+      console.log('Successfully connected to PostgreSQL');
+      client.release();
+      
+      // Proceed with table creation
+      await initializeTables();
+      console.log('Database setup completed');
+    } catch (err) {
+      console.error('Error testing database connection:', err);
+    }
   } catch (error) {
-    console.error('Error in Supabase setup:', error);
+    console.error('Error in database setup:', error);
   }
 }
