@@ -7,6 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { 
+  FadeIn, 
+  StaggerContainer, 
+  StaggerItem,
+  ScrollReveal, 
+  Parallax, 
+  FloatingElement,
+  AnimatedGradient 
+} from "@/components/animations";
 
 
 export default function Home() {
@@ -21,77 +30,113 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-black">
-        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
+        {/* Animated gradient background */}
+        <AnimatedGradient 
+          className="absolute inset-0 z-0 opacity-20" 
+          colors={['hsl(345, 90%, 55%)', 'hsl(30, 90%, 55%)', 'hsl(235, 60%, 40%)']}
+          blur={120}
+        />
+        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5 z-0"></div>
+        
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                  Connecting Athletes & Brands
-                </span>
-                <br /> 
-                For Authentic Partnerships
-              </h1>
-              <p className="text-xl text-zinc-400 max-w-xl">
-                Contested leverages cutting-edge AI to precisely match athletes and brands, unlocking powerful, data-driven marketing partnerships built for genuine impact and measurable results.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-2">
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-                  asChild
-                >
-                  <Link to="/enhanced-onboarding">Get Started</Link>
-                </Button>
-                <Badge className="ml-2 bg-amber-600 hover:bg-amber-700 text-white">NEW</Badge>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-amber-500 text-white hover:bg-amber-500/10"
-                  onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant'))}
-                >
-                  Chat with AI Assistant
-                </Button>
-              </div>
-              <div className="flex items-center gap-4 pt-4">
-                <div className="text-zinc-400 text-sm flex items-center">
-                  <span className="text-xl font-bold text-red-500 mr-2">500+</span>
-                  <span>successful partnerships created this year</span>
+              <FadeIn direction="up" duration={0.8}>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                    Connecting Athletes & Brands
+                  </span>
+                  <br /> 
+                  For Authentic Partnerships
+                </h1>
+              </FadeIn>
+              
+              <FadeIn direction="up" delay={0.2} duration={0.8}>
+                <p className="text-xl text-zinc-400 max-w-xl">
+                  Contested leverages cutting-edge AI to precisely match athletes and brands, unlocking powerful, data-driven marketing partnerships built for genuine impact and measurable results.
+                </p>
+              </FadeIn>
+              
+              <FadeIn direction="up" delay={0.4} duration={0.8}>
+                <div className="flex flex-wrap gap-4 pt-2">
+                  <FloatingElement floatIntensity={5} hoverScale={1.05}>
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
+                      asChild
+                    >
+                      <Link to="/enhanced-onboarding">Get Started</Link>
+                    </Button>
+                  </FloatingElement>
+                  <Badge className="ml-2 bg-amber-600 hover:bg-amber-700 text-white">NEW</Badge>
+                  <FloatingElement floatIntensity={3} duration={4} hoverScale={1.03}>
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="border-amber-500 text-white hover:bg-amber-500/10"
+                      onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-assistant'))}
+                    >
+                      Chat with AI Assistant
+                    </Button>
+                  </FloatingElement>
                 </div>
-              </div>
+              </FadeIn>
+              
+              <FadeIn direction="up" delay={0.6} duration={0.8}>
+                <div className="flex items-center gap-4 pt-4">
+                  <div className="text-zinc-400 text-sm flex items-center">
+                    <span className="text-xl font-bold text-red-500 mr-2">500+</span>
+                    <span>successful partnerships created this year</span>
+                  </div>
+                </div>
+              </FadeIn>
             </div>
-            <div className="relative h-72 md:h-96 lg:block">
-              {/* Background styling */}
-              <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
+            
+            <FadeIn direction="right" delay={0.3} duration={1}>
+              <div className="relative h-72 md:h-96 lg:block">
+                {/* Background styling with parallax effect */}
+                <Parallax speed={0.1} direction="up">
+                  <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
+                </Parallax>
 
-              {/* Video container - simplified */}
-              <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg bg-zinc-900 z-10">
-                <video
-                  className="w-full h-full object-cover"
-                  src="/videos/landing-video.mp4"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls={false}
-                  poster="/contested-logo.png"
-                  style={{ display: 'block', maxWidth: '100%', height: '100%' }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent"></div>
+                {/* Video container with floating animation */}
+                <FloatingElement floatIntensity={6} duration={7} hoverScale={1.01}>
+                  <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg bg-zinc-900 z-10 shadow-2xl">
+                    <video
+                      className="w-full h-full object-cover"
+                      src="/videos/landing-video.mp4"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      controls={false}
+                      poster="/contested-logo.png"
+                      style={{ display: 'block', maxWidth: '100%', height: '100%' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-transparent"></div>
+                  </div>
+                </FloatingElement>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
 
-        {/* Divider */}
+        {/* Animated Divider */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 bg-[#111]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+      <section className="py-20 bg-[#111] relative overflow-hidden">
+        {/* Subtle animated gradient in background */}
+        <AnimatedGradient 
+          className="absolute inset-0 z-0 opacity-10" 
+          colors={['hsl(345, 80%, 45%)', 'hsl(235, 70%, 40%)']}
+          blur={100}
+          duration={30}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 The Contested Advantage
@@ -101,62 +146,78 @@ export default function Home() {
               Our AI-powered platform creates perfect matches between athletes and businesses, 
               delivering authentic partnerships that drive real results.
             </p>
-          </div>
+          </ScrollReveal>
 
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
-              <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Athletes</TabsTrigger>
-              <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Businesses</TabsTrigger>
-            </TabsList>
+            <ScrollReveal threshold={0.2}>
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
+                <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Athletes</TabsTrigger>
+                <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Businesses</TabsTrigger>
+              </TabsList>
+            </ScrollReveal>
 
             <TabsContent value="athletes" className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
-                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Unlock Your Earning Potential</h4>
-                    <p className="text-zinc-400">
-                      Contested unlocks your earning potential by automatically matching you directly with personalized partnership offers.
-                    </p>
-                  </CardContent>
-                </Card>
+              <StaggerContainer delayChildren={0.1} staggerChildren={0.15}>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <StaggerItem>
+                    <FloatingElement floatIntensity={4} duration={6} hoverScale={1.03}>
+                      <Card className="bg-zinc-900 shadow-md hover:shadow-xl transition-all border-none">
+                        <CardContent className="p-6">
+                          <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
+                          <h4 className="text-sm font-medium text-zinc-400 mb-2">Unlock Your Earning Potential</h4>
+                          <p className="text-zinc-400">
+                            Contested unlocks your earning potential by automatically matching you directly with personalized partnership offers.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </FloatingElement>
+                  </StaggerItem>
 
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
-                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Perfect Brand Alignment</h4>
-                    <p className="text-zinc-400">
-                      Powered by our proprietary AI, you'll only receive offers that perfectly align with your sport, personal brand, and audience.
-                      We handle the matching—you focus on creating authentic content.
-                    </p>
-                  </CardContent>
-                </Card>
+                  <StaggerItem>
+                    <FloatingElement floatIntensity={5} duration={7} hoverScale={1.03}>
+                      <Card className="bg-zinc-900 shadow-md hover:shadow-xl transition-all border-none">
+                        <CardContent className="p-6">
+                          <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
+                          <h4 className="text-sm font-medium text-zinc-400 mb-2">Perfect Brand Alignment</h4>
+                          <p className="text-zinc-400">
+                            Powered by our proprietary AI, you'll only receive offers that perfectly align with your sport, personal brand, and audience.
+                            We handle the matching—you focus on creating authentic content.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </FloatingElement>
+                  </StaggerItem>
 
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Zero Upfront Cost</h3>
-                    <h4 className="text-sm font-medium text-zinc-400 mb-2">Free to Join</h4>
-                    <p className="text-zinc-400">
-                      Joining is always free. We only succeed when you do—fees are charged exclusively after partnerships are successfully completed.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
+                  <StaggerItem>
+                    <FloatingElement floatIntensity={3} duration={8} hoverScale={1.03}>
+                      <Card className="bg-zinc-900 shadow-md hover:shadow-xl transition-all border-none">
+                        <CardContent className="p-6">
+                          <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-bold mb-2 text-white">Zero Upfront Cost</h3>
+                          <h4 className="text-sm font-medium text-zinc-400 mb-2">Free to Join</h4>
+                          <p className="text-zinc-400">
+                            Joining is always free. We only succeed when you do—fees are charged exclusively after partnerships are successfully completed.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </FloatingElement>
+                  </StaggerItem>
+                </div>
+              </StaggerContainer>
 
               <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
