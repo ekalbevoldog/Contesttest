@@ -1136,9 +1136,10 @@ export default function Onboarding() {
                 <Button
                   type="button"
                   onClick={handleNextStep}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !formData.athleteCategory}
+                  variant="default"
                 >
-                  Next <ArrowRight className="ml-2 h-4 w-4" />
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -3109,35 +3110,38 @@ export default function Onboarding() {
             <form onSubmit={handleSubmit}>
               {renderStepContent()}
               
-              <div className="flex justify-between mt-8">
-                {currentStep !== "user-type" && (
-                  <button
-                    type="button"
-                    onClick={handlePrevStep}
-                    className="px-6 py-2 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors"
-                  >
-                    Back
-                  </button>
-                )}
-                
-                {currentStep === "create-password" ? (
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed ml-auto"
-                  >
-                    {isSubmitting ? "Creating Account..." : "Create Account"}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleNextStep}
-                    className="px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] ml-auto"
-                  >
-                    Continue
-                  </button>
-                )}
-              </div>
+              {/* Only render these buttons if we're not already on a page with custom buttons */}
+              {!['athlete-category'].includes(currentStep) && (
+                <div className="flex justify-between mt-8">
+                  {currentStep !== "user-type" && (
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="px-6 py-2 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors"
+                    >
+                      Back
+                    </button>
+                  )}
+                  
+                  {currentStep === "create-password" ? (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed ml-auto"
+                    >
+                      {isSubmitting ? "Creating Account..." : "Create Account"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] ml-auto"
+                    >
+                      Continue
+                    </button>
+                  )}
+                </div>
+              )}
             </form>
           </StaggerContainer>
         </div>
