@@ -41,6 +41,25 @@ async function hashPassword(password: string): Promise<string> {
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
+
+// Password comparison function
+async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
+  try {
+    // Check if the password includes a salt
+    if (stored.includes('.')) {
+      const [hashed, salt] = stored.split('.');
+      const hashedBuf = Buffer.from(hashed, 'hex');
+      const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+      return timingSafeEqual(hashedBuf, suppliedBuf);
+    } else {
+      // Legacy format or plain-text comparison (for testing)
+      return supplied === stored;
+    }
+  } catch (error) {
+    console.error("Error comparing passwords:", error);
+    return false;
+  }
+}
 import { setupAuth } from "./tempAuth";
 import { insertFeedbackSchema, Feedback } from "@shared/schema";
 
@@ -1418,26 +1437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Verify password
           try {
-            // Helper function to verify password
-            async function verifyPassword(password: string, storedPassword: string): Promise<boolean> {
-              try {
-                // Check if the password includes a salt
-                if (storedPassword.includes('.')) {
-                  const [hashed, salt] = storedPassword.split('.');
-                  const hashedBuf = Buffer.from(hashed, 'hex');
-                  const suppliedBuf = (await scryptAsync(password, salt, 64)) as Buffer;
-                  return timingSafeEqual(hashedBuf, suppliedBuf);
-                } else {
-                  // Legacy format or plain-text comparison (for testing)
-                  return password === storedPassword;
-                }
-              } catch (error) {
-                console.error("Error verifying password:", error);
-                return false;
-              }
-            }
-            
-            const isPasswordValid = await verifyPassword(password, user.password);
+            const isPasswordValid = await comparePasswords(password, user.password);
             
             if (!isPasswordValid) {
               console.log("Password verification failed");
