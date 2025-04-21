@@ -25,16 +25,11 @@ export const insertSessionSchema = createInsertSchema(sessions).omit({
 
 // Authentication - Adapt to match Supabase structure (no username/password columns)
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey(), // In Supabase, this is a UUID
   email: text("email").notNull().unique(),
-  userType: text("user_type", { enum: ["athlete", "business", "compliance", "admin"] }).default("athlete"),
-  sessionId: text("session_id"),
-  verified: boolean("verified").default(false),
-  avatar: text("avatar"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  role: text("role", { enum: ["athlete", "business", "compliance", "admin"] }).notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+  last_login: timestamp("last_login"),
 });
 
 // User credentials table for secure password storage
@@ -58,11 +53,8 @@ export type InsertUserCredentials = z.infer<typeof insertUserCredentialsSchema>;
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
-  createdAt: true,
-  updatedAt: true,
-  verified: true,
-  stripeCustomerId: true,
-  stripeSubscriptionId: true,
+  created_at: true,
+  last_login: true,
 }).extend({
   // Add password for authentication even though it's not in the DB schema
   password: z.string().min(8, "Password must be at least 8 characters"),
