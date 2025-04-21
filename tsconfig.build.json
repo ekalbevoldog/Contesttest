@@ -1,5 +1,4 @@
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
     "outDir": "dist",
@@ -9,7 +8,15 @@
     "esModuleInterop": true,
     "moduleResolution": "Node",
     "target": "ES2020",
-    "module": "ESNext"
+    "module": "CommonJS",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"]
+    }
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["client/**/*", "node_modules", "**/*.test.ts"]
