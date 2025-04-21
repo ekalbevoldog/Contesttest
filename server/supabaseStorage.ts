@@ -772,6 +772,11 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
     
+    // Map user_type back to role for schema compatibility
+    if (data && data.user_type && !data.role) {
+      data.role = data.user_type;
+    }
+    
     return data as User;
   }
 
@@ -840,10 +845,19 @@ export class SupabaseStorage implements IStorage {
       console.error('Error creating Supabase auth user:', error);
     }
     
+    // Map role to user_type for Supabase compatibility
+    const supabaseUserData = {
+      ...userWithoutPassword,
+      user_type: userWithoutPassword.role, // Map role to user_type 
+    };
+    delete supabaseUserData.role; // Remove role as it's not in the Supabase schema
+    
+    console.log('Creating user with data:', supabaseUserData);
+    
     // Insert the user into our Supabase table without password
     const { data, error } = await supabase
       .from('users')
-      .insert(userWithoutPassword)
+      .insert(supabaseUserData)
       .select()
       .single();
       
