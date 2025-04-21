@@ -11,6 +11,7 @@ import { SupabaseStorage } from "./supabaseStorage";
 import { DrizzleStorage } from "./drizzleStorage";
 import { supabase } from "./supabase";
 import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
