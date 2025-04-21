@@ -1960,7 +1960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      if (req.user.userType !== 'compliance') {
+      if (req.user.role !== 'compliance') {
         return res.status(403).json({ message: "Not authorized" });
       }
       
@@ -1996,7 +1996,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      if (req.user.userType !== 'compliance') {
+      if (req.user.role !== 'compliance') {
         return res.status(403).json({ message: "Not authorized" });
       }
       
@@ -2014,11 +2014,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Notify the user if they are connected
       const originalFeedback = await storage.getFeedback(feedbackId);
       if (originalFeedback) {
-        const user = await storage.getUser(originalFeedback.userId);
-        if (user && user.sessionId) {
-          const clientSocket = connectedClients.get(user.sessionId);
+        // Get the user's session based on userId
+        const userSession = await storage.getSessionByUserId(originalFeedback.userId);
+        if (userSession && userSession.sessionId) {
+          const clientSocket = connectedClients.get(userSession.sessionId);
           if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
-            sendWebSocketMessage(user.sessionId, {
+            sendWebSocketMessage(userSession.sessionId, {
               type: 'feedback_response',
               message: 'Your feedback has received a response',
               data: {
