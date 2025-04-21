@@ -63,7 +63,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 // Athlete Profiles
 export const athletes = pgTable("athlete_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id"),
+  userId: text("user_id"), // Updated to text for UUID compatibility
   sessionId: text("session_id").notNull(),
   name: text("name").notNull(),
   
@@ -152,7 +152,7 @@ export const insertAthleteSchema = createInsertSchema(athletes).omit({
 // Business Profiles
 export const businesses = pgTable("business_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id"),
+  userId: text("user_id"), // Updated to text for UUID compatibility
   sessionId: text("session_id").notNull(),
   
   // Basic Information
@@ -348,7 +348,7 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 // Compliance Officer Profiles
 export const complianceOfficers = pgTable("compliance_officers", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id"),
+  userId: text("user_id"), // Updated to text for UUID compatibility
   name: text("name").notNull(),
   email: text("email").notNull(),
   institution: text("institution").notNull(),
@@ -452,7 +452,7 @@ export type InsertPartnershipOffer = z.infer<typeof insertPartnershipOfferSchema
 // Feedback system
 export const feedbacks = pgTable("feedbacks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: text("user_id").references(() => users.id).notNull(), // Updated to text for UUID compatibility
   userType: text("user_type").notNull(), // athlete, business, compliance, admin
   feedbackType: text("feedback_type").notNull(), // general, match, feature, bug, other
   matchId: integer("match_id").references(() => matches.id),

@@ -1055,7 +1055,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   // Helper methods
-  async getPasswordHash(userId: number): Promise<string | null> {
+  async getPasswordHash(userId: string): Promise<string | null> {
     const { data, error } = await supabase
       .from('user_credentials')
       .select('password_hash, salt')
@@ -1071,7 +1071,7 @@ export class SupabaseStorage implements IStorage {
     return `${data.password_hash}.${data.salt}`;
   }
   
-  async storePasswordHash(userId: number, hashedPassword: string): Promise<void> {
+  async storePasswordHash(userId: string, hashedPassword: string): Promise<void> {
     // Split the combined hash into components
     const [hash, salt] = hashedPassword.split('.');
     
