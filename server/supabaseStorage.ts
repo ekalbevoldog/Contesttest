@@ -792,6 +792,11 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
     
+    // Map user_type back to role for schema compatibility
+    if (data && data.user_type && !data.role) {
+      data.role = data.user_type;
+    }
+    
     return data as User;
   }
   
@@ -807,6 +812,11 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
     
+    // Map user_type back to role for schema compatibility
+    if (data && data.user_type && !data.role) {
+      data.role = data.user_type;
+    }
+    
     return data as User;
   }
 
@@ -818,6 +828,15 @@ export class SupabaseStorage implements IStorage {
     if (error) {
       console.error('Error getting all users:', error);
       return [];
+    }
+    
+    // Map user_type to role for each user
+    if (data) {
+      data.forEach(user => {
+        if (user.user_type && !user.role) {
+          user.role = user.user_type;
+        }
+      });
     }
     
     return data as User[];
@@ -845,12 +864,10 @@ export class SupabaseStorage implements IStorage {
       console.error('Error creating Supabase auth user:', error);
     }
     
-    // Map role to user_type for Supabase compatibility
+    // The Supabase database already uses role instead of user_type
     const supabaseUserData = {
-      ...userWithoutPassword,
-      user_type: userWithoutPassword.role, // Map role to user_type 
+      ...userWithoutPassword
     };
-    delete supabaseUserData.role; // Remove role as it's not in the Supabase schema
     
     console.log('Creating user with data:', supabaseUserData);
     
@@ -883,10 +900,15 @@ export class SupabaseStorage implements IStorage {
     // Extract password if it's included (it's not part of the User type)
     const { password, ...userDataWithoutPassword } = userData;
     
+    // The database already uses role field, no conversion needed
+    const supabaseUserData = { ...userDataWithoutPassword };
+    
+    console.log('Updating user with data:', supabaseUserData);
+    
     // Update the user data in the users table
     const { data, error } = await supabase
       .from('users')
-      .update(userDataWithoutPassword)
+      .update(supabaseUserData)
       .eq('id', userId)
       .select()
       .single();
