@@ -2,13 +2,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
-    "skipLibCheck": true,
-    "noEmitOnError": false,
     "outDir": "dist",
-    "module": "ESNext",
-    "moduleResolution": "NodeNext",
-    "jsx": "react-jsx",
-    "allowImportingTsExtensions": false
+    "noEmitOnError": false,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "moduleResolution": "Node",
+    "target": "ES2020",
+    "module": "ESNext"
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["client/**/*", "node_modules", "**/*.test.ts"]

@@ -67,7 +67,7 @@ export interface IStorage {
 
   // Message operations
   getMessages(sessionId: string, limit?: number, offset?: number): Promise<Message[]>;
-  storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message>;
+  storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message>;
   getUnreadMessageCounts(sessionId: string): Promise<number>;
   markMessagesRead(sessionId: string, messageIds: number[]): Promise<void>;
 
@@ -911,7 +911,7 @@ export class MemStorage implements IStorage {
     return this.messages.get(sessionId) || [];
   }
 
-  async storeMessage(sessionId: string, role: string, content: string, metadata?: MessageMetadata): Promise<Message> {
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> {
     const id = this.currentMessageId++;
 
     const message: Message = {
