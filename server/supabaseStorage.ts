@@ -819,46 +819,31 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    // Hash password if provided
-    let userToInsert = { ...insertUser };
+    // Create a user record without the password
+    const { password, ...userWithoutPassword } = insertUser;
     
-    if (userToInsert.password) {
-      const salt = randomBytes(16).toString('hex');
-      const passwordHash = await this.hashPassword(userToInsert.password, salt);
-      userToInsert = {
-        ...userToInsert,
-        password: passwordHash,
-        salt
-      };
-    }
-    
-    // Also create a Supabase auth user if possible
+    // Create a Supabase auth user if possible
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userToInsert.email || `${userToInsert.username}@example.com`,
-        password: insertUser.password || 'defaultPassword123',
-      });
-      
-      if (authError) {
-        console.error('Error creating Supabase auth user:', authError);
-      } else {
-        console.log('Created Supabase auth user');
-        // Add the Supabase user ID to our user record
-        if (authData.user) {
-          userToInsert = {
-            ...userToInsert,
-            supabaseId: authData.user.id
-          };
+      if (password && insertUser.email) {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: insertUser.email,
+          password: password,
+        });
+        
+        if (authError) {
+          console.error('Error creating Supabase auth user:', authError);
+        } else {
+          console.log('Created Supabase auth user');
         }
       }
     } catch (error) {
       console.error('Error creating Supabase auth user:', error);
     }
     
-    // Insert the user into our Supabase table
+    // Insert the user into our Supabase table without password
     const { data, error } = await supabase
       .from('users')
-      .insert(userToInsert)
+      .insert(userWithoutPassword)
       .select()
       .single();
       
@@ -867,26 +852,27 @@ export class SupabaseStorage implements IStorage {
       throw new Error('Failed to create user');
     }
     
+    // Store the password hash separately if provided
+    if (password && data && data.id) {
+      // Create a hash using the auth.ts hashPassword function
+      const salt = randomBytes(16).toString("hex");
+      const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+      const hashedPassword = `${buf.toString("hex")}.${salt}`;
+      
+      await this.storePasswordHash(data.id, hashedPassword);
+    }
+    
     return data as User;
   }
 
-  async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
-    // If updating password, hash it
-    let updatedData = { ...userData };
+  async updateUser(userId: number, userData: Partial<User> & { password?: string }): Promise<User | undefined> {
+    // Extract password if it's included (it's not part of the User type)
+    const { password, ...userDataWithoutPassword } = userData;
     
-    if (updatedData.password) {
-      const salt = randomBytes(16).toString('hex');
-      const passwordHash = await this.hashPassword(updatedData.password, salt);
-      updatedData = {
-        ...updatedData,
-        password: passwordHash,
-        salt
-      };
-    }
-    
+    // Update the user data in the users table
     const { data, error } = await supabase
       .from('users')
-      .update(updatedData)
+      .update(userDataWithoutPassword)
       .eq('id', userId)
       .select()
       .single();
@@ -894,6 +880,21 @@ export class SupabaseStorage implements IStorage {
     if (error) {
       console.error('Error updating user:', error);
       return undefined;
+    }
+    
+    // If password was provided, update it separately in the credentials table
+    if (password) {
+      try {
+        // Create hash using the same method as in auth.ts
+        const salt = randomBytes(16).toString("hex");
+        const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+        const hashedPassword = `${buf.toString("hex")}.${salt}`;
+        
+        await this.storePasswordHash(userId, hashedPassword);
+      } catch (error) {
+        console.error('Error updating password:', error);
+        // Continue even if password update fails
+      }
     }
     
     return data as User;
@@ -1054,14 +1055,84 @@ export class SupabaseStorage implements IStorage {
   }
 
   // Helper methods
-  private async hashPassword(password: string, salt: string): Promise<string> {
-    const hashBuffer = await scryptAsync(password, salt, 64) as Buffer;
-    return hashBuffer.toString('hex');
+  async getPasswordHash(userId: number): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('user_credentials')
+      .select('password_hash, salt')
+      .eq('user_id', userId)
+      .single();
+      
+    if (error || !data) {
+      console.error('Error getting password hash:', error);
+      return null;
+    }
+    
+    // Return the combined hash.salt format used by auth system
+    return `${data.password_hash}.${data.salt}`;
   }
-
-  private async verifyPassword(password: string, hash: string, salt: string): Promise<boolean> {
+  
+  async storePasswordHash(userId: number, hashedPassword: string): Promise<void> {
+    // Split the combined hash into components
+    const [hash, salt] = hashedPassword.split('.');
+    
+    if (!hash || !salt) {
+      throw new Error('Invalid password hash format');
+    }
+    
+    // Check if user already has credentials
+    const { data: existingCreds } = await supabase
+      .from('user_credentials')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+      
+    if (existingCreds) {
+      // Update existing credentials
+      const { error } = await supabase
+        .from('user_credentials')
+        .update({
+          password_hash: hash,
+          salt: salt,
+          updated_at: new Date()
+        })
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error updating password hash:', error);
+        throw new Error('Failed to update password hash');
+      }
+    } else {
+      // Insert new credentials
+      const { error } = await supabase
+        .from('user_credentials')
+        .insert({
+          user_id: userId,
+          password_hash: hash, 
+          salt: salt
+        });
+        
+      if (error) {
+        console.error('Error storing password hash:', error);
+        throw new Error('Failed to store password hash');
+      }
+    }
+  }
+  
+  async verifyPassword(password: string, storedPassword: string): Promise<boolean> {
+    // Split the stored password hash which is in format "hash.salt"
+    const [hash, salt] = storedPassword.split('.');
+    
+    if (!hash || !salt) {
+      return false;
+    }
+    
     const hashBuffer = Buffer.from(hash, 'hex');
     const keyBuffer = await scryptAsync(password, salt, 64) as Buffer;
     return timingSafeEqual(hashBuffer, keyBuffer);
+  }
+  
+  private async hashPassword(password: string, salt: string): Promise<string> {
+    const hashBuffer = await scryptAsync(password, salt, 64) as Buffer;
+    return hashBuffer.toString('hex');
   }
 }

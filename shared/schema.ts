@@ -37,6 +37,25 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User credentials table for secure password storage
+export const userCredentials = pgTable("user_credentials", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  salt: text("salt").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertUserCredentialsSchema = createInsertSchema(userCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type UserCredentials = typeof userCredentials.$inferSelect;
+export type InsertUserCredentials = z.infer<typeof insertUserCredentialsSchema>;
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
