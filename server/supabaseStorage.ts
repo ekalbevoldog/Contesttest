@@ -229,6 +229,21 @@ export class SupabaseStorage implements IStorage {
     
     return data as Athlete[];
   }
+  
+  async getAthleteByUserId(userId: number): Promise<Athlete | undefined> {
+    const { data, error } = await supabase
+      .from('athletes')
+      .select('*')
+      .eq('userId', userId)
+      .single();
+      
+    if (error) {
+      console.error('Error getting athlete by user ID:', error);
+      return undefined;
+    }
+    
+    return data as Athlete;
+  }
 
   // Business operations
   async getBusiness(id: number): Promise<Business | undefined> {
@@ -347,6 +362,21 @@ export class SupabaseStorage implements IStorage {
     }
     
     return data as Business[];
+  }
+  
+  async getBusinessByUserId(userId: number): Promise<Business | undefined> {
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('userId', userId)
+      .single();
+      
+    if (error) {
+      console.error('Error getting business by user ID:', error);
+      return undefined;
+    }
+    
+    return data as Business;
   }
 
   // Campaign operations

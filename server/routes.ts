@@ -559,11 +559,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get matches for session
   app.get("/api/matches", async (req: Request, res: Response) => {
     try {
-      // Get matches for the current session
-      // This would normally use authentication, but for the demo we'll
-      // just return a sample match
+      // Check if the user is authenticated
+      if (!req.session?.passport?.user) {
+        return res.status(401).json({
+          message: "Not authenticated",
+        });
+      }
+
+      const userId = req.session.passport.user;
       
-      const matches = await storage.getAllMatches();
+      // Get the user to determine their type
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+      
+      let matches = [];
+      
+      // Filter matches based on user type
+      if (user.userType === 'athlete') {
+        // Get athlete profile
+        const athlete = await storage.getAthleteByUserId(userId);
+        
+        if (!athlete) {
+          return res.status(404).json({
+            message: "Athlete profile not found",
+          });
+        }
+        
+        // Get matches for this athlete only
+        matches = await storage.getMatchesForAthlete(athlete.id);
+      } else if (user.userType === 'business') {
+        // Get business profile
+        const business = await storage.getBusinessByUserId(userId);
+        
+        if (!business) {
+          return res.status(404).json({
+            message: "Business profile not found",
+          });
+        }
+        
+        // Get matches for this business only
+        matches = await storage.getMatchesForBusiness(business.id);
+      } else if (user.userType === 'admin' || user.userType === 'compliance') {
+        // Admins and compliance officers can see all matches
+        matches = await storage.getAllMatches();
+      } else {
+        return res.status(403).json({
+          message: "Unauthorized user type",
+        });
+      }
       
       // Format matches for the frontend
       const formattedMatches = await Promise.all(matches.map(async (match) => {
