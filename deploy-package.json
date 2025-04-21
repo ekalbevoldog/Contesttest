@@ -1,0 +1,39 @@
+{
+  "name": "contested-platform",
+  "version": "1.0.0",
+  "description": "AI-powered platform connecting college athletes with businesses",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "start:ts": "node server-ts.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.8.1",
+    "animejs": "^3.2.2",
+    "cmdk": "^0.2.0",
+    "connect-pg-simple": "^9.0.1",
+    "date-fns": "^3.3.1",
+    "dotenv": "^16.3.1",
+    "drizzle-orm": "^0.29.3",
+    "drizzle-zod": "^0.5.1",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "framer-motion": "^11.1.10",
+    "memorystore": "^1.6.7",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "pg": "^8.11.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "ws": "^8.16.0",
+    "zod": "^3.22.4",
+    "zod-validation-error": "^2.1.0"
+  },
+  "overrides": {
+    "semver": "^7.5.3"
+  }
+}

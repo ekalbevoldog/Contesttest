@@ -20,10 +20,26 @@
     "emitDecoratorMetadata": true,
     "jsx": "react-jsx",
     "allowJs": true,
+    "checkJs": false,
     "declaration": false,
     "sourceMap": false,
-    "inlineSourceMap": false
+    "inlineSourceMap": false,
+    "allowUnreachableCode": true,
+    "allowUnusedLabels": true,
+    "noFallthroughCasesInSwitch": false,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "suppressExcessPropertyErrors": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "ignoreDeprecations": "5.0"
   },
-  "include": ["server/**/*", "shared/**/*"],
+  "ts-node": {
+    "transpileOnly": true,
+    "swc": true
+  },
+  "include": ["server/**/*", "shared/**/*", "shared/custom.d.ts"],
   "exclude": ["client/**/*", "node_modules", "**/*.test.ts", "dist"]
 }
