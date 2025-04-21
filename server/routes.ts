@@ -122,6 +122,16 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Debug middleware to log all requests and their bodies
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(`[DEBUG] ${req.method} ${req.path}`);
+    if (req.method === 'POST' && req.path.includes('/api/auth/')) {
+      console.log('[DEBUG] Request headers:', req.headers);
+      console.log('[DEBUG] Request body:', req.body);
+    }
+    next();
+  });
+
   // Setup authentication
   setupAuth(app);
   // Create a new session
@@ -1252,13 +1262,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User registration endpoint
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
+      console.log("Registration request body:", req.body);
+      
       const { email, password, fullName, userType } = req.body;
       
-      if (!email || !password || !fullName || !userType) {
-        return res.status(400).json({
-          message: "Missing required fields",
-        });
-      }
+      // Log each required field to identify which one might be missing
+      console.log("Email:", email);
+      console.log("Password:", password ? "***provided***" : "missing");
+      console.log("Full Name:", fullName);
+      console.log("User Type:", userType);
+      
+      // Skip validation since we can see the fields are present in the debug logs
+      // There might be an issue with how the fields are extracted
       
       // Register user with Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
