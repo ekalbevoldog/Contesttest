@@ -1361,6 +1361,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Get current authenticated user
+  app.get("/api/auth/user", async (req: Request, res: Response) => {
+    try {
+      // Check if there's a token in the request headers
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const token = authHeader.split(' ')[1];
+      
+      // Verify token with Supabase
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const userType = user.user_metadata?.user_type || 'unknown';
+      
+      // Return the authenticated user
+      return res.status(200).json({
+        id: user.id,
+        email: user.email,
+        userType: userType
+      });
+    } catch (error) {
+      console.error("Error getting authenticated user:", error);
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+  });
+  
+  // Logout endpoint
+  app.post("/api/auth/logout", async (req: Request, res: Response) => {
+    try {
+      // Get the token from the authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Supabase logout error:", error);
+        return res.status(500).json({
+          message: "Logout failed",
+          error: error.message
+        });
+      }
+      
+      return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+      console.error("Error logging out:", error);
+      return res.status(500).json({
+        message: "Failed to log out",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   
