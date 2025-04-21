@@ -68,13 +68,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           }
           
           // Redirect based on user type
-          if (profileData?.user_type === 'athlete') {
+          if (profileData?.role === 'athlete') {
             navigate('/athlete/dashboard');
-          } else if (profileData?.user_type === 'business') {
+          } else if (profileData?.role === 'business') {
             navigate('/business/dashboard');
-          } else if (profileData?.user_type === 'compliance') {
+          } else if (profileData?.role === 'compliance') {
             navigate('/compliance/dashboard');
-          } else if (profileData?.user_type === 'admin') {
+          } else if (profileData?.role === 'admin') {
             navigate('/admin/dashboard');
           }
         } else if (event === 'SIGNED_OUT') {
@@ -154,7 +154,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           .insert({
             auth_id: data.user.id,
             email: data.user.email,
-            user_type: userData.user_type,
+            role: userData.role,
             created_at: new Date()
           });
           
