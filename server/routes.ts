@@ -28,8 +28,19 @@ const bigQueryService = {
   }
 };
 import { z } from "zod";
-import { createHash } from "crypto";
+import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 import { WebSocketServer, WebSocket } from "ws";
+
+// Helper for password hashing
+const scryptAsync = promisify(scrypt);
+
+// Password hashing function
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 import { setupAuth } from "./tempAuth";
 import { insertFeedbackSchema, Feedback } from "@shared/schema";
 
@@ -1296,11 +1307,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Generated username:", username);
       
       try {
+        // Hash the password before storing
+        const hashedPassword = await hashPassword(password);
+        
         // Create the user in our database using the storage interface
         const newUser = await storage.createUser({
           username,
           email,
-          password,
+          password: hashedPassword,
           userType,
           sessionId: null, // Will be updated later
         });
@@ -1404,7 +1418,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Verify password
           try {
-            const isPasswordValid = await storage.verifyPassword(password, user.password);
+            // Helper function to verify password
+            async function verifyPassword(password: string, storedPassword: string): Promise<boolean> {
+              try {
+                // Check if the password includes a salt
+                if (storedPassword.includes('.')) {
+                  const [hashed, salt] = storedPassword.split('.');
+                  const hashedBuf = Buffer.from(hashed, 'hex');
+                  const suppliedBuf = (await scryptAsync(password, salt, 64)) as Buffer;
+                  return timingSafeEqual(hashedBuf, suppliedBuf);
+                } else {
+                  // Legacy format or plain-text comparison (for testing)
+                  return password === storedPassword;
+                }
+              } catch (error) {
+                console.error("Error verifying password:", error);
+                return false;
+              }
+            }
+            
+            const isPasswordValid = await verifyPassword(password, user.password);
             
             if (!isPasswordValid) {
               console.log("Password verification failed");
