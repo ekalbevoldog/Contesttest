@@ -46,7 +46,7 @@ export function setupAuth(app: Express) {
       if (!existingAdmin) {
         const adminUser = await storage.createUser({
           email: 'admin@contested.com',
-          password: await hashPassword('adminpassword123'),
+          password: 'P@ssw0rd!Complex#2024!', // Strong password to pass Supabase checks
           userType: 'admin',
         });
         console.log('Created admin user: admin@contested.com (admin)');
@@ -117,17 +117,20 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Email already registered" });
       }
 
-      // Hash the password
-      const hashedPassword = await hashPassword(req.body.password);
-      
-      // Create user in database (without password in the main record)
+      // Validate required fields
+      if (!req.body.email || !req.body.password) {
+        return res.status(400).json({ error: "Email and password are required" });
+      }
+
+      // Create user in database (with password)
+      // The storage implementation will handle separating the password
       const user = await storage.createUser({
         email: req.body.email,
+        password: req.body.password,
         userType: req.body.userType || 'athlete',
+        sessionId: req.body.sessionId || null,
+        avatar: req.body.avatar || null
       });
-      
-      // Store the password hash separately
-      await storage.storePasswordHash(user.id, hashedPassword);
 
       // Log in the user
       req.login(user, (err) => {
@@ -206,24 +209,34 @@ export function setupAuth(app: Express) {
   });
 
   // Update user profile
-  app.put("/api/auth/user", (req, res, next) => {
+  app.put("/api/auth/user", async (req, res, next) => {
     if (!req.session || !req.session.passport || !req.session.passport.user) {
       return res.status(401).json({ error: "Not authenticated" });
     }
     
     const userId = req.session.passport.user;
     
-    // Update user profile with the data from the request
-    storage.updateUser(userId, req.body)
-      .then(updatedUser => {
-        if (!updatedUser) {
-          return res.status(400).json({ error: "Failed to update user" });
-        }
-        res.json(updatedUser);
-      })
-      .catch(err => {
-        console.error("Error updating user:", err);
-        res.status(500).json({ error: "Server error" });
-      });
+    try {
+      // If password is being updated, handle it separately
+      const { password, ...userData } = req.body;
+      
+      // Update user profile with the data from the request
+      const updatedUser = await storage.updateUser(userId, userData);
+      
+      if (!updatedUser) {
+        return res.status(400).json({ error: "Failed to update user" });
+      }
+      
+      // If password was provided, update it separately
+      if (password) {
+        const hashedPassword = await hashPassword(password);
+        await storage.storePasswordHash(userId, hashedPassword);
+      }
+      
+      res.json(updatedUser);
+    } catch (err) {
+      console.error("Error updating user:", err);
+      res.status(500).json({ error: "Server error" });
+    }
   });
 }
