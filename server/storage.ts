@@ -72,12 +72,15 @@ export interface IStorage {
 
   // Auth operations
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
-  createUser(insertUser: InsertUser): Promise<User>;
+  createUser(insertUser: Partial<InsertUser>): Promise<User>;
   updateUser(userId: number, userData: Partial<User>): Promise<User | undefined>;
   updateStripeCustomerId(userId: number, customerId: string): Promise<User>;
   updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User>;
+  // Password-related operations (separate from user table)
+  getPasswordHash(userId: number): Promise<string | null>;
+  storePasswordHash(userId: number, passwordHash: string): Promise<void>;
   verifyPassword(password: string, storedPassword: string): Promise<boolean>;
 
   // Feedback operations
@@ -287,18 +290,78 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+  
+  // For backward compatibility - redirects to email-based lookup
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    console.warn('getUserByUsername is deprecated, use getUserByEmail instead');
+    return this.getUserByEmail(username);
   }
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+  async createUser(insertUser: Partial<InsertUser>): Promise<User> {
+    // Omit password from the user object as it should be stored separately
+    const { password, ...userData } = insertUser as any;
+    
+    // Create the user record
+    const [user] = await db.insert(users).values({
+      ...userData,
+      userType: userData.userType || 'athlete', // Set default user type if not provided
+    }).returning();
+    
+    // If a password was provided, store it separately
+    if (password && user.id) {
+      await this.storePasswordHash(user.id, password);
+    }
+    
     return user;
+  }
+  
+  // Password-related methods
+  async getPasswordHash(userId: number): Promise<string | null> {
+    try {
+      // Store password in a separate table for security
+      const { data, error } = await supabase
+        .from('user_credentials')
+        .select('password_hash')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error || !data) {
+        console.error('Error getting password hash:', error);
+        return null;
+      }
+      
+      return data.password_hash;
+    } catch (error) {
+      console.error('Exception getting password hash:', error);
+      return null;
+    }
+  }
+  
+  async storePasswordHash(userId: number, passwordHash: string): Promise<void> {
+    try {
+      // Store in a separate table from users
+      const { error } = await supabase
+        .from('user_credentials')
+        .upsert({
+          user_id: userId,
+          password_hash: passwordHash,
+          updated_at: new Date()
+        });
+      
+      if (error) {
+        console.error('Error storing password hash:', error);
+      }
+    } catch (error) {
+      console.error('Exception storing password hash:', error);
+    }
   }
 
   async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
@@ -518,6 +581,7 @@ export class MemStorage implements IStorage {
   private partnershipOffers: Map<number, PartnershipOffer>;
   private messages: Map<string, Message[]>;
   private users: Map<number, User>;
+  private userCredentials: Map<number, string>; // For storing password hashes
   private feedbacks: Map<number, Feedback>;
   private currentSessionId: number;
   private currentAthleteId: number;
@@ -539,6 +603,7 @@ export class MemStorage implements IStorage {
     this.partnershipOffers = new Map();
     this.messages = new Map();
     this.users = new Map();
+    this.userCredentials = new Map();
     this.feedbacks = new Map();
     this.currentSessionId = 1;
     this.currentAthleteId = 1;
@@ -849,20 +914,31 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+  
+  // For backward compatibility
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    console.warn('getUserByUsername is deprecated, use getUserByEmail instead');
+    return this.getUserByEmail(username);
   }
 
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: Partial<InsertUser>): Promise<User> {
     const id = this.currentUserId++;
+    
+    // Extract password for separate storage
+    const { password, ...userData } = insertUser as any;
 
     const newUser: User = {
       id,
-      ...insertUser,
+      ...userData,
+      email: userData.email,
+      userType: userData.userType || 'athlete',
       verified: false,
       sessionId: null,
       avatar: null,
@@ -873,7 +949,22 @@ export class MemStorage implements IStorage {
     };
 
     this.users.set(id, newUser);
+    
+    // Store password separately if provided
+    if (password) {
+      await this.storePasswordHash(id, password);
+    }
+    
     return newUser;
+  }
+  
+  // Password handling methods
+  async getPasswordHash(userId: number): Promise<string | null> {
+    return this.userCredentials.get(userId) || null;
+  }
+  
+  async storePasswordHash(userId: number, passwordHash: string): Promise<void> {
+    this.userCredentials.set(userId, passwordHash);
   }
 
   async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
