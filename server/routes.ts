@@ -1403,12 +1403,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Found user in our database: ${user.id}`);
           
           // Verify password
-          const isPasswordValid = await storage.verifyPassword(password, user.password);
-          
-          if (!isPasswordValid) {
-            console.log("Password verification failed");
+          try {
+            const isPasswordValid = await storage.verifyPassword(password, user.password);
+            
+            if (!isPasswordValid) {
+              console.log("Password verification failed");
+              return res.status(401).json({
+                error: "Invalid email or password"
+              });
+            }
+          } catch (passwordError) {
+            console.error("Error verifying password:", passwordError);
             return res.status(401).json({
-              error: "Invalid email or password"
+              error: "Authentication failed",
+              details: "Password verification error"
             });
           }
           

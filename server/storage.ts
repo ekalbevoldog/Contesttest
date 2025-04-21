@@ -8,12 +8,19 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
 import { SupabaseStorage } from "./supabaseStorage";
-import { DrizzleStorage } from "./drizzleStorage";
 import { supabase } from "./supabase";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
+// Helper for password hashing
 const scryptAsync = promisify(scrypt);
+
+// Password hashing function
+export async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 // Interface for storage operations
 export interface IStorage {
@@ -920,6 +927,24 @@ export class MemStorage implements IStorage {
 
     this.users.set(userId, updatedUser);
     return updatedUser;
+  }
+  
+  async verifyPassword(password: string, storedPassword: string): Promise<boolean> {
+    try {
+      // Check if the password includes a salt
+      if (storedPassword.includes('.')) {
+        const [hashedPassword, salt] = storedPassword.split('.');
+        const hashedBuf = Buffer.from(hashedPassword, 'hex');
+        const suppliedBuf = (await scryptAsync(password, salt, 64)) as Buffer;
+        return timingSafeEqual(hashedBuf, suppliedBuf);
+      } else {
+        // Legacy format or plain-text comparison (for testing)
+        return password === storedPassword;
+      }
+    } catch (error) {
+      console.error("Error verifying password:", error);
+      return false;
+    }
   }
 
   // Feedback operations
