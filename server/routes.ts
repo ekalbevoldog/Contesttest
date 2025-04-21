@@ -5,6 +5,8 @@ import { db } from "./db";
 // Use services
 import { geminiService } from "./services/geminiService";
 import { sessionService } from "./services/sessionService";
+// Import Supabase client for auth
+import { supabase } from "./supabase";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -1258,25 +1260,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // In a real application, you would:
-      // 1. Hash the password
-      // 2. Check for existing user with the same email
-      // 3. Create user in database
+      // Register user with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            user_type: userType,
+          }
+        }
+      });
       
-      // For now, we'll simulate a successful registration
-      const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
+      if (authError) {
+        console.error("Supabase auth error:", authError);
+        return res.status(400).json({
+          message: "Registration failed",
+          error: authError.message
+        });
+      }
       
       // Create a session for the new user
+      const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
       await sessionService.createSession(sessionId);
       await sessionService.updateSession(sessionId, {
         userType,
-        profileCompleted: true,
+        profileCompleted: false,
+        supabaseUserId: authData.user?.id
       });
       
       return res.status(201).json({
         message: "User registered successfully",
-        sessionId,
-        userType,
+        user: {
+          id: authData.user?.id,
+          email: authData.user?.email,
+          userType: userType
+        },
+        sessionId
       });
     } catch (error) {
       console.error("Error registering user:", error);
@@ -1290,32 +1310,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User login endpoint
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      const { email, password, userType } = req.body;
+      const { email, password } = req.body;
       
-      if (!email || !password || !userType) {
+      if (!email || !password) {
         return res.status(400).json({
-          message: "Missing required fields",
+          message: "Missing username or password",
         });
       }
       
-      // In a real application, you would:
-      // 1. Verify credentials against database
-      // 2. Handle login failures
+      // Login with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
       
-      // For now, simulate a successful login
-      const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
+      if (authError) {
+        console.error("Supabase auth error:", authError);
+        return res.status(401).json({
+          message: "Authentication failed",
+          error: authError.message
+        });
+      }
+      
+      const userType = authData.user?.user_metadata?.user_type || 'unknown';
       
       // Create a session for the logged-in user
+      const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
       await sessionService.createSession(sessionId);
       await sessionService.updateSession(sessionId, {
         userType,
-        profileCompleted: true,
+        profileCompleted: true, // Assume profile is completed for now
+        supabaseUserId: authData.user?.id
       });
       
       return res.status(200).json({
         message: "Login successful",
+        user: {
+          id: authData.user?.id,
+          email: authData.user?.email,
+          userType: userType
+        },
         sessionId,
-        userType,
+        token: authData.session?.access_token
       });
     } catch (error) {
       console.error("Error logging in:", error);
