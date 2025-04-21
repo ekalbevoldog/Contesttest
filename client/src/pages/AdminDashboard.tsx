@@ -54,9 +54,9 @@ const AdminDashboard = () => {
   });
   
   // Fetch partnerships data
-  const { data: matches = [], isLoading: isLoadingMatches } = useQuery({
+  const { data: matches = [], isLoading: isLoadingMatches } = useQuery<any[]>({
     queryKey: ['/api/matches'],
-    enabled: !!user && user.userType === 'admin',
+    enabled: !!user && user.role === 'admin',
   });
   
   // Fetch partnership offers data
@@ -96,7 +96,7 @@ const AdminDashboard = () => {
 
   // Check if user is admin, redirect if not
   useEffect(() => {
-    if (!user || user.userType !== "admin") {
+    if (!user || user.role !== "admin") {
       toast({
         title: "Unauthorized Access",
         description: "You must be an admin to view this page.",
@@ -107,7 +107,7 @@ const AdminDashboard = () => {
   }, [user, navigate, toast]);
 
   // Format date helper function
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
