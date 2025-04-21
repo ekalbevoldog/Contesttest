@@ -1286,7 +1286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Missing fields:", missingFields);
         
         return res.status(400).json({
-          message: "Missing required fields",
+          error: "Missing required fields",
           missingFields
         });
       }
@@ -1295,50 +1295,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const username = email.split('@')[0] + '_' + Math.floor(Math.random() * 1000);
       console.log("Generated username:", username);
       
-      // Register user with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            full_name: fullName,
-            user_type: userType,
-            username: username,
+      try {
+        // Create the user in our database using the storage interface
+        const newUser = await storage.createUser({
+          username,
+          email,
+          password,
+          userType,
+          sessionId: null, // Will be updated later
+        });
+        
+        console.log("Created user in storage:", newUser.id);
+        
+        // Create a session for the new user
+        const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
+        await sessionService.createSession(sessionId);
+        await sessionService.updateSession(sessionId, {
+          userType,
+          profileCompleted: false,
+          userId: newUser.id
+        });
+        
+        // Update the user with the session ID
+        await storage.updateUser(newUser.id, { sessionId });
+        
+        return res.status(201).json({
+          message: "User registered successfully",
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            userType: newUser.userType,
+            username: newUser.username
+          },
+          sessionId
+        });
+      } catch (storageError) {
+        console.error("Error creating user in storage:", storageError);
+        
+        // Fallback to Supabase Auth if our storage fails
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              full_name: fullName,
+              user_type: userType,
+              username: username,
+            }
           }
+        });
+        
+        if (authError) {
+          console.error("Supabase auth error:", authError);
+          return res.status(400).json({
+            error: "Registration failed",
+            details: authError.message
+          });
         }
-      });
-      
-      if (authError) {
-        console.error("Supabase auth error:", authError);
-        return res.status(400).json({
-          message: "Registration failed",
-          error: authError.message
+        
+        // Create a session for the new user
+        const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
+        await sessionService.createSession(sessionId);
+        await sessionService.updateSession(sessionId, {
+          userType,
+          profileCompleted: false,
+          supabaseUserId: authData.user?.id
+        });
+        
+        return res.status(201).json({
+          message: "User registered successfully with Supabase Auth",
+          user: {
+            id: authData.user?.id,
+            email: authData.user?.email,
+            userType: userType
+          },
+          sessionId
         });
       }
-      
-      // Create a session for the new user
-      const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
-      await sessionService.createSession(sessionId);
-      await sessionService.updateSession(sessionId, {
-        userType,
-        profileCompleted: false,
-        supabaseUserId: authData.user?.id
-      });
-      
-      return res.status(201).json({
-        message: "User registered successfully",
-        user: {
-          id: authData.user?.id,
-          email: authData.user?.email,
-          userType: userType
-        },
-        sessionId
-      });
     } catch (error) {
       console.error("Error registering user:", error);
       return res.status(500).json({
-        message: "Failed to register user",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "Failed to register user",
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });
@@ -1350,11 +1388,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!email || !password) {
         return res.status(400).json({
-          message: "Missing username or password",
+          error: "Missing email or password"
         });
       }
       
-      // Login with Supabase
+      console.log(`Login attempt for email: ${email}`);
+      
+      try {
+        // First try to find the user by email in our database
+        const users = await db.query("users", "SELECT * FROM users WHERE email = $1", [email]);
+        const user = users && users.length > 0 ? users[0] : null;
+        
+        if (user) {
+          console.log(`Found user in our database: ${user.id}`);
+          
+          // Verify password
+          const isPasswordValid = await storage.verifyPassword(password, user.password);
+          
+          if (!isPasswordValid) {
+            console.log("Password verification failed");
+            return res.status(401).json({
+              error: "Invalid email or password"
+            });
+          }
+          
+          // Create a session for the logged-in user
+          const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
+          await sessionService.createSession(sessionId);
+          await sessionService.updateSession(sessionId, {
+            userType: user.userType,
+            profileCompleted: true, // Assume profile is completed for now
+            userId: user.id
+          });
+          
+          // Update user's sessionId
+          await storage.updateUser(user.id, { sessionId });
+          
+          return res.status(200).json({
+            message: "Login successful",
+            user: {
+              id: user.id,
+              email: user.email,
+              userType: user.userType,
+              username: user.username
+            },
+            sessionId
+          });
+        }
+      } catch (storageError) {
+        console.error("Error finding user in database:", storageError);
+      }
+      
+      // Fallback to Supabase Auth if our database lookup fails
+      console.log("Falling back to Supabase auth");
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -1363,8 +1449,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (authError) {
         console.error("Supabase auth error:", authError);
         return res.status(401).json({
-          message: "Authentication failed",
-          error: authError.message
+          error: "Authentication failed",
+          details: authError.message
         });
       }
       
@@ -1380,7 +1466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       return res.status(200).json({
-        message: "Login successful",
+        message: "Login successful with Supabase Auth",
         user: {
           id: authData.user?.id,
           email: authData.user?.email,
@@ -1392,8 +1478,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error logging in:", error);
       return res.status(500).json({
-        message: "Failed to log in",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "Failed to log in",
+        details: error instanceof Error ? error.message : "Unknown error",
       });
     }
   });

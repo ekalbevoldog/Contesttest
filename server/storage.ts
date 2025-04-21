@@ -71,6 +71,7 @@ export interface IStorage {
   updateUser(userId: number, userData: Partial<User>): Promise<User | undefined>;
   updateStripeCustomerId(userId: number, customerId: string): Promise<User>;
   updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User>;
+  verifyPassword(password: string, storedPassword: string): Promise<boolean>;
 
   // Feedback operations
   getFeedback(id: number): Promise<Feedback | undefined>;
@@ -342,6 +343,19 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedUser;
+  }
+  
+  async verifyPassword(password: string, storedPassword: string): Promise<boolean> {
+    // Check if the password includes a salt
+    if (storedPassword.includes('.')) {
+      const [hashedPassword, salt] = storedPassword.split('.');
+      const hashedBuf = Buffer.from(hashedPassword, 'hex');
+      const suppliedBuf = (await scryptAsync(password, salt, 64)) as Buffer;
+      return timingSafeEqual(hashedBuf, suppliedBuf);
+    } else {
+      // Legacy format or plain-text comparison (for testing)
+      return password === storedPassword;
+    }
   }
 
   // Feedback operations
