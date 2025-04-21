@@ -8,6 +8,7 @@ import Onboarding from "@/pages/Onboarding";
 import SignIn from "@/pages/SignIn";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AthleteDashboard from "@/pages/AthleteDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/hooks/use-auth";

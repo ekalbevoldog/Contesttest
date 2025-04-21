@@ -51,14 +51,26 @@ export default function SignIn() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, signIn, signUp, isLoading } = useSupabaseAuth();
+  const { user, userData, signIn, signUp, isLoading } = useSupabaseAuth();
   
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
+    if (user && userData) {
+      const role = userData.role;
+      if (role === 'athlete') {
+        navigate('/athlete/dashboard');
+      } else if (role === 'business') {
+        navigate('/business/dashboard');
+      } else if (role === 'compliance') {
+        navigate('/compliance/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        // Default fallback
+        navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, userData, navigate]);
   
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -93,7 +105,7 @@ export default function SignIn() {
   // Handle register form submission
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     const userData = {
-      user_type: values.userType,
+      role: values.userType,
       email: values.email,
     };
     
