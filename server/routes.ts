@@ -136,7 +136,7 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
   if (requiredRole) {
     try {
       const user = await storage.getUser(req.session.passport.user);
-      if (!user || user.userType !== requiredRole) {
+      if (!user || user.role !== requiredRole) {
         return res.status(403).json({ error: `${requiredRole} access required` });
       }
       
@@ -625,8 +625,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let matches = [];
       
-      // Filter matches based on user type
-      if (user.userType === 'athlete') {
+      // Filter matches based on user role
+      if (user.role === 'athlete') {
         // Get athlete profile
         const athlete = await storage.getAthleteByUserId(userId);
         
@@ -638,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Get matches for this athlete only
         matches = await storage.getMatchesForAthlete(athlete.id);
-      } else if (user.userType === 'business') {
+      } else if (user.role === 'business') {
         // Get business profile
         const business = await storage.getBusinessByUserId(userId);
         
@@ -650,7 +650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Get matches for this business only
         matches = await storage.getMatchesForBusiness(business.id);
-      } else if (user.userType === 'admin' || user.userType === 'compliance') {
+      } else if (user.role === 'admin' || user.role === 'compliance') {
         // Admins and compliance officers can see all matches
         matches = await storage.getAllMatches();
       } else {
@@ -1135,10 +1135,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const userType = user.userType;
+      const userRole = user.role;
       
-      // Return the appropriate profile based on user type
-      if (userType === 'athlete') {
+      // Return the appropriate profile based on user role
+      if (userRole === 'athlete') {
         // Get athlete profile for the authenticated user
         const athlete = await storage.getAthleteByUserId(userId);
         
@@ -1182,7 +1182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      if (userType === 'business') {
+      if (userRole === 'business') {
         // Get business profile for the authenticated user
         const business = await storage.getBusinessByUserId(userId);
         
