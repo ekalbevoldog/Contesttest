@@ -418,16 +418,16 @@ export default function Header() {
                     <NavDropdown
                       key={index}
                       triggerItem={item}
-                      items={item.dropdownItems}
+                      items={item.dropdownItems || []}
                       isActive={isActive}
                       user={user}
-                      userType={userType}
+                      userType={userType || null}
                     />
                   );
                 }
               } else {
                 // Regular NavLinkItem
-                return <NavLinkItem key={index} item={item} isActive={isActive} />;
+                return <NavLinkItem key={index} item={item} isActive={!!isActive} />;
               }
             })}
           </div>
@@ -487,12 +487,12 @@ export default function Header() {
                           <NavDropdown
                             key={index}
                             triggerItem={item}
-                            items={item.dropdownItems}
+                            items={item.dropdownItems || []}
                             isActive={false} // Active state not highlighted on dropdown trigger in mobile
                             isMobile={true}
                             closeSheet={() => setOpen(false)}
                             user={user}
-                            userType={userType}
+                            userType={userType || null}
                           />
                         );
                       } else {
