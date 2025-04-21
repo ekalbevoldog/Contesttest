@@ -71,16 +71,16 @@ export interface IStorage {
   markMessagesRead(sessionId: string, messageIds: number[]): Promise<void>;
 
   // Auth operations
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(insertUser: Partial<InsertUser>): Promise<User>;
-  updateUser(userId: number, userData: Partial<User>): Promise<User | undefined>;
-  updateStripeCustomerId(userId: number, customerId: string): Promise<User>;
-  updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User>;
+  updateUser(userId: string, userData: Partial<User>): Promise<User | undefined>;
+  updateStripeCustomerId(userId: string, customerId: string): Promise<User>;
+  updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User>;
   // Password-related operations (separate from user table)
-  getPasswordHash(userId: number): Promise<string | null>;
-  storePasswordHash(userId: number, passwordHash: string): Promise<void>;
+  getPasswordHash(userId: string): Promise<string | null>;
+  storePasswordHash(userId: string, passwordHash: string): Promise<void>;
   verifyPassword(password: string, storedPassword: string): Promise<boolean>;
 
   // Feedback operations
@@ -285,7 +285,7 @@ export class DatabaseStorage implements IStorage {
 
 
   // Auth operations
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
@@ -324,7 +324,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Password-related methods
-  async getPasswordHash(userId: number): Promise<string | null> {
+  async getPasswordHash(userId: string): Promise<string | null> {
     try {
       // Store password in a separate table for security
       const { data, error } = await supabase
@@ -345,7 +345,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async storePasswordHash(userId: number, passwordHash: string): Promise<void> {
+  async storePasswordHash(userId: string, passwordHash: string): Promise<void> {
     try {
       // Store in a separate table from users
       const { error } = await supabase
@@ -364,7 +364,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateUser(userId: number, userData: Partial<User>): Promise<User | undefined> {
+  async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> {
     // Remove properties that shouldn't be directly updated
     const { id, createdAt, ...safeUserData } = userData as any;
 
@@ -372,6 +372,7 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({
         ...safeUserData,
+        // Don't include fields that don't exist in the schema
         updatedAt: new Date()
       })
       .where(eq(users.id, userId))
@@ -380,39 +381,55 @@ export class DatabaseStorage implements IStorage {
     return updatedUser;
   }
 
-  async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {
-    const [updatedUser] = await db
-      .update(users)
-      .set({
-        stripeCustomerId: customerId,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
-
-    if (!updatedUser) {
-      throw new Error(`User with ID ${userId} not found`);
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> {
+    // Note: We need to make sure these fields are actually in the schema
+    // For now, we'll use supabase directly to update the custom fields
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({ 
+          stripe_customer_id: customerId,
+          updated_at: new Date()
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+        
+      if (error || !data) {
+        throw new Error(`User with ID ${userId} not found: ${error?.message}`);
+      }
+      
+      return data as User;
+    } catch (error) {
+      console.error("Error updating stripe customer ID:", error);
+      throw new Error(`Failed to update stripe info for user ${userId}`);
     }
-
-    return updatedUser;
   }
 
-  async updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User> {
-    const [updatedUser] = await db
-      .update(users)
-      .set({
-        stripeCustomerId: data.customerId,
-        stripeSubscriptionId: data.subscriptionId,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
-
-    if (!updatedUser) {
-      throw new Error(`User with ID ${userId} not found`);
+  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> {
+    // Note: We need to make sure these fields are actually in the schema
+    // For now, we'll use supabase directly to update the custom fields
+    try {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .update({ 
+          stripe_customer_id: data.customerId,
+          stripe_subscription_id: data.subscriptionId,
+          updated_at: new Date()
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+        
+      if (error || !userData) {
+        throw new Error(`User with ID ${userId} not found: ${error?.message}`);
+      }
+      
+      return userData as User;
+    } catch (error) {
+      console.error("Error updating stripe info:", error);
+      throw new Error(`Failed to update stripe info for user ${userId}`);
     }
-
-    return updatedUser;
   }
   
   async verifyPassword(password: string, storedPassword: string): Promise<boolean> {
