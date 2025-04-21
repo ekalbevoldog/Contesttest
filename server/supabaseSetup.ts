@@ -7,9 +7,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Read the SQL migration file
-const migrationFilePath = path.join(__dirname, 'supabase-migration.sql');
-const MIGRATION_SQL = fs.readFileSync(migrationFilePath, 'utf8');
+// Try to read the SQL migration file with fallback
+let MIGRATION_SQL = '';
+try {
+  const migrationFilePath = path.join(__dirname, 'supabase-migration.sql');
+  MIGRATION_SQL = fs.readFileSync(migrationFilePath, 'utf8');
+  console.log('Successfully loaded migration file');
+} catch (err) {
+  console.log('Migration file not found, falling back to direct table creation');
+}
 
 // Split the SQL statements for individual execution
 const SQL_STATEMENTS = MIGRATION_SQL
