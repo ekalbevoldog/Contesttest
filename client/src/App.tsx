@@ -5,26 +5,62 @@ import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import SimpleOnboarding from "@/pages/SimpleOnboarding";
 import Onboarding from "@/pages/Onboarding";
+import SignIn from "@/pages/SignIn";
+import BusinessDashboard from "@/pages/BusinessDashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/hooks/use-auth";
+import { SupabaseAuthProvider } from "@/hooks/use-supabase-auth";
+import { Suspense, lazy } from "react";
+
+// Define a ProtectedRoute component
+const ProtectedRoute = ({ 
+  component: Component, 
+  path 
+}: { 
+  component: React.ComponentType; 
+  path: string 
+}) => {
+  return (
+    <Route
+      path={path}
+      component={() => {
+        // This will render the component and pass props
+        return <Component />;
+      }}
+    />
+  );
+};
+
+// Define a fallback loading component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  </div>
+);
 
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow">
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/onboarding" component={Onboarding} />
-          <Route path="/athlete-onboarding" component={Onboarding} />
-          <Route path="/athlete/sign-up" component={Onboarding} />
-          <Route path="/explore-matches" component={SimpleOnboarding} />
-          <Route path="/business-onboarding" component={Onboarding} />
-          <Route path="/business/sign-up" component={Onboarding} />
-          {/* All other routes temporarily point to our simple components */}
-          <Route component={Home} />
-        </Switch>
+        <Suspense fallback={<LoadingFallback />}>
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/sign-in" component={SignIn} />
+            <Route path="/onboarding" component={Onboarding} />
+            <Route path="/athlete-onboarding" component={Onboarding} />
+            <Route path="/athlete/sign-up" component={Onboarding} />
+            <Route path="/explore-matches" component={SimpleOnboarding} />
+            <Route path="/business-onboarding" component={Onboarding} />
+            <Route path="/business/sign-up" component={Onboarding} />
+            <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} />
+            <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} />
+            {/* All other routes temporarily point to our simple components */}
+            <Route component={Home} />
+          </Switch>
+        </Suspense>
       </main>
       <Footer />
     </div>
@@ -35,8 +71,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <SupabaseAuthProvider>
+          <Router />
+          <Toaster />
+        </SupabaseAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
