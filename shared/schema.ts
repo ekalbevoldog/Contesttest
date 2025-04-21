@@ -482,5 +482,9 @@ export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 
 // Define MessageMetadata interface for storing additional data with messages
 export interface MessageMetadata {
-  [key: string]: any;
+  [key: string]: unknown;
+  unread?: boolean;
+  sessionData?: unknown;
+  userId?: string | null;
+  userType?: string | null;
 }
