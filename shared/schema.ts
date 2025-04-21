@@ -337,6 +337,7 @@ export const messages = pgTable("messages", {
   sessionId: text("session_id").notNull(),
   role: text("role").notNull(),
   content: text("content").notNull(),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -478,3 +479,8 @@ export const insertFeedbackSchema = createInsertSchema(feedbacks).omit({
 
 export type Feedback = typeof feedbacks.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+
+// Define MessageMetadata interface for storing additional data with messages
+export interface MessageMetadata {
+  [key: string]: any;
+}
