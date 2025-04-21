@@ -52,6 +52,38 @@ export class SupabaseStorage implements IStorage {
       return undefined;
     }
   }
+  
+  async getSessionByUserId(userId: string): Promise<Session | undefined> {
+    try {
+      // First, check for athlete sessions
+      const { data: athleteSession, error: athleteError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('athlete_id', userId)
+        .single();
+        
+      if (athleteSession) {
+        return athleteSession as Session;
+      }
+      
+      // If no athlete session, check for business sessions
+      const { data: businessSession, error: businessError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('business_id', userId)
+        .single();
+        
+      if (businessSession) {
+        return businessSession as Session;
+      }
+      
+      // No matching session found
+      return undefined;
+    } catch (e) {
+      console.error('Exception getting session by user ID:', e);
+      return undefined;
+    }
+  }
 
   async createSession(session: InsertSession): Promise<Session> {
     try {

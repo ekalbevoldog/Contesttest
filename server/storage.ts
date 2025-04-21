@@ -26,6 +26,7 @@ export async function hashPassword(password: string): Promise<string> {
 export interface IStorage {
   // Session operations
   getSession(sessionId: string): Promise<Session | undefined>;
+  getSessionByUserId(userId: string): Promise<Session | undefined>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(sessionId: string, data: Partial<Session>): Promise<Session>;
   deleteSession(sessionId: string): Promise<void>;
@@ -122,6 +123,15 @@ export class DatabaseStorage implements IStorage {
   async getSession(sessionId: string): Promise<Session | undefined> {
     const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, sessionId));
     return session;
+  }
+  
+  async getSessionByUserId(userId: string): Promise<Session | undefined> {
+    // Find a session where either athleteId or businessId match the userId
+    const [athleteSession] = await db.select().from(sessions).where(eq(sessions.athleteId, userId));
+    if (athleteSession) return athleteSession;
+    
+    const [businessSession] = await db.select().from(sessions).where(eq(sessions.businessId, userId));
+    return businessSession;
   }
 
   async createSession(session: InsertSession): Promise<Session> {
@@ -638,6 +648,16 @@ export class MemStorage implements IStorage {
 
   async getSession(sessionId: string): Promise<Session | undefined> {
     return this.sessions.get(sessionId);
+  }
+  
+  async getSessionByUserId(userId: string): Promise<Session | undefined> {
+    // Iterate through all sessions to find one matching the athlete or business ID
+    for (const session of this.sessions.values()) {
+      if (session.athleteId === userId || session.businessId === userId) {
+        return session;
+      }
+    }
+    return undefined;
   }
 
   async createSession(session: InsertSession): Promise<Session> {
