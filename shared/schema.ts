@@ -35,7 +35,7 @@ export const users = pgTable("users", {
 // User credentials table for secure password storage
 export const userCredentials = pgTable("user_credentials", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),
+  userId: text("user_id").notNull().unique(),  // Use text instead of integer to match the UUID in users table
   passwordHash: text("password_hash").notNull(),
   salt: text("salt").notNull(),
   createdAt: timestamp("created_at").defaultNow(),

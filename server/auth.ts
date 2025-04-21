@@ -11,7 +11,7 @@ import { User as SelectUser } from "@shared/schema";
 declare module 'express-session' {
   interface Session {
     passport?: {
-      user: number;
+      user: string;
     };
   }
 }
@@ -47,7 +47,7 @@ export function setupAuth(app: Express) {
         const adminUser = await storage.createUser({
           email: 'admin@contested.com',
           password: 'P@ssw0rd!Complex#2024!', // Strong password to pass Supabase checks
-          userType: 'admin',
+          role: 'admin',
         });
         console.log('Created admin user: admin@contested.com (admin)');
       }
@@ -99,7 +99,7 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
       done(null, user);
@@ -127,9 +127,7 @@ export function setupAuth(app: Express) {
       const user = await storage.createUser({
         email: req.body.email,
         password: req.body.password,
-        userType: req.body.userType || 'athlete',
-        sessionId: req.body.sessionId || null,
-        avatar: req.body.avatar || null
+        role: req.body.role || 'athlete',
       });
 
       // Log in the user
@@ -140,7 +138,7 @@ export function setupAuth(app: Express) {
         return res.status(201).json({ 
           id: user.id,
           email: user.email,
-          userType: user.userType 
+          role: user.role 
         });
       });
     } catch (error) {

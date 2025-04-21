@@ -8,7 +8,7 @@ async function createUserCredentialsTable() {
     const createTableSql = `
       CREATE TABLE IF NOT EXISTS public.user_credentials (
         id SERIAL PRIMARY KEY,
-        user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
         password_hash TEXT NOT NULL,
         salt TEXT NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
