@@ -1023,10 +1023,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get profile for current session
   app.get("/api/profile", async (req: Request, res: Response) => {
     try {
-      const userType = req.query.userType || 'athlete';
+      // Check if the user is authenticated
+      if (!req.session?.passport?.user) {
+        return res.status(401).json({
+          message: "Not authenticated",
+        });
+      }
+
+      const userId = req.session.passport.user;
       
-      // If there's an actual stored profile, use that
+      // Get the user to determine their type
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+      
+      const userType = user.userType;
+      
+      // Return the appropriate profile based on user type
       if (userType === 'athlete') {
+        // Get athlete profile for the authenticated user
+        const athlete = await storage.getAthleteByUserId(userId);
+        
+        if (athlete) {
+          return res.status(200).json({
+            id: athlete.id,
+            name: athlete.name,
+            userType: "athlete",
+            sport: athlete.sport,
+            school: athlete.school,
+            division: athlete.division,
+            followerCount: athlete.followerCount,
+            contentStyle: athlete.contentStyle,
+            // Additional fields as needed
+            email: athlete.email,
+            phone: athlete.phone,
+            // Parse JSON fields if they exist
+            socialHandles: athlete.socialHandles ? JSON.parse(athlete.socialHandles) : {},
+            personalValues: athlete.personalValues ? JSON.parse(athlete.personalValues) : [],
+            contentTypes: athlete.contentTypes ? JSON.parse(athlete.contentTypes) : [],
+          });
+        }
+        
+        // Fallback to first athlete if no specific athlete profile found
         const athletes = await storage.getAllAthletes();
         if (athletes.length > 0) {
           return res.status(200).json({
@@ -1041,63 +1083,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        // No stored athlete profile, return mock data for demonstration
-        return res.status(200).json({
-          id: 1,
-          name: "Jordan Mitchell",
-          userType: "athlete",
-          sport: "Basketball",
-          school: "State University",
-          division: "Division I",
-          followerCount: "15.2K",
-          contentStyle: "Athletic lifestyle",
-          email: "jordan.mitchell@example.com",
-          phone: "555-123-4567",
-          socialMedia: {
-            instagram: "@jordanmitchell",
-            twitter: "@jmitch_hoops", 
-            tiktok: "@jordanmitchell"
-          },
-          // Profile link data
-          profileLinkEnabled: true,
-          profileLinkId: "jordanmitchell",
-          profileLinkBio: "State University Basketball | Computer Science Major | Content Creator",
-          profileLinkPhotoUrl: "",
-          profileLinkTheme: "gradient",
-          profileLinkBackgroundColor: "#1e293b",
-          profileLinkTextColor: "#ffffff",
-          profileLinkAccentColor: "#3b82f6",
-          profileLinkButtons: [
-            {
-              id: "1",
-              label: "Instagram",
-              url: "https://instagram.com/jordanmitchell",
-              type: "social"
-            },
-            {
-              id: "2",
-              label: "Twitter",
-              url: "https://twitter.com/jmitch_hoops",
-              type: "social"
-            },
-            {
-              id: "3",
-              label: "TikTok",
-              url: "https://tiktok.com/@jordanmitchell",
-              type: "social"
-            },
-            {
-              id: "4",
-              label: "Watch My Highlights",
-              url: "https://youtube.com/c/jordanmitchell",
-              type: "video"
-            }
-          ]
+        return res.status(404).json({
+          message: "Athlete profile not found",
         });
       }
       
-      // If it's a business profile
       if (userType === 'business') {
+        // Get business profile for the authenticated user
+        const business = await storage.getBusinessByUserId(userId);
+        
+        if (business) {
+          // Return business-specific profile data
+          return res.status(200).json({
+            id: business.id,
+            name: business.name,
+            userType: "business",
+            productType: business.productType,
+            audienceGoals: business.audienceGoals,
+            values: business.values,
+            industry: business.industry,
+            email: business.email,
+            // Parse the preferences if it exists
+            preferences: business.preferences ? JSON.parse(business.preferences) : {},
+          });
+        }
+        
+        // Fallback to first business if no specific business profile found
         const businesses = await storage.getAllBusinesses();
         if (businesses.length > 0) {
           return res.status(200).json({
@@ -1110,20 +1121,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        // No stored business profile, return mock data
-        return res.status(200).json({
-          id: 1,
-          name: "Urban Athletics Co.",
-          userType: "business",
-          productType: "Athletic Apparel",
-          audienceGoals: "Young adults interested in fitness and sports",
-          values: "Sustainability, Quality, Innovation"
+        return res.status(404).json({
+          message: "Business profile not found",
         });
       }
       
-      // No profiles found
+      // Handle other user types (admin, compliance, etc.)
       return res.status(404).json({
-        message: "No profile found",
+        message: "Profile type not supported",
       });
     } catch (error) {
       console.error("Error getting profile:", error);
