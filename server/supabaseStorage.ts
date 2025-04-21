@@ -760,7 +760,7 @@ export class SupabaseStorage implements IStorage {
   }
 
   // Auth operations
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -865,7 +865,7 @@ export class SupabaseStorage implements IStorage {
     return data as User;
   }
 
-  async updateUser(userId: number, userData: Partial<User> & { password?: string }): Promise<User | undefined> {
+  async updateUser(userId: string, userData: Partial<User> & { password?: string }): Promise<User | undefined> {
     // Extract password if it's included (it's not part of the User type)
     const { password, ...userDataWithoutPassword } = userData;
     
@@ -900,7 +900,7 @@ export class SupabaseStorage implements IStorage {
     return data as User;
   }
 
-  async updateStripeCustomerId(userId: number, customerId: string): Promise<User> {
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> {
     const { data, error } = await supabase
       .from('users')
       .update({ stripeCustomerId: customerId })
@@ -916,7 +916,7 @@ export class SupabaseStorage implements IStorage {
     return data as User;
   }
 
-  async updateUserStripeInfo(userId: number, data: { customerId: string, subscriptionId: string }): Promise<User> {
+  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> {
     const { data: updatedData, error } = await supabase
       .from('users')
       .update({ 
