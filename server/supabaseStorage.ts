@@ -951,7 +951,7 @@ export class SupabaseStorage implements IStorage {
     return data as Feedback;
   }
 
-  async getFeedbackByUser(userId: number): Promise<Feedback[]> {
+  async getFeedbackByUser(userId: string): Promise<Feedback[]> {
     const { data, error } = await supabase
       .from('feedbacks')
       .select('*')

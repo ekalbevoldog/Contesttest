@@ -85,7 +85,7 @@ export interface IStorage {
 
   // Feedback operations
   getFeedback(id: number): Promise<Feedback | undefined>;
-  getFeedbackByUser(userId: number): Promise<Feedback[]>;
+  getFeedbackByUser(userId: string): Promise<Feedback[]>; // Updated to use string IDs
   getFeedbackByMatch(matchId: number): Promise<Feedback[]>;
   getFeedbackByType(feedbackType: string): Promise<Feedback[]>;
   getPublicFeedback(): Promise<Feedback[]>;
@@ -451,7 +451,7 @@ export class DatabaseStorage implements IStorage {
     return feedback;
   }
 
-  async getFeedbackByUser(userId: number): Promise<Feedback[]> {
+  async getFeedbackByUser(userId: string): Promise<Feedback[]> {
     return await db.select().from(feedbacks).where(eq(feedbacks.userId, userId));
   }
 
@@ -1062,7 +1062,7 @@ export class MemStorage implements IStorage {
     return this.feedbacks.get(id);
   }
 
-  async getFeedbackByUser(userId: number): Promise<Feedback[]> {
+  async getFeedbackByUser(userId: string): Promise<Feedback[]> {
     return Array.from(this.feedbacks.values())
       .filter(feedback => feedback.userId === userId);
   }
