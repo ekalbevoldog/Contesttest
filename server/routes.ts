@@ -60,7 +60,7 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
     return false;
   }
 }
-import { setupAuth } from "./tempAuth";
+import { setupAuth } from "./auth";
 import { insertFeedbackSchema, Feedback } from "@shared/schema";
 
 // Map to store active WebSocket connections by session ID

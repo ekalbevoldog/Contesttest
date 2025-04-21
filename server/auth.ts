@@ -40,15 +40,19 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   // Create admin user if it doesn't exist
   (async () => {
-    const existingAdmin = await storage.getUserByUsername('admin');
-    if (!existingAdmin) {
-      const adminUser = await storage.createUser({
-        username: 'admin',
-        password: await hashPassword('adminpassword123'),
-        email: 'admin@contested.com',
-        userType: 'admin',
-      });
-      console.log('Created admin user: admin (admin)');
+    try {
+      // Check if admin exists by email instead of username
+      const existingAdmin = await storage.getUserByEmail('admin@contested.com');
+      if (!existingAdmin) {
+        const adminUser = await storage.createUser({
+          email: 'admin@contested.com',
+          password: await hashPassword('adminpassword123'),
+          userType: 'admin',
+        });
+        console.log('Created admin user: admin@contested.com (admin)');
+      }
+    } catch (error) {
+      console.error('Error checking/creating admin user:', error);
     }
   })();
   const sessionSettings: session.SessionOptions = {
@@ -69,18 +73,29 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username: string, password: string, done: (error: Error | null, user?: Express.User | false, options?: { message: string }) => void) => {
-      try {
-        const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Invalid username or password" });
-        } else {
+    new LocalStrategy(
+      // Configure LocalStrategy to use email field instead of username
+      { usernameField: 'email' },
+      async (email: string, password: string, done: (error: Error | null, user?: Express.User | false, options?: { message: string }) => void) => {
+        try {
+          const user = await storage.getUserByEmail(email);
+          if (!user) {
+            return done(null, false, { message: "Invalid email or password" });
+          }
+          
+          // Get the password hash from a separate secure storage
+          const passwordHash = await storage.getPasswordHash(user.id);
+          if (!passwordHash || !(await comparePasswords(password, passwordHash))) {
+            return done(null, false, { message: "Invalid email or password" });
+          }
+          
           return done(null, user);
+        } catch (error) {
+          console.error("Authentication error:", error);
+          return done(error as Error);
         }
-      } catch (error) {
-        return done(error as Error);
       }
-    }),
+    ),
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -96,25 +111,37 @@ export function setupAuth(app: Express) {
   // Register a new user
   app.post("/api/auth/register", async (req, res, next) => {
     try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      // Check if user exists by email
+      const existingUser = await storage.getUserByEmail(req.body.email);
       if (existingUser) {
-        return res.status(400).json({ error: "Username already exists" });
+        return res.status(400).json({ error: "Email already registered" });
       }
 
+      // Hash the password
       const hashedPassword = await hashPassword(req.body.password);
+      
+      // Create user in database (without password in the main record)
       const user = await storage.createUser({
-        ...req.body,
-        password: hashedPassword,
+        email: req.body.email,
+        userType: req.body.userType || 'athlete',
       });
+      
+      // Store the password hash separately
+      await storage.storePasswordHash(user.id, hashedPassword);
 
+      // Log in the user
       req.login(user, (err) => {
         if (err) return next(err);
         
-        // Dispatch login event
-        const loginEvent = new CustomEvent("contestedLogin", { detail: user });
-        return res.status(201).json(user);
+        // Return the user data (never include password)
+        return res.status(201).json({ 
+          id: user.id,
+          email: user.email,
+          userType: user.userType 
+        });
       });
     } catch (error) {
+      console.error("Registration error:", error);
       next(error);
     }
   });

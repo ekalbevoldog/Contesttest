@@ -23,13 +23,11 @@ export const insertSessionSchema = createInsertSchema(sessions).omit({
   lastLogin: true,
 });
 
-// Authentication
+// Authentication - Adapt to match Supabase structure (no username/password columns)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  userType: text("user_type", { enum: ["athlete", "business", "compliance", "admin"] }).notNull(),
+  userType: text("user_type", { enum: ["athlete", "business", "compliance", "admin"] }).default("athlete"),
   sessionId: text("session_id"),
   verified: boolean("verified").default(false),
   avatar: text("avatar"),
@@ -46,6 +44,9 @@ export const insertUserSchema = createInsertSchema(users).omit({
   verified: true,
   stripeCustomerId: true,
   stripeSubscriptionId: true,
+}).extend({
+  // Add password for authentication even though it's not in the DB schema
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 // Athlete Profiles
