@@ -32,6 +32,14 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { WebSocketServer, WebSocket } from "ws";
 
+// Extend the WebSocket type to include userData
+interface CustomWebSocket extends WebSocket {
+  userData?: {
+    role: 'athlete' | 'business' | 'compliance' | 'admin';
+    userId?: string;
+  };
+}
+
 // Helper for password hashing
 const scryptAsync = promisify(scrypt);
 
@@ -67,7 +75,7 @@ import { insertFeedbackSchema, Feedback } from "@shared/schema";
 import { websocketService } from './services/websocketService';
 
 // Map to store connected WebSocket clients
-const connectedClients = new Map<string, WebSocket>();
+const connectedClients = new Map<string, CustomWebSocket>();
 
 // Schema for session creation
 const sessionCreateSchema = z.object({});
@@ -1590,7 +1598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
-  wss.on('connection', (ws: WebSocket) => {
+  wss.on('connection', (ws: CustomWebSocket) => {
     console.log('WebSocket client connected');
     
     // Handle incoming messages
@@ -1598,8 +1606,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const data = JSON.parse(message);
         
-        // Register the client with their session ID
+        // Register the client with their session ID and role if available
         if (data.type === 'register' && data.sessionId) {
+          // Initialize userData
+          if (data.userData && data.userData.role) {
+            ws.userData = {
+              role: data.userData.role,
+              userId: data.userData.userId
+            };
+          }
+          
           connectedClients.set(data.sessionId, ws);
           console.log(`Client registered with session ID: ${data.sessionId}`);
           
@@ -1836,7 +1852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store feedback
       const feedback = await storage.storeFeedback({
         userId,
-        userType: req.user.userType,
+        userType: req.user.role, // Changed from userType to role
         feedbackType: feedbackData.feedbackType,
         matchId: feedbackData.matchId || null,
         rating: feedbackData.rating || null,
@@ -1849,7 +1865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const complianceUser = Array.from(connectedClients.entries())
         .find(([_, socket]) => {
           if (socket.readyState === WebSocket.OPEN) {
-            return socket['userData'] && socket['userData'].userType === 'compliance';
+            return socket.userData && socket.userData.role === 'compliance';
           }
           return false;
         });
