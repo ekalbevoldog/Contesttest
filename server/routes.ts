@@ -1331,10 +1331,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Create the user in our database using the storage interface
         const newUser = await storage.createUser({
-          username,
           email,
           password: hashedPassword,
-          userType,
+          role: userType, // Map userType to role
           sessionId: null, // Will be updated later
         });
         
@@ -1357,8 +1356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user: {
             id: newUser.id,
             email: newUser.email,
-            userType: newUser.userType,
-            username: newUser.username
+            userType: newUser.role, // Map role back to userType for client compatibility
           },
           sessionId
         });

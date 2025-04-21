@@ -826,11 +826,10 @@ export default function Onboarding() {
       try {
         // Register user first
         const userData = {
-          username: formData.email,
           email: formData.email,
           password: formData.password,
           fullName: formData.name, // Backend expects fullName, not name
-          userType: formData.userType // Use the selected user type
+          role: formData.userType // Map userType to role as the server expects
         };
         
         // Register user with the API
