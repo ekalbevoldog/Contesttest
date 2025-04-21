@@ -85,6 +85,7 @@ function Router() {
             <Route path="/explore-matches" component={SimpleOnboarding} />
             <Route path="/business-onboarding" component={Onboarding} />
             <Route path="/business/sign-up" component={Onboarding} />
+            <ProtectedRoute path="/athlete/dashboard" component={AthleteDashboard} />
             <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} />
             <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} />
             {/* All other routes temporarily point to our simple components */}

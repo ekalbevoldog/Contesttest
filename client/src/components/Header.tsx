@@ -198,7 +198,7 @@ export default function Header() {
   
   // Use the Supabase user data if available, otherwise fall back to the legacy auth
   const user = supabaseUser || authUser;
-  const userType = (userData?.role || authUser?.userType) as UserType || null;
+  const userType = (userData?.role || authUser?.role) as UserType || null;
 
   const handleLogout = async () => {
     if (supabaseUser) {

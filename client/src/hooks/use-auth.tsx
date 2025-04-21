@@ -24,7 +24,7 @@ interface LoginData {
 
 interface RegisterData extends LoginData {
   email: string;
-  userType: "athlete" | "business" | "compliance" | "admin";
+  role: "athlete" | "business" | "compliance" | "admin";
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -64,15 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/auth/user"], user);
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.username}!`,
+        description: `Welcome back!`,
       });
       
-      // Dispatch custom login event with user details including userType
+      // Dispatch custom login event with user details including role
       const loginEvent = new CustomEvent("contestedLogin", { 
         detail: { 
           id: user.id,
-          username: user.username, 
-          userType: user.userType 
+          email: user.email, 
+          role: user.role 
         } 
       });
       window.dispatchEvent(loginEvent);
@@ -100,15 +100,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/auth/user"], user);
       toast({
         title: "Registration successful",
-        description: `Welcome to Contested, ${user.username}!`,
+        description: "Welcome to Contested!",
       });
       
       // Dispatch custom registration event (separate from login)
       const registrationEvent = new CustomEvent("contestedRegistration", { 
         detail: { 
           id: user.id,
-          username: user.username, 
-          userType: user.userType 
+          email: user.email, 
+          role: user.role 
         } 
       });
       window.dispatchEvent(registrationEvent);
