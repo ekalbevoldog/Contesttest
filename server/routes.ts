@@ -128,6 +128,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (req.method === 'POST' && req.path.includes('/api/auth/')) {
       console.log('[DEBUG] Request headers:', req.headers);
       console.log('[DEBUG] Request body:', req.body);
+      console.log('[DEBUG] Request body type:', typeof req.body);
+      if (req.body === null || req.body === undefined) {
+        console.log('[DEBUG] Body parser may not be properly set up');
+      }
     }
     next();
   });
@@ -1259,7 +1263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return match;
   }
 
-  // User registration endpoint
+  // User registration endpoint - Supabase Auth
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       console.log("Registration request body:", req.body);
@@ -1272,8 +1276,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Full Name:", fullName);
       console.log("User Type:", userType);
       
-      // Skip validation since we can see the fields are present in the debug logs
-      // There might be an issue with how the fields are extracted
+      if (!email || !password || !fullName || !userType) {
+        const missingFields = [];
+        if (!email) missingFields.push("email");
+        if (!password) missingFields.push("password");
+        if (!fullName) missingFields.push("fullName");
+        if (!userType) missingFields.push("userType");
+        
+        console.log("Missing fields:", missingFields);
+        
+        return res.status(400).json({
+          message: "Missing required fields",
+          missingFields
+        });
+      }
+      
+      // Generate username from email (our schema requires username)
+      const username = email.split('@')[0] + '_' + Math.floor(Math.random() * 1000);
+      console.log("Generated username:", username);
       
       // Register user with Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -1283,6 +1303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: {
             full_name: fullName,
             user_type: userType,
+            username: username,
           }
         }
       });
