@@ -1,463 +1,126 @@
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
+import { FadeIn } from "@/components/animations/FadeIn";
+import { Link } from "wouter";
+import { ArrowLeft } from "lucide-react";
 
 export default function Solutions() {
   return (
-    <div className="bg-black text-white min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-black pt-20 pb-16">
-        {/* Background patterns and effects */}
-        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/50 via-black/90 to-black"></div>
+    <FadeIn>
+      <div className="container max-w-6xl mx-auto px-4 py-16 mt-12">
+        <div className="flex justify-between items-center mb-8">
+          <Link href="/">
+            <Button variant="ghost" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
         
-        {/* Diagonal line accent */}
-        <div className="absolute top-0 left-0 right-0 h-24 w-full bg-gradient-to-r from-red-500 to-amber-500 transform -rotate-1 -translate-y-16 opacity-40"></div>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold tracking-tight mb-4">Our NIL Solutions</h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Connecting athletes and businesses through intelligent matching and compliance management.
+          </p>
+        </div>
         
-        {/* Animated red circles */}
-        <div className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full bg-red-500/10 animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/4 h-32 w-32 rounded-full bg-amber-500/10 animate-pulse delay-700"></div>
-        
-        {/* Background athlete silhouette */}
-        <div className="absolute right-0 bottom-0 w-1/3 h-3/4 bg-[url('/athlete-silhouette.png')] bg-contain bg-no-repeat bg-right-bottom opacity-20"></div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-block mb-4 rounded-full bg-red-500/10 px-4 py-1 border border-red-500/20">
-              <span className="text-red-400 font-semibold">Next Generation NIL Platform</span>
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="rounded-lg border bg-card text-card-foreground shadow p-6">
+            <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">🏆</span>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                Solutions for Next-Gen Athlete Partnerships
-              </span>
-            </h1>
-            <p className="text-xl text-zinc-400 mb-8 max-w-3xl mx-auto">
-              Contested provides cutting-edge tools and services to connect athletes and businesses for authentic marketing partnerships that drive measurable results.
+            <h3 className="text-xl font-bold mb-2">For Athletes</h3>
+            <p className="text-muted-foreground mb-4">
+              Build your personal brand, showcase your talents, and connect with businesses that align with your values.
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-                asChild
-              >
-                <Link to="/dynamic-onboarding">Get Started</Link>
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-red-500 text-white hover:bg-red-500/10"
-                asChild
-              >
-                <Link to="/pricing">View Pricing</Link>
-              </Button>
-            </div>
+            <ul className="space-y-2 mb-6">
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>AI-powered brand matching</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Public profile page</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Direct messaging with businesses</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Partnership management</span>
+              </li>
+            </ul>
           </div>
           
-          {/* Logo partners strip */}
-          <div className="mt-16 max-w-5xl mx-auto">
-            <p className="text-center text-zinc-500 mb-6 text-sm uppercase tracking-wider">Trusted by leading brands and universities</p>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
-                <div className="text-zinc-400 font-bold">BRAND 1</div>
-              </div>
-              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
-                <div className="text-zinc-400 font-bold">BRAND 2</div>
-              </div>
-              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
-                <div className="text-zinc-400 font-bold">BRAND 3</div>
-              </div>
-              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
-                <div className="text-zinc-400 font-bold">BRAND 4</div>
-              </div>
-              <div className="w-24 h-12 bg-white/5 rounded-md flex items-center justify-center">
-                <div className="text-zinc-400 font-bold">BRAND 5</div>
-              </div>
+          <div className="rounded-lg border bg-card text-card-foreground shadow p-6">
+            <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">💼</span>
             </div>
-          </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
-      </section>
-
-      {/* Solutions Features */}
-      <section className="py-20 bg-zinc-950">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto mb-16 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                Comprehensive Partnership Solutions
-              </span>
-            </h2>
-            <p className="text-xl text-zinc-400">
-              Contested streamlines the entire NIL partnership process—from precise athlete-brand matching to campaign management and compliance—ensuring seamless collaborations and measurable results.
+            <h3 className="text-xl font-bold mb-2">For Businesses</h3>
+            <p className="text-muted-foreground mb-4">
+              Find and partner with the perfect athlete ambassadors to represent your brand authentically.
             </p>
+            <ul className="space-y-2 mb-6">
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Advanced athlete matching</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Campaign management</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Performance analytics</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Compliance assistance</span>
+              </li>
+            </ul>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-            {/* AI Matching */}
-            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/30 to-transparent rounded-bl-full"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-tr-full"></div>
-              
-              <CardContent className="p-6 relative z-10">
-                <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
-                  <div className="h-12 w-12 text-red-500 flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      {/* Brain outline with circuits */}
-                      <path d="M19 11C19 15.4183 15.6421 19 12 19C8.35786 19 5 15.4183 5 11C5 6.58172 8.35786 3 12 3C15.6421 3 19 6.58172 19 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      
-                      {/* Circuit lines */}
-                      <path d="M12 3V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M12 19V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M19 11H22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M2 11H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      
-                      {/* Connection points */}
-                      <circle cx="12" cy="6" r="1" fill="currentColor"/>
-                      <circle cx="12" cy="16" r="1" fill="currentColor"/>
-                      <circle cx="15" cy="11" r="1" fill="currentColor"/>
-                      <circle cx="9" cy="11" r="1" fill="currentColor"/>
-                      
-                      {/* Inner match pattern */}
-                      <path d="M9 7L12 10L15 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M9 15L12 12L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      
-                      {/* AI/Data Pulse */}
-                      <path d="M7 11.5H8.5L9.5 10L10.5 13L11.5 9L12.5 11.5L13.5 10L14.5 13L15.5 10L17 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
-                
-                <h3 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">AI-Powered Matching</h3>
-                <h4 className="text-lg font-semibold text-zinc-300 mb-4">Precision Matching, Maximum Impact</h4>
-                <p className="text-zinc-400 mb-6 text-lg">
-                  Our proprietary AI-driven algorithm identifies perfect athlete-brand partnerships by analyzing extensive data points—optimizing audience fit, brand alignment, and content style.
-                </p>
-                
-                <ul className="space-y-3 text-zinc-400">
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Advanced Personality and Values Alignment</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Deep Audience Demographic Insights</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Content Quality and Engagement Predictions</span>
-                  </li>
-                </ul>
-                
-                <div className="mt-8 pt-6 border-t border-zinc-800">
-                  <div className="flex items-center">
-                    <div className="text-zinc-500 text-sm">Powered by</div>
-                    <div className="ml-2 text-white font-semibold">Google Gemini AI</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Campaign Management */}
-            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/30 to-transparent rounded-bl-full"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-tr-full"></div>
-              
-              <CardContent className="p-6 relative z-10">
-                <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
-                  <div className="h-12 w-12 text-red-500 flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke="currentColor" />
-                    </svg>
-                  </div>
-                </div>
-                
-                <h3 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">Campaign Management</h3>
-                <h4 className="text-lg font-semibold text-zinc-300 mb-4">All-in-One Campaign Simplicity</h4>
-                <p className="text-zinc-400 mb-6 text-lg">
-                  Manage your entire campaign lifecycle effortlessly. Our comprehensive platform automates planning, execution, tracking, and reporting, letting you focus on results, not logistics.
-                </p>
-                
-                <ul className="space-y-3 text-zinc-400">
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Centralized Content Scheduling & Deliverables</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Real-Time Performance Analytics Dashboard</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Automated Documentation & Compliance Records</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Compliance Management */}
-            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow border-none relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-red-500/30 to-transparent rounded-bl-full"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-tr-full"></div>
-              
-              <CardContent className="p-6 relative z-10">
-                <div className="h-20 w-20 mb-6 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-red-500">
-                  <div className="h-12 w-12 text-red-500 flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </div>
-                
-                <h3 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">NIL Compliance</h3>
-                <h4 className="text-lg font-semibold text-zinc-300 mb-4">Compliance Made Effortless</h4>
-                <p className="text-zinc-400 mb-6 text-lg">
-                  Navigate NCAA and university-specific NIL regulations smoothly. Our dedicated compliance tools simplify approvals, minimize administrative hurdles, and ensure transparency for all stakeholders.
-                </p>
-                
-                <ul className="space-y-3 text-zinc-400">
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Integrated School-Specific Policy Guidelines</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Expedited Compliance Officer Approvals</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="h-6 w-6 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="text-zinc-300">Automated NIL Disclosure & Reporting</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="text-center">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-              asChild
-            >
-              <Link to="/enhanced-onboarding">Start Your Partnership Journey</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Visual Showcase */}
-      <section className="py-16 bg-black overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black z-10"></div>
-        <div className="container mx-auto px-4 relative z-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                  Real Results Through Strategic Partnerships
-                </span>
-              </h2>
-              <p className="text-xl text-zinc-400 mb-6">
-                Our platform has facilitated partnerships that drive measurable engagement, revenue, and brand growth for both athletes and businesses.
-              </p>
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-zinc-900 p-4 rounded-lg">
-                  <div className="text-red-500 text-3xl font-bold">$3.2M+</div>
-                  <div className="text-zinc-400">Revenue generated</div>
-                </div>
-                <div className="bg-zinc-900 p-4 rounded-lg">
-                  <div className="text-red-500 text-3xl font-bold">1,200+</div>
-                  <div className="text-zinc-400">Partnerships formed</div>
-                </div>
-                <div className="bg-zinc-900 p-4 rounded-lg">
-                  <div className="text-red-500 text-3xl font-bold">48%</div>
-                  <div className="text-zinc-400">Avg. engagement increase</div>
-                </div>
-                <div className="bg-zinc-900 p-4 rounded-lg">
-                  <div className="text-red-500 text-3xl font-bold">3.8x</div>
-                  <div className="text-zinc-400">Average ROI</div>
-                </div>
-              </div>
+          
+          <div className="rounded-lg border bg-card text-card-foreground shadow p-6">
+            <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">🔒</span>
             </div>
-            <div className="relative h-96 md:h-[500px] rounded-xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10"></div>
-              <div className="absolute inset-0 bg-[url('/athlete-partnership.jpg')] bg-cover bg-center transform hover:scale-105 transition-transform duration-700"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Use Cases */}
-      <section className="py-20 bg-black">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto mb-16 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                Who We Serve
-              </span>
-            </h2>
-            <p className="text-xl text-zinc-400">
-              Contested provides tailored solutions for everyone in the NIL ecosystem.
+            <h3 className="text-xl font-bold mb-2">For Compliance Officers</h3>
+            <p className="text-muted-foreground mb-4">
+              Streamline NIL compliance oversight and ensure all partnerships meet institutional requirements.
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-5xl mx-auto">
-            {/* For Athletes */}
-            <div className="bg-zinc-900 rounded-xl p-8 border border-zinc-800">
-              <h3 className="text-2xl font-bold mb-4 text-white">For Athletes</h3>
-              <ul className="space-y-4 mb-6">
-                <li className="flex items-start">
-                  <div className="h-8 w-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                    <span className="font-bold">1</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">Personal Brand Development</h4>
-                    <p className="text-zinc-400">Build your personal brand with partnerships that align with your values and goals.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="h-8 w-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                    <span className="font-bold">2</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">NIL Income Opportunities</h4>
-                    <p className="text-zinc-400">Access diverse monetization opportunities from local businesses to national brands.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="h-8 w-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                    <span className="font-bold">3</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">Compliance Peace of Mind</h4>
-                    <p className="text-zinc-400">Stay eligible with automated compliance tracking and documentation.</p>
-                  </div>
-                </li>
-              </ul>
-              <Button variant="outline" className="border-red-500 text-white hover:bg-red-500/10" asChild>
-                <Link to="/enhanced-onboarding">Athlete Sign Up</Link>
-              </Button>
-            </div>
-
-            {/* For Businesses */}
-            <div className="bg-zinc-900 rounded-xl p-8 border border-zinc-800">
-              <h3 className="text-2xl font-bold mb-4 text-white">For Businesses</h3>
-              <ul className="space-y-4 mb-6">
-                <li className="flex items-start">
-                  <div className="h-8 w-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                    <span className="font-bold">1</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">Authentic Marketing</h4>
-                    <p className="text-zinc-400">Connect with athletes who genuinely love your products and share your brand values.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="h-8 w-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                    <span className="font-bold">2</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">Targeted Reach</h4>
-                    <p className="text-zinc-400">Access niche audiences through athletes with engaged, relevant followers.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="h-8 w-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mr-3 mt-0.5">
-                    <span className="font-bold">3</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white">ROI Measurement</h4>
-                    <p className="text-zinc-400">Track campaign performance with detailed analytics and reporting.</p>
-                  </div>
-                </li>
-              </ul>
-              <Button variant="outline" className="border-red-500 text-white hover:bg-red-500/10" asChild>
-                <Link to="/enhanced-onboarding">Business Sign Up</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Image Strip */}
-      <section className="py-12 bg-black relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black z-10"></div>
-        <div className="container mx-auto px-4 relative z-20">
-          <div className="flex flex-wrap -mx-2 overflow-hidden">
-            {/* Image Strip - These would be actual image paths in production */}
-            <div className="w-1/2 md:w-1/4 px-2 mb-4">
-              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
-                <div className="h-full w-full bg-[url('/basketball-player.jpg')] bg-cover bg-center"></div>
-              </div>
-            </div>
-            <div className="w-1/2 md:w-1/4 px-2 mb-4">
-              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
-                <div className="h-full w-full bg-[url('/volleyball-player.jpg')] bg-cover bg-center"></div>
-              </div>
-            </div>
-            <div className="w-1/2 md:w-1/4 px-2 mb-4">
-              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
-                <div className="h-full w-full bg-[url('/local-cafe.jpg')] bg-cover bg-center"></div>
-              </div>
-            </div>
-            <div className="w-1/2 md:w-1/4 px-2 mb-4">
-              <div className="h-64 rounded-lg overflow-hidden transform hover:scale-105 transition-all">
-                <div className="h-full w-full bg-[url('/outdoor-brand.jpg')] bg-cover bg-center"></div>
-              </div>
-            </div>
+            <ul className="space-y-2 mb-6">
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Partnership approval workflow</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Compliance dashboard</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Documentation management</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">✓</span>
+                <span>Audit trail and reporting</span>
+              </li>
+            </ul>
           </div>
         </div>
         
-        {/* Red diagonal line */}
-        <div className="absolute -bottom-10 left-0 right-0 h-20 bg-red-500 transform -rotate-1 z-0"></div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-zinc-950 text-white relative">
-        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to transform your NIL strategy?</h2>
-            <p className="text-xl text-zinc-400 mb-8">
-              Join thousands of athletes and businesses creating authentic partnerships that drive real results.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-                asChild
-              >
-                <Link to="/dynamic-onboarding">Get Started Now</Link>
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-red-500 text-white hover:bg-red-500/10"
-                asChild
-              >
-                <Link to="/case-studies">View Success Stories</Link>
-              </Button>
-            </div>
-          </div>
+        <div className="bg-muted rounded-lg p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">Ready to get started?</h2>
+          <p className="mb-6 max-w-2xl mx-auto">
+            Join the Contested platform today and transform your NIL opportunities
+          </p>
+          <Link href="/onboarding">
+            <Button size="lg" className="bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600">
+              Create Your Account
+            </Button>
+          </Link>
         </div>
-      </section>
-    </div>
+      </div>
+    </FadeIn>
   );
 }
