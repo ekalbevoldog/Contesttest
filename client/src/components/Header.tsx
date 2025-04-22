@@ -418,7 +418,7 @@ export default function Header() {
                       key={index}
                       triggerItem={item}
                       items={item.dropdownItems || []}
-                      isActive={isActive}
+                      isActive={isActive || false}
                       user={user}
                       userType={userType || null}
                     />
@@ -426,7 +426,7 @@ export default function Header() {
                 }
               } else {
                 // Regular NavLinkItem
-                return <NavLinkItem key={index} item={item} isActive={!!isActive} />;
+                return <NavLinkItem key={index} item={item} isActive={isActive || false} />;
               }
             })}
           </div>
