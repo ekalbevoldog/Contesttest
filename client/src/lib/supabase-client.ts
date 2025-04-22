@@ -57,12 +57,11 @@ export async function initializeSupabase(): Promise<boolean> {
         persistSession: true,
         storageKey: 'nil-connect-auth'
       },
+      // Configure limited realtime capabilities to prevent WebSocket errors
       realtime: {
         params: {
           eventsPerSecond: 10
-        },
-        // Disable realtime subscriptions if not needed for onboarding
-        mode: 'manual'
+        }
       },
       global: {
         headers: {
