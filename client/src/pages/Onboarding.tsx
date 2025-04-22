@@ -12,8 +12,6 @@ import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
-import { createAthleteProfile, createBusinessProfile } from "@/lib/supabase-client";
 import { 
   DollarSign, 
   MapPin, 
@@ -378,7 +376,6 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { signUp, user, refreshProfile } = useSupabaseAuth();
   
   // Handle form data changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -831,27 +828,34 @@ export default function Onboarding() {
         console.log("==== ONBOARDING FORM DATA COLLECTED ====");
         console.log("Complete form data:", formData);
         
-        // 1. Use the enhanced signUp function from our auth hook
+        // APPROACH CHANGE: Let's use direct API call instead of Supabase hook
+        // This avoids WebSocket errors and circular dependencies
         const userData = {
+          email: formData.email,
+          password: formData.password,
           fullName: formData.name,
-          role: formData.userType 
+          role: formData.userType
         };
         
-        console.log("Data being sent to auth API:", {
-          email: formData.email,
-          password: "********", // Don't log the actual password
-          userData
+        console.log("Using direct API for registration to avoid WebSocket issues");
+        
+        // Call our server API directly 
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
         });
         
-        const { error, user: newUser } = await signUp(
-          formData.email, 
-          formData.password, 
-          userData
-        );
-        
-        if (error) {
-          throw new Error(error.message || "Failed to create account");
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Registration API failed:', errorText);
+          throw new Error('Registration failed: ' + (errorText || response.statusText));
         }
+        
+        const registrationData = await response.json();
+        const newUser = registrationData.user;
         
         if (!newUser || !newUser.id) {
           throw new Error("Registration succeeded but no user data returned");
@@ -860,11 +864,12 @@ export default function Onboarding() {
         console.log("Registration successful:", newUser);
         
         // 2. Create profile based on user type
-        let profileResult;
+        // Prepare profile data based on user type
+        let profileData;
         
         if (formData.userType === "athlete") {
-          // Use our enhanced athlete profile creation function
-          profileResult = await createAthleteProfile({
+          // Create athlete profile data
+          profileData = {
             userId: newUser.id,
             name: formData.name,
             email: formData.email,
@@ -900,10 +905,10 @@ export default function Onboarding() {
             
             // Eligibility status 
             eligibilityStatus: "pending" // Will be verified by admin/compliance officer
-          });
+          };
         } else {
-          // Use our enhanced business profile creation function
-          profileResult = await createBusinessProfile({
+          // Create business profile data
+          profileData = {
             userId: newUser.id,
             name: formData.name,
             email: formData.email,
@@ -937,17 +942,27 @@ export default function Onboarding() {
                 phone: formData.contactPhone
               }
             })
-          });
+          };
         }
         
-        if (!profileResult || profileResult.error) {
-          throw new Error(profileResult?.error || `Failed to create ${formData.userType} profile`);
+        // Use direct API to create profile to avoid WebSocket issues
+        console.log("Using direct API call for profile creation");
+        const profileResponse = await fetch('/api/profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(profileData),
+        });
+        
+        if (!profileResponse.ok) {
+          const errorText = await profileResponse.text();
+          console.error('Profile creation failed:', errorText);
+          throw new Error(`Failed to create ${formData.userType} profile: ` + (errorText || profileResponse.statusText));
         }
         
+        const profileResult = await profileResponse.json();
         console.log("Profile created successfully:", profileResult);
-        
-        // Refresh the profile data in our auth context
-        await refreshProfile();
         
         toast({
           title: "Success!",
@@ -955,13 +970,20 @@ export default function Onboarding() {
           variant: "default",
         });
         
+        // Manually reload the page to ensure fresh session data
+        // This is simpler than trying to use refreshProfile which requires 
+        // calling Supabase and can trigger the WebSocket error again
+        
+        // First set a user type cookie to ensure proper redirect after reload
+        document.cookie = `user_type=${formData.userType};path=/;max-age=60`;
+        
         // Redirect to the appropriate dashboard based on user type
         if (formData.userType === "athlete") {
-          setLocation("/athlete/dashboard");
+          window.location.href = "/athlete/dashboard";
         } else if (formData.userType === "business") {
-          setLocation("/business/dashboard");
+          window.location.href = "/business/dashboard";
         } else {
-          setLocation("/dashboard");
+          window.location.href = "/dashboard";
         }
       } catch (error) {
         console.error("Onboarding error:", error);
