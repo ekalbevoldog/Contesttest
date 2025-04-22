@@ -3,6 +3,14 @@
  * necessary environment variables to the client.
  */
 import express, { Request, Response } from 'express';
+import crypto from 'crypto';
+
+// Store active sessions in memory for simplicity
+const activeSessions: Record<string, {
+  id: string;
+  createdAt: Date;
+  userType?: string;
+}> = {};
 
 export function registerPublicRoutes(app: express.Express) {
   // Route to provide client-side Supabase credentials
@@ -10,6 +18,55 @@ export function registerPublicRoutes(app: express.Express) {
     res.json({
       url: process.env.SUPABASE_URL,
       key: process.env.SUPABASE_KEY
+    });
+  });
+  
+  // Route to generate a new session ID for onboarding
+  app.get('/api/session/new', (req: Request, res: Response) => {
+    const sessionId = crypto.randomUUID();
+    activeSessions[sessionId] = {
+      id: sessionId,
+      createdAt: new Date()
+    };
+    res.json({
+      sessionId,
+      success: true
+    });
+  });
+  
+  // Route to check session status - useful for debugging
+  app.get('/api/session/:id', (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (activeSessions[id]) {
+      res.json({
+        session: activeSessions[id],
+        exists: true
+      });
+    } else {
+      res.status(404).json({
+        message: "Session not found",
+        exists: false
+      });
+    }
+  });
+  
+  // Route to set session user type
+  app.post('/api/session/:id/user-type', (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { userType } = req.body;
+    
+    if (!activeSessions[id]) {
+      activeSessions[id] = {
+        id,
+        createdAt: new Date()
+      };
+    }
+    
+    activeSessions[id].userType = userType;
+    
+    res.json({
+      session: activeSessions[id],
+      success: true
     });
   });
 }
