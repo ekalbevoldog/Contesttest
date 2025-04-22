@@ -17,20 +17,61 @@ import SupabaseTest from "@/pages/SupabaseTest";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 // Define a ProtectedRoute component
 const ProtectedRoute = ({ 
   component: Component, 
-  path 
+  path,
+  requiredRole
 }: { 
   component: React.ComponentType<any>; 
-  path: string 
+  path: string;
+  requiredRole?: string | string[];
 }) => {
   // Use the auth state from Supabase auth hook
   const { user, isLoading } = useSupabaseAuth();
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/auth');
+    } else if (!isLoading && user && requiredRole) {
+      // Check if user has the required role
+      const userRole = user.role || 'visitor';
+      
+      if (Array.isArray(requiredRole)) {
+        if (!requiredRole.includes(userRole)) {
+          // Redirect based on actual role
+          if (userRole === 'athlete') {
+            navigate('/athlete/dashboard');
+          } else if (userRole === 'business') {
+            navigate('/business/dashboard');
+          } else if (userRole === 'compliance') {
+            navigate('/compliance/dashboard');
+          } else if (userRole === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/');
+          }
+        }
+      } else if (userRole !== requiredRole) {
+        // Redirect based on actual role
+        if (userRole === 'athlete') {
+          navigate('/athlete/dashboard');
+        } else if (userRole === 'business') {
+          navigate('/business/dashboard');
+        } else if (userRole === 'compliance') {
+          navigate('/compliance/dashboard');
+        } else if (userRole === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
+    }
+  }, [user, isLoading, navigate, requiredRole]);
 
   if (isLoading) {
     return (
@@ -49,11 +90,135 @@ const ProtectedRoute = ({
     return (
       <Route
         path={path}
-        component={() => {
-          // Redirect to auth page
-          navigate('/auth');
-          return null;
-        }}
+        component={() => null} // The useEffect will handle the redirection
+      />
+    );
+  }
+
+  // Role-based check
+  if (requiredRole) {
+    const userRole = user.role || 'visitor';
+    
+    if (Array.isArray(requiredRole)) {
+      if (!requiredRole.includes(userRole)) {
+        return (
+          <Route
+            path={path}
+            component={() => null} // The useEffect will handle the redirection
+          />
+        );
+      }
+    } else if (userRole !== requiredRole) {
+      return (
+        <Route
+          path={path}
+          component={() => null} // The useEffect will handle the redirection
+        />
+      );
+    }
+  }
+
+  // Use the RouteComponentProps wrapper to fix the type error
+  const WrappedComponent = (props: RouteComponentProps) => <Component {...props} />; 
+  return <Route path={path} component={WrappedComponent} />;
+};
+
+// Define a route that redirects based on user role
+const RoleRedirect = ({ path }: { path: string }) => {
+  const { user, isLoading } = useSupabaseAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        navigate('/auth');
+      } else {
+        // Redirect based on role
+        const role = user.role || 'visitor';
+        if (role === 'athlete') {
+          navigate('/athlete/dashboard');
+        } else if (role === 'business') {
+          navigate('/business/dashboard');
+        } else if (role === 'compliance') {
+          navigate('/compliance/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
+    }
+  }, [user, isLoading, navigate]);
+
+  return (
+    <Route
+      path={path}
+      component={() => (
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-border" />
+        </div>
+      )}
+    />
+  );
+};
+
+// Profile Completion Route - checks if user has completed their profile
+const ProfileRequiredRoute = ({ 
+  component: Component, 
+  path,
+  redirectPath,
+  requiredRole
+}: { 
+  component: React.ComponentType<any>; 
+  path: string;
+  redirectPath: string;
+  requiredRole?: string | string[];
+}) => {
+  // Use the auth state from Supabase auth hook
+  const { user, isLoading, hasCompletedProfile } = useSupabaseAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        navigate('/auth');
+      } else if (!hasCompletedProfile) {
+        navigate(redirectPath);
+      } else if (requiredRole) {
+        // Check if user has the required role
+        const userRole = user.role || 'visitor';
+        
+        if (Array.isArray(requiredRole)) {
+          if (!requiredRole.includes(userRole)) {
+            // Redirect based on actual role
+            if (userRole === 'athlete') {
+              navigate('/athlete/dashboard');
+            } else if (userRole === 'business') {
+              navigate('/business/dashboard');
+            } else if (userRole === 'compliance') {
+              navigate('/compliance/dashboard');
+            } else if (userRole === 'admin') {
+              navigate('/admin/dashboard');
+            } else {
+              navigate('/');
+            }
+          }
+        } else if (userRole !== requiredRole) {
+          navigate('/');
+        }
+      }
+    }
+  }, [user, isLoading, navigate, hasCompletedProfile, redirectPath, requiredRole]);
+
+  if (isLoading || !user || !hasCompletedProfile) {
+    return (
+      <Route
+        path={path}
+        component={() => (
+          <div className="flex items-center justify-center h-screen">
+            <Loader2 className="h-8 w-8 animate-spin text-border" />
+          </div>
+        )}
       />
     );
   }
@@ -77,22 +242,63 @@ function Router() {
       <main className="flex-grow">
         <Suspense fallback={<LoadingFallback />}>
           <Switch>
+            {/* Public routes accessible to everyone */}
             <Route path="/" component={Home} />
-            <Route path="/sign-in" component={SignIn} />
             <Route path="/auth" component={AuthPage} />
+            <Route path="/sign-in" component={SignIn} />
+            
+            {/* Onboarding routes - accessible after authentication */}
+            <ProtectedRoute path="/onboarding" component={Onboarding} />
+            
+            {/* Role-specific onboarding routes */}
+            <ProtectedRoute 
+              path="/athlete-onboarding" 
+              component={Onboarding} 
+              requiredRole="athlete"
+            />
+            <ProtectedRoute 
+              path="/business-onboarding" 
+              component={Onboarding} 
+              requiredRole="business"
+            />
+            
+            {/* Alternate paths for onboarding */}
+            <ProtectedRoute path="/athlete/sign-up" component={Onboarding} requiredRole="athlete" />
+            <ProtectedRoute path="/business/sign-up" component={Onboarding} requiredRole="business" />
+            
+            {/* Public info pages */}
             <Route path="/athletes" component={AthleteInfo} />
             <Route path="/businesses" component={BusinessInfo} />
-            <Route path="/onboarding" component={Onboarding} />
-            <Route path="/athlete-onboarding" component={Onboarding} />
-            <Route path="/athlete/sign-up" component={Onboarding} />
+            
+            {/* Simple exploration path */}
             <Route path="/explore-matches" component={SimpleOnboarding} />
-            <Route path="/business-onboarding" component={Onboarding} />
-            <Route path="/business/sign-up" component={Onboarding} />
+            
+            {/* Testing routes */}
             <Route path="/supabase-test" component={SupabaseTest} />
-            <ProtectedRoute path="/athlete/dashboard" component={AthleteDashboard} />
-            <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} />
-            <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} />
-            {/* All other routes temporarily point to our simple components */}
+            
+            {/* Role-specific protected dashboard routes with profile completion check */}
+            <ProfileRequiredRoute 
+              path="/athlete/dashboard" 
+              component={AthleteDashboard} 
+              requiredRole="athlete"
+              redirectPath="/athlete-onboarding"
+            />
+            <ProfileRequiredRoute 
+              path="/business/dashboard" 
+              component={BusinessDashboard} 
+              requiredRole="business"
+              redirectPath="/business-onboarding"
+            />
+            <ProtectedRoute 
+              path="/admin/dashboard" 
+              component={AdminDashboard} 
+              requiredRole="admin"
+            />
+            
+            {/* Main dashboard redirect */}
+            <RoleRedirect path="/dashboard" />
+            
+            {/* All other routes redirect to home */}
             <Route component={Home} />
           </Switch>
         </Suspense>

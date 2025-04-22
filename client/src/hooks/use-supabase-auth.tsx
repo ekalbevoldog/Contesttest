@@ -4,30 +4,38 @@ import {
   loginUser, 
   registerUser, 
   logoutUser, 
-  getCurrentUser 
+  getCurrentUser, 
+  checkUserProfile
 } from '@/lib/supabase-client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 
+interface EnhancedUser extends SupabaseUser {
+  role?: string;
+}
+
 interface AuthContextType {
-  user: SupabaseUser | null;
+  user: EnhancedUser | null;
   session: any | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  hasCompletedProfile: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any, user?: EnhancedUser }>;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any, user: any }>;
   signOut: () => Promise<void>;
   setUserData: (data: any) => void;
   userData: any;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [user, setUser] = useState<EnhancedUser | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
   const [isSupabaseInitialized, setIsSupabaseInitialized] = useState(false);
   const { toast } = useToast();
   const [location, navigate] = useLocation();

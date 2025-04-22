@@ -83,13 +83,21 @@ export default function AuthPage() {
   const onLoginSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     try {
-      const { error } = await signIn(values.email, values.password);
+      // Use our updated login function
+      const { error, user } = await signIn(values.email, values.password);
+      
       if (error) {
         toast({
           title: 'Login failed',
           description: error.message,
           variant: 'destructive',
         });
+      } else if (user) {
+        toast({
+          title: 'Login successful',
+          description: `Welcome back, ${user.email}`,
+        });
+        // The useEffect will handle the redirection
       }
     } catch (error: any) {
       toast({
@@ -106,14 +114,11 @@ export default function AuthPage() {
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      const userData = {
-        first_name: values.firstName,
-        last_name: values.lastName,
-        full_name: `${values.firstName} ${values.lastName}`,
+      // Use our updated registerUser function (indirectly through signUp)
+      const { error, user } = await signUp(values.email, values.password, {
+        fullName: `${values.firstName} ${values.lastName}`,
         role: values.role
-      };
-      
-      const { error, user } = await signUp(values.email, values.password, userData);
+      });
       
       if (error) {
         toast({
@@ -124,9 +129,21 @@ export default function AuthPage() {
       } else {
         toast({
           title: 'Registration successful',
-          description: 'Please check your email to verify your account',
+          description: 'Your account has been created successfully',
         });
-        setActiveTab('login');
+        
+        // Automatic login after registration
+        if (user) {
+          toast({
+            title: 'Welcome to NIL Connect',
+            description: 'You have been automatically logged in',
+          });
+          
+          // Let the auth context handle the redirect based on role
+        } else {
+          // If no user was returned, switch to login tab
+          setActiveTab('login');
+        }
       }
     } catch (error: any) {
       toast({
