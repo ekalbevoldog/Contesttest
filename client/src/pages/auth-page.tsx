@@ -1,306 +1,344 @@
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
-import { ChevronRight, Lock, Mail, User, UserPlus } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { useLocation } from 'wouter';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription,
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Mail, Lock, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { FadeIn } from '@/components/animations/FadeIn';
+
+// Form validation schema
+const loginSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+const registerSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  role: z.enum(['athlete', 'business', 'compliance', 'admin']).default('athlete'),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
+  const [activeTab, setActiveTab] = useState<string>('login');
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
   const { user, loginMutation, registerMutation } = useAuth();
-  const [location, navigate] = useLocation();
   
-  // Login form state
-  const [loginUsername, setLoginUsername] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  
-  // Register form state
-  const [registerUsername, setRegisterUsername] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerUserType, setRegisterUserType] = useState<"athlete" | "business" | "compliance" | "">("");
-  
-  // Set up event listeners for redirection
+  // Redirect if already logged in
   useEffect(() => {
-    // Handle registration - redirect to onboarding
-    const handleRegistration = (event: CustomEvent) => {
-      navigate("/dynamic-onboarding");
-    };
-
-    // Handle login - redirect to appropriate dashboard based on user type
-    const handleLogin = (event: CustomEvent) => {
-      const userData = event.detail as { userType: string };
-      if (userData.userType === 'athlete') {
-        navigate("/athlete/dashboard");
-      } else if (userData.userType === 'business') {
-        navigate("/business/dashboard");
-      } else if (userData.userType === 'compliance') {
-        navigate("/compliance/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
-    };
-
-    // Add event listeners for both events
-    window.addEventListener("contestedRegistration", handleRegistration as EventListener);
-    window.addEventListener("contestedLogin", handleLogin as EventListener);
-
-    // If user is already logged in (from a previous session), redirect to appropriate dashboard
     if (user) {
-      if (user.userType === 'athlete') {
-        navigate("/athlete/dashboard");
-      } else if (user.userType === 'business') {
-        navigate("/business/dashboard");
-      } else if (user.userType === 'compliance') {
-        navigate("/compliance/dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      navigate('/');
     }
-
-    // Clean up event listeners
-    return () => {
-      window.removeEventListener("contestedRegistration", handleRegistration as EventListener);
-      window.removeEventListener("contestedLogin", handleLogin as EventListener);
-    };
   }, [user, navigate]);
   
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    loginMutation.mutate({
-      username: loginUsername,
-      password: loginPassword,
-    });
+  // Login form
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
+  
+  // Register form
+  const registerForm = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+      role: 'athlete',
+    },
+  });
+  
+  // Handle login form submission
+  const onLoginSubmit = async (values: LoginFormValues) => {
+    loginMutation.mutate(values);
   };
   
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!registerUserType) {
-      return;
-    }
-    
-    registerMutation.mutate({
-      username: registerUsername,
-      password: registerPassword,
-      email: registerEmail,
-      userType: registerUserType as "athlete" | "business" | "compliance",
-    });
+  // Handle register form submission
+  const onRegisterSubmit = async (values: RegisterFormValues) => {
+    registerMutation.mutate(values);
   };
   
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      {/* Hero Section */}
-      <div className="hidden md:flex flex-col p-10 text-white bg-black">
-        <div className="grow flex flex-col items-start justify-center space-y-8 max-w-md">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-amber-500">Contested</span> - Elevate Your NIL Game
-            </h1>
-            <p className="text-zinc-400 text-lg">
-              Connect mid-tier athletes with SMBs for authentic, meaningful partnerships
-            </p>
+    <FadeIn>
+      <div className="flex min-h-[calc(100vh-180px)] items-center justify-center px-4 py-12">
+        <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8">
+          {/* Left column: Authentication forms */}
+          <div className="flex flex-col justify-center">
+            <div className="mx-auto w-full max-w-md space-y-6">
+              <div className="space-y-2 text-center">
+                <h1 className="text-3xl font-bold">Welcome to Contested</h1>
+                <p className="text-muted-foreground">Sign in to access your account or create a new one</p>
+              </div>
+              
+              <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="login">Login</TabsTrigger>
+                  <TabsTrigger value="register">Register</TabsTrigger>
+                </TabsList>
+                
+                {/* Login Tab */}
+                <TabsContent value="login">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Login to your account</CardTitle>
+                      <CardDescription>Enter your username and password to access your dashboard</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Form {...loginForm}>
+                        <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                          <FormField
+                            control={loginForm.control}
+                            name="username"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Username</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                    <Input placeholder="username" className="pl-10" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={loginForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                    <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                            {loginMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Signing in...
+                              </>
+                            ) : (
+                              "Sign In"
+                            )}
+                          </Button>
+                        </form>
+                      </Form>
+                    </CardContent>
+                    <CardFooter className="flex flex-col space-y-2">
+                      <div className="text-sm text-muted-foreground text-center">
+                        Don't have an account?{" "}
+                        <button 
+                          onClick={() => setActiveTab('register')} 
+                          className="text-primary hover:underline"
+                        >
+                          Register here
+                        </button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
+                
+                {/* Register Tab */}
+                <TabsContent value="register">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Create a new account</CardTitle>
+                      <CardDescription>Fill in the form below to create your account</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Form {...registerForm}>
+                        <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                          <FormField
+                            control={registerForm.control}
+                            name="username"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Username</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                    <Input placeholder="username" className="pl-10" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={registerForm.control}
+                            name="role"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Account Type</FormLabel>
+                                <div className="grid grid-cols-3 gap-3">
+                                  <Button
+                                    type="button"
+                                    variant={field.value === 'athlete' ? 'default' : 'outline'}
+                                    className={`flex flex-col items-center justify-center h-20 ${field.value === 'athlete' ? 'ring-2 ring-primary' : ''}`}
+                                    onClick={() => registerForm.setValue('role', 'athlete')}
+                                  >
+                                    <span className="text-xs">Athlete</span>
+                                  </Button>
+                                  
+                                  <Button
+                                    type="button"
+                                    variant={field.value === 'business' ? 'default' : 'outline'}
+                                    className={`flex flex-col items-center justify-center h-20 ${field.value === 'business' ? 'ring-2 ring-primary' : ''}`}
+                                    onClick={() => registerForm.setValue('role', 'business')}
+                                  >
+                                    <span className="text-xs">Business</span>
+                                  </Button>
+                                  
+                                  <Button
+                                    type="button"
+                                    variant={field.value === 'compliance' ? 'default' : 'outline'}
+                                    className={`flex flex-col items-center justify-center h-20 ${field.value === 'compliance' ? 'ring-2 ring-primary' : ''}`}
+                                    onClick={() => registerForm.setValue('role', 'compliance')}
+                                  >
+                                    <span className="text-xs">Compliance</span>
+                                  </Button>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={registerForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                    <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                            {registerMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating account...
+                              </>
+                            ) : (
+                              "Create Account"
+                            )}
+                          </Button>
+                        </form>
+                      </Form>
+                    </CardContent>
+                    <CardFooter className="flex flex-col space-y-2">
+                      <div className="text-sm text-muted-foreground text-center">
+                        Already have an account?{" "}
+                        <button 
+                          onClick={() => setActiveTab('login')} 
+                          className="text-primary hover:underline"
+                        >
+                          Sign in here
+                        </button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
           
-          <div className="space-y-6">
-            <div className="flex items-start space-x-3">
-              <div className="mt-0.5 bg-red-500/20 p-1 rounded-full">
-                <ChevronRight className="h-5 w-5 text-red-500" />
+          {/* Right column: Hero content */}
+          <div className="hidden md:flex flex-col items-center justify-center bg-muted rounded-lg p-8">
+            <div className="max-w-md space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight">Connect. Partner. Prosper.</h2>
+                <p className="text-muted-foreground">
+                  Contested is the premier platform connecting college athletes with businesses 
+                  for authentic partnerships. Join us today and start building meaningful marketing 
+                  collaborations.
+                </p>
               </div>
-              <div className="space-y-1">
-                <h3 className="font-medium">Smart Matching</h3>
-                <p className="text-zinc-400 text-sm">Our AI-powered algorithm connects the right athletes with the right brands.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-3">
-              <div className="mt-0.5 bg-red-500/20 p-1 rounded-full">
-                <ChevronRight className="h-5 w-5 text-red-500" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-medium">Streamlined Compliance</h3>
-                <p className="text-zinc-400 text-sm">Built-in tools for NIL compliance officers to review and approve partnerships.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start space-x-3">
-              <div className="mt-0.5 bg-red-500/20 p-1 rounded-full">
-                <ChevronRight className="h-5 w-5 text-red-500" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-medium">Real Growth, Real Results</h3>
-                <p className="text-zinc-400 text-sm">Create authentic partnerships that drive measurable value for both parties.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Auth Forms */}
-      <div className="flex items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-6">
-          <div className="text-center space-y-2 md:hidden">
-            <h1 className="text-3xl font-bold">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-amber-500">
-                Contested
-              </span>
-            </h1>
-            <p className="text-muted-foreground">The NIL platform for mid-tier athletes and SMBs</p>
-          </div>
-          
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Login to Contested</CardTitle>
-                  <CardDescription>Enter your credentials to access your account</CardDescription>
-                  <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-md text-xs text-amber-600 dark:text-amber-400">
-                    <strong>Demo Accounts:</strong> Use username "athlete1", "business1", or "compliance1" with password "password123"
+              
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-primary/20 p-2 rounded-full">
+                    <span className="h-5 w-5 text-primary">🏆</span>
                   </div>
-                </CardHeader>
-                <form onSubmit={handleLogin}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-username">Username or Email</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="login-username"
-                          type="text"
-                          placeholder="Your username or email"
-                          className="pl-10"
-                          value={loginUsername}
-                          onChange={(e) => setLoginUsername(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="login-password"
-                          type="password"
-                          placeholder="Your password"
-                          className="pl-10"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600"
-                      disabled={loginMutation.isPending}
-                    >
-                      {loginMutation.isPending ? "Logging in..." : "Login"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="register">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create an account</CardTitle>
-                  <CardDescription>Fill out the form to join Contested</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleRegister}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-username">Username</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="register-username"
-                          type="text"
-                          placeholder="Choose a username"
-                          className="pl-10"
-                          value={registerUsername}
-                          onChange={(e) => setRegisterUsername(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="register-email"
-                          type="email"
-                          placeholder="Your email address"
-                          className="pl-10"
-                          value={registerEmail}
-                          onChange={(e) => setRegisterEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="register-password"
-                          type="password"
-                          placeholder="Create a password"
-                          className="pl-10"
-                          value={registerPassword}
-                          onChange={(e) => setRegisterPassword(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="register-user-type">I am a</Label>
-                      <Select 
-                        value={registerUserType} 
-                        onValueChange={(value) => setRegisterUserType(value as any)}
-                        required
-                      >
-                        <SelectTrigger id="register-user-type" className="w-full">
-                          <SelectValue placeholder="Select account type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="athlete">College Athlete</SelectItem>
-                          <SelectItem value="business">Business/Brand</SelectItem>
-                          <SelectItem value="compliance">Compliance Officer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600"
-                      disabled={registerMutation.isPending || !registerUserType}
-                    >
-                      {registerMutation.isPending ? "Creating account..." : "Create Account"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                  <div>
+                    <h3 className="font-semibold">For Athletes</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Showcase your personal brand and connect with businesses looking for authentic partnerships.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="bg-primary/20 p-2 rounded-full">
+                    <span className="h-5 w-5 text-primary">💼</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">For Businesses</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Connect with student athletes who align with your brand values and audience demographics.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="bg-primary/20 p-2 rounded-full">
+                    <span className="h-5 w-5 text-primary">🔒</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">For Compliance Officers</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Ensure all partnerships meet institutional and regulatory requirements with our dedicated tools.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }

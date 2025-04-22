@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, RouteComponentProps } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,14 +6,16 @@ import Home from "@/pages/Home";
 import SimpleOnboarding from "@/pages/SimpleOnboarding";
 import Onboarding from "@/pages/Onboarding";
 import SignIn from "@/pages/SignIn";
+import AuthPage from "@/pages/auth-page";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { AuthProvider } from "@/hooks/use-auth";
-import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { SupabaseAuthProvider } from "@/hooks/use-supabase-auth";
 import { Suspense, lazy } from "react";
+import { Loader2 } from "lucide-react";
 
 // Define a ProtectedRoute component
 const ProtectedRoute = ({ 
@@ -23,8 +25,8 @@ const ProtectedRoute = ({
   component: React.ComponentType; 
   path: string 
 }) => {
-  // Use the Supabase auth state
-  const { user, isLoading } = useSupabaseAuth();
+  // Use the auth state from use-auth hook
+  const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
   if (isLoading) {
@@ -33,7 +35,7 @@ const ProtectedRoute = ({
         path={path}
         component={() => (
           <div className="flex items-center justify-center h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <Loader2 className="h-8 w-8 animate-spin text-border" />
           </div>
         )}
       />
@@ -45,22 +47,15 @@ const ProtectedRoute = ({
       <Route
         path={path}
         component={() => {
-          // Redirect to sign-in page
-          navigate('/sign-in');
-          return <div></div>;
+          // Redirect to auth page following the blueprint
+          navigate('/auth');
+          return null;
         }}
       />
     );
   }
 
-  return (
-    <Route
-      path={path}
-      component={() => {
-        return <Component />;
-      }}
-    />
-  );
+  return <Route path={path} component={Component} />;
 };
 
 // Define a fallback loading component
