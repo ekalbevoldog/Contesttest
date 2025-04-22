@@ -49,16 +49,18 @@ export async function initializeSupabase(): Promise<boolean> {
     console.log(`[Client] Supabase URL prefix: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
     console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
     
-    // Initialize the Supabase client with proper real-time configuration
+    // Initialize the Supabase client WITHOUT real-time configuration
+    // IMPORTANT: Disabling realtime to avoid WebSocket errors
     supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         storageKey: 'nil-connect-auth'
       },
+      // Explicitly disable realtime to prevent WebSocket connection attempts
       realtime: {
         params: {
-          eventsPerSecond: 10
+          eventsPerSecond: 0
         }
       },
       global: {
@@ -68,33 +70,7 @@ export async function initializeSupabase(): Promise<boolean> {
       }
     });
     
-    // Initialize real-time connection
-    console.log('[Client] Initializing real-time connection...');
-    
-    // Connect to the realtime service
-    const channel = supabase.channel('public:users', {
-      config: {
-        broadcast: { self: true }
-      }
-    });
-    
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        console.log('[Client] Realtime presence synced');
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('[Client] Realtime user joined:', key, newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('[Client] Realtime user left:', key, leftPresences);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('[Client] Realtime connection established successfully');
-        } else {
-          console.warn('[Client] Realtime connection status:', status);
-        }
-      });
+    console.log('[Client] Supabase initialized with realtime DISABLED');
     
     // Test the connection
     const { error } = await supabase.from('users').select('count').limit(1);

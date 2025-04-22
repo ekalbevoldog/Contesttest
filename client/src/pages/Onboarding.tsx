@@ -506,7 +506,12 @@ export default function Onboarding() {
   // Handle radio changes for boolean or single-select options
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>, value: any) => {
     const { name } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    console.log(`DEBUG: handleRadioChange - name: ${name}, value:`, value);
+    
+    setFormData(prev => {
+      console.log(`DEBUG: Setting form data for ${name} to:`, value);
+      return { ...prev, [name]: value };
+    });
     
     // Clear any error on this field
     if (errors[name]) {
@@ -516,6 +521,8 @@ export default function Onboarding() {
         return newErrors;
       });
     }
+    
+    console.log(`DEBUG: After handleRadioChange - formData will be updated with ${name}:`, value);
   };
   
   // Validate the current step
