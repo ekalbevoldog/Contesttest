@@ -1,7 +1,8 @@
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
 
 // Get the directory name in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -57,12 +58,13 @@ CREATE INDEX IF NOT EXISTS messages_session_id_idx ON messages(session_id);
 // Function to check if a table exists
 async function tableExists(tableName: string): Promise<boolean> {
   try {
-    // First approach: Try to select one record from the table directly
-    // If this doesn't throw an error, the table exists
+    console.log(`Checking if table ${tableName} exists...`);
+    
+    // Use the admin client which has more permissions
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from(tableName)
-        .select('*')
+        .select('count')
         .limit(1);
       
       if (!error) {
@@ -72,18 +74,18 @@ async function tableExists(tableName: string): Promise<boolean> {
       
       // If the error is not "relation doesn't exist", it might be a permissions issue or other error
       if (error && error.code !== '42P01') {
-        console.log(`Table ${tableName} might exist, but got another error:`, error.code, error.message);
+        console.log(`Table ${tableName} might exist, but got another error: ${error.code}`);
         // Let's assume the table exists if it's a permission error
         return error.code.startsWith('PGRST');
       }
     } catch (selectError) {
-      console.log(`Error checking table existence via select:`, selectError);
+      console.log(`Error checking table existence via select: ${selectError instanceof Error ? selectError.message : String(selectError)}`);
     }
     
     console.log(`Table ${tableName} does not exist or is not accessible`);
     return false;
   } catch (error) {
-    console.error(`Error checking if table ${tableName} exists:`, error);
+    console.error(`Error checking if table ${tableName} exists: ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
 }
@@ -176,7 +178,7 @@ async function createCoreTablesDirectly(): Promise<boolean> {
     if (!(await tableExists('sessions'))) {
       console.log('Creating sessions table...');
       try {
-        const { error } = await supabase.from('sessions').insert({
+        const { error } = await supabaseAdmin.from('sessions').insert({
           session_id: 'initialization-test',
           user_type: 'system',
           data: { test: true },
@@ -189,7 +191,7 @@ async function createCoreTablesDirectly(): Promise<boolean> {
           console.log('Sessions table created successfully');
         }
       } catch (e) {
-        console.error('Exception creating sessions table:', e);
+        console.error('Exception creating sessions table:', e instanceof Error ? e.message : String(e));
       }
     }
 
@@ -197,11 +199,11 @@ async function createCoreTablesDirectly(): Promise<boolean> {
     if (!(await tableExists('users'))) {
       console.log('Creating users table...');
       try {
-        const { error } = await supabase.from('users').insert({
+        const { error } = await supabaseAdmin.from('users').insert({
           username: 'system-initialization',
           email: 'system@example.com',
           password: 'not-real-password',
-          user_type: 'system'
+          role: 'system', // Updated field name to match our schema
         });
         
         if (error && error.code !== 'PGRST109') { // Duplicate key error is OK here
@@ -210,20 +212,23 @@ async function createCoreTablesDirectly(): Promise<boolean> {
           console.log('Users table created successfully');
         }
       } catch (e) {
-        console.error('Exception creating users table:', e);
+        console.error('Exception creating users table:', e instanceof Error ? e.message : String(e));
       }
     }
 
-    // Create athletes table (correct name from the SQL file)
+    // Create athletes table
     if (!(await tableExists('athletes'))) {
       console.log('Creating athletes table...');
       try {
-        const { error } = await supabase.from('athletes').insert({
+        const { error } = await supabaseAdmin.from('athletes').insert({
           session_id: 'initialization-test',
           name: 'System Test Athlete',
           sport: 'Test Sport',
-          university: 'Test University',
-          follower_count: 0
+          school: 'Test University', // Changed from university to school to match our schema
+          division: 'Division I', // Required field in schema
+          followerCount: 0, // Changed to match camelCase in schema
+          contentStyle: 'Test Content Style', // Required field in schema
+          compensationGoals: 'Test Compensation Goals' // Required field in schema
         });
         
         if (error && error.code !== 'PGRST109') { // Duplicate key error is OK here
@@ -232,19 +237,23 @@ async function createCoreTablesDirectly(): Promise<boolean> {
           console.log('Athletes table created successfully');
         }
       } catch (e) {
-        console.error('Exception creating athletes table:', e);
+        console.error('Exception creating athletes table:', e instanceof Error ? e.message : String(e));
       }
     }
 
-    // Create businesses table (correct name from the SQL file)
+    // Create businesses table
     if (!(await tableExists('businesses'))) {
       console.log('Creating businesses table...');
       try {
         // First try with minimal fields
-        const { error } = await supabase.from('businesses').insert({
+        const { error } = await supabaseAdmin.from('businesses').insert({
           session_id: 'initialization-test',
           name: 'System Test Business',
-          values: 'Test Values'
+          productType: 'Test Product', // Required field in schema
+          audienceGoals: 'Test Audience Goals', // Required field in schema
+          campaignVibe: 'Test Campaign Vibe', // Required field in schema
+          values: 'Test Values', // Required field in schema
+          targetSchoolsSports: 'Test Schools & Sports' // Required field in schema
         });
         
         if (error) {
@@ -252,7 +261,7 @@ async function createCoreTablesDirectly(): Promise<boolean> {
           
           // If there was an error, try a different approach by checking if the table is accessible
           // even if we can't insert data into it
-          const { count, error: countError } = await supabase
+          const { count, error: countError } = await supabaseAdmin
             .from('businesses')
             .select('*', { count: 'exact', head: true });
             
@@ -266,7 +275,7 @@ async function createCoreTablesDirectly(): Promise<boolean> {
           console.log('Businesses table created successfully');
         }
       } catch (e) {
-        console.error('Exception creating businesses table:', e);
+        console.error('Exception creating businesses table:', e instanceof Error ? e.message : String(e));
       }
     }
 

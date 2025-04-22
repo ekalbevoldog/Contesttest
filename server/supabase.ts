@@ -5,12 +5,12 @@ import fetch from 'node-fetch';
 // Load environment variables
 dotenv.config();
 
-// Check for Supabase credentials
+// Extract Supabase credentials
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Log essential environment variable status
+// Validate Supabase credentials
 if (!supabaseUrl) {
   console.error('SUPABASE_URL is missing or empty');
 }
@@ -23,8 +23,12 @@ if (!supabaseServiceKey) {
   console.error('SUPABASE_SERVICE_ROLE_KEY is missing or empty');
 }
 
-// Used for debugging only - do not log in production
+// Log essential environment variable status (safe partial info for debugging)
 console.log(`Supabase URL available: ${!!supabaseUrl}`);
+if (supabaseUrl) {
+  console.log(`URL starts with: ${supabaseUrl.substring(0, 10)}...`);
+}
+
 console.log(`Supabase Key available: ${!!supabaseKey}`);
 console.log(`Supabase Service Key available: ${!!supabaseServiceKey}`);
 
