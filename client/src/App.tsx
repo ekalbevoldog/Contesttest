@@ -12,7 +12,7 @@ import BusinessInfo from "@/pages/BusinessInfo";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
-import SupabaseTest from "@/pages/SupabaseTest";
+// SupabaseTest import removed
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -288,8 +288,7 @@ function Router() {
             {/* Redirect exploration path to main onboarding */}
             <Route path="/explore-matches" component={RedirectToOnboarding} />
             
-            {/* Testing routes */}
-            <Route path="/supabase-test" component={SupabaseTest} />
+            {/* Testing routes - disabled */}
             
             {/* Role-specific protected dashboard routes with profile completion check */}
             <ProfileRequiredRoute 

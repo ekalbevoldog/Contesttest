@@ -421,17 +421,9 @@ export default function Onboarding() {
   
   // Function to sync step changes via REST API
   const syncStepChange = async (step: OnboardingStep) => {
-    if (!sessionId) return;
-    
-    try {
-      console.log('Syncing step change via API:', step);
-      // Make REST API call to update step
-      const response = await apiRequest('POST', `/api/session/${sessionId}/step`, { step });
-      console.log('Step sync response:', response.ok ? 'success' : 'failed');
-    } catch (error) {
-      console.error('Error syncing step via API:', error);
-      // Continue regardless of error - don't block the UI
-    }
+    console.log('DISABLED: Would sync step change via API:', step);
+    // Completely disabled for debugging
+    return;
   };
   
   // Effect to fetch and sync data from the server when needed
@@ -1155,7 +1147,7 @@ export default function Onboarding() {
                       name="userType"
                       value="athlete"
                       checked={formData.userType === "athlete"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "athlete")}
                       title="I'm an Athlete"
                       description="Looking for sponsorships and brand partnerships"
                       icon={<Dumbbell className="h-5 w-5 mr-2" />}
@@ -1165,7 +1157,7 @@ export default function Onboarding() {
                       name="userType"
                       value="business"
                       checked={formData.userType === "business"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "business")}
                       title="I'm a Business"
                       description="Looking to partner with athletes"
                       icon={<Building className="h-5 w-5 mr-2" />}
