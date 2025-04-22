@@ -90,16 +90,13 @@ async function tableExists(tableName: string): Promise<boolean> {
   }
 }
 
-// Function to execute SQL using Supabase's REST API
+// Function to execute SQL using the existing db connection
 async function executeSql(sql: string): Promise<boolean> {
   try {
-    console.log('Executing SQL statement via Supabase REST API');
+    console.log('Executing SQL statement');
     
     // Log the first 50 characters of the SQL statement for debugging
     console.log('SQL statement (preview):', sql.substring(0, 50) + '...');
-    
-    // Supabase doesn't have a direct SQL execution endpoint in their JS client
-    // We have to use the appropriate endpoints based on what we're trying to do
     
     // For table creation, we'll check if the table exists first before attempting to create it
     if (sql.trim().toUpperCase().startsWith('CREATE TABLE')) {
@@ -114,11 +111,19 @@ async function executeSql(sql: string): Promise<boolean> {
       }
     }
     
-    // For now, we'll assume success and rely on the table check to verify
-    // In a production environment, you would want to execute the SQL directly
-    // or use an appropriate migration tool
-    
-    return true;
+    // Execute using the existing pool from db.ts
+    try {
+      // Import the pool from db.ts
+      const { pool } = await import('./db');
+      
+      // Execute SQL
+      await pool.query(sql);
+      console.log('SQL statement executed successfully');
+      return true;
+    } catch (dbError) {
+      console.error('Error executing SQL via database client:', dbError instanceof Error ? dbError.message : String(dbError));
+      return false;
+    }
   } catch (error) {
     console.error(`Error executing SQL:`, error);
     return false;
@@ -305,8 +310,40 @@ export async function initializeSupabaseTables() {
       return;
     }
     
-    // Try to create core tables directly using the Supabase API
-    console.log('Some or all core tables missing, creating them...');
+    // Try to execute the migration SQL if it exists
+    if (MIGRATION_SQL && process.env.DATABASE_URL) {
+      console.log('Running migration from SQL file...');
+      
+      // Execute each SQL statement separately
+      for (const statement of SQL_STATEMENTS) {
+        if (statement.trim()) {
+          await executeSql(statement);
+        }
+      }
+      
+      // Verify the tables were created
+      const tablesAfterMigration = {
+        sessions: await tableExists('sessions'),
+        users: await tableExists('users'),
+        athleteProfiles: await tableExists('athlete_profiles'),
+        businessProfiles: await tableExists('business_profiles')
+      };
+      
+      console.log('Tables after migration:', tablesAfterMigration);
+      
+      if (tablesAfterMigration.sessions && tablesAfterMigration.users && 
+          tablesAfterMigration.athleteProfiles && tablesAfterMigration.businessProfiles) {
+        console.log('All tables created successfully via SQL migration');
+        return;
+      } else {
+        console.log('Some tables not created via SQL migration, falling back to API method');
+      }
+    } else {
+      console.log('No migration SQL available or DATABASE_URL not set, using API method');
+    }
+    
+    // Fallback: Try to create core tables directly using the Supabase API
+    console.log('Using API method to create tables...');
     await createCoreTablesDirectly();
     
     console.log('Table initialization complete');
