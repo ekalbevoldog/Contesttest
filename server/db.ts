@@ -1,26 +1,14 @@
 
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from 'ws';
+import { createClient } from '@supabase/supabase-js';
+import { supabase, supabaseAdmin } from './supabase';
+import dotenv from 'dotenv';
 
-// Mock schema to prevent issues with imports
-const schema = {};
+// Load environment variables
+dotenv.config();
 
-// Configure Neon to use WebSockets for serverless environments
-neonConfig.webSocketConstructor = ws;
-
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL environment variable is not set");
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error("DATABASE_URL must be set");
-  }
-}
-
-// Create a connection pool
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-// Initialize Drizzle with the connection pool - without schema to avoid issues
-export const db = drizzle(pool);
+// Export Supabase client for database operations
+export const db = supabase;
+export const adminDb = supabaseAdmin;
 
 // Export a function to check the database connection
 export async function testConnection() {
