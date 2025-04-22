@@ -231,6 +231,107 @@ export const createAthleteProfile = async (profileData: any) => {
   return data;
 };
 
+export const createBusinessProfile = async (profileData: any) => {
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .insert(profileData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating business profile:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const getAthleteProfile = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('athlete_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 is the "not found" error
+    console.error('Error fetching athlete profile:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const getBusinessProfile = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 is the "not found" error
+    console.error('Error fetching business profile:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const updateAthleteProfile = async (userId: string, profileData: any) => {
+  const { data, error } = await supabase
+    .from('athlete_profiles')
+    .update(profileData)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating athlete profile:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const updateBusinessProfile = async (userId: string, profileData: any) => {
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .update(profileData)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating business profile:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const checkUserProfile = async (userId: string, role: string) => {
+  try {
+    if (role === 'athlete') {
+      const profile = await getAthleteProfile(userId);
+      return !!profile;
+    }
+    
+    if (role === 'business') {
+      const profile = await getBusinessProfile(userId);
+      return !!profile;
+    }
+    
+    // For admin and compliance roles, they don't have separate profiles
+    if (role === 'admin' || role === 'compliance') {
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error checking user profile:', error);
+    return false;
+  }
+};
+
 // Test function to verify connection to Supabase
 export const testSupabaseConnection = async () => {
   try {

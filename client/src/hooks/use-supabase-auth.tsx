@@ -46,6 +46,48 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setIsSupabaseInitialized(true);
   }, []);
 
+  // Function to refresh the user's profile data
+  const refreshProfile = async () => {
+    if (!user || !user.id) return;
+    
+    try {
+      setIsLoading(true);
+      // Get the basic user information
+      const userData = await getCurrentUser();
+      
+      if (!userData) return;
+      
+      // Set user session data
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        setSession(data.session);
+      }
+      
+      // Set user data based on what's available
+      if (userData.auth) {
+        setUser(userData.auth);
+      } else if (userData.user) {
+        setUser(userData.user);
+      }
+      
+      // Set profile data if available
+      if (userData.profile) {
+        setUserData(userData.profile);
+      }
+      
+      // Check if the user has completed their profile
+      const userRole = userData.profile?.role || userData.user?.role || userData.auth?.role;
+      if (userRole && user.id) {
+        const hasProfile = await checkUserProfile(user.id, userRole);
+        setHasCompletedProfile(hasProfile);
+      }
+    } catch (error) {
+      console.error("Error refreshing user profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Initial session check - only run after Supabase is initialized
   useEffect(() => {
     if (!isSupabaseInitialized || !supabase) return;
@@ -63,15 +105,26 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             setSession(data.session);
           }
           
+          // Set up user data
+          let currentUser = null;
           if (userData.auth) {
+            currentUser = userData.auth;
             setUser(userData.auth);
           } else if (userData.user) {
             // Different response structure depending on which path succeeded
+            currentUser = userData.user;
             setUser(userData.user);
           }
           
           if (userData.profile) {
             setUserData(userData.profile);
+          }
+          
+          // Check if profile is complete
+          if (currentUser && currentUser.id) {
+            const userRole = userData.profile?.role || currentUser.role || 'visitor';
+            const hasProfile = await checkUserProfile(currentUser.id, userRole);
+            setHasCompletedProfile(hasProfile);
           }
         }
       } catch (error) {
@@ -161,7 +214,21 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         description: 'You have been logged in successfully.',
       });
       
-      return { error: null };
+      // After successful login, check user data
+      let userData = null;
+      
+      if (loginData.user) {
+        userData = loginData.user;
+      } else if (loginData.session?.user) {
+        userData = loginData.session.user;
+      } else if (loginData.data?.user) {
+        userData = loginData.data.user;
+      }
+      
+      // Refresh profile data to ensure we have the latest
+      await refreshProfile();
+      
+      return { error: null, user: userData as EnhancedUser };
     } catch (e: any) {
       toast({
         title: 'Login failed',
@@ -248,11 +315,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         isLoading,
+        hasCompletedProfile,
         signIn,
         signUp,
         signOut,
         userData,
-        setUserData
+        setUserData,
+        refreshProfile
       }}
     >
       {children}

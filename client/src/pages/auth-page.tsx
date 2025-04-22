@@ -48,15 +48,36 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading, signIn, signUp } = useSupabaseAuth();
+  const { user, isLoading, signIn, signUp, hasCompletedProfile } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Redirect if already logged in
+  // Redirect if already logged in based on role and profile completion status
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+    
+    // We have a logged-in user, redirect based on role and profile completion
+    const userRole = user.role || 'visitor';
+    
+    if (userRole === 'athlete') {
+      if (hasCompletedProfile) {
+        navigate('/athlete/dashboard');
+      } else {
+        navigate('/athlete-onboarding');
+      }
+    } else if (userRole === 'business') {
+      if (hasCompletedProfile) {
+        navigate('/business/dashboard');
+      } else {
+        navigate('/business-onboarding');
+      }
+    } else if (userRole === 'compliance') {
+      navigate('/compliance/dashboard');
+    } else if (userRole === 'admin') {
+      navigate('/admin/dashboard');
+    } else {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, hasCompletedProfile]);
   
   // Login form
   const loginForm = useForm<LoginFormValues>({
