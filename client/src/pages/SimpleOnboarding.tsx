@@ -25,7 +25,8 @@ import {
   Users,
   Dumbbell,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  RefreshCw
 } from "lucide-react";
 
 // Import UI components
@@ -411,7 +412,7 @@ export default function SimpleOnboarding() {
     console.log('WebSocket connection status changed to:', connectionStatus);
   }, [connectionStatus]);
   
-  // Fetch a new session ID when component mounts
+  // Fetch a new session ID and restore session data when component mounts
   useEffect(() => {
     const getSessionId = async () => {
       try {
@@ -422,10 +423,46 @@ export default function SimpleOnboarding() {
           if (data.success && data.sessionId) {
             setSessionId(data.sessionId);
             console.log("Server session created:", data.sessionId);
+            
+            // Try to restore saved form data from session
+            const sessionResponse = await fetch(`/api/session/${data.sessionId}`);
+            const sessionData = await sessionResponse.json();
+            
+            if (sessionData.success && sessionData.data) {
+              // If session has saved form data, restore it
+              if (sessionData.data.formData) {
+                console.log("Restoring saved form data from session:", sessionData.data.formData);
+                setFormData(prevData => ({
+                  ...prevData,
+                  ...sessionData.data.formData
+                }));
+                
+                toast({
+                  title: "Session Restored",
+                  description: "Your previous form data has been restored",
+                });
+              }
+              
+              // If session has a saved current step, restore it
+              if (sessionData.data.currentStep) {
+                console.log("Restoring saved step from session:", sessionData.data.currentStep);
+                setCurrentStep(sessionData.data.currentStep);
+              }
+              
+              // If session has a saved user type, restore it
+              if (sessionData.data.userType) {
+                console.log("Restoring saved user type from session:", sessionData.data.userType);
+                setFormData(prevData => ({
+                  ...prevData,
+                  userType: sessionData.data.userType as "athlete" | "business" | ""
+                }));
+              }
+            }
+            
             return;
           }
         } catch (serverError) {
-          console.warn("Server session creation failed:", serverError);
+          console.warn("Server session creation or restoration failed:", serverError);
         }
         
         // If server approach fails, generate a local ID
@@ -720,12 +757,44 @@ export default function SimpleOnboarding() {
         data: dataToSync
       });
       
-      console.log('Synced form data via WebSocket');
+      console.log('Synced form data via WebSocket:', dataToSync);
     } else {
       console.log('WebSocket not connected, skipping form data sync');
     }
   };
 
+  // Function to sync the entire form state
+  const syncFullFormState = () => {
+    if (sessionId && connectionStatus === 'open') {
+      console.log('Syncing full form state to server...');
+      // Send the complete form data via WebSocket
+      sendMessage({
+        type: 'profile_update',
+        sessionId: sessionId,
+        data: formData
+      });
+      
+      // Also sync the current step
+      sendMessage({
+        type: 'step_change',
+        sessionId: sessionId,
+        step: currentStep
+      });
+      
+      toast({
+        title: "Data Synchronized",
+        description: "Your form data has been fully synchronized across devices",
+      });
+    } else {
+      console.log('WebSocket not connected, cannot sync full form state');
+      toast({
+        title: "Connection Issue",
+        description: "Unable to synchronize data - check your connection",
+        variant: "destructive"
+      });
+    }
+  };
+  
   // Sync step changes with WebSocket
   const syncStepChange = (step: OnboardingStep) => {
     if (sessionId && connectionStatus === 'open') {
@@ -880,8 +949,8 @@ export default function SimpleOnboarding() {
       // Sync step change with WebSocket
       syncStepChange(nextStep);
       
-      // Sync form data changes with WebSocket
-      syncFormDataChanges();
+      // Sync full form state with WebSocket
+      syncFullFormState();
     }
   };
   
@@ -2593,8 +2662,38 @@ export default function SimpleOnboarding() {
           >
             {renderStepContent()}
             
+            {/* Connection status and sync button */}
+            <div className="mt-4 flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-2">
+              <div className="flex items-center space-x-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${
+                  connectionStatus === 'open' 
+                    ? 'bg-green-500 animate-pulse' 
+                    : connectionStatus === 'connecting' 
+                      ? 'bg-yellow-500 animate-pulse' 
+                      : 'bg-red-500'
+                }`} />
+                <span>{
+                  connectionStatus === 'open' 
+                    ? 'Connected - Data syncing active' 
+                    : connectionStatus === 'connecting' 
+                      ? 'Connecting...' 
+                      : 'Disconnected - Working in offline mode'
+                }</span>
+              </div>
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={syncFullFormState}
+                disabled={connectionStatus !== 'open'}
+                className="flex items-center space-x-1"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Sync Now
+              </Button>
+            </div>
+
             {/* Navigation buttons */}
-            <div className="mt-8 flex justify-between">
+            <div className="mt-4 flex justify-between">
               <Button
                 variant="outline"
                 onClick={handleBack}
