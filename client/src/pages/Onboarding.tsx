@@ -384,8 +384,10 @@ export default function Onboarding() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   
-  // Initialize WebSocket connection with the session ID
-  const { lastMessage, sendMessage, connectionStatus } = useWebSocket(sessionId);
+  // Temporarily disable WebSocket for debugging
+  const connectionStatus = 'closed' as const;
+  const lastMessage = null;
+  const sendMessage = () => console.log("WebSocket disabled for debugging");
 
   // Function to manually sync form data through WebSocket
   const syncFormData = () => {
