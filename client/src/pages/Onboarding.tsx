@@ -12,6 +12,8 @@ import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { createAthleteProfile, createBusinessProfile } from "@/lib/supabase-client";
 import { 
   DollarSign, 
   MapPin, 
