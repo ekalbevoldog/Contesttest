@@ -11,7 +11,8 @@ import AthleteProfileForm from "./AthleteProfileForm";
 import BusinessProfileForm from "./BusinessProfileForm";
 import CompactMatchResults from "./CompactMatchResults";
 import { Send } from "lucide-react";
-import { useWebSocket } from "@/hooks/use-websocket";
+// WebSocket connection removed in favor of REST API
+// import { useWebSocket } from "@/hooks/use-websocket";
 
 type MessageType = {
   id: string;
@@ -35,28 +36,17 @@ export default function ChatInterface() {
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
-  // Set up WebSocket connection
-  const { lastMessage, sendMessage, connectionStatus } = useWebSocket(session);
+  // Using REST API instead of WebSocket
+  const connectionStatus = "open"; // Simulate always connected
 
 useEffect(() => {
   if (session) {
-    // Register session with WebSocket
-    sendMessage({
-      type: 'register',
-      sessionId: session
-    });
-
-    // Start presence heartbeat
-    const heartbeat = setInterval(() => {
-      sendMessage({
-        type: 'presence',
-        sessionId: session
-      });
-    }, 30000);
-
-    return () => clearInterval(heartbeat);
+    // Using REST API instead of WebSocket for registration
+    console.log("Session created:", session);
+    
+    // No heartbeat needed with REST API
   }
-}, [session, sendMessage]);
+}, [session]);
 
 const handleFileUpload = async (files: FileList) => {
   // In a real implementation, upload files to storage and get URLs
@@ -68,15 +58,31 @@ const handleFileUpload = async (files: FileList) => {
     size: file.size
   }));
 
-  sendMessage({
-    type: 'message',
-    sessionId: session,
-    role: 'user',
-    content: 'Sent attachments',
-    metadata: {
+  // Using the REST API instead of WebSocket for file uploads
+  try {
+    await apiRequest("POST", "/api/chat/message", {
+      message: 'Sent attachments',
+      sessionId: session,
       attachments
-    }
-  });
+    });
+    
+    // Add a placeholder message for now
+    const userMessage: MessageType = {
+      id: Date.now().toString(),
+      type: "user",
+      content: "Sent attachments",
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+  } catch (error) {
+    console.error("Error uploading files:", error);
+    toast({
+      title: "Upload Failed",
+      description: "Could not upload files. Please try again.",
+      variant: "destructive"
+    });
+  }
 };
   
   // Initialize session and welcome message
@@ -318,46 +324,51 @@ const handleFileUpload = async (files: FileList) => {
     inputRef.current?.focus();
   }, []);
   
-  // Handle incoming WebSocket messages
+  // Check for matches - polling instead of WebSocket
   useEffect(() => {
-    if (lastMessage?.type === 'match') {
-      toast({
-        title: "New Match Found!",
-        description: lastMessage.message,
-        variant: "default",
-      });
+    // Implement polling for matches if needed
+    // For now, we'll rely on the test notification API and 
+    // regular chat interaction to receive matches
+    
+    // A real implementation would poll for matches:
+    /*
+    const checkForMatches = async () => {
+      if (!session) return;
       
-      // Add the match notification as a message
-      if (lastMessage.matchData) {
-        const matchMessage: MessageType = {
-          id: Date.now().toString(),
-          type: 'assistant',
-          content: "🎉 Great news! We've found a new partnership match for you! This opportunity was just identified in real-time.",
-          timestamp: new Date(),
-          showMatchResults: true,
-          matchData: {
-            ...lastMessage.matchData,
-            // Flag to indicate this is a real-time match from WebSocket
-            isNewMatch: true 
-          }
-        };
+      try {
+        const response = await apiRequest("GET", `/api/matches/check?sessionId=${session}`);
+        const data = await response.json();
         
-        setMessages(prev => [...prev, matchMessage]);
-        
-        // Scroll to the bottom after adding the message
-        setTimeout(() => {
-          if (messagesEndRef.current) {
-            const container = messagesEndRef.current.parentElement?.parentElement;
-            if (container) {
-              container.scrollTop = container.scrollHeight;
-            } else {
-              messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (data.hasNewMatch && data.matchData) {
+          toast({
+            title: "New Match Found!",
+            description: data.message || "We've found a new match for you!",
+            variant: "default",
+          });
+          
+          const matchMessage: MessageType = {
+            id: Date.now().toString(),
+            type: 'assistant',
+            content: "🎉 Great news! We've found a new partnership match for you! This opportunity was just identified in real-time.",
+            timestamp: new Date(),
+            showMatchResults: true,
+            matchData: {
+              ...data.matchData,
+              isNewMatch: true 
             }
-          }
-        }, 100);
+          };
+          
+          setMessages(prev => [...prev, matchMessage]);
+        }
+      } catch (error) {
+        console.error("Error checking for matches:", error);
       }
-    }
-  }, [lastMessage, toast]);
+    };
+    
+    const matchInterval = setInterval(checkForMatches, 30000);
+    return () => clearInterval(matchInterval);
+    */
+  }, [toast, session]);
   
   return (
     <div className="flex flex-col bg-zinc-900 h-full text-white">
