@@ -12,7 +12,7 @@ if (!process.env.SUPABASE_URL) {
 }
 
 // Get the connection string from Supabase config
-const connectionString = process.env.SUPABASE_URL;
+const connectionString = process.env.SUPABASE_URL + '/postgres';
 
 // Create a Postgres client
 const client = postgres(connectionString, { max: 1 });
