@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { supabase, testSupabaseConnection } from '@/lib/supabase-client';
+import { supabase, testSupabaseConnection, initializeSupabase } from '@/lib/supabase-client';
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 
 export function SupabaseConnectionTest() {
@@ -46,8 +46,33 @@ export function SupabaseConnectionTest() {
   };
 
   useEffect(() => {
-    // Check connection when component mounts
-    checkConnection();
+    // Initialize Supabase first, then check connection when component mounts
+    async function initialize() {
+      try {
+        setIsLoading(true);
+        setConnectionStatus('loading');
+        setErrorMessage(null);
+        
+        // First initialize Supabase with credentials from the server
+        const initSuccess = await initializeSupabase();
+        if (!initSuccess) {
+          setConnectionStatus('error');
+          setErrorMessage('Failed to initialize Supabase. Could not fetch configuration from server.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Then test connection
+        await checkConnection();
+      } catch (error) {
+        console.error('Error during initialization:', error);
+        setConnectionStatus('error');
+        setErrorMessage(error instanceof Error ? error.message : 'Unknown error during initialization');
+        setIsLoading(false);
+      }
+    }
+    
+    initialize();
   }, []);
 
   return (
@@ -94,7 +119,20 @@ export function SupabaseConnectionTest() {
       </CardContent>
       <CardFooter>
         <Button 
-          onClick={checkConnection} 
+          onClick={async () => {
+            setIsLoading(true);
+            setConnectionStatus('loading');
+            setErrorMessage(null);
+            // Reinitialize Supabase and then check connection
+            const initSuccess = await initializeSupabase();
+            if (initSuccess) {
+              await checkConnection();
+            } else {
+              setConnectionStatus('error');
+              setErrorMessage('Failed to initialize Supabase. Could not fetch configuration from server.');
+              setIsLoading(false);
+            }
+          }}
           disabled={isLoading}
           className="w-full"
         >

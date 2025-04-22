@@ -26,31 +26,15 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [location, navigate] = useLocation();
 
-  // Initialize Supabase
+  // Supabase is now initialized in main.tsx before the app renders
   useEffect(() => {
-    async function initSupabase() {
-      try {
-        const success = await initializeSupabase();
-        setIsSupabaseInitialized(success);
-        if (!success) {
-          toast({
-            title: 'Connection Error',
-            description: 'Failed to initialize Supabase connection. Please refresh and try again.',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        console.error('Failed to initialize Supabase:', error);
-        setIsSupabaseInitialized(false);
-      }
-    }
-    
-    initSupabase();
-  }, [toast]);
+    // Mark as initialized since we know Supabase is already initialized
+    setIsSupabaseInitialized(true);
+  }, []);
 
   // Initial session check - only run after Supabase is initialized
   useEffect(() => {
-    if (!isSupabaseInitialized) return;
+    if (!isSupabaseInitialized || !supabase) return;
     
     const fetchSession = async () => {
       try {
@@ -86,26 +70,31 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           setSession(newSession);
           setUser(newSession.user);
           
-          // Fetch additional user data
-          const { data: profileData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('auth_id', newSession.user.id)
-            .single();
-            
-          if (profileData) {
-            setUserData(profileData);
-          }
-          
-          // Redirect based on user type
-          if (profileData?.role === 'athlete') {
-            navigate('/athlete/dashboard');
-          } else if (profileData?.role === 'business') {
-            navigate('/business/dashboard');
-          } else if (profileData?.role === 'compliance') {
-            navigate('/compliance/dashboard');
-          } else if (profileData?.role === 'admin') {
-            navigate('/admin/dashboard');
+          try {
+            // Fetch additional user data
+            const { data: profileData } = await supabase
+              .from('users')
+              .select('*')
+              .eq('auth_id', newSession.user.id)
+              .single();
+              
+            if (profileData) {
+              setUserData(profileData);
+              
+              // Redirect based on user type
+              if (profileData?.role === 'athlete') {
+                navigate('/athlete/dashboard');
+              } else if (profileData?.role === 'business') {
+                navigate('/business/dashboard');
+              } else if (profileData?.role === 'compliance') {
+                navigate('/compliance/dashboard');
+              } else if (profileData?.role === 'admin') {
+                navigate('/admin/dashboard');
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching user profile:", err);
+            // Don't redirect if we couldn't get profile data
           }
         } else if (event === 'SIGNED_OUT') {
           setSession(null);
@@ -117,11 +106,22 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
-      authListener.subscription.unsubscribe();
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, [navigate, isSupabaseInitialized]);
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) {
+      toast({
+        title: 'Connection Error',
+        description: 'Supabase is not initialized. Please refresh the page and try again.',
+        variant: 'destructive',
+      });
+      return { error: new Error('Supabase not initialized') };
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -154,6 +154,15 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userData: any) => {
+    if (!supabase) {
+      toast({
+        title: 'Connection Error',
+        description: 'Supabase is not initialized. Please refresh the page and try again.',
+        variant: 'destructive',
+      });
+      return { error: new Error('Supabase not initialized'), user: null };
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -205,15 +214,33 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setUserData(null);
-    toast({
-      title: 'Logged out',
-      description: 'You have been logged out successfully.',
-    });
-    navigate('/');
+    if (!supabase) {
+      toast({
+        title: 'Connection Error',
+        description: 'Supabase is not initialized. Please refresh the page and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setUserData(null);
+      toast({
+        title: 'Logged out',
+        description: 'You have been logged out successfully.',
+      });
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to sign out. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

@@ -1,39 +1,55 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// Instead of using environment variables directly, we'll initialize with empty values
-// and then fetch the actual configuration from our server
+// Default placeholder values
 let supabaseUrl = '';
 let supabaseKey = '';
 
-// Create the Supabase client with placeholder values first
-export let supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    storageKey: 'nil-connect-auth'
-  }
-});
+// Create the Supabase client with placeholder values first - will be updated after initialization
+export let supabase: SupabaseClient;
+
+// We'll use a flag to track initialization state
+let isInitialized = false;
 
 // Function to initialize the Supabase client with config from our server
-export async function initializeSupabase() {
+export async function initializeSupabase(): Promise<boolean> {
+  // If already initialized, just return true
+  if (isInitialized && supabase) {
+    console.log('[Client] Supabase already initialized.');
+    return true;
+  }
+
   try {
     console.log('[Client] Fetching Supabase configuration from server...');
-    const response = await fetch('/api/config/supabase');
+    
+    // Make sure we have a proper fetch call with error handling
+    const response = await fetch('/api/config/supabase', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      },
+    });
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch Supabase config: ${response.status}`);
+      const errorMessage = await response.text();
+      throw new Error(`Failed to fetch Supabase config (${response.status}): ${errorMessage}`);
     }
     
     const config = await response.json();
+    
+    // Validate configuration
+    if (!config || !config.url || !config.key) {
+      throw new Error('Invalid Supabase configuration received from server');
+    }
+    
     supabaseUrl = config.url;
     supabaseKey = config.key;
     
     console.log(`[Client] Supabase URL available: ${!!supabaseUrl}`);
-    console.log(`[Client] Supabase URL: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
+    console.log(`[Client] Supabase URL prefix: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
     console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
-    console.log(`[Client] Supabase Key length: ${supabaseKey ? supabaseKey.length : 0}`);
     
-    // Re-initialize the Supabase client with the fetched configuration
+    // Initialize the Supabase client
     supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: true,
@@ -42,10 +58,20 @@ export async function initializeSupabase() {
       }
     });
     
+    // Test the connection
+    const { error } = await supabase.from('users').select('count').limit(1);
+    if (error) {
+      console.error('[Client] Could not connect to Supabase:', error);
+      throw new Error(`Supabase connection failed: ${error.message}`);
+    }
+    
+    console.log('[Client] Supabase initialized successfully');
+    isInitialized = true;
     return true;
   } catch (error) {
     console.error('[Client] Error initializing Supabase:', error);
-    return false;
+    // Re-throw the error to propagate it to the caller for proper error handling
+    throw error;
   }
 }
 

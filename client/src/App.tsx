@@ -13,6 +13,7 @@ import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import SupabaseTest from "@/pages/SupabaseTest";
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
