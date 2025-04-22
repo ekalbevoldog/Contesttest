@@ -235,6 +235,13 @@ const LoadingFallback = () => (
   </div>
 );
 
+const routes = {
+  '/': Home,
+  '/onboarding': Onboarding,
+  '/auth': SignIn,
+  // Add other routes as needed
+};
+
 // Simple redirect component
 const RedirectToOnboarding = () => {
   const [, navigate] = useLocation();
