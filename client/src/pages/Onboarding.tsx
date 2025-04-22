@@ -390,43 +390,51 @@ export default function Onboarding() {
   const lastMessage = null;
   const sendMessage = () => console.log("WebSocket disabled for debugging");
 
-  // Function to manually sync form data through WebSocket (disabled for debugging)
-  const syncFormData = () => {
+  // Function to sync form data via REST API
+  const syncFormData = async () => {
     if (!sessionId) return;
     
     setIsSyncing(true);
     
     try {
-      // Temporarily disabled for debugging
-      console.log("Would sync data:", {
-        type: 'profile_update',
-        sessionId,
+      console.log("Syncing form data via API:", formData);
+      // Make REST API call to update form data
+      const response = await apiRequest('POST', `/api/session/${sessionId}/data`, { 
+        userType: formData.userType,
         data: formData
       });
       
-      setTimeout(() => {
-        setIsSyncing(false);
-        toast({
-          title: "Sync Simulation",
-          description: "WebSocket sync simulation completed (disabled for debugging)",
-        });
-      }, 500);
-    } catch (error) {
-      console.error('Error in sync simulation:', error);
+      console.log('Form data sync response:', response.ok ? 'success' : 'failed');
+      
       setIsSyncing(false);
       toast({
-        title: "Sync Simulation Failed",
-        description: "Simulation failed (WebSocket disabled for debugging)",
+        title: "Data Synchronized",
+        description: "Your progress has been saved",
+      });
+    } catch (error) {
+      console.error('Error syncing form data via API:', error);
+      setIsSyncing(false);
+      toast({
+        title: "Sync Failed",
+        description: "Could not save your progress, but you can continue",
         variant: "destructive"
       });
     }
   };
   
-  // Function to sync step changes (disabled for debugging)
-  const syncStepChange = (step: OnboardingStep) => {
-    // Function completely bypassed - no WebSocket or API calls
-    console.log('Step changed to:', step);
-    // No syncing with server to avoid any errors
+  // Function to sync step changes via REST API
+  const syncStepChange = async (step: OnboardingStep) => {
+    if (!sessionId) return;
+    
+    try {
+      console.log('Syncing step change via API:', step);
+      // Make REST API call to update step
+      const response = await apiRequest('POST', `/api/session/${sessionId}/step`, { step });
+      console.log('Step sync response:', response.ok ? 'success' : 'failed');
+    } catch (error) {
+      console.error('Error syncing step via API:', error);
+      // Continue regardless of error - don't block the UI
+    }
   };
   
   // Handle incoming WebSocket messages
@@ -2187,86 +2195,7 @@ export default function Onboarding() {
           </AnimatedFormTransition>
         );
 
-      // Common steps
-      case "user-type":
-        return (
-          <AnimatedFormTransition step={currentStep} direction="forward">
-            <div className="space-y-8 relative max-w-3xl mx-auto">
-              
-              <StaggerContainer>
-                <StaggerItem>
-                  <motion.h2 
-                    className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    Welcome to Contested!
-                  </motion.h2>
-                  <motion.h3
-                    className="text-xl font-medium mb-4 text-white"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.8 }}
-                  >
-                    I'm here to help you get started
-                  </motion.h3>
-                  <motion.p 
-                    className="text-zinc-400 mb-8"
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 1 }}
-                  >
-                    Let me guide you through our platform based on your needs. First, tell me which best describes you:
-                  </motion.p>
-                </StaggerItem>
-                
-                <StaggerItem
-                  customVariants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: {
-                      opacity: 1,
-                      y: 0,
-                      transition: {
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 24,
-                        delay: 0.4,
-                      },
-                    },
-                  }}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                    <AnimatedSelectionField
-                      type="radio"
-                      name="userType"
-                      selectedValues={formData.userType}
-                      onChange={(e) => handleRadioChange(e, e.target.value)}
-                      options={[
-                        {
-                          value: "business",
-                          label: "I'm a Business",
-                          description: "Looking to partner with college athletes for marketing and promotion",
-                          icon: <Building className="h-12 w-12 text-amber-500" />
-                        },
-                        {
-                          value: "athlete",
-                          label: "I'm an Athlete",
-                          description: "Looking to monetize my brand and find business partnerships", 
-                          icon: <Trophy className="h-12 w-12 text-red-500" />
-                        }
-                      ]}
-                      cardStyle={true}
-                      required={true}
-                      errorMessage={errors.userType}
-                      isTouched={!!errors.userType}
-                    />
-                  </div>
-                </StaggerItem>
-              </StaggerContainer>
-            </div>
-          </AnimatedFormTransition>
-        );
+      // This entire section was a duplicate and has been removed
         
       case "business-type":
         return (
