@@ -12,12 +12,15 @@ if (!process.env.SUPABASE_URL) {
 }
 
 // Get the connection string from Supabase config
-const connectionString = process.env.DATABASE_URL || process.env.SUPABASE_URL;
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
 
 // Create a Postgres client
 const client = postgres(connectionString, { 
   max: 1,
-  ssl: 'require'
+  ssl: { rejectUnauthorized: false }
 });
 
 // Initialize Drizzle with the Postgres client
