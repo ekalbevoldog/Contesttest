@@ -14,6 +14,11 @@ export async function runProfileMigration() {
     
     // Read the SQL file
     const sqlFilePath = path.join(__dirname, 'create-profile-tables.sql');
+    if (!fs.existsSync(sqlFilePath)) {
+      console.error(`SQL file not found at path: ${sqlFilePath}`);
+      return false;
+    }
+    
     const sqlContent = fs.readFileSync(sqlFilePath, 'utf8');
     
     // Split the SQL statements
@@ -22,11 +27,18 @@ export async function runProfileMigration() {
       .filter(statement => statement.trim().length > 0)
       .map(statement => statement.trim() + ';');
       
-    // Execute each statement
+    console.log('Successfully loaded migration file');
+    
+    // Execute each statement using the Supabase admin client
     for (const statement of statements) {
       try {
-        // Use Supabase to execute raw SQL
-        const { data, error } = await supabaseAdmin.rpc('run_sql', { query: statement });
+        console.log('Executing SQL statement');
+        console.log('SQL statement (preview):', statement.substring(0, 50) + '...');
+        
+        // According to the error message, the parameter should be named 'sql' not 'sql_statement'
+        const { data, error } = await supabaseAdmin.rpc('exec_sql', { 
+          sql: statement 
+        });
         
         if (error) {
           console.error('Error executing SQL statement:', error);
