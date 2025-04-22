@@ -68,7 +68,10 @@ export function setupSupabaseAuth(app: Express) {
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       // Log incoming request body for debugging
+      console.log("\n==== /api/auth/register RECEIVED REQUEST ====");
+      console.log("Request headers:", req.headers);
       console.log("Request body:", req.body);
+      console.log("Request body type:", typeof req.body);
       
       // Extract form data from request
       const { email, password, fullName, role } = req.body;
@@ -96,22 +99,34 @@ export function setupSupabaseAuth(app: Express) {
         return res.status(400).json({ error: 'User already exists' });
       }
       
+      // Prepare user data for insertion
+      const userDataToInsert = {
+        email: email,
+        username: fullName, // We'll use fullName as username since there's no full_name column
+        password: password, // This will be hashed by supabase
+        role: role,
+        created_at: new Date()
+      };
+      
+      console.log('\n==== SUPABASE REGISTRATION DATA ====');
+      console.log('Inserting user data into users table:', userDataToInsert);
+      console.log('Table columns (expected): id, email, username, password, role, created_at');
+      
       // Store user data in our database
       // Using only the columns that exist in the users table
       const { data, error } = await supabase
         .from('users')
-        .insert({
-          email: email,
-          username: fullName, // We'll use fullName as username since there's no full_name column
-          password: password, // This will be hashed by supabase
-          role: role,
-          created_at: new Date()
-        })
+        .insert(userDataToInsert)
         .select()
         .single();
-        
+      
       if (error) {
         console.error('Error storing user data:', error);
+        // Useful debug information
+        console.log('Column error details:', error.details);
+        console.log('Column error hint:', error.hint);
+        console.log('Column error code:', error.code);
+        
         return res.status(500).json({ error: 'Failed to store user data' });
       }
       

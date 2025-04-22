@@ -832,6 +832,11 @@ export default function Onboarding() {
           role: formData.userType // Map userType to role as the server expects
         };
         
+        // Log the complete form data for debugging
+        console.log("==== ONBOARDING FORM DATA COLLECTED ====");
+        console.log("Complete form data:", formData);
+        console.log("Data being sent to API:", userData);
+        
         // Register user with the API
         const userResponse = await apiRequest("POST", "/api/auth/register", userData);
         
