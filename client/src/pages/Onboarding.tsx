@@ -378,6 +378,7 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { signUp, user, refreshProfile } = useSupabaseAuth();
   
   // Handle form data changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -826,64 +827,48 @@ export default function Onboarding() {
       setIsSubmitting(true);
       
       try {
-        // Register user first
-        const userData = {
-          email: formData.email,
-          password: formData.password,
-          fullName: formData.name, // Backend expects fullName, not name
-          role: formData.userType // Map userType to role as the server expects
-        };
-        
         // Log the complete form data for debugging
         console.log("==== ONBOARDING FORM DATA COLLECTED ====");
         console.log("Complete form data:", formData);
-        console.log("Data being sent to API:", userData);
         
-        // Register user with the API
-        const userResponse = await apiRequest("POST", "/api/auth/register", userData);
+        // 1. Use the enhanced signUp function from our auth hook
+        const userData = {
+          fullName: formData.name,
+          role: formData.userType 
+        };
         
-        if (!userResponse.ok) {
-          // Handle error response
-          let errorMessage = "Failed to create account";
-          try {
-            const errorData = await userResponse.json();
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          } catch (e) {
-            console.error("Error parsing error response:", e);
-          }
-          throw new Error(errorMessage);
+        console.log("Data being sent to auth API:", {
+          email: formData.email,
+          password: "********", // Don't log the actual password
+          userData
+        });
+        
+        const { error, user: newUser } = await signUp(
+          formData.email, 
+          formData.password, 
+          userData
+        );
+        
+        if (error) {
+          throw new Error(error.message || "Failed to create account");
         }
         
-        // Parse successful response
-        let userResponseData;
-        try {
-          userResponseData = await userResponse.json();
-          console.log("Registration successful:", userResponseData);
-        } catch (error) {
-          console.error("Error parsing success response:", error);
-          throw new Error("Registration succeeded but unable to process server response");
+        if (!newUser || !newUser.id) {
+          throw new Error("Registration succeeded but no user data returned");
         }
         
-        // Extract the session ID from the response
-        const sessionId = userResponseData?.sessionId;
+        console.log("Registration successful:", newUser);
         
-        if (!sessionId) {
-          console.error("Registration response missing sessionId:", userResponseData);
-          throw new Error("No session ID returned from registration");
-        }
-        
-        // Create profile based on selected user type
-        // Make sure to match the exact schema expected by the backend
-        let profileData;
+        // 2. Create profile based on user type
+        let profileResult;
         
         if (formData.userType === "athlete") {
-          // Create athlete profile with required fields from schema.ts
-          profileData = {
+          // Use our enhanced athlete profile creation function
+          profileResult = await createAthleteProfile({
+            userId: newUser.id,
             name: formData.name,
-            userType: formData.userType,
-            sessionId: sessionId,
-            
-            // Required fields for athlete_profiles table
+            email: formData.email,
+            phone: formData.phone,
             school: formData.school,
             division: formData.division,
             sport: formData.sport,
@@ -891,81 +876,50 @@ export default function Onboarding() {
             contentStyle: formData.contentStyle || "Authentic and engaging content that resonates with my audience",
             compensationGoals: formData.compensationGoals || "Fair compensation that reflects my value and engagement",
             
-            // Optional fields
-            email: formData.email,
-            phone: formData.phone,
+            // Additional athletic data
             birthdate: formData.birthdate,
             gender: formData.gender,
             bio: formData.bio,
-            
-            // Athlete category
             athleteCategory: formData.athleteCategory,
-            
-            // Academic Information
             graduationYear: formData.graduationYear,
             major: formData.major,
             gpa: formData.gpa,
             academicHonors: formData.academicHonors,
-            
-            // Athletic Information
             position: formData.position,
             sportAchievements: formData.sportAchievements,
             
-            // Social and content information
-            socialHandles: JSON.stringify(formData.socialHandles),
+            // Convert objects to strings for database storage
+            socialHandles: JSON.stringify(formData.socialHandles || {}),
             averageEngagementRate: formData.averageEngagementRate,
-            contentTypes: JSON.stringify(formData.contentTypes),
-            preferredProductCategories: JSON.stringify(formData.preferredProductCategories),
-            personalValues: JSON.stringify(formData.personalValues),
-            causes: JSON.stringify(formData.causes),
-            
-            // Availability & Requirements
-            availabilityTimeframe: formData.availabilityTimeframe,
+            contentTypes: JSON.stringify(formData.contentTypes || []),
+            preferredProductCategories: JSON.stringify(formData.preferredProductCategories || []),
+            personalValues: JSON.stringify(formData.personalValues || []),
+            causes: JSON.stringify(formData.causes || []),
             minimumCompensation: formData.minimumCompensation,
+            availabilityTimeframe: formData.availabilityTimeframe,
             
             // Eligibility status 
-            eligibilityStatus: "pending", // Will be verified by admin/compliance officer
-            
-            // Store detailed preferences as JSON
-            preferences: JSON.stringify({
-              athleteCategory: formData.athleteCategory,
-              eligibilityDetails: {
-                school: formData.school,
-                sport: formData.sport,
-                division: formData.division
-              },
-              contactInfo: {
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone
-              },
-              socialMedia: formData.socialHandles,
-              brandValues: formData.personalValues,
-              contentPreferences: formData.contentTypes
-            })
-          };
+            eligibilityStatus: "pending" // Will be verified by admin/compliance officer
+          });
         } else {
-          // Create business profile (existing functionality)
-          profileData = {
+          // Use our enhanced business profile creation function
+          profileResult = await createBusinessProfile({
+            userId: newUser.id,
             name: formData.name,
-            userType: formData.userType, // Use the selected user type from form
-            sessionId: sessionId, // Use the session ID from registration
+            email: formData.email,
             
-            // Required by the business schema with minimum length requirements
+            // Format required business fields
             productType: formData.businessType || "product",
             audienceGoals: formData.goalIdentification.length > 0 
               ? formData.goalIdentification.join(", ") 
-              : "Increasing brand awareness and driving sales through authentic athlete partnerships",
-            campaignVibe: "Premium professional brand representation with authentic content creation",
-            values: "Quality, authenticity, trust, and exceptional customer satisfaction for all partnerships",
-            targetSchoolsSports: "All relevant college sports programs that align with our brand values",
+              : "Increasing brand awareness and driving sales",
+            campaignVibe: "Professional brand representation with authentic content",
+            values: "Quality, authenticity, trust, and customer satisfaction",
+            targetSchoolsSports: "All relevant sports programs that align with our brand",
             
-            // Optional fields that still need to be present
-            budget: `$${formData.budgetMin} - $${formData.budgetMax} per month`,
+            // Store detailed business preferences as needed by API
+            budget: `$${formData.budgetMin} - $${formData.budgetMax}`,
             industry: formData.industry,
-            email: formData.email,
-            
-            // Store detailed preferences as JSON
             preferences: JSON.stringify({
               accessRestriction: formData.accessRestriction,
               hasPastPartnership: formData.hasPastPartnership,
@@ -983,34 +937,17 @@ export default function Onboarding() {
                 phone: formData.contactPhone
               }
             })
-          };
+          });
         }
         
-        // Submit profile data
-        const profileResponse = await apiRequest("POST", "/api/profile", profileData);
-        
-        if (!profileResponse.ok) {
-          // Handle error response
-          let errorMessage = `Failed to create ${formData.userType} profile`;
-          try {
-            const errorData = await profileResponse.json();
-            errorMessage = errorData.message || errorData.error || errorMessage;
-            console.error("Profile creation error:", errorData);
-          } catch (e) {
-            console.error("Error parsing profile response:", e);
-          }
-          throw new Error(errorMessage);
+        if (!profileResult || profileResult.error) {
+          throw new Error(profileResult?.error || `Failed to create ${formData.userType} profile`);
         }
         
-        // Parse successful response
-        let profileResponseData;
-        try {
-          profileResponseData = await profileResponse.json();
-          console.log("Profile created successfully:", profileResponseData);
-        } catch (error) {
-          console.error("Error parsing profile success response:", error);
-          // Don't throw here - the profile was created, we just couldn't parse response
-        }
+        console.log("Profile created successfully:", profileResult);
+        
+        // Refresh the profile data in our auth context
+        await refreshProfile();
         
         toast({
           title: "Success!",
@@ -1018,8 +955,14 @@ export default function Onboarding() {
           variant: "default",
         });
         
-        // Redirect to dashboard
-        setLocation("/dashboard");
+        // Redirect to the appropriate dashboard based on user type
+        if (formData.userType === "athlete") {
+          setLocation("/athlete/dashboard");
+        } else if (formData.userType === "business") {
+          setLocation("/business/dashboard");
+        } else {
+          setLocation("/dashboard");
+        }
       } catch (error) {
         console.error("Onboarding error:", error);
         toast({
