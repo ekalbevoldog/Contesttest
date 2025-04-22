@@ -1173,6 +1173,16 @@ export default function Onboarding() {
   
   // Render the current step content
   const renderStepContent = () => {
+    // Display loading indicator while session is being established
+    if (!sessionId) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <RefreshCw className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-zinc-400 mt-4">Initializing your session...</p>
+        </div>
+      );
+    }
+    
     switch (currentStep) {
       // Athlete-specific steps
       case "athlete-category":
@@ -3216,9 +3226,9 @@ export default function Onboarding() {
   
   // Render progress indicator
   const renderProgress = () => {
-    // Only show progress bar after user-type step
-    if (currentStep === "user-type") {
-      return null; // Don't show progress bar on the first step
+    // Don't show progress during loading or on first step
+    if (!sessionId || currentStep === "user-type") {
+      return null; // Don't show progress bar during loading or on the first step
     }
     
     // Different steps based on user type
@@ -3294,8 +3304,8 @@ export default function Onboarding() {
             <form onSubmit={handleSubmit}>
               {renderStepContent()}
               
-              {/* Only render these buttons if we're not already on a page with custom buttons */}
-              {!['athlete-category'].includes(currentStep) && (
+              {/* Only render these buttons if we're not loading and not already on a page with custom buttons */}
+              {sessionId && !['athlete-category'].includes(currentStep) && (
                 <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
                   <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start gap-4">
                     {currentStep !== "user-type" && (
