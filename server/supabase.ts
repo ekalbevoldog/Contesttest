@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
 // Load environment variables
 dotenv.config();
@@ -7,7 +8,9 @@ dotenv.config();
 // Check for Supabase credentials
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Log essential environment variable status
 if (!supabaseUrl) {
   console.error('SUPABASE_URL is missing or empty');
 }
@@ -16,23 +19,41 @@ if (!supabaseKey) {
   console.error('SUPABASE_KEY is missing or empty');
 }
 
-// Used for debugging only - do not log in production
-console.log(`Supabase URL (first few chars): ${supabaseUrl ? supabaseUrl.substring(0, 10) + '...' : 'missing'}`);
-console.log(`Supabase Key length: ${supabaseKey ? supabaseKey.length : 'missing'}`);
+if (!supabaseServiceKey) {
+  console.error('SUPABASE_SERVICE_ROLE_KEY is missing or empty');
+}
 
-// Create the Supabase client
+// Used for debugging only - do not log in production
+console.log(`Supabase URL available: ${!!supabaseUrl}`);
+console.log(`Supabase Key available: ${!!supabaseKey}`);
+console.log(`Supabase Service Key available: ${!!supabaseServiceKey}`);
+
+// Create options with fetch compatibility for Replit environment
+const supabaseOptions = {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true
+  },
+  global: {
+    fetch: fetch as any
+  }
+};
+
+// Create the standard Supabase client with anon key (for normal operations)
 export const supabase = createClient(
   supabaseUrl || '',
   supabaseKey || '',
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true
-    }
-  }
+  supabaseOptions
 );
 
-console.log('Supabase client initialized with provided credentials');
+// Create an admin client with service role key (for admin operations)
+export const supabaseAdmin = createClient(
+  supabaseUrl || '',
+  supabaseServiceKey || '',
+  supabaseOptions
+);
+
+console.log('Supabase clients initialized with provided credentials');
 
 // Test connection
 export const testSupabaseConnection = async () => {

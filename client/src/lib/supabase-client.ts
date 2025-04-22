@@ -1,30 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Get Supabase URL and key from environment variables
-// For client-side, these need to be passed through Vite
-// The server can't directly share environment variables with the client 
-// so we need to set these in the build process
+// For client-side, we need the credentials passed through Vite environment variables
+// The server can't directly share environment variables with the client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
-// Log for debugging - we should see the environment variables being loaded
+// Log for debugging - should see the environment variables being loaded
 console.log(`[Client] Supabase URL available: ${!!supabaseUrl}`);
+console.log(`[Client] Supabase URL: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
 console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
+console.log(`[Client] Supabase Key length: ${supabaseKey ? supabaseKey.length : 0}`);
 
-// If Vite environment variables aren't available yet, we'll use server-provided values
-// Our API will communicate with Supabase regardless, so the client just needs
-// to be able to make API calls to our own server endpoints
-let url = supabaseUrl;
-let key = supabaseKey;
-
-// Create the Supabase client
+// Create the Supabase client with enhanced options for browser environment
 export const supabase = createClient(
-  url || '',
-  key || '', 
+  supabaseUrl || '',
+  supabaseKey || '', 
   {
     auth: {
       autoRefreshToken: true,
-      persistSession: true
+      persistSession: true,
+      storageKey: 'nil-connect-auth'
     }
   }
 );
