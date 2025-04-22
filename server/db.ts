@@ -12,10 +12,13 @@ if (!process.env.SUPABASE_URL) {
 }
 
 // Get the connection string from Supabase config
-const connectionString = process.env.SUPABASE_URL + '/postgres';
+const connectionString = process.env.DATABASE_URL || process.env.SUPABASE_URL;
 
 // Create a Postgres client
-const client = postgres(connectionString, { max: 1 });
+const client = postgres(connectionString, { 
+  max: 1,
+  ssl: 'require'
+});
 
 // Initialize Drizzle with the Postgres client
 export const db = drizzle(client, { schema });
