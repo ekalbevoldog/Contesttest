@@ -874,8 +874,8 @@ export default function Onboarding() {
       // Sync form data too
       if (sessionId) {
         try {
-          // Sync form data via WebSocket
-          sendMessage({
+          // WebSocket sync temporarily disabled for debugging
+          console.log('Would sync form data via WebSocket (disabled):', {
             type: 'profile_update',
             sessionId,
             data: formData
