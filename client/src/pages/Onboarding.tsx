@@ -2195,7 +2195,7 @@ export default function Onboarding() {
           </AnimatedFormTransition>
         );
 
-      // This entire section was a duplicate and has been removed
+      /* This section was a duplicate and has been removed */
         
       case "business-type":
         return (

@@ -10,6 +10,8 @@ const activeSessions: Record<string, {
   id: string;
   createdAt: Date;
   userType?: string;
+  currentStep?: string;
+  data?: any;
 }> = {};
 
 export function registerPublicRoutes(app: express.Express) {
@@ -63,6 +65,49 @@ export function registerPublicRoutes(app: express.Express) {
     }
     
     activeSessions[id].userType = userType;
+    
+    res.json({
+      session: activeSessions[id],
+      success: true
+    });
+  });
+  
+  // Route to update current step
+  app.post('/api/session/:id/step', (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { step } = req.body;
+    
+    if (!activeSessions[id]) {
+      // Create session if it doesn't exist (supports local fallback sessions)
+      activeSessions[id] = {
+        id,
+        createdAt: new Date()
+      };
+    }
+    
+    activeSessions[id].currentStep = step;
+    
+    res.json({
+      session: activeSessions[id],
+      success: true
+    });
+  });
+  
+  // Route to update form data
+  app.post('/api/session/:id/data', (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { userType, data } = req.body;
+    
+    if (!activeSessions[id]) {
+      // Create session if it doesn't exist (supports local fallback sessions)
+      activeSessions[id] = {
+        id,
+        createdAt: new Date()
+      };
+    }
+    
+    activeSessions[id].userType = userType;
+    activeSessions[id].data = data;
     
     res.json({
       session: activeSessions[id],
