@@ -366,51 +366,62 @@ export default function SimpleOnboarding() {
   const { toast } = useToast();
   const [sessionId, setSessionId] = useState<string | null>(null);
   
-  // Initialize WebSocket connection with the session ID
-  const { lastMessage, sendMessage, connectionStatus } = useWebSocket(sessionId);
+  // Using REST API instead of WebSocket
   
-  // Handle incoming WebSocket messages
-  useEffect(() => {
-    if (lastMessage) {
-      console.log('Received WebSocket message:', lastMessage);
+  // Function to sync form data via REST API
+  const syncFormData = async () => {
+    if (!sessionId) return;
+    
+    try {
+      console.log("Syncing form data via API:", formData);
+      // Make REST API call to update form data
+      const response = await fetch(`/api/session/${sessionId}/data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userType: formData.userType,
+          data: formData
+        })
+      });
       
-      // Handle profile update messages
-      if (lastMessage.type === 'profile_update' && lastMessage.data) {
-        try {
-          // Update form data with incoming data
-          setFormData(prevData => ({
-            ...prevData,
-            ...lastMessage.data
-          }));
-          
-          console.log('Form data updated from WebSocket message');
-          
-          // Show toast notification
-          toast({
-            title: "Profile Updated",
-            description: "Your profile has been synchronized across devices",
-          });
-        } catch (error) {
-          console.error('Error processing WebSocket profile update:', error);
-        }
-      }
+      console.log('Form data sync response:', response.ok ? 'success' : 'failed');
       
-      // Handle step change messages
-      if (lastMessage.type === 'step_change' && lastMessage.step) {
-        try {
-          setCurrentStep(lastMessage.step as OnboardingStep);
-          console.log('Step updated from WebSocket message to:', lastMessage.step);
-        } catch (error) {
-          console.error('Error processing WebSocket step change:', error);
-        }
-      }
+      toast({
+        title: "Data Synchronized",
+        description: "Your progress has been saved",
+      });
+    } catch (error) {
+      console.error('Error syncing form data via API:', error);
+      toast({
+        title: "Sync Failed",
+        description: "Could not save your progress, but you can continue",
+        variant: "destructive"
+      });
     }
-  }, [lastMessage, toast]);
+  };
   
-  // Log WebSocket connection status changes
-  useEffect(() => {
-    console.log('WebSocket connection status changed to:', connectionStatus);
-  }, [connectionStatus]);
+  // Function to sync step changes via REST API
+  const syncStepChange = async (step: OnboardingStep) => {
+    if (!sessionId) return;
+    
+    try {
+      console.log('Syncing step change via API:', step);
+      // Make REST API call to update step
+      const response = await fetch(`/api/session/${sessionId}/step`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ step })
+      });
+      console.log('Step sync response:', response.ok ? 'success' : 'failed');
+    } catch (error) {
+      console.error('Error syncing step via API:', error);
+      // Continue regardless of error - don't block the UI
+    }
+  };
   
   // Fetch a new session ID and restore session data when component mounts
   useEffect(() => {
@@ -745,69 +756,84 @@ export default function SimpleOnboarding() {
     return Object.keys(newErrors).length === 0;
   };
   
-  // Sync form data changes with WebSocket
+  // Sync specific form data changes with REST API
   const syncFormDataChanges = (data: Partial<BusinessFormData> = {}) => {
-    if (sessionId && connectionStatus === 'open') {
+    if (sessionId) {
       const dataToSync = Object.keys(data).length > 0 ? data : formData;
       
-      // Send the form data update via WebSocket
-      sendMessage({
-        type: 'profile_update',
-        sessionId: sessionId,
-        data: dataToSync
+      // Send the form data update via REST API
+      fetch(`/api/session/${sessionId}/data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userType: formData.userType,
+          data: dataToSync
+        })
+      })
+      .then(response => {
+        console.log('Synced form data via API:', response.ok ? 'success' : 'failed');
+      })
+      .catch(error => {
+        console.error('Error syncing form data via API:', error);
       });
-      
-      console.log('Synced form data via WebSocket:', dataToSync);
     } else {
-      console.log('WebSocket not connected, skipping form data sync');
+      console.log('No session ID, skipping form data sync');
     }
   };
 
-  // Function to sync the entire form state
+  // Function to sync the entire form state via REST API
   const syncFullFormState = () => {
-    if (sessionId && connectionStatus === 'open') {
-      console.log('Syncing full form state to server...');
-      // Send the complete form data via WebSocket
-      sendMessage({
-        type: 'profile_update',
-        sessionId: sessionId,
-        data: formData
-      });
+    if (sessionId) {
+      console.log('Syncing full form state to server via API...');
       
-      // Also sync the current step
-      sendMessage({
-        type: 'step_change',
-        sessionId: sessionId,
-        step: currentStep
-      });
-      
-      toast({
-        title: "Data Synchronized",
-        description: "Your form data has been fully synchronized across devices",
+      // Send the complete form data via REST API
+      fetch(`/api/session/${sessionId}/data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userType: formData.userType,
+          data: formData
+        })
+      })
+      .then(response => {
+        console.log('Full form data sync response:', response.ok ? 'success' : 'failed');
+        
+        // Also sync the current step
+        return fetch(`/api/session/${sessionId}/step`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ step: currentStep })
+        });
+      })
+      .then(response => {
+        console.log('Step sync response:', response.ok ? 'success' : 'failed');
+        
+        toast({
+          title: "Data Synchronized",
+          description: "Your form data has been fully synchronized",
+        });
+      })
+      .catch(error => {
+        console.error('Error syncing full form state via API:', error);
+        toast({
+          title: "Sync Issue",
+          description: "Unable to fully synchronize data - check your connection",
+          variant: "destructive"
+        });
       });
     } else {
-      console.log('WebSocket not connected, cannot sync full form state');
+      console.log('No session ID, cannot sync full form state');
       toast({
         title: "Connection Issue",
-        description: "Unable to synchronize data - check your connection",
+        description: "Unable to synchronize data - missing session",
         variant: "destructive"
       });
-    }
-  };
-  
-  // Sync step changes with WebSocket
-  const syncStepChange = (step: OnboardingStep) => {
-    if (sessionId && connectionStatus === 'open') {
-      // Send the step change via WebSocket
-      sendMessage({
-        type: 'step_change',
-        sessionId: sessionId,
-        step: step
-      });
-      
-      console.log('Synced step change to', step, 'via WebSocket');
-    } else {
-      console.log('WebSocket not connected, skipping step sync');
     }
   };
   
@@ -946,10 +972,10 @@ export default function SimpleOnboarding() {
       // Update the current step
       setCurrentStep(nextStep);
       
-      // Sync step change with WebSocket
+      // Sync step change with REST API
       syncStepChange(nextStep);
       
-      // Sync full form state with WebSocket
+      // Sync full form state via REST API
       syncFullFormState();
     }
   };
@@ -1176,7 +1202,7 @@ export default function SimpleOnboarding() {
     // Update the current step
     setCurrentStep(previousStep);
     
-    // Sync step change with WebSocket
+    // Sync step change with REST API
     syncStepChange(previousStep);
   };
   
