@@ -451,7 +451,16 @@ export default function SimpleOnboarding() {
   // Handle form data changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Update local state
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+      
+      // Sync the change via WebSocket
+      setTimeout(() => syncFormDataChanges({ [name]: value }), 100);
+      
+      return newData;
+    });
     
     // Clear any error on this field
     if (errors[name]) {
@@ -470,15 +479,32 @@ export default function SimpleOnboarding() {
     if (Array.isArray(formData[field])) {
       setFormData(prev => {
         const currentArray = [...(prev[field] as string[])];
+        let newArray: string[];
         
         if (checked) {
           // Add to array if checked
           if (!currentArray.includes(value)) {
-            return { ...prev, [field]: [...currentArray, value] };
+            newArray = [...currentArray, value];
+            
+            // Create updated formData for syncing
+            const updatedData = { ...prev, [field]: newArray };
+            
+            // Sync the new data via WebSocket
+            setTimeout(() => syncFormDataChanges({ [field]: newArray }), 100);
+            
+            return updatedData;
           }
         } else {
           // Remove from array if unchecked
-          return { ...prev, [field]: currentArray.filter(item => item !== value) };
+          newArray = currentArray.filter(item => item !== value);
+          
+          // Create updated formData for syncing
+          const updatedData = { ...prev, [field]: newArray };
+          
+          // Sync the new data via WebSocket
+          setTimeout(() => syncFormDataChanges({ [field]: newArray }), 100);
+          
+          return updatedData;
         }
         
         return prev;
@@ -489,7 +515,16 @@ export default function SimpleOnboarding() {
   // Handle radio changes for boolean or single-select options
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>, value: any) => {
     const { name } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Update local state
+    setFormData(prev => {
+      const updatedData = { ...prev, [name]: value };
+      
+      // Sync the change via WebSocket
+      setTimeout(() => syncFormDataChanges({ [name]: value }), 100);
+      
+      return updatedData;
+    });
     
     // Clear any error on this field
     if (errors[name]) {
@@ -1069,7 +1104,11 @@ export default function SimpleOnboarding() {
       }
     }
     
+    // Update the current step
     setCurrentStep(previousStep);
+    
+    // Sync step change with WebSocket
+    syncStepChange(previousStep);
   };
   
   // Determine step title based on current step

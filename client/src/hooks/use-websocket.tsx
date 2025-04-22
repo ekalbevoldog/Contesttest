@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabase-client';
 
 type WebSocketMessage = {
   type: string;
-  message: string;
+  message?: string;
   data?: any;
   matchData?: any;
+  sessionId?: string;
+  step?: string;
 };
 
 type WebSocketHook = {
