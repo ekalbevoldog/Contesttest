@@ -12,6 +12,7 @@ import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/use-websocket";
 import { 
   DollarSign, 
   MapPin, 
@@ -33,7 +34,11 @@ import {
   Users,
   Dumbbell,
   ArrowLeft,
-  ArrowRight
+  ArrowRight,
+  RefreshCw,
+  AlertCircle,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 
 // Import UI components
@@ -376,6 +381,143 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  // Initialize WebSocket connection with the session ID
+  const { lastMessage, sendMessage, connectionStatus } = useWebSocket(sessionId);
+
+  // Function to manually sync form data through WebSocket
+  const syncFormData = () => {
+    if (!sessionId) return;
+    
+    setIsSyncing(true);
+    
+    try {
+      sendMessage({
+        type: 'profile_update',
+        sessionId,
+        data: formData
+      });
+      
+      setTimeout(() => {
+        setIsSyncing(false);
+        toast({
+          title: "Sync Successful",
+          description: "Your form data has been synchronized",
+        });
+      }, 500);
+    } catch (error) {
+      console.error('Error syncing form data:', error);
+      setIsSyncing(false);
+      toast({
+        title: "Sync Failed",
+        description: "Could not synchronize your data. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Function to sync step changes
+  const syncStepChange = (step: OnboardingStep) => {
+    if (!sessionId) return;
+    
+    try {
+      sendMessage({
+        type: 'step_change',
+        sessionId,
+        step
+      });
+      console.log('Step change synchronized:', step);
+    } catch (error) {
+      console.error('Error syncing step change:', error);
+    }
+  };
+  
+  // Handle incoming WebSocket messages
+  useEffect(() => {
+    if (lastMessage) {
+      console.log('Received WebSocket message:', lastMessage);
+      
+      // Handle profile update messages
+      if (lastMessage.type === 'profile_update' && lastMessage.data) {
+        try {
+          // Update form data with incoming data
+          setFormData(prevData => ({
+            ...prevData,
+            ...lastMessage.data
+          }));
+          
+          console.log('Form data updated from WebSocket message');
+          
+          // Show toast notification
+          toast({
+            title: "Profile Updated",
+            description: "Your profile has been synchronized across devices",
+          });
+        } catch (error) {
+          console.error('Error processing WebSocket profile update:', error);
+        }
+      }
+      
+      // Handle step change messages
+      if (lastMessage.type === 'step_change' && lastMessage.step) {
+        try {
+          setCurrentStep(lastMessage.step as OnboardingStep);
+          console.log('Step updated from WebSocket message to:', lastMessage.step);
+        } catch (error) {
+          console.error('Error processing WebSocket step change:', error);
+        }
+      }
+    }
+  }, [lastMessage, toast]);
+  
+  // Log WebSocket connection status changes
+  useEffect(() => {
+    console.log('WebSocket connection status changed to:', connectionStatus);
+  }, [connectionStatus]);
+  
+  // Fetch a new session ID when component mounts
+  useEffect(() => {
+    const getSessionId = async () => {
+      try {
+        // First try to get a server session
+        const response = await fetch('/api/session/new');
+        const data = await response.json();
+        if (data.success && data.sessionId) {
+          setSessionId(data.sessionId);
+          console.log("Server session created:", data.sessionId);
+          
+          // Try to restore saved form data from session
+          const sessionResponse = await fetch(`/api/session/${data.sessionId}`);
+          const sessionData = await sessionResponse.json();
+          
+          if (sessionData.success && sessionData.data) {
+            // If session has saved form data, restore it
+            if (sessionData.data.formData) {
+              console.log("Restoring saved form data from session:", sessionData.data.formData);
+              setFormData(prevData => ({
+                ...prevData,
+                ...sessionData.data.formData
+              }));
+            }
+            
+            // If session has a saved step, restore it
+            if (sessionData.data.currentStep) {
+              console.log("Restoring saved step from session:", sessionData.data.currentStep);
+              setCurrentStep(sessionData.data.currentStep);
+            }
+          }
+        } else {
+          console.error("Failed to create server session");
+        }
+      } catch (error) {
+        console.error("Error setting up session:", error);
+      }
+    };
+    
+    getSessionId();
+  }, []);
   
   // Handle form data changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -717,6 +859,33 @@ export default function Onboarding() {
       }
       
       setCurrentStep(nextStep);
+      
+      // Sync step change via WebSocket
+      syncStepChange(nextStep);
+      
+      // Sync form data too
+      if (sessionId) {
+        try {
+          // Sync form data via WebSocket
+          sendMessage({
+            type: 'profile_update',
+            sessionId,
+            data: formData
+          });
+          
+          // Attempt to update session data on server
+          apiRequest('POST', `/api/session/${sessionId}/user-type`, {
+            userType: formData.userType,
+            formData,
+            currentStep: nextStep
+          }).catch(error => {
+            console.error('Error updating session data:', error);
+          });
+        } catch (error) {
+          console.error('Error updating session data:', error);
+        }
+      }
+      
       window.scrollTo(0, 0);
     }
   };
@@ -813,6 +982,10 @@ export default function Onboarding() {
     }
     
     setCurrentStep(prevStep);
+    
+    // Sync step change via WebSocket
+    syncStepChange(prevStep);
+    
     window.scrollTo(0, 0);
   };
   
