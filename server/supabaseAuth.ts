@@ -67,10 +67,23 @@ export function setupSupabaseAuth(app: Express) {
   // Register endpoint - stores additional user data in our database
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
-      const { email, password, firstName, lastName, role } = req.body;
+      // Log incoming request body for debugging
+      console.log("Request body:", req.body);
       
-      // The actual registration is handled by the Supabase client directly
-      // This endpoint is for creating additional user data in our database
+      // Extract form data from request
+      const { email, password, fullName, role } = req.body;
+      
+      // Ensure we have all required fields
+      if (!email || !password || !fullName) {
+        return res.status(400).json({ 
+          error: 'Missing required fields',
+          missing: [
+            !email ? 'email' : null,
+            !password ? 'password' : null,
+            !fullName ? 'fullName' : null
+          ].filter(Boolean)
+        });
+      }
       
       // Check if user exists with the given email
       const { data: userData } = await supabase
@@ -84,13 +97,15 @@ export function setupSupabaseAuth(app: Express) {
       }
       
       // Store user data in our database
+      // Handle the case where we get full name instead of first/last name
+      // (For simplicity, we'll use the full name as both first name and full name)
       const { data, error } = await supabase
         .from('users')
         .insert({
           email: email,
-          first_name: firstName,
-          last_name: lastName,
-          full_name: `${firstName} ${lastName}`,
+          username: email.split('@')[0], // Generate username from email
+          password: password, // This will be hashed by supabase
+          full_name: fullName,
           role: role,
           created_at: new Date()
         })
