@@ -352,11 +352,19 @@ export async function initializeSupabaseTables() {
   }
 }
 
+// Import the profile migration function
+import { runProfileMigration } from './runProfileMigration';
+
 // Export a function to initialize everything at once
 export async function setupSupabase() {
   try {
     console.log('Starting Supabase setup process...');
     await initializeSupabaseTables();
+    
+    // Run our profile tables migration
+    console.log('Running profile tables migration...');
+    await runProfileMigration();
+    
     console.log('Supabase setup completed successfully');
     
     // Run a simple test query to verify the connection
