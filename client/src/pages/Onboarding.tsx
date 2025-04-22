@@ -385,10 +385,7 @@ export default function Onboarding() {
   const [sessionId, setSessionId] = useState<string | null>(`local-${Date.now()}`);
   const [isSyncing, setIsSyncing] = useState(false);
   
-  // Temporarily disable WebSocket for debugging
-  const connectionStatus = 'closed' as const;
-  const lastMessage = null;
-  const sendMessage = () => console.log("WebSocket disabled for debugging");
+  // Using REST API approach - no WebSockets needed
 
   // Function to sync form data via REST API
   const syncFormData = async () => {
@@ -437,59 +434,35 @@ export default function Onboarding() {
     }
   };
   
-  // Handle incoming WebSocket messages
-  useEffect(() => {
-    if (lastMessage) {
-      console.log('Received WebSocket message:', lastMessage);
-      
-      // Handle profile update messages
-      if (lastMessage.type === 'profile_update' && lastMessage.data) {
-        try {
-          // Update form data with incoming data
-          setFormData(prevData => ({
-            ...prevData,
-            ...lastMessage.data
-          }));
-          
-          console.log('Form data updated from WebSocket message');
-          
-          // Show toast notification
-          toast({
-            title: "Profile Updated",
-            description: "Your profile has been synchronized across devices",
-          });
-        } catch (error) {
-          console.error('Error processing WebSocket profile update:', error);
-        }
-      }
-      
-      // Handle step change messages
-      if (lastMessage.type === 'step_change' && lastMessage.step) {
-        try {
-          setCurrentStep(lastMessage.step as OnboardingStep);
-          console.log('Step updated from WebSocket message to:', lastMessage.step);
-        } catch (error) {
-          console.error('Error processing WebSocket step change:', error);
-        }
-      }
-    }
-  }, [lastMessage, toast]);
+  // Effect to fetch and sync data from the server when needed
+  // Currently not implemented as we're using a local-first approach
+  // with server updates happening in the background
   
-  // Log WebSocket connection status changes
+  // Session creation with API fallback
   useEffect(() => {
-    console.log('WebSocket connection status changed to:', connectionStatus);
-  }, [connectionStatus]);
-  
-  // IMMEDIATE SESSION CREATION: Skip API call attempts and use fallback
-  useEffect(() => {
-    console.log("Using immediate session creation to bypass server issues");
+    const createSession = async () => {
+      try {
+        // First try to create a session via the API
+        console.log("Creating session via API");
+        const response = await apiRequest('GET', '/api/session/new');
+        const data = await response.json();
+        
+        if (data.sessionId) {
+          console.log("Created API session ID:", data.sessionId);
+          setSessionId(data.sessionId);
+        } else {
+          throw new Error("No session ID returned");
+        }
+      } catch (error) {
+        // If API fails, create a local fallback
+        console.warn("API session creation failed, using local fallback", error);
+        const fallbackId = `local-${Date.now()}`;
+        console.log("Created local fallback session ID:", fallbackId);
+        setSessionId(fallbackId);
+      }
+    };
     
-    // Immediately create a fallback session ID without even trying server
-    // This is a temporary solution to unblock development
-    const sessionId = `local-${Date.now()}`;
-    console.log("Created local session ID:", sessionId);
-    setSessionId(sessionId);
-    
+    createSession();
   }, []);
   
   // Handle form data changes
