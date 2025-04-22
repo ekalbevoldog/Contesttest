@@ -1268,15 +1268,55 @@ export default function Onboarding() {
                 </StaggerItem>
               </StaggerContainer>
               
-              <div className="flex justify-between mt-8 pt-4 border-t border-zinc-800">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrevStep}
-                  disabled={isSubmitting}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                </Button>
+              <div className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-4 border-t border-zinc-800 gap-4">
+                <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handlePrevStep}
+                    disabled={isSubmitting}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                  </Button>
+                  
+                  {/* Connection status indicator */}
+                  <div className="flex items-center text-sm">
+                    {connectionStatus === 'open' ? (
+                      <div className="flex items-center text-green-500">
+                        <Wifi className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Connected</span>
+                      </div>
+                    ) : connectionStatus === 'connecting' ? (
+                      <div className="flex items-center text-yellow-500">
+                        <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                        <span className="hidden sm:inline">Connecting...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-red-500">
+                        <WifiOff className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Disconnected</span>
+                      </div>
+                    )}
+                    
+                    {/* Manual sync button */}
+                    {sessionId && (
+                      <button 
+                        type="button" 
+                        onClick={syncFormData}
+                        disabled={isSyncing || connectionStatus !== 'open'}
+                        className="ml-2 p-1 rounded-full hover:bg-zinc-800 disabled:opacity-50"
+                        title="Manually sync your data"
+                      >
+                        {isSyncing ? (
+                          <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 text-primary" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
                 <Button
                   type="button"
                   onClick={handleNextStep}
@@ -3256,22 +3296,64 @@ export default function Onboarding() {
               
               {/* Only render these buttons if we're not already on a page with custom buttons */}
               {!['athlete-category'].includes(currentStep) && (
-                <div className="flex justify-between mt-8">
-                  {currentStep !== "user-type" && (
-                    <button
-                      type="button"
-                      onClick={handlePrevStep}
-                      className="px-6 py-2 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors"
-                    >
-                      Back
-                    </button>
-                  )}
+                <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
+                  <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start gap-4">
+                    {currentStep !== "user-type" && (
+                      <button
+                        type="button"
+                        onClick={handlePrevStep}
+                        className="px-6 py-2 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors"
+                      >
+                        <span className="flex items-center">
+                          <ArrowLeft className="w-4 h-4 mr-2" />
+                          Back
+                        </span>
+                      </button>
+                    )}
+                    
+                    {/* Connection status indicator */}
+                    <div className="flex items-center text-sm">
+                      {connectionStatus === 'open' ? (
+                        <div className="flex items-center text-green-500">
+                          <Wifi className="w-4 h-4 mr-1" />
+                          <span className="hidden sm:inline">Connected</span>
+                        </div>
+                      ) : connectionStatus === 'connecting' ? (
+                        <div className="flex items-center text-yellow-500">
+                          <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                          <span className="hidden sm:inline">Connecting...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-red-500">
+                          <WifiOff className="w-4 h-4 mr-1" />
+                          <span className="hidden sm:inline">Disconnected</span>
+                        </div>
+                      )}
+                      
+                      {/* Manual sync button */}
+                      {sessionId && (
+                        <button 
+                          type="button" 
+                          onClick={syncFormData}
+                          disabled={isSyncing || connectionStatus !== 'open'}
+                          className="ml-2 p-1 rounded-full hover:bg-zinc-800 disabled:opacity-50"
+                          title="Manually sync your data"
+                        >
+                          {isSyncing ? (
+                            <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   
                   {currentStep === "create-password" ? (
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed ml-auto"
+                      className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? "Creating Account..." : "Create Account"}
                     </button>
@@ -3279,9 +3361,12 @@ export default function Onboarding() {
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] ml-auto"
+                      className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                     >
-                      Continue
+                      <span className="flex items-center justify-center">
+                        Continue
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </span>
                     </button>
                   )}
                 </div>
