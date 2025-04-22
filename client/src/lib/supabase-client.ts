@@ -55,7 +55,7 @@ export const registerAthlete = async (userData: {
 
 export const createAthleteProfile = async (profileData: any) => {
   const { data, error } = await supabase
-    .from('athletes')
+    .from('athlete_profiles')
     .insert(profileData)
     .select()
     .single();
@@ -66,4 +66,23 @@ export const createAthleteProfile = async (profileData: any) => {
   }
 
   return data;
+};
+
+// Test function to verify connection to Supabase
+export const testSupabaseConnection = async () => {
+  try {
+    console.log('[Client] Testing Supabase connection...');
+    const { data, error } = await supabase.from('sessions').select('count').limit(1);
+    
+    if (error) {
+      console.error('[Client] Supabase connection test failed:', error.message);
+      return false;
+    }
+    
+    console.log('[Client] Supabase connection test successful:', data);
+    return true;
+  } catch (error) {
+    console.error('[Client] Unexpected error during Supabase connection test:', error);
+    return false;
+  }
 };

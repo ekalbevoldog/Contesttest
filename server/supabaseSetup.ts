@@ -217,71 +217,72 @@ async function createCoreTablesDirectly(): Promise<boolean> {
     }
 
     // Create athletes table
-    if (!(await tableExists('athletes'))) {
-      console.log('Creating athletes table...');
+    if (!(await tableExists('athlete_profiles'))) {
+      console.log('Creating athlete_profiles table...');
       try {
-        const { error } = await supabaseAdmin.from('athletes').insert({
+        const { error } = await supabaseAdmin.from('athlete_profiles').insert({
           session_id: 'initialization-test',
           name: 'System Test Athlete',
           sport: 'Test Sport',
-          school: 'Test University', // Changed from university to school to match our schema
-          division: 'Division I', // Required field in schema
-          followerCount: 0, // Changed to match camelCase in schema
-          contentStyle: 'Test Content Style', // Required field in schema
-          compensationGoals: 'Test Compensation Goals' // Required field in schema
+          school: 'Test University',
+          division: 'Division I',
+          follower_count: 0, // Using snake_case for column names in DB
+          content_style: 'Test Content Style',
+          compensation_goals: 'Test Compensation Goals'
         });
         
         if (error && error.code !== 'PGRST109') { // Duplicate key error is OK here
-          console.error('Error creating athletes table:', error);
+          console.error('Error creating athlete_profiles table:', error);
         } else {
-          console.log('Athletes table created successfully');
+          console.log('athlete_profiles table created successfully');
         }
       } catch (e) {
-        console.error('Exception creating athletes table:', e instanceof Error ? e.message : String(e));
+        console.error('Exception creating athlete_profiles table:', e instanceof Error ? e.message : String(e));
       }
     }
 
     // Create businesses table
-    if (!(await tableExists('businesses'))) {
-      console.log('Creating businesses table...');
+    if (!(await tableExists('business_profiles'))) {
+      console.log('Creating business_profiles table...');
       try {
         // First try with minimal fields
-        const { error } = await supabaseAdmin.from('businesses').insert({
+        const { error } = await supabaseAdmin.from('business_profiles').insert({
           session_id: 'initialization-test',
           name: 'System Test Business',
-          productType: 'Test Product', // Required field in schema
-          audienceGoals: 'Test Audience Goals', // Required field in schema
-          campaignVibe: 'Test Campaign Vibe', // Required field in schema
-          values: 'Test Values', // Required field in schema
-          targetSchoolsSports: 'Test Schools & Sports' // Required field in schema
+          product_type: 'Test Product', // Using snake_case for column names in DB
+          audience_goals: 'Test Audience Goals',
+          campaign_vibe: 'Test Campaign Vibe',
+          values: 'Test Values',
+          target_schools_sports: 'Test Schools & Sports'
         });
         
         if (error) {
-          console.error('Error creating businesses table:', error);
+          console.error('Error creating business_profiles table:', error);
           
           // If there was an error, try a different approach by checking if the table is accessible
           // even if we can't insert data into it
           const { count, error: countError } = await supabaseAdmin
-            .from('businesses')
+            .from('business_profiles')
             .select('*', { count: 'exact', head: true });
             
           if (!countError) {
-            console.log('Businesses table exists but might have restrictions on inserting data');
+            console.log('business_profiles table exists but might have restrictions on inserting data');
             return true;
           } else {
-            console.error('Could not access businesses table:', countError);
+            console.error('Could not access business_profiles table:', countError);
           }
         } else {
-          console.log('Businesses table created successfully');
+          console.log('business_profiles table created successfully');
         }
       } catch (e) {
-        console.error('Exception creating businesses table:', e instanceof Error ? e.message : String(e));
+        console.error('Exception creating business_profiles table:', e instanceof Error ? e.message : String(e));
       }
     }
 
+    console.log('Successfully completed createCoreTablesDirectly function');
     return true;
   } catch (err) {
-    console.error('Exception creating core tables:', err);
+    console.error('Exception creating core tables:', err instanceof Error ? err.message : String(err));
     return false;
   }
 }
@@ -295,8 +296,8 @@ export async function initializeSupabaseTables() {
     console.log('Checking if core tables exist...');
     const sessionsExists = await tableExists('sessions');
     const usersExists = await tableExists('users');
-    const athletesExists = await tableExists('athletes'); // Changed from athlete_profiles to athletes
-    const businessesExists = await tableExists('businesses'); // Changed from business_profiles to businesses
+    const athletesExists = await tableExists('athlete_profiles'); // Correct table name from schema.ts
+    const businessesExists = await tableExists('business_profiles'); // Correct table name from schema.ts
     
     // If all core tables exist, we don't need to run the full migration
     if (sessionsExists && usersExists && athletesExists && businessesExists) {
@@ -310,16 +311,27 @@ export async function initializeSupabaseTables() {
     
     console.log('Table initialization complete');
   } catch (err) {
-    console.error('Exception during Supabase initialization:', err);
+    console.error('Exception during Supabase initialization:', err instanceof Error ? err.message : String(err));
   }
 }
 
 // Export a function to initialize everything at once
 export async function setupSupabase() {
   try {
+    console.log('Starting Supabase setup process...');
     await initializeSupabaseTables();
-    console.log('Supabase setup completed');
+    console.log('Supabase setup completed successfully');
+    
+    // Run a simple test query to verify the connection
+    console.log('Testing connection with a final verification...');
+    const { data, error } = await supabaseAdmin.from('users').select('count').limit(1);
+    
+    if (error) {
+      console.error('Final connection test failed:', error.message);
+    } else {
+      console.log('Final connection test succeeded');
+    }
   } catch (error) {
-    console.error('Error in Supabase setup:', error);
+    console.error('Error in Supabase setup:', error instanceof Error ? error.message : String(error));
   }
 }
