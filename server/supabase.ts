@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import ws from 'ws'; // Import WebSocket for server-side
 
 // Load environment variables
 dotenv.config();
@@ -39,9 +40,28 @@ const supabaseOptions = {
     persistSession: true
   },
   global: {
-    fetch: fetch as any
+    fetch: fetch as any,
+    headers: {
+      'X-Client-Info': 'nil-connect-server'
+    }
+  },
+  // Add WebSocket configuration for real-time capabilities
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 };
+
+// Set the WebSocket constructor for Neon database
+// This is critical for real-time updates to work properly
+try {
+  const { neonConfig } = require('@neondatabase/serverless');
+  neonConfig.webSocketConstructor = ws;
+  console.log('Neon WebSocket constructor configured');
+} catch (error) {
+  console.warn('Neon configuration not available:', error);
+}
 
 // Create the standard Supabase client with anon key (for normal operations)
 export const supabase = createClient(

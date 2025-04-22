@@ -50,11 +50,24 @@ export async function initializeSupabase(): Promise<boolean> {
     console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
     
     // Initialize the Supabase client
+    // Configure explicitly to fix WebSocket connection issues
     supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
         storageKey: 'nil-connect-auth'
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10
+        },
+        // Disable realtime subscriptions if not needed for onboarding
+        mode: 'manual'
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'nil-connect' // Identify our app to Supabase
+        }
       }
     });
     
