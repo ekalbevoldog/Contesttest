@@ -12,6 +12,7 @@ import BusinessInfo from "@/pages/BusinessInfo";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
+import SupabaseTest from "@/pages/SupabaseTest";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
@@ -86,6 +87,7 @@ function Router() {
             <Route path="/explore-matches" component={SimpleOnboarding} />
             <Route path="/business-onboarding" component={Onboarding} />
             <Route path="/business/sign-up" component={Onboarding} />
+            <Route path="/supabase-test" component={SupabaseTest} />
             <ProtectedRoute path="/athlete/dashboard" component={AthleteDashboard} />
             <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} />
             <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} />
