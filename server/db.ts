@@ -10,7 +10,7 @@ if (!process.env.SUPABASE_URL) {
 }
 
 // Initialize Drizzle with Supabase's underlying Postgres connection
-export const db = drizzle(supabase.connectionString, { schema });
+export const db = drizzle(supabase, { schema });
 
 // Export a function to check the database connection
 export async function testConnection() {
