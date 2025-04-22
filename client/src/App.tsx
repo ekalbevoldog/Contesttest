@@ -7,9 +7,8 @@ import SimpleOnboarding from "@/pages/SimpleOnboarding";
 import Onboarding from "@/pages/Onboarding";
 import SignIn from "@/pages/SignIn";
 import AuthPage from "@/pages/auth-page";
-import Solutions from "@/pages/Solutions";
-import Pricing from "@/pages/Pricing";
-import CaseStudies from "@/pages/CaseStudies";
+import AthleteInfo from "@/pages/AthleteInfo";
+import BusinessInfo from "@/pages/BusinessInfo";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
@@ -80,9 +79,8 @@ function Router() {
             <Route path="/" component={Home} />
             <Route path="/sign-in" component={SignIn} />
             <Route path="/auth" component={AuthPage} />
-            <Route path="/solutions" component={Solutions} />
-            <Route path="/pricing" component={Pricing} />
-            <Route path="/case-studies" component={CaseStudies} />
+            <Route path="/athletes" component={AthleteInfo} />
+            <Route path="/businesses" component={BusinessInfo} />
             <Route path="/onboarding" component={Onboarding} />
             <Route path="/athlete-onboarding" component={Onboarding} />
             <Route path="/athlete/sign-up" component={Onboarding} />

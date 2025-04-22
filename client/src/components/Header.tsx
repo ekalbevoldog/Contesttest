@@ -212,9 +212,8 @@ export default function Header() {
   // --- Navigation Data ---
   const navItems: NavItem[] = [
     // --- Marketing Links (Not Logged In) ---
-    { label: "Solutions", href: "/solutions", icon: Info, condition: (user) => !user, desktopOnly: true },
-    { label: "Pricing", href: "/pricing", icon: DollarSign, condition: (user) => !user, desktopOnly: true },
-    { label: "Case Studies", href: "/case-studies", icon: BookOpen, condition: (user) => !user, desktopOnly: true },
+    { label: "For Athletes", href: "/athletes", icon: Trophy, condition: (user) => !user, desktopOnly: true },
+    { label: "For Businesses", href: "/businesses", icon: Briefcase, condition: (user) => !user, desktopOnly: true },
 
     // --- App Navigation (Logged In) ---
     // Dashboard Links (Conditional)
