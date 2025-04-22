@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/use-websocket";
 import {
   DollarSign,
   MapPin,
@@ -364,34 +365,78 @@ export default function SimpleOnboarding() {
   const { toast } = useToast();
   const [sessionId, setSessionId] = useState<string | null>(null);
   
+  // Initialize WebSocket connection with the session ID
+  const { lastMessage, sendMessage, connectionStatus } = useWebSocket(sessionId);
+  
+  // Handle incoming WebSocket messages
+  useEffect(() => {
+    if (lastMessage) {
+      console.log('Received WebSocket message:', lastMessage);
+      
+      // Handle profile update messages
+      if (lastMessage.type === 'profile_update' && lastMessage.data) {
+        try {
+          // Update form data with incoming data
+          setFormData(prevData => ({
+            ...prevData,
+            ...lastMessage.data
+          }));
+          
+          console.log('Form data updated from WebSocket message');
+          
+          // Show toast notification
+          toast({
+            title: "Profile Updated",
+            description: "Your profile has been synchronized across devices",
+          });
+        } catch (error) {
+          console.error('Error processing WebSocket profile update:', error);
+        }
+      }
+      
+      // Handle step change messages
+      if (lastMessage.type === 'step_change' && lastMessage.step) {
+        try {
+          setCurrentStep(lastMessage.step as OnboardingStep);
+          console.log('Step updated from WebSocket message to:', lastMessage.step);
+        } catch (error) {
+          console.error('Error processing WebSocket step change:', error);
+        }
+      }
+    }
+  }, [lastMessage, toast]);
+  
+  // Log WebSocket connection status changes
+  useEffect(() => {
+    console.log('WebSocket connection status changed to:', connectionStatus);
+  }, [connectionStatus]);
+  
   // Fetch a new session ID when component mounts
   useEffect(() => {
     const getSessionId = async () => {
       try {
-        // Generate a client-side unique ID that doesn't rely on server storage
-        // This is more reliable than depending on WebSocket connections
-        const localSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-        setSessionId(localSessionId);
-        console.log("New local session created:", localSessionId);
-        
-        // Also try the server approach as backup
+        // First try to get a server session
         try {
           const response = await fetch('/api/session/new');
           const data = await response.json();
-          if (data.success) {
-            // Only update if we got a valid session ID
+          if (data.success && data.sessionId) {
             setSessionId(data.sessionId);
             console.log("Server session created:", data.sessionId);
+            return;
           }
         } catch (serverError) {
-          // If server approach fails, we already have the local ID as fallback
-          console.warn("Server session creation failed, using local ID instead:", serverError);
+          console.warn("Server session creation failed:", serverError);
         }
+        
+        // If server approach fails, generate a local ID
+        const localSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+        setSessionId(localSessionId);
+        console.log("Local session created:", localSessionId);
       } catch (error) {
         console.error("Failed to initialize session:", error);
         toast({
           title: "Connection Issue",
-          description: "There was a problem initializing your session. We'll continue with a local session.",
+          description: "There was a problem initializing your session. We'll try to continue with limited functionality.",
         });
         
         // Final fallback - set a simple random ID
@@ -628,6 +673,40 @@ export default function SimpleOnboarding() {
     return Object.keys(newErrors).length === 0;
   };
   
+  // Sync form data changes with WebSocket
+  const syncFormDataChanges = (data: Partial<BusinessFormData> = {}) => {
+    if (sessionId && connectionStatus === 'open') {
+      const dataToSync = Object.keys(data).length > 0 ? data : formData;
+      
+      // Send the form data update via WebSocket
+      sendMessage({
+        type: 'profile_update',
+        sessionId: sessionId,
+        data: dataToSync
+      });
+      
+      console.log('Synced form data via WebSocket');
+    } else {
+      console.log('WebSocket not connected, skipping form data sync');
+    }
+  };
+
+  // Sync step changes with WebSocket
+  const syncStepChange = (step: OnboardingStep) => {
+    if (sessionId && connectionStatus === 'open') {
+      // Send the step change via WebSocket
+      sendMessage({
+        type: 'step_change',
+        sessionId: sessionId,
+        step: step
+      });
+      
+      console.log('Synced step change to', step, 'via WebSocket');
+    } else {
+      console.log('WebSocket not connected, skipping step sync');
+    }
+  };
+  
   // Handle next step navigation
   const handleNextStep = () => {
     if (validateCurrentStep()) {
@@ -760,7 +839,14 @@ export default function SimpleOnboarding() {
         }
       }
       
+      // Update the current step
       setCurrentStep(nextStep);
+      
+      // Sync step change with WebSocket
+      syncStepChange(nextStep);
+      
+      // Sync form data changes with WebSocket
+      syncFormDataChanges();
     }
   };
   
