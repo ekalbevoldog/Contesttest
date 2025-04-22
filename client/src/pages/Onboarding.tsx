@@ -484,6 +484,12 @@ export default function Onboarding() {
   useEffect(() => {
     console.log("Starting session initialization");
     
+    // Set a fallback timeout to ensure we don't get stuck loading
+    const timeoutId = setTimeout(() => {
+      console.log("Session initialization timed out, using fallback sessionId");
+      setSessionId(`fallback-${Date.now()}`);
+    }, 3000); // 3 second fallback
+    
     const getSessionId = async () => {
       console.log("getSessionId function called");
       try {
@@ -492,39 +498,59 @@ export default function Onboarding() {
         const response = await fetch('/api/session/new');
         console.log("Session API response status:", response.status);
         
-        const data = await response.json();
-        console.log("Session API response data:", data);
+        if (!response.ok) {
+          console.error("Session API response was not OK, using fallback");
+          setSessionId(`fallback-error-${Date.now()}`);
+          return;
+        }
         
-        if (data.success && data.sessionId) {
-          console.log("Setting sessionId state to:", data.sessionId);
-          setSessionId(data.sessionId);
-          console.log("Server session created:", data.sessionId);
+        try {
+          const data = await response.json();
+          console.log("Session API response data:", data);
           
-          // Try to restore saved form data from session
-          const sessionResponse = await fetch(`/api/session/${data.sessionId}`);
-          const sessionData = await sessionResponse.json();
-          
-          // Log the actual response for debugging
-          console.log("Session data response:", sessionData);
-          
-          if (sessionData.exists && sessionData.session) {
-            // Handle any saved data if we add it later
-            console.log("Retrieved session:", sessionData.session);
+          if (data.success && data.sessionId) {
+            console.log("Setting sessionId state to:", data.sessionId);
+            setSessionId(data.sessionId);
+            console.log("Server session created:", data.sessionId);
+            
+            try {
+              // Try to restore saved form data from session
+              const sessionResponse = await fetch(`/api/session/${data.sessionId}`);
+              if (sessionResponse.ok) {
+                const sessionData = await sessionResponse.json();
+                
+                // Log the actual response for debugging
+                console.log("Session data response:", sessionData);
+                
+                if (sessionData.exists && sessionData.session) {
+                  // Handle any saved data if we add it later
+                  console.log("Retrieved session:", sessionData.session);
+                } else {
+                  console.log("No saved session data found, using default values");
+                }
+              } else {
+                console.log("Session data fetch unsuccessful, continuing with default values");
+              }
+            } catch (sessionError) {
+              console.error("Error fetching session data (non-critical):", sessionError);
+            }
           } else {
-            console.log("No saved session data found, using default values");
+            console.error("Failed to create server session, using fallback ID");
+            setSessionId(`fallback-invalid-${Date.now()}`);
           }
-          
-          // Continue regardless of whether we found saved data or not
-          // Now that we have a sessionId, the loading state will resolve
-        } else {
-          console.error("Failed to create server session");
+        } catch (parseError) {
+          console.error("Error parsing session response:", parseError);
+          setSessionId(`fallback-parse-${Date.now()}`);
         }
       } catch (error) {
         console.error("Error setting up session:", error);
+        setSessionId(`fallback-try-${Date.now()}`);
       }
     };
     
     getSessionId();
+    
+    return () => clearTimeout(timeoutId);
   }, []);
   
   // Handle form data changes
@@ -1182,25 +1208,6 @@ export default function Onboarding() {
   // Render the current step content
   const renderStepContent = () => {
     console.log("renderStepContent called, sessionId:", sessionId);
-    
-    // Display loading indicator while session is being established
-    // Add a 10-second timeout to prevent infinite loading
-    useEffect(() => {
-      let timeoutId: NodeJS.Timeout;
-      
-      if (!sessionId) {
-        console.log("Setting timeout to handle potential session initialization failures");
-        timeoutId = setTimeout(() => {
-          console.log("Session initialization timed out, forcing a sessionId");
-          // Force a sessionId if the API call is failing
-          setSessionId("fallback-" + Date.now().toString());
-        }, 5000); // 5 seconds timeout
-      }
-      
-      return () => {
-        if (timeoutId) clearTimeout(timeoutId);
-      };
-    }, [sessionId]);
     
     if (!sessionId) {
       console.log("Showing loading indicator because sessionId is not set");
