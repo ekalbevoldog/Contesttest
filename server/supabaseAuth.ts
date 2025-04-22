@@ -64,6 +64,129 @@ export const requireRole = (role: string) => {
  * Setup auth routes for Supabase authentication
  */
 export function setupSupabaseAuth(app: Express) {
+  // Login endpoint
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+      
+      console.log('\n==== SUPABASE LOGIN ATTEMPT ====');
+      console.log(`Login attempt for: ${email}`);
+      
+      // Use Supabase Auth for login
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.error('Login error:', error);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      
+      if (!data.user || !data.session) {
+        return res.status(401).json({ error: 'Authentication failed' });
+      }
+      
+      // Update last login in our users table
+      await supabase
+        .from('users')
+        .update({ last_login: new Date() })
+        .eq('email', email);
+      
+      // Also fetch the user profile data from our users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+        
+      if (userError) {
+        console.error('Error fetching user data after login:', userError);
+        // We can still proceed with just the auth data
+      }
+      
+      console.log('Login successful for:', email);
+      
+      // Return both auth data and profile data
+      return res.status(200).json({
+        user: data.user,
+        profile: userData || null,
+        session: {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_at: data.session.expires_at
+        }
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({ error: 'Login failed' });
+    }
+  });
+  
+  // Logout endpoint
+  app.post("/api/auth/logout", async (req: Request, res: Response) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        // Extract token
+        const token = authHeader.split(' ')[1];
+        
+        // Sign out using Supabase Auth
+        await supabase.auth.signOut();
+      }
+      
+      return res.status(200).json({ message: 'Logged out successfully' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+  });
+
+  // User endpoint - get current authenticated user
+  app.get("/api/auth/user", async (req: Request, res: Response) => {
+    try {
+      // Check for authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
+      // Extract token
+      const token = authHeader.split(' ')[1];
+      
+      // Verify token with Supabase
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
+      // Get additional user data from our users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', user.email)
+        .single();
+        
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+        // We can still return just the auth user
+      }
+      
+      return res.status(200).json({
+        auth: user,
+        profile: userData || null
+      });
+    } catch (error) {
+      console.error('Error getting authenticated user:', error);
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+  });
+  
   // Register endpoint - stores additional user data in our database
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {

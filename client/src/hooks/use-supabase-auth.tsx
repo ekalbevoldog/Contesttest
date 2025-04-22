@@ -1,5 +1,11 @@
 import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
-import { supabase, initializeSupabase } from '@/lib/supabase-client';
+import { 
+  supabase, 
+  loginUser, 
+  registerUser, 
+  logoutUser, 
+  getCurrentUser 
+} from '@/lib/supabase-client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -38,20 +44,26 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     
     const fetchSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
-        if (data?.session) {
-          setSession(data.session);
-          setUser(data.session.user);
+        // Use our getCurrentUser function for a complete user profile
+        const userData = await getCurrentUser();
+        
+        if (userData) {
+          // If we get valid user data
+          const { data } = await supabase.auth.getSession();
           
-          // Fetch additional user data if needed
-          const { data: profileData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('auth_id', data.session.user.id)
-            .single();
-            
-          if (profileData) {
-            setUserData(profileData);
+          if (data?.session) {
+            setSession(data.session);
+          }
+          
+          if (userData.auth) {
+            setUser(userData.auth);
+          } else if (userData.user) {
+            // Different response structure depending on which path succeeded
+            setUser(userData.user);
+          }
+          
+          if (userData.profile) {
+            setUserData(userData.profile);
           }
         }
       } catch (error) {
@@ -123,18 +135,17 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      // Use our updated login function that handles both direct and server auth
+      const loginData = await loginUser({ email, password });
       
-      if (error) {
+      // Our custom method might return different structure based on success path
+      if (loginData.error) {
         toast({
           title: 'Login failed',
-          description: error.message,
+          description: loginData.error,
           variant: 'destructive',
         });
-        return { error };
+        return { error: loginData.error };
       }
       
       toast({
@@ -164,45 +175,20 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Use our registerUser function that handles both auth and profile creation
+      const registrationData = await registerUser({
         email,
         password,
-        options: {
-          data: userData
-        }
+        fullName: userData.fullName || email.split('@')[0], // Fallback to email username if no name provided
+        role: userData.role || 'athlete' // Default to athlete if no role provided
       });
-      
-      if (error) {
-        toast({
-          title: 'Registration failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return { error, user: null };
-      }
       
       toast({
         title: 'Registration successful',
-        description: 'Your account has been created. Please check your email for verification.',
+        description: 'Your account has been created successfully.',
       });
       
-      // For Supabase, we'd proceed to create a record in our users table
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            auth_id: data.user.id,
-            email: data.user.email,
-            role: userData.role,
-            created_at: new Date()
-          });
-          
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-        }
-      }
-      
-      return { error: null, user: data.user };
+      return { error: null, user: registrationData.user };
     } catch (e: any) {
       toast({
         title: 'Registration failed',
@@ -224,14 +210,19 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      await supabase.auth.signOut();
+      // Use our logoutUser function that notifies the server
+      await logoutUser();
+      
+      // Update UI state
       setUser(null);
       setSession(null);
       setUserData(null);
+      
       toast({
         title: 'Logged out',
         description: 'You have been logged out successfully.',
       });
+      
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);

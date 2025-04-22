@@ -75,33 +75,145 @@ export async function initializeSupabase(): Promise<boolean> {
   }
 }
 
-// Helper functions for athlete onboarding
-export const registerAthlete = async (userData: {
+// Helper functions for authentication
+export const loginUser = async (credentials: {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
 }) => {
-  // First register with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: userData.email,
-    password: userData.password,
-    options: {
-      data: {
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        full_name: `${userData.firstName} ${userData.lastName}`,
-        user_type: 'athlete'
-      }
+  try {
+    // First, try to use our server endpoint for more complete data
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Login failed:', errorText);
+      throw new Error('Login failed: ' + (errorText || response.statusText));
     }
-  });
-
-  if (authError) {
-    console.error('Supabase registration error:', authError);
-    throw new Error(authError.message);
+    
+    const loginData = await response.json();
+    return loginData;
+  } catch (serverError) {
+    console.error('Server login failed, falling back to direct Supabase auth:', serverError);
+    
+    // Fallback to direct Supabase Auth if server endpoint fails
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password
+    });
+    
+    if (error) {
+      console.error('Supabase login error:', error);
+      throw new Error(error.message);
+    }
+    
+    return data;
   }
+};
 
-  return authData;
+export const registerUser = async (userData: {
+  email: string;
+  password: string;
+  fullName: string;
+  role: 'athlete' | 'business' | 'compliance' | 'admin';
+}) => {
+  try {
+    // Use our server endpoint for registration
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Registration failed:', errorText);
+      throw new Error('Registration failed: ' + (errorText || response.statusText));
+    }
+    
+    const registrationData = await response.json();
+    return registrationData;
+  } catch (serverError) {
+    console.error('Server registration failed:', serverError);
+    throw serverError;
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    // Try server endpoint first for complete profile data
+    const response = await fetch('/api/auth/user', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
+      },
+    });
+    
+    if (!response.ok) {
+      // If server endpoint fails with auth error, return null (not authenticated)
+      if (response.status === 401) {
+        return null;
+      }
+      
+      // For other errors, we'll try the direct Supabase approach
+      const errorText = await response.text();
+      console.error('Server user fetch failed:', errorText);
+      throw new Error('Failed to fetch user: ' + (errorText || response.statusText));
+    }
+    
+    const userData = await response.json();
+    return userData;
+  } catch (serverError) {
+    console.error('Server user fetch failed, falling back to direct Supabase auth:', serverError);
+    
+    // Fallback to direct Supabase Auth
+    const { data, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      if (error.status === 401) {
+        return null; // Not authenticated
+      }
+      console.error('Supabase getUser error:', error);
+      throw new Error(error.message);
+    }
+    
+    return data.user;
+  }
+};
+
+export const logoutUser = async () => {
+  try {
+    // Call server logout endpoint
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
+      },
+    });
+    
+    // Also perform client-side logout with Supabase
+    await supabase.auth.signOut();
+    
+    return true;
+  } catch (error) {
+    console.error('Logout error:', error);
+    
+    // Try direct Supabase logout as fallback
+    try {
+      await supabase.auth.signOut();
+      return true;
+    } catch (directError) {
+      console.error('Direct Supabase logout failed:', directError);
+      throw directError;
+    }
+  }
 };
 
 export const createAthleteProfile = async (profileData: any) => {
