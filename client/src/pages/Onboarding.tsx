@@ -12,7 +12,7 @@ import { FloatingElement } from "@/components/animations/FloatingElement";
 import { motion } from "framer-motion";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useWebSocket } from "@/hooks/use-websocket";
+// WebSocket hook disabled completely
 import { 
   DollarSign, 
   MapPin, 
@@ -423,18 +423,9 @@ export default function Onboarding() {
   
   // Function to sync step changes (disabled for debugging)
   const syncStepChange = (step: OnboardingStep) => {
-    if (!sessionId) return;
-    
-    try {
-      // Temporarily disabled for debugging
-      console.log('Step change would be synchronized (disabled):', {
-        type: 'step_change',
-        sessionId,
-        step
-      });
-    } catch (error) {
-      console.error('Error in step change simulation:', error);
-    }
+    // Function completely bypassed - no WebSocket or API calls
+    console.log('Step changed to:', step);
+    // No syncing with server to avoid any errors
   };
   
   // Handle incoming WebSocket messages
@@ -480,77 +471,16 @@ export default function Onboarding() {
     console.log('WebSocket connection status changed to:', connectionStatus);
   }, [connectionStatus]);
   
-  // Fetch a new session ID when component mounts
+  // IMMEDIATE SESSION CREATION: Skip API call attempts and use fallback
   useEffect(() => {
-    console.log("Starting session initialization");
+    console.log("Using immediate session creation to bypass server issues");
     
-    // Set a fallback timeout to ensure we don't get stuck loading
-    const timeoutId = setTimeout(() => {
-      console.log("Session initialization timed out, using fallback sessionId");
-      setSessionId(`fallback-${Date.now()}`);
-    }, 3000); // 3 second fallback
+    // Immediately create a fallback session ID without even trying server
+    // This is a temporary solution to unblock development
+    const sessionId = `local-${Date.now()}`;
+    console.log("Created local session ID:", sessionId);
+    setSessionId(sessionId);
     
-    const getSessionId = async () => {
-      console.log("getSessionId function called");
-      try {
-        console.log("Fetching session from /api/session/new");
-        // First try to get a server session
-        const response = await fetch('/api/session/new');
-        console.log("Session API response status:", response.status);
-        
-        if (!response.ok) {
-          console.error("Session API response was not OK, using fallback");
-          setSessionId(`fallback-error-${Date.now()}`);
-          return;
-        }
-        
-        try {
-          const data = await response.json();
-          console.log("Session API response data:", data);
-          
-          if (data.success && data.sessionId) {
-            console.log("Setting sessionId state to:", data.sessionId);
-            setSessionId(data.sessionId);
-            console.log("Server session created:", data.sessionId);
-            
-            try {
-              // Try to restore saved form data from session
-              const sessionResponse = await fetch(`/api/session/${data.sessionId}`);
-              if (sessionResponse.ok) {
-                const sessionData = await sessionResponse.json();
-                
-                // Log the actual response for debugging
-                console.log("Session data response:", sessionData);
-                
-                if (sessionData.exists && sessionData.session) {
-                  // Handle any saved data if we add it later
-                  console.log("Retrieved session:", sessionData.session);
-                } else {
-                  console.log("No saved session data found, using default values");
-                }
-              } else {
-                console.log("Session data fetch unsuccessful, continuing with default values");
-              }
-            } catch (sessionError) {
-              console.error("Error fetching session data (non-critical):", sessionError);
-            }
-          } else {
-            console.error("Failed to create server session, using fallback ID");
-            setSessionId(`fallback-invalid-${Date.now()}`);
-          }
-        } catch (parseError) {
-          console.error("Error parsing session response:", parseError);
-          setSessionId(`fallback-parse-${Date.now()}`);
-        }
-      } catch (error) {
-        console.error("Error setting up session:", error);
-        setSessionId(`fallback-try-${Date.now()}`);
-      }
-    };
-    
-    getSessionId();
-    
-    return () => clearTimeout(timeoutId);
   }, []);
   
   // Handle form data changes
@@ -898,27 +828,9 @@ export default function Onboarding() {
       syncStepChange(nextStep);
       
       // Sync form data too
-      if (sessionId) {
-        try {
-          // WebSocket sync temporarily disabled for debugging
-          console.log('Would sync form data via WebSocket (disabled):', {
-            type: 'profile_update',
-            sessionId,
-            data: formData
-          });
-          
-          // Attempt to update session data on server
-          apiRequest('POST', `/api/session/${sessionId}/user-type`, {
-            userType: formData.userType,
-            formData,
-            currentStep: nextStep
-          }).catch(error => {
-            console.error('Error updating session data:', error);
-          });
-        } catch (error) {
-          console.error('Error updating session data:', error);
-        }
-      }
+      // Skip session updates entirely for now
+      console.log('Step updated locally to:', nextStep);
+      console.log('Skipping session update API calls to avoid errors');
       
       window.scrollTo(0, 0);
     }
