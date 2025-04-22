@@ -389,14 +389,15 @@ export default function Onboarding() {
   const lastMessage = null;
   const sendMessage = () => console.log("WebSocket disabled for debugging");
 
-  // Function to manually sync form data through WebSocket
+  // Function to manually sync form data through WebSocket (disabled for debugging)
   const syncFormData = () => {
     if (!sessionId) return;
     
     setIsSyncing(true);
     
     try {
-      sendMessage({
+      // Temporarily disabled for debugging
+      console.log("Would sync data:", {
         type: 'profile_update',
         sessionId,
         data: formData
@@ -405,34 +406,34 @@ export default function Onboarding() {
       setTimeout(() => {
         setIsSyncing(false);
         toast({
-          title: "Sync Successful",
-          description: "Your form data has been synchronized",
+          title: "Sync Simulation",
+          description: "WebSocket sync simulation completed (disabled for debugging)",
         });
       }, 500);
     } catch (error) {
-      console.error('Error syncing form data:', error);
+      console.error('Error in sync simulation:', error);
       setIsSyncing(false);
       toast({
-        title: "Sync Failed",
-        description: "Could not synchronize your data. Please try again.",
+        title: "Sync Simulation Failed",
+        description: "Simulation failed (WebSocket disabled for debugging)",
         variant: "destructive"
       });
     }
   };
   
-  // Function to sync step changes
+  // Function to sync step changes (disabled for debugging)
   const syncStepChange = (step: OnboardingStep) => {
     if (!sessionId) return;
     
     try {
-      sendMessage({
+      // Temporarily disabled for debugging
+      console.log('Step change would be synchronized (disabled):', {
         type: 'step_change',
         sessionId,
         step
       });
-      console.log('Step change synchronized:', step);
     } catch (error) {
-      console.error('Error syncing step change:', error);
+      console.error('Error in step change simulation:', error);
     }
   };
   
@@ -481,12 +482,21 @@ export default function Onboarding() {
   
   // Fetch a new session ID when component mounts
   useEffect(() => {
+    console.log("Starting session initialization");
+    
     const getSessionId = async () => {
+      console.log("getSessionId function called");
       try {
+        console.log("Fetching session from /api/session/new");
         // First try to get a server session
         const response = await fetch('/api/session/new');
+        console.log("Session API response status:", response.status);
+        
         const data = await response.json();
+        console.log("Session API response data:", data);
+        
         if (data.success && data.sessionId) {
+          console.log("Setting sessionId state to:", data.sessionId);
           setSessionId(data.sessionId);
           console.log("Server session created:", data.sessionId);
           
@@ -1171,15 +1181,26 @@ export default function Onboarding() {
   
   // Render the current step content
   const renderStepContent = () => {
+    console.log("renderStepContent called, sessionId:", sessionId);
+    
     // Display loading indicator while session is being established
     if (!sessionId) {
+      console.log("Showing loading indicator because sessionId is not set");
       return (
         <div className="flex flex-col items-center justify-center py-12">
           <RefreshCw className="h-12 w-12 animate-spin text-primary mb-4" />
           <p className="text-zinc-400 mt-4">Initializing your session...</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
+            onClick={() => window.location.reload()}
+          >
+            Restart
+          </button>
         </div>
       );
     }
+    
+    console.log("Session established, rendering step:", currentStep);
     
     switch (currentStep) {
       // Athlete-specific steps
