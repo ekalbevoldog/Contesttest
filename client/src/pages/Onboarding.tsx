@@ -804,10 +804,14 @@ export default function Onboarding() {
         }
       }
       
+      // Update locally first for immediate UI response
       setCurrentStep(nextStep);
       
-      // Sync step change via WebSocket
+      // Then sync with server via REST API
       syncStepChange(nextStep);
+      
+      // Also sync form data to ensure everything is up to date
+      syncFormData();
       
       // Sync form data too
       // Skip session updates entirely for now
@@ -909,10 +913,14 @@ export default function Onboarding() {
       }
     }
     
+    // Update locally first for immediate UI response
     setCurrentStep(prevStep);
     
-    // Sync step change via WebSocket
+    // Then sync with server via REST API
     syncStepChange(prevStep);
+    
+    // Also sync form data to ensure everything is saved
+    syncFormData();
     
     window.scrollTo(0, 0);
   };
