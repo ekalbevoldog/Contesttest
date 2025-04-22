@@ -1462,7 +1462,15 @@ export default function SimpleOnboarding() {
                   max={10000}
                   step={100}
                   value={[formData.budgetMin]}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, budgetMin: value[0] }))}
+                  onValueChange={(value) => {
+                    const newValue = value[0];
+                    setFormData(prev => {
+                      const updatedData = { ...prev, budgetMin: newValue };
+                      // Sync the change via WebSocket after a short delay to reduce network traffic
+                      setTimeout(() => syncFormDataChanges({ budgetMin: newValue }), 100);
+                      return updatedData;
+                    });
+                  }}
                 />
               </div>
               
@@ -1475,7 +1483,15 @@ export default function SimpleOnboarding() {
                   max={20000}
                   step={100}
                   value={[formData.budgetMax]}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, budgetMax: value[0] }))}
+                  onValueChange={(value) => {
+                    const newValue = value[0];
+                    setFormData(prev => {
+                      const updatedData = { ...prev, budgetMax: newValue };
+                      // Sync the change via WebSocket after a short delay to reduce network traffic
+                      setTimeout(() => syncFormDataChanges({ budgetMax: newValue }), 100);
+                      return updatedData;
+                    });
+                  }}
                 />
               </div>
             </div>
