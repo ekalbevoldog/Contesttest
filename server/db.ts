@@ -11,16 +11,20 @@ if (!process.env.SUPABASE_URL) {
   }
 }
 
-// Get the connection string from Supabase config
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is required');
-}
+// Construct connection string from components
+const host = 'db.yfkqvuevaykxizpndhke.supabase.co';
+const port = 5432;
+const database = 'postgres';
+const user = 'postgres';
+const connectionString = `postgres://${user}:${process.env.SUPABASE_DB_PASSWORD}@${host}:${port}/${database}`;
 
 // Create a Postgres client
 const client = postgres(connectionString, { 
   max: 1,
-  ssl: { rejectUnauthorized: false }
+  ssl: true,
+  connection: {
+    options: `--cluster=db-yfkqvuevaykxizpndhke`
+  }
 });
 
 // Initialize Drizzle with the Postgres client
