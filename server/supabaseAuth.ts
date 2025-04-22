@@ -99,18 +99,39 @@ export function setupSupabaseAuth(app: Express) {
         return res.status(400).json({ error: 'User already exists' });
       }
       
-      // Prepare user data for insertion
+      console.log('\n==== SUPABASE REGISTRATION DATA ====');
+      console.log('Creating user account with Supabase Auth...');
+      
+      // First create the user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: role
+          }
+        }
+      });
+      
+      if (authError) {
+        console.error('Error creating Supabase auth account:', authError);
+        return res.status(500).json({ error: 'Failed to create user account' });
+      }
+      
+      console.log('Auth account created successfully, storing additional user data...');
+      
+      // Also store in the users table for our application
       const userDataToInsert = {
         email: email,
         username: fullName, // We'll use fullName as username since there's no full_name column
-        password: password, // This will be hashed by supabase
+        password: '**MANAGED_BY_SUPABASE_AUTH**', // Don't store actual password in our table
         role: role,
         created_at: new Date()
+        // Note: We'd ideally store auth_id but the users table doesn't have that column yet
       };
       
-      console.log('\n==== SUPABASE REGISTRATION DATA ====');
       console.log('Inserting user data into users table:', userDataToInsert);
-      console.log('Table columns (expected): id, email, username, password, role, created_at');
       
       // Store user data in our database
       // Using only the columns that exist in the users table
@@ -127,6 +148,7 @@ export function setupSupabaseAuth(app: Express) {
         console.log('Column error hint:', error.hint);
         console.log('Column error code:', error.code);
         
+        // Even though auth account was created, we should report the error
         return res.status(500).json({ error: 'Failed to store user data' });
       }
       
