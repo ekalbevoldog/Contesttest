@@ -492,22 +492,18 @@ export default function Onboarding() {
           const sessionResponse = await fetch(`/api/session/${data.sessionId}`);
           const sessionData = await sessionResponse.json();
           
-          if (sessionData.success && sessionData.data) {
-            // If session has saved form data, restore it
-            if (sessionData.data.formData) {
-              console.log("Restoring saved form data from session:", sessionData.data.formData);
-              setFormData(prevData => ({
-                ...prevData,
-                ...sessionData.data.formData
-              }));
-            }
-            
-            // If session has a saved step, restore it
-            if (sessionData.data.currentStep) {
-              console.log("Restoring saved step from session:", sessionData.data.currentStep);
-              setCurrentStep(sessionData.data.currentStep);
-            }
+          // Log the actual response for debugging
+          console.log("Session data response:", sessionData);
+          
+          if (sessionData.exists && sessionData.session) {
+            // Handle any saved data if we add it later
+            console.log("Retrieved session:", sessionData.session);
+          } else {
+            console.log("No saved session data found, using default values");
           }
+          
+          // Continue regardless of whether we found saved data or not
+          // Now that we have a sessionId, the loading state will resolve
         } else {
           console.error("Failed to create server session");
         }
