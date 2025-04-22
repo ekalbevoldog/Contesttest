@@ -22,7 +22,7 @@ const ProtectedRoute = ({
   component: Component, 
   path 
 }: { 
-  component: React.ComponentType; 
+  component: React.ComponentType<any>; 
   path: string 
 }) => {
   // Use the auth state from use-auth hook
@@ -55,7 +55,9 @@ const ProtectedRoute = ({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  // Use the RouteComponentProps wrapper to fix the type error
+  const WrappedComponent = (props: RouteComponentProps) => <Component {...props} />; 
+  return <Route path={path} component={WrappedComponent} />;
 };
 
 // Define a fallback loading component
@@ -74,6 +76,7 @@ function Router() {
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/sign-in" component={SignIn} />
+            <Route path="/auth" component={AuthPage} />
             <Route path="/onboarding" component={Onboarding} />
             <Route path="/athlete-onboarding" component={Onboarding} />
             <Route path="/athlete/sign-up" component={Onboarding} />
