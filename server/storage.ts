@@ -1,16 +1,13 @@
 import { 
   InsertSession, InsertAthlete, InsertBusiness, 
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
-  Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer,
-  users, sessions, athletes, businesses, campaigns, matches, messages, partnershipOffers, feedbacks
+  Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
 } from "@shared/schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
-import { SupabaseStorage } from "./supabaseStorage";
+import { pool } from "./db";
 import { supabase } from "./supabase";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
 
 // Helper for password hashing
 const scryptAsync = promisify(scrypt);
@@ -98,12 +95,14 @@ export interface IStorage {
   sessionStore: session.Store;
 }
 
-// PostgreSQL implementation of IStorage
-export class DatabaseStorage implements IStorage {
+/**
+ * SupabaseStorage provides an implementation of the IStorage interface using Supabase client APIs
+ */
+export class SupabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // Use memory store for simplicity after removing Neon database
+    // Use memory store for simplicity 
     import('memorystore').then(memorystore => {
       const MemoryStore = memorystore.default(session);
       this.sessionStore = new MemoryStore({
@@ -121,229 +120,473 @@ export class DatabaseStorage implements IStorage {
 
   // Session operations
   async getSession(sessionId: string): Promise<Session | undefined> {
-    const [session] = await db.select().from(sessions).where(eq(sessions.sessionId, sessionId));
-    return session;
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('session_id', sessionId)
+        .single();
+        
+      if (error) {
+        console.error('Error getting session:', error);
+        return undefined;
+      }
+      
+      return this.mapSessionFromDb(data);
+    } catch (error) {
+      console.error('Exception getting session:', error);
+      return undefined;
+    }
   }
   
   async getSessionByUserId(userId: string): Promise<Session | undefined> {
-    // Find a session where either athleteId or businessId match the userId
-    const [athleteSession] = await db.select().from(sessions).where(eq(sessions.athleteId, userId));
-    if (athleteSession) return athleteSession;
-    
-    const [businessSession] = await db.select().from(sessions).where(eq(sessions.businessId, userId));
-    return businessSession;
+    try {
+      // Try to find session with athlete_id
+      const { data: athleteData, error: athleteError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('athlete_id', userId)
+        .single();
+        
+      if (!athleteError && athleteData) {
+        return this.mapSessionFromDb(athleteData);
+      }
+      
+      // Try to find session with business_id
+      const { data: businessData, error: businessError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('business_id', userId)
+        .single();
+        
+      if (!businessError && businessData) {
+        return this.mapSessionFromDb(businessData);
+      }
+      
+      return undefined;
+    } catch (error) {
+      console.error('Exception getting session by user ID:', error);
+      return undefined;
+    }
   }
 
-  async createSession(session: InsertSession): Promise<Session> {
-    const [newSession] = await db.insert(sessions).values(session).returning();
-    return newSession;
+  async createSession(sessionData: InsertSession): Promise<Session> {
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({
+          session_id: sessionData.sessionId,
+          user_type: sessionData.userType,
+          data: sessionData.data,
+          profile_completed: sessionData.profileCompleted,
+          athlete_id: sessionData.athleteId,
+          business_id: sessionData.businessId,
+          created_at: new Date(),
+          updated_at: new Date(),
+          last_login: new Date()
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error creating session:', error);
+        throw new Error(`Failed to create session: ${error.message}`);
+      }
+      
+      return this.mapSessionFromDb(data);
+    } catch (error) {
+      console.error('Exception creating session:', error);
+      throw new Error('Failed to create session');
+    }
   }
 
   async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
-    const [updatedSession] = await db
-      .update(sessions)
-      .set({
-        ...data,
-        updatedAt: new Date()
-      })
-      .where(eq(sessions.sessionId, sessionId))
-      .returning();
-
-    if (!updatedSession) {
-      throw new Error(`Session with ID ${sessionId} not found`);
+    try {
+      // Map to DB column names
+      const dbData: any = {};
+      if (data.userType !== undefined) dbData.user_type = data.userType;
+      if (data.data !== undefined) dbData.data = data.data;
+      if (data.profileCompleted !== undefined) dbData.profile_completed = data.profileCompleted;
+      if (data.athleteId !== undefined) dbData.athlete_id = data.athleteId;
+      if (data.businessId !== undefined) dbData.business_id = data.businessId;
+      if (data.lastLogin !== undefined) dbData.last_login = data.lastLogin;
+      
+      dbData.updated_at = new Date();
+      
+      const { data: updatedData, error } = await supabase
+        .from('sessions')
+        .update(dbData)
+        .eq('session_id', sessionId)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating session:', error);
+        throw new Error(`Failed to update session: ${error.message}`);
+      }
+      
+      return this.mapSessionFromDb(updatedData);
+    } catch (error) {
+      console.error('Exception updating session:', error);
+      throw new Error(`Failed to update session ${sessionId}`);
     }
-
-    return updatedSession;
   }
 
   async deleteSession(sessionId: string): Promise<void> {
-    await db.delete(sessions).where(eq(sessions.sessionId, sessionId));
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('session_id', sessionId);
+        
+      if (error) {
+        console.error('Error deleting session:', error);
+        throw new Error(`Failed to delete session: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Exception deleting session:', error);
+      throw new Error(`Failed to delete session ${sessionId}`);
+    }
   }
 
   // Athlete operations
   async getAthlete(id: number): Promise<Athlete | undefined> {
-    const [athlete] = await db.select().from(athletes).where(eq(athletes.id, id));
-    return athlete;
+    try {
+      const { data, error } = await supabase
+        .from('athlete_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error getting athlete:', error);
+        return undefined;
+      }
+      
+      return this.mapAthleteFromDb(data);
+    } catch (error) {
+      console.error('Exception getting athlete:', error);
+      return undefined;
+    }
   }
 
   async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
-    const [athlete] = await db.select().from(athletes).where(eq(athletes.sessionId, sessionId));
-    return athlete;
+    try {
+      const { data, error } = await supabase
+        .from('athlete_profiles')
+        .select('*')
+        .eq('session_id', sessionId)
+        .single();
+        
+      if (error) {
+        return undefined;
+      }
+      
+      return this.mapAthleteFromDb(data);
+    } catch (error) {
+      console.error('Exception getting athlete by session:', error);
+      return undefined;
+    }
   }
 
   async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
-    const [newAthlete] = await db.insert(athletes).values(athlete).returning();
-    return newAthlete;
+    try {
+      const dbAthlete = this.mapAthleteToDb(athlete);
+      
+      const { data, error } = await supabase
+        .from('athlete_profiles')
+        .insert(dbAthlete)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error storing athlete profile:', error);
+        throw new Error(`Failed to store athlete profile: ${error.message}`);
+      }
+      
+      return this.mapAthleteFromDb(data);
+    } catch (error) {
+      console.error('Exception storing athlete profile:', error);
+      throw new Error('Failed to store athlete profile');
+    }
   }
 
   async getAllAthletes(): Promise<Athlete[]> {
-    return await db.select().from(athletes);
+    try {
+      const { data, error } = await supabase
+        .from('athlete_profiles')
+        .select('*');
+        
+      if (error) {
+        console.error('Error getting all athletes:', error);
+        return [];
+      }
+      
+      return data.map(this.mapAthleteFromDb);
+    } catch (error) {
+      console.error('Exception getting all athletes:', error);
+      return [];
+    }
   }
 
   // Business operations
   async getBusiness(id: number): Promise<Business | undefined> {
-    const [business] = await db.select().from(businesses).where(eq(businesses.id, id));
-    return business;
+    try {
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error getting business:', error);
+        return undefined;
+      }
+      
+      return this.mapBusinessFromDb(data);
+    } catch (error) {
+      console.error('Exception getting business:', error);
+      return undefined;
+    }
   }
 
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
-    const [business] = await db.select().from(businesses).where(eq(businesses.sessionId, sessionId));
-    return business;
+    try {
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('session_id', sessionId)
+        .single();
+        
+      if (error) {
+        return undefined;
+      }
+      
+      return this.mapBusinessFromDb(data);
+    } catch (error) {
+      console.error('Exception getting business by session:', error);
+      return undefined;
+    }
   }
 
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
-    const [newBusiness] = await db.insert(businesses).values(business).returning();
-    return newBusiness;
+    try {
+      const dbBusiness = this.mapBusinessToDb(business);
+      
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .insert(dbBusiness)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error storing business profile:', error);
+        throw new Error(`Failed to store business profile: ${error.message}`);
+      }
+      
+      return this.mapBusinessFromDb(data);
+    } catch (error) {
+      console.error('Exception storing business profile:', error);
+      throw new Error('Failed to store business profile');
+    }
   }
 
   async getAllBusinesses(): Promise<Business[]> {
-    return await db.select().from(businesses);
-  }
-
-  // Campaign operations
-  async getCampaign(id: number): Promise<Campaign | undefined> {
-    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
-    return campaign;
-  }
-
-  async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
-    return await db.select().from(campaigns).where(eq(campaigns.businessId, businessId));
-  }
-
-  async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
-    return newCampaign;
-  }
-
-  // Match operations
-  async getMatch(id: number): Promise<Match | undefined> {
-    const [match] = await db.select().from(matches).where(eq(matches.id, id));
-    return match;
-  }
-
-  async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
-    return await db.select().from(matches).where(eq(matches.athleteId, athleteId));
-  }
-
-  async getMatchesForBusiness(businessId: number): Promise<Match[]> {
-    return await db.select().from(matches).where(eq(matches.businessId, businessId));
-  }
-
-  async storeMatch(match: InsertMatch): Promise<Match> {
-    const [newMatch] = await db.insert(matches).values(match).returning();
-    return newMatch;
-  }
-
-  async getAllMatches(): Promise<Match[]> {
-    return await db.select().from(matches);
-  }
-
-  // Message operations
-  async getMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
-    return await db.select().from(messages)
-      .where(eq(messages.sessionId, sessionId))
-      .limit(limit)
-      .offset(offset);
-  }
-
-  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> {
-    const [message] = await db.insert(messages).values({
-      sessionId,
-      role,
-      content
-    }).returning();
-
-    return message;
-  }
-
-  async getUnreadMessageCounts(sessionId: string): Promise<number> {
     try {
       const { data, error } = await supabase
-        .from('messages')
-        .select('count')
-        .eq('session_id', sessionId);
+        .from('business_profiles')
+        .select('*');
         
       if (error) {
-        console.error("Error getting unread message count:", error);
-        return 0;
+        console.error('Error getting all businesses:', error);
+        return [];
       }
       
-      return data && data.length > 0 ? parseInt(data[0].count, 10) : 0;
+      return data.map(this.mapBusinessFromDb);
     } catch (error) {
-      console.error("Error getting unread message count:", error);
-      return 0;
+      console.error('Exception getting all businesses:', error);
+      return [];
     }
   }
-
-  async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
-    if (messageIds.length === 0) return;
-    
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .update({ unread: false })
-        .eq('session_id', sessionId)
-        .in('id', messageIds);
-        
-      if (error) {
-        console.error("Error marking messages as read:", error);
-      }
-    } catch (error) {
-      console.error("Error marking messages as read:", error);
-    }
-  }
-
 
   // Auth operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error getting user:', error);
+        return undefined;
+      }
+      
+      return this.mapUserFromDb(data);
+    } catch (error) {
+      console.error('Exception getting user:', error);
+      return undefined;
+    }
   }
   
-  // For backward compatibility - redirects to email-based lookup
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    console.warn('getUserByUsername is deprecated, use getUserByEmail instead');
-    return this.getUserByEmail(username);
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
-  }
-
-  async createUser(insertUser: Partial<InsertUser>): Promise<User> {
-    // Omit password from the user object as it should be stored separately
-    const { password, ...userData } = insertUser as any;
-    
-    // Create the user record
-    const [user] = await db.insert(users).values({
-      ...userData,
-      userType: userData.userType || 'athlete', // Set default user type if not provided
-    }).returning();
-    
-    // If a password was provided, store it separately
-    if (password && user.id) {
-      await this.storePasswordHash(user.id, password);
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+        
+      if (error) {
+        console.error('Error getting user by email:', error);
+        return undefined;
+      }
+      
+      return this.mapUserFromDb(data);
+    } catch (error) {
+      console.error('Exception getting user by email:', error);
+      return undefined;
     }
-    
-    return user;
+  }
+  
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*');
+        
+      if (error) {
+        console.error('Error getting all users:', error);
+        return [];
+      }
+      
+      return data.map(this.mapUserFromDb);
+    } catch (error) {
+      console.error('Exception getting all users:', error);
+      return [];
+    }
+  }
+
+  async createUser(userData: Partial<InsertUser>): Promise<User> {
+    try {
+      // Map the user data to the DB schema
+      const dbUser: any = {
+        email: userData.email,
+        username: userData.username,
+        role: userData.role,
+        created_at: new Date()
+      };
+      
+      // Create the user record
+      const { data, error } = await supabase
+        .from('users')
+        .insert(dbUser)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error creating user:', error);
+        throw new Error(`Failed to create user: ${error.message}`);
+      }
+      
+      // If a password was provided, store it separately
+      if (userData.password && data.id) {
+        const passwordHash = await hashPassword(userData.password);
+        await this.storePasswordHash(data.id.toString(), passwordHash);
+      }
+      
+      return this.mapUserFromDb(data);
+    } catch (error) {
+      console.error('Exception creating user:', error);
+      throw new Error('Failed to create user');
+    }
+  }
+
+  async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> {
+    try {
+      // Map the user data to the DB schema
+      const dbUser: any = {};
+      
+      if (userData.email !== undefined) dbUser.email = userData.email;
+      if (userData.username !== undefined) dbUser.username = userData.username;
+      if (userData.role !== undefined) dbUser.role = userData.role;
+      
+      // Create the user record
+      const { data, error } = await supabase
+        .from('users')
+        .update(dbUser)
+        .eq('id', userId)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating user:', error);
+        return undefined;
+      }
+      
+      return this.mapUserFromDb(data);
+    } catch (error) {
+      console.error('Exception updating user:', error);
+      return undefined;
+    }
+  }
+  
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', userId)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating stripe customer ID:', error);
+        throw new Error(`Failed to update stripe customer ID: ${error.message}`);
+      }
+      
+      return this.mapUserFromDb(data);
+    } catch (error) {
+      console.error('Exception updating stripe customer ID:', error);
+      throw new Error(`Failed to update stripe customer ID for user ${userId}`);
+    }
+  }
+  
+  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> {
+    try {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .update({ 
+          stripe_customer_id: data.customerId,
+          stripe_subscription_id: data.subscriptionId
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating stripe info:', error);
+        throw new Error(`Failed to update stripe info: ${error.message}`);
+      }
+      
+      return this.mapUserFromDb(userData);
+    } catch (error) {
+      console.error('Exception updating stripe info:', error);
+      throw new Error(`Failed to update stripe info for user ${userId}`);
+    }
   }
   
   // Password-related methods
   async getPasswordHash(userId: string): Promise<string | null> {
     try {
-      // Store password in a separate table for security
       const { data, error } = await supabase
         .from('user_credentials')
         .select('password_hash')
         .eq('user_id', userId)
         .single();
-      
-      if (error || !data) {
+        
+      if (error) {
         console.error('Error getting password hash:', error);
         return null;
       }
@@ -357,7 +600,6 @@ export class DatabaseStorage implements IStorage {
   
   async storePasswordHash(userId: string, passwordHash: string): Promise<void> {
     try {
-      // Store in a separate table from users
       const { error } = await supabase
         .from('user_credentials')
         .upsert({
@@ -365,888 +607,911 @@ export class DatabaseStorage implements IStorage {
           password_hash: passwordHash,
           updated_at: new Date()
         });
-      
+        
       if (error) {
         console.error('Error storing password hash:', error);
+        throw new Error(`Failed to store password hash: ${error.message}`);
       }
     } catch (error) {
       console.error('Exception storing password hash:', error);
-    }
-  }
-
-  async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> {
-    // Remove properties that shouldn't be directly updated
-    const { id, createdAt, ...safeUserData } = userData as any;
-
-    const [updatedUser] = await db
-      .update(users)
-      .set({
-        ...safeUserData,
-        // Don't include fields that don't exist in the schema
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, userId))
-      .returning();
-
-    return updatedUser;
-  }
-
-  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> {
-    // Note: We need to make sure these fields are actually in the schema
-    // For now, we'll use supabase directly to update the custom fields
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .update({ 
-          stripe_customer_id: customerId,
-          updated_at: new Date()
-        })
-        .eq('id', userId)
-        .select()
-        .single();
-        
-      if (error || !data) {
-        throw new Error(`User with ID ${userId} not found: ${error?.message}`);
-      }
-      
-      return data as User;
-    } catch (error) {
-      console.error("Error updating stripe customer ID:", error);
-      throw new Error(`Failed to update stripe info for user ${userId}`);
-    }
-  }
-
-  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> {
-    // Note: We need to make sure these fields are actually in the schema
-    // For now, we'll use supabase directly to update the custom fields
-    try {
-      const { data: userData, error } = await supabase
-        .from('users')
-        .update({ 
-          stripe_customer_id: data.customerId,
-          stripe_subscription_id: data.subscriptionId,
-          updated_at: new Date()
-        })
-        .eq('id', userId)
-        .select()
-        .single();
-        
-      if (error || !userData) {
-        throw new Error(`User with ID ${userId} not found: ${error?.message}`);
-      }
-      
-      return userData as User;
-    } catch (error) {
-      console.error("Error updating stripe info:", error);
-      throw new Error(`Failed to update stripe info for user ${userId}`);
+      throw new Error(`Failed to store password hash for user ${userId}`);
     }
   }
   
   async verifyPassword(password: string, storedPassword: string): Promise<boolean> {
-    // Check if the password includes a salt
-    if (storedPassword.includes('.')) {
-      const [hashedPassword, salt] = storedPassword.split('.');
-      const hashedBuf = Buffer.from(hashedPassword, 'hex');
+    try {
+      const [hashedPart, salt] = storedPassword.split('.');
+      const hashedBuf = Buffer.from(hashedPart, 'hex');
       const suppliedBuf = (await scryptAsync(password, salt, 64)) as Buffer;
       return timingSafeEqual(hashedBuf, suppliedBuf);
-    } else {
-      // Legacy format or plain-text comparison (for testing)
-      return password === storedPassword;
-    }
-  }
-
-  // Feedback operations
-  async getFeedback(id: number): Promise<Feedback | undefined> {
-    const [feedback] = await db.select().from(feedbacks).where(eq(feedbacks.id, id));
-    return feedback;
-  }
-
-  async getFeedbackByUser(userId: string): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.userId, userId));
-  }
-
-  async getFeedbackByMatch(matchId: number): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.matchId, matchId));
-  }
-
-  async getFeedbackByType(feedbackType: string): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.feedbackType, feedbackType));
-  }
-
-  async getPublicFeedback(): Promise<Feedback[]> {
-    return await db.select().from(feedbacks).where(eq(feedbacks.isPublic, true));
-  }
-
-  async storeFeedback(feedback: InsertFeedback): Promise<Feedback> {
-    const [newFeedback] = await db.insert(feedbacks).values(feedback).returning();
-    return newFeedback;
-  }
-
-  async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> {
-    const [updatedFeedback] = await db
-      .update(feedbacks)
-      .set({
-        status,
-        updatedAt: new Date()
-      })
-      .where(eq(feedbacks.id, feedbackId))
-      .returning();
-
-    if (!updatedFeedback) {
-      throw new Error(`Feedback with ID ${feedbackId} not found`);
-    }
-
-    return updatedFeedback;
-  }
-
-  async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> {
-    const [updatedFeedback] = await db
-      .update(feedbacks)
-      .set({
-        adminResponse: response,
-        updatedAt: new Date()
-      })
-      .where(eq(feedbacks.id, feedbackId))
-      .returning();
-
-    if (!updatedFeedback) {
-      throw new Error(`Feedback with ID ${feedbackId} not found`);
-    }
-
-    return updatedFeedback;
-  }
-
-  // Partnership Offer operations
-  async getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined> {
-    const [offer] = await db.select().from(partnershipOffers).where(eq(partnershipOffers.id, id));
-    return offer;
-  }
-
-  async getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]> {
-    return await db.select().from(partnershipOffers).where(eq(partnershipOffers.athleteId, athleteId));
-  }
-
-  async getPartnershipOffersByBusiness(businessId: number): Promise<PartnershipOffer[]> {
-    return await db.select().from(partnershipOffers).where(eq(partnershipOffers.businessId, businessId));
-  }
-
-  async getPartnershipOffersByMatch(matchId: number): Promise<PartnershipOffer | undefined> {
-    const [offer] = await db.select().from(partnershipOffers).where(eq(partnershipOffers.matchId, matchId));
-    return offer;
-  }
-
-  async createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer> {
-    const [newOffer] = await db.insert(partnershipOffers).values(offer).returning();
-    return newOffer;
-  }
-
-  async updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer> {
-    const now = new Date();
-    const [updatedOffer] = await db
-      .update(partnershipOffers)
-      .set({
-        status,
-        athleteRespondedAt: status !== "pending" ? now : undefined,
-        updatedAt: now
-      })
-      .where(eq(partnershipOffers.id, id))
-      .returning();
-
-    if (!updatedOffer) {
-      throw new Error(`Partnership offer with ID ${id} not found`);
-    }
-
-    return updatedOffer;
-  }
-
-  async markPartnershipOfferViewed(id: number): Promise<PartnershipOffer> {
-    const now = new Date();
-    const [updatedOffer] = await db
-      .update(partnershipOffers)
-      .set({
-        athleteViewedAt: now,
-        updatedAt: now
-      })
-      .where(eq(partnershipOffers.id, id))
-      .returning();
-
-    if (!updatedOffer) {
-      throw new Error(`Partnership offer with ID ${id} not found`);
-    }
-
-    return updatedOffer;
-  }
-
-  async updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer> {
-    const now = new Date();
-    const [updatedOffer] = await db
-      .update(partnershipOffers)
-      .set({
-        complianceStatus: status,
-        complianceNotes: notes,
-        complianceReviewedAt: now,
-        updatedAt: now
-      })
-      .where(eq(partnershipOffers.id, id))
-      .returning();
-
-    if (!updatedOffer) {
-      throw new Error(`Partnership offer with ID ${id} not found`);
-    }
-
-    return updatedOffer;
-  }
-}
-
-// For backwards compatibility and fallback
-export class MemStorage implements IStorage {
-  private sessions: Map<string, Session>;
-  private athletes: Map<number, Athlete>;
-  private businesses: Map<number, Business>;
-  private campaigns: Map<number, Campaign>;
-  private matches: Map<number, Match>;
-  private partnershipOffers: Map<number, PartnershipOffer>;
-  private messages: Map<string, Message[]>;
-  private users: Map<string, User>;
-  private userCredentials: Map<string, string>; // For storing password hashes
-  private feedbacks: Map<number, Feedback>;
-  private currentSessionId: number;
-  private currentAthleteId: number;
-  private currentBusinessId: number;
-  private currentCampaignId: number;
-  private currentMatchId: number;
-  private currentPartnershipOfferId: number;
-  private currentMessageId: number;
-  private currentFeedbackId: number;
-  sessionStore: session.Store;
-
-  constructor() {
-    this.sessions = new Map();
-    this.athletes = new Map();
-    this.businesses = new Map();
-    this.campaigns = new Map();
-    this.matches = new Map();
-    this.partnershipOffers = new Map();
-    this.messages = new Map();
-    this.users = new Map();
-    this.userCredentials = new Map();
-    this.feedbacks = new Map();
-    this.currentSessionId = 1;
-    this.currentAthleteId = 1;
-    this.currentBusinessId = 1;
-    this.currentCampaignId = 1;
-    this.currentMatchId = 1;
-    this.currentPartnershipOfferId = 1;
-    this.currentMessageId = 1;
-    this.currentUserId = 1;
-    this.currentFeedbackId = 1;
-
-    // Create a memory store for Express sessions
-    // Initialize with basic memory store until the import completes
-    this.sessionStore = new session.MemoryStore();
-  }
-
-  async getSession(sessionId: string): Promise<Session | undefined> {
-    return this.sessions.get(sessionId);
-  }
-  
-  async getSessionByUserId(userId: string): Promise<Session | undefined> {
-    // Iterate through all sessions to find one matching the athlete or business ID
-    for (const session of this.sessions.values()) {
-      if (session.athleteId === userId || session.businessId === userId) {
-        return session;
-      }
-    }
-    return undefined;
-  }
-
-  async createSession(session: InsertSession): Promise<Session> {
-    const id = this.currentSessionId++;
-
-    const newSession: Session = {
-      id,
-      sessionId: session.sessionId,
-      userType: session.userType || null,
-      data: session.data || null,
-      profileCompleted: session.profileCompleted || false,
-      athleteId: session.athleteId || null,
-      businessId: session.businessId || null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.sessions.set(session.sessionId, newSession);
-    return newSession;
-  }
-
-  async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
-    const session = this.sessions.get(sessionId);
-
-    if (!session) {
-      throw new Error(`Session with ID ${sessionId} not found`);
-    }
-
-    const updatedSession: Session = {
-      ...session,
-      ...data,
-      updatedAt: new Date(),
-    };
-
-    this.sessions.set(sessionId, updatedSession);
-    return updatedSession;
-  }
-
-  async deleteSession(sessionId: string): Promise<void> {
-    this.sessions.delete(sessionId);
-  }
-
-  async getAthlete(id: number): Promise<Athlete | undefined> {
-    return this.athletes.get(id);
-  }
-
-  async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> {
-    const athletes = Array.from(this.athletes.values());
-    return athletes.find(athlete => athlete.sessionId === sessionId);
-  }
-
-  async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
-    const id = this.currentAthleteId++;
-
-    const newAthlete: Athlete = {
-      id,
-      ...athlete,
-      userId: null,
-      email: null,
-      phone: null,
-      birthdate: null,
-      gender: null,
-      bio: null,
-      graduationYear: null,
-      major: null,
-      gpa: null,
-      academicHonors: null,
-      position: null,
-      sportAchievements: null,
-      stats: null,
-      socialHandles: null,
-      averageEngagementRate: null,
-      contentQuality: null,
-      postFrequency: null,
-      contentTypes: null,
-      topPerformingContentThemes: null,
-      mediaKit: null,
-      preferredProductCategories: null,
-      previousBrandDeals: null,
-      availableForTravel: null,
-      exclusivityRequirements: null,
-      personalValues: null,
-      causes: null,
-      brandPersonality: null,
-      availabilityTimeframe: null,
-      minimumCompensation: null,
-      preferences: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.athletes.set(id, newAthlete);
-    return newAthlete;
-  }
-
-  async getAllAthletes(): Promise<Athlete[]> {
-    return Array.from(this.athletes.values());
-  }
-
-  async getBusiness(id: number): Promise<Business | undefined> {
-    return this.businesses.get(id);
-  }
-
-  async getBusinessBySession(sessionId: string): Promise<Business | undefined> {
-    const businesses = Array.from(this.businesses.values());
-    return businesses.find(business => business.sessionId === sessionId);
-  }
-
-  async storeBusinessProfile(business: InsertBusiness): Promise<Business> {
-    const id = this.currentBusinessId++;
-
-    const newBusiness: Business = {
-      id,
-      ...business,
-      userId: null,
-      email: null,
-      phone: null,
-      industry: null,
-      companySize: null,
-      foundedYear: null,
-      website: null,
-      logo: null,
-      productDescription: null,
-      productImages: null,
-      pricingTier: null,
-      audienceDemographics: null,
-      primaryAudienceAgeRange: null,
-      secondaryAudienceAgeRange: null,
-      campaignGoals: null,
-      campaignFrequency: null,
-      campaignDuration: null,
-      campaignSeasonality: null,
-      campaignTimeline: null,
-      brandVoice: null,
-      brandColors: null,
-      brandGuidelines: null,
-      sustainabilityFocus: null,
-      preferredSports: null,
-      preferredDivisions: null,
-      preferredRegions: null,
-      budget: null,
-      compensationModel: null,
-      budgetPerAthlete: null,
-      previousInfluencerCampaigns: null,
-      campaignSuccessMetrics: null,
-      preferences: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.businesses.set(id, newBusiness);
-    return newBusiness;
-  }
-
-  async getAllBusinesses(): Promise<Business[]> {
-    return Array.from(this.businesses.values());
-  }
-
-  async getCampaign(id: number): Promise<Campaign | undefined> {
-    return this.campaigns.get(id);
-  }
-
-  async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
-    return Array.from(this.campaigns.values())
-      .filter(campaign => campaign.businessId === businessId);
-  }
-
-  async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    const id = this.currentCampaignId++;
-
-    const newCampaign: Campaign = {
-      id,
-      ...campaign,
-      status: null,
-      budget: null,
-      campaignBrief: null,
-      contentTypes: null,
-      athleteRequirements: null,
-      audienceTargeting: null,
-      deliveryTimeline: null,
-      compensationDetails: null,
-      messageGuidelines: null,
-      trackingMetrics: null,
-      approvalWorkflow: null,
-      legalDisclosures: null,
-      exclusivityTerms: null,
-      contentRights: null,
-      paymentTerms: null,
-      cancellationPolicy: null,
-      creativeAssets: null,
-      goals: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.campaigns.set(id, newCampaign);
-    return newCampaign;
-  }
-
-  async getMatch(id: number): Promise<Match | undefined> {
-    return this.matches.get(id);
-  }
-
-  async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
-    return Array.from(this.matches.values())
-      .filter(match => match.athleteId === athleteId);
-  }
-
-  async getMatchesForBusiness(businessId: number): Promise<Match[]> {
-    return Array.from(this.matches.values())
-      .filter(match => match.businessId === businessId);
-  }
-
-  async storeMatch(match: InsertMatch): Promise<Match> {
-    const id = this.currentMatchId++;
-
-    const newMatch: Match = {
-      id,
-      ...match,
-      status: null,
-      strengthAreas: null,
-      weaknessAreas: null,
-      potentialCollaboration: null,
-      riskFactors: null,
-      deliverables: null,
-      compensation: null,
-      platformPreferences: null,
-      contentType: null,
-      contentRequirements: null,
-      timeline: null,
-      complianceRequirements: null,
-      contactDetails: null,
-      nextSteps: null,
-      matchedAt: null,
-      respondedAt: null,
-      approvedAt: null,
-      completedAt: null,
-      createdAt: new Date(),
-    };
-
-    this.matches.set(id, newMatch);
-    return newMatch;
-  }
-
-  async getAllMatches(): Promise<Match[]> {
-    return Array.from(this.matches.values());
-  }
-
-  async getMessages(sessionId: string): Promise<Message[]> {
-    return this.messages.get(sessionId) || [];
-  }
-
-  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> {
-    const id = this.currentMessageId++;
-
-    const message: Message = {
-      id,
-      sessionId,
-      role,
-      content,
-      metadata: metadata ? JSON.stringify(metadata) : null,
-      unread: true,
-      createdAt: new Date(),
-    };
-
-    const sessionMessages = this.messages.get(sessionId) || [];
-    sessionMessages.push(message);
-    this.messages.set(sessionId, sessionMessages);
-
-    return message;
-  }
-
-  async getUnreadMessageCounts(sessionId: string): Promise<number> {
-    const messages = this.messages.get(sessionId) || [];
-    return messages.filter(msg => msg.unread).length;
-  }
-
-  async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
-    const sessionMessages = this.messages.get(sessionId) || [];
-    sessionMessages.forEach(msg => {
-      if (messageIds.includes(msg.id)) {
-        msg.unread = false;
-      }
-    });
-    this.messages.set(sessionId, sessionMessages);
-  }
-
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
-  }
-  
-  // For backward compatibility
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    console.warn('getUserByUsername is deprecated, use getUserByEmail instead');
-    return this.getUserByEmail(username);
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
-  }
-
-  async createUser(insertUser: Partial<InsertUser>): Promise<User> {
-    // Generate a UUID for the user ID to match Supabase
-    const id = crypto.randomUUID();
-    
-    // Extract password for separate storage
-    const { password, ...userData } = insertUser as any;
-
-    const newUser: User = {
-      id,
-      email: userData.email,
-      role: userData.role || 'athlete',
-      created_at: new Date(),
-      last_login: null
-    };
-
-    this.users.set(id, newUser);
-    
-    // Store password separately if provided
-    if (password) {
-      await this.storePasswordHash(id, password);
-    }
-    
-    return newUser;
-  }
-  
-  // Password handling methods
-  async getPasswordHash(userId: string): Promise<string | null> {
-    return this.userCredentials.get(userId) || null;
-  }
-  
-  async storePasswordHash(userId: string, passwordHash: string): Promise<void> {
-    this.userCredentials.set(userId, passwordHash);
-  }
-
-  async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> {
-    const user = this.users.get(userId);
-
-    if (!user) {
-      return undefined;
-    }
-
-    // Handle Supabase user schema which only has specific fields
-    const updatedUser: User = {
-      ...user,
-      ...userData,
-    };
-
-    this.users.set(userId, updatedUser);
-    return updatedUser;
-  }
-
-  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> {
-    const user = this.users.get(userId);
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
-    }
-
-    // For memory storage, we'll simulate adding the stripe data
-    // Note: In real Supabase implementation, this would be stored in a separate table
-    const updatedUser = {
-      ...user,
-      // Maintain existing schema with Supabase
-    };
-
-    this.users.set(userId, updatedUser);
-    
-    // Store the stripe ID as metadata or in a different table
-    // In memory this would be handled via another map
-    console.log(`Stored stripe customer ID ${customerId} for user ${userId}`);
-    
-    return updatedUser;
-  }
-
-  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> {
-    const user = this.users.get(userId);
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
-    }
-
-    // For memory storage, we'll simulate adding the stripe data
-    // Note: In real Supabase implementation, this would be stored in a separate table
-    const updatedUser = {
-      ...user,
-      // Maintain existing schema with Supabase
-    };
-
-    this.users.set(userId, updatedUser);
-    
-    // Store the stripe info as metadata or in a different table
-    // In memory this would be handled via another map
-    console.log(`Stored stripe info (customer: ${data.customerId}, subscription: ${data.subscriptionId}) for user ${userId}`);
-    
-    return updatedUser;
-  }
-  
-  async verifyPassword(password: string, storedPassword: string): Promise<boolean> {
-    try {
-      // Check if the password includes a salt
-      if (storedPassword.includes('.')) {
-        const [hashedPassword, salt] = storedPassword.split('.');
-        const hashedBuf = Buffer.from(hashedPassword, 'hex');
-        const suppliedBuf = (await scryptAsync(password, salt, 64)) as Buffer;
-        return timingSafeEqual(hashedBuf, suppliedBuf);
-      } else {
-        // Legacy format or plain-text comparison (for testing)
-        return password === storedPassword;
-      }
     } catch (error) {
-      console.error("Error verifying password:", error);
+      console.error('Exception verifying password:', error);
       return false;
     }
   }
 
-  // Feedback operations
-  async getFeedback(id: number): Promise<Feedback | undefined> {
-    return this.feedbacks.get(id);
-  }
-
-  async getFeedbackByUser(userId: string): Promise<Feedback[]> {
-    return Array.from(this.feedbacks.values())
-      .filter(feedback => feedback.userId === userId);
-  }
-
-  async getFeedbackByMatch(matchId: number): Promise<Feedback[]> {
-    return Array.from(this.feedbacks.values())
-      .filter(feedback => feedback.matchId === matchId);
-  }
-
-  async getFeedbackByType(feedbackType: string): Promise<Feedback[]> {
-    return Array.from(this.feedbacks.values())
-      .filter(feedback => feedback.feedbackType === feedbackType);
-  }
-
-  async getPublicFeedback(): Promise<Feedback[]> {
-    return Array.from(this.feedbacks.values())
-      .filter(feedback => feedback.isPublic);
-  }
-
-  async storeFeedback(feedback: InsertFeedback): Promise<Feedback> {
-    const id = this.currentFeedbackId++;
-
-    const newFeedback: Feedback = {
-      id,
-      ...feedback,
-      sentiment: null,
-      status: 'pending',
-      adminResponse: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.feedbacks.set(id, newFeedback);
-    return newFeedback;
-  }
-
-  async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> {
-    const feedback = this.feedbacks.get(feedbackId);
-    if (!feedback) {
-      throw new Error(`Feedback with ID ${feedbackId} not found`);
+  // Campaigns
+  async getCampaign(id: number): Promise<Campaign | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error getting campaign:', error);
+        return undefined;
+      }
+      
+      return this.mapCampaignFromDb(data);
+    } catch (error) {
+      console.error('Exception getting campaign:', error);
+      return undefined;
     }
-
-    const updatedFeedback: Feedback = {
-      ...feedback,
-      status,
-      updatedAt: new Date(),
-    };
-
-    this.feedbacks.set(feedbackId, updatedFeedback);
-    return updatedFeedback;
   }
 
-  async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> {
-    const feedback = this.feedbacks.get(feedbackId);
-    if (!feedback) {
-      throw new Error(`Feedback with ID ${feedbackId} not found`);
+  async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> {
+    try {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('business_id', businessId);
+        
+      if (error) {
+        console.error('Error getting campaigns by business:', error);
+        return [];
+      }
+      
+      return data.map(this.mapCampaignFromDb);
+    } catch (error) {
+      console.error('Exception getting campaigns by business:', error);
+      return [];
     }
-
-    const updatedFeedback: Feedback = {
-      ...feedback,
-      adminResponse: response,
-      updatedAt: new Date(),
-    };
-
-    this.feedbacks.set(feedbackId, updatedFeedback);
-    return updatedFeedback;
   }
 
-  // Partnership Offer operations
+  async storeCampaign(campaign: InsertCampaign): Promise<Campaign> {
+    try {
+      const dbCampaign = this.mapCampaignToDb(campaign);
+      
+      const { data, error } = await supabase
+        .from('campaigns')
+        .insert(dbCampaign)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error storing campaign:', error);
+        throw new Error(`Failed to store campaign: ${error.message}`);
+      }
+      
+      return this.mapCampaignFromDb(data);
+    } catch (error) {
+      console.error('Exception storing campaign:', error);
+      throw new Error('Failed to store campaign');
+    }
+  }
+
+  // Matches
+  async getMatch(id: number): Promise<Match | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('match_scores')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error getting match:', error);
+        return undefined;
+      }
+      
+      return this.mapMatchFromDb(data);
+    } catch (error) {
+      console.error('Exception getting match:', error);
+      return undefined;
+    }
+  }
+
+  async getMatchesForAthlete(athleteId: number): Promise<Match[]> {
+    try {
+      const { data, error } = await supabase
+        .from('match_scores')
+        .select('*')
+        .eq('athlete_id', athleteId);
+        
+      if (error) {
+        console.error('Error getting matches for athlete:', error);
+        return [];
+      }
+      
+      return data.map(this.mapMatchFromDb);
+    } catch (error) {
+      console.error('Exception getting matches for athlete:', error);
+      return [];
+    }
+  }
+
+  async getMatchesForBusiness(businessId: number): Promise<Match[]> {
+    try {
+      const { data, error } = await supabase
+        .from('match_scores')
+        .select('*')
+        .eq('business_id', businessId);
+        
+      if (error) {
+        console.error('Error getting matches for business:', error);
+        return [];
+      }
+      
+      return data.map(this.mapMatchFromDb);
+    } catch (error) {
+      console.error('Exception getting matches for business:', error);
+      return [];
+    }
+  }
+
+  async storeMatch(match: InsertMatch): Promise<Match> {
+    try {
+      const dbMatch = this.mapMatchToDb(match);
+      
+      const { data, error } = await supabase
+        .from('match_scores')
+        .insert(dbMatch)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error storing match:', error);
+        throw new Error(`Failed to store match: ${error.message}`);
+      }
+      
+      return this.mapMatchFromDb(data);
+    } catch (error) {
+      console.error('Exception storing match:', error);
+      throw new Error('Failed to store match');
+    }
+  }
+
+  async getAllMatches(): Promise<Match[]> {
+    try {
+      const { data, error } = await supabase
+        .from('match_scores')
+        .select('*');
+        
+      if (error) {
+        console.error('Error getting all matches:', error);
+        return [];
+      }
+      
+      return data.map(this.mapMatchFromDb);
+    } catch (error) {
+      console.error('Exception getting all matches:', error);
+      return [];
+    }
+  }
+
+  // Message operations
+  async getMessages(sessionId: string, limit = 50, offset = 0): Promise<Message[]> {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+        
+      if (error) {
+        console.error('Error getting messages:', error);
+        return [];
+      }
+      
+      return data.map(this.mapMessageFromDb);
+    } catch (error) {
+      console.error('Exception getting messages:', error);
+      return [];
+    }
+  }
+
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          session_id: sessionId,
+          role,
+          content,
+          metadata,
+          created_at: new Date()
+        })
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error storing message:', error);
+        throw new Error(`Failed to store message: ${error.message}`);
+      }
+      
+      return this.mapMessageFromDb(data);
+    } catch (error) {
+      console.error('Exception storing message:', error);
+      throw new Error('Failed to store message');
+    }
+  }
+
+  async getUnreadMessageCounts(sessionId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('count')
+        .eq('session_id', sessionId)
+        .eq('metadata->>unread', 'true');
+        
+      if (error) {
+        console.error('Error getting unread message count:', error);
+        return 0;
+      }
+      
+      return data && data.length > 0 ? parseInt(data[0].count, 10) : 0;
+    } catch (error) {
+      console.error('Exception getting unread message count:', error);
+      return 0;
+    }
+  }
+
+  async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {
+    if (messageIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ 'metadata': { unread: false } })
+        .eq('session_id', sessionId)
+        .in('id', messageIds);
+        
+      if (error) {
+        console.error('Error marking messages as read:', error);
+        throw new Error(`Failed to mark messages as read: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Exception marking messages as read:', error);
+      throw new Error('Failed to mark messages as read');
+    }
+  }
+
+  // Partnership Offers
   async getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined> {
-    return this.partnershipOffers.get(id);
+    try {
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error getting partnership offer:', error);
+        return undefined;
+      }
+      
+      return this.mapPartnershipOfferFromDb(data);
+    } catch (error) {
+      console.error('Exception getting partnership offer:', error);
+      return undefined;
+    }
   }
 
   async getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]> {
-    return Array.from(this.partnershipOffers.values())
-      .filter(offer => offer.athleteId === athleteId);
+    try {
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .select('*')
+        .eq('athlete_id', athleteId);
+        
+      if (error) {
+        console.error('Error getting partnership offers by athlete:', error);
+        return [];
+      }
+      
+      return data.map(this.mapPartnershipOfferFromDb);
+    } catch (error) {
+      console.error('Exception getting partnership offers by athlete:', error);
+      return [];
+    }
   }
 
   async getPartnershipOffersByBusiness(businessId: number): Promise<PartnershipOffer[]> {
-    return Array.from(this.partnershipOffers.values())
-      .filter(offer => offer.businessId === businessId);
+    try {
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .select('*')
+        .eq('business_id', businessId);
+        
+      if (error) {
+        console.error('Error getting partnership offers by business:', error);
+        return [];
+      }
+      
+      return data.map(this.mapPartnershipOfferFromDb);
+    } catch (error) {
+      console.error('Exception getting partnership offers by business:', error);
+      return [];
+    }
   }
 
   async getPartnershipOffersByMatch(matchId: number): Promise<PartnershipOffer | undefined> {
-    return Array.from(this.partnershipOffers.values())
-      .find(offer => offer.matchId === matchId);
+    try {
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .select('*')
+        .eq('match_id', matchId)
+        .single();
+        
+      if (error) {
+        console.error('Error getting partnership offer by match:', error);
+        return undefined;
+      }
+      
+      return this.mapPartnershipOfferFromDb(data);
+    } catch (error) {
+      console.error('Exception getting partnership offer by match:', error);
+      return undefined;
+    }
   }
 
   async createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer> {
-    const id = this.currentPartnershipOfferId++;
-
-    const newOffer: PartnershipOffer = {
-      id,
-      ...offer,
-      status: "pending",
-      athleteViewedAt: null,
-      athleteRespondedAt: null,
-      businessUpdatedAt: new Date(),
-      complianceStatus: "pending",
-      complianceNotes: null,
-      complianceReviewedAt: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      expiresAt: offer.expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Default 7 days expiry
-    };
-
-    this.partnershipOffers.set(id, newOffer);
-    return newOffer;
+    try {
+      const dbOffer = this.mapPartnershipOfferToDb(offer);
+      
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .insert(dbOffer)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error creating partnership offer:', error);
+        throw new Error(`Failed to create partnership offer: ${error.message}`);
+      }
+      
+      return this.mapPartnershipOfferFromDb(data);
+    } catch (error) {
+      console.error('Exception creating partnership offer:', error);
+      throw new Error('Failed to create partnership offer');
+    }
   }
 
   async updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer> {
-    const offer = this.partnershipOffers.get(id);
-    if (!offer) {
-      throw new Error(`Partnership offer with ID ${id} not found`);
+    try {
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .update({ status, updated_at: new Date() })
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating partnership offer status:', error);
+        throw new Error(`Failed to update partnership offer status: ${error.message}`);
+      }
+      
+      return this.mapPartnershipOfferFromDb(data);
+    } catch (error) {
+      console.error('Exception updating partnership offer status:', error);
+      throw new Error(`Failed to update partnership offer status for offer ${id}`);
     }
-
-    const updatedOffer: PartnershipOffer = {
-      ...offer,
-      status,
-      athleteRespondedAt: status !== "pending" ? new Date() : offer.athleteRespondedAt,
-      updatedAt: new Date(),
-    };
-
-    this.partnershipOffers.set(id, updatedOffer);
-    return updatedOffer;
   }
 
   async markPartnershipOfferViewed(id: number): Promise<PartnershipOffer> {
-    const offer = this.partnershipOffers.get(id);
-    if (!offer) {
-      throw new Error(`Partnership offer with ID ${id} not found`);
+    try {
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .update({ viewed: true, updated_at: new Date() })
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error marking partnership offer as viewed:', error);
+        throw new Error(`Failed to mark partnership offer as viewed: ${error.message}`);
+      }
+      
+      return this.mapPartnershipOfferFromDb(data);
+    } catch (error) {
+      console.error('Exception marking partnership offer as viewed:', error);
+      throw new Error(`Failed to mark partnership offer as viewed for offer ${id}`);
     }
-
-    const updatedOffer: PartnershipOffer = {
-      ...offer,
-      athleteViewedAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.partnershipOffers.set(id, updatedOffer);
-    return updatedOffer;
   }
 
   async updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer> {
-    const offer = this.partnershipOffers.get(id);
-    if (!offer) {
-      throw new Error(`Partnership offer with ID ${id} not found`);
+    try {
+      const updateData: any = {
+        compliance_status: status,
+        updated_at: new Date()
+      };
+      
+      if (notes) {
+        updateData.compliance_notes = notes;
+      }
+      
+      const { data, error } = await supabase
+        .from('partnership_offers')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating partnership offer compliance status:', error);
+        throw new Error(`Failed to update partnership offer compliance status: ${error.message}`);
+      }
+      
+      return this.mapPartnershipOfferFromDb(data);
+    } catch (error) {
+      console.error('Exception updating partnership offer compliance status:', error);
+      throw new Error(`Failed to update partnership offer compliance status for offer ${id}`);
     }
+  }
 
-    const updatedOffer: PartnershipOffer = {
-      ...offer,
-      complianceStatus: status,
-      complianceNotes: notes || offer.complianceNotes,
-      complianceReviewedAt: new Date(),
-      updatedAt: new Date(),
+  // Feedback operations
+  async getFeedback(id: number): Promise<Feedback | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error getting feedback:', error);
+        return undefined;
+      }
+      
+      return this.mapFeedbackFromDb(data);
+    } catch (error) {
+      console.error('Exception getting feedback:', error);
+      return undefined;
+    }
+  }
+
+  async getFeedbackByUser(userId: string): Promise<Feedback[]> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error getting feedback by user:', error);
+        return [];
+      }
+      
+      return data.map(this.mapFeedbackFromDb);
+    } catch (error) {
+      console.error('Exception getting feedback by user:', error);
+      return [];
+    }
+  }
+
+  async getFeedbackByMatch(matchId: number): Promise<Feedback[]> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('match_id', matchId);
+        
+      if (error) {
+        console.error('Error getting feedback by match:', error);
+        return [];
+      }
+      
+      return data.map(this.mapFeedbackFromDb);
+    } catch (error) {
+      console.error('Exception getting feedback by match:', error);
+      return [];
+    }
+  }
+
+  async getFeedbackByType(feedbackType: string): Promise<Feedback[]> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('feedback_type', feedbackType);
+        
+      if (error) {
+        console.error('Error getting feedback by type:', error);
+        return [];
+      }
+      
+      return data.map(this.mapFeedbackFromDb);
+    } catch (error) {
+      console.error('Exception getting feedback by type:', error);
+      return [];
+    }
+  }
+
+  async getPublicFeedback(): Promise<Feedback[]> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('public', true);
+        
+      if (error) {
+        console.error('Error getting public feedback:', error);
+        return [];
+      }
+      
+      return data.map(this.mapFeedbackFromDb);
+    } catch (error) {
+      console.error('Exception getting public feedback:', error);
+      return [];
+    }
+  }
+
+  async storeFeedback(feedback: InsertFeedback): Promise<Feedback> {
+    try {
+      const dbFeedback = this.mapFeedbackToDb(feedback);
+      
+      const { data, error } = await supabase
+        .from('feedback')
+        .insert(dbFeedback)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error storing feedback:', error);
+        throw new Error(`Failed to store feedback: ${error.message}`);
+      }
+      
+      return this.mapFeedbackFromDb(data);
+    } catch (error) {
+      console.error('Exception storing feedback:', error);
+      throw new Error('Failed to store feedback');
+    }
+  }
+
+  async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .update({ status })
+        .eq('id', feedbackId)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating feedback status:', error);
+        throw new Error(`Failed to update feedback status: ${error.message}`);
+      }
+      
+      return this.mapFeedbackFromDb(data);
+    } catch (error) {
+      console.error('Exception updating feedback status:', error);
+      throw new Error(`Failed to update feedback status for feedback ${feedbackId}`);
+    }
+  }
+
+  async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> {
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .update({ admin_response: response })
+        .eq('id', feedbackId)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error adding admin response to feedback:', error);
+        throw new Error(`Failed to add admin response to feedback: ${error.message}`);
+      }
+      
+      return this.mapFeedbackFromDb(data);
+    } catch (error) {
+      console.error('Exception adding admin response to feedback:', error);
+      throw new Error(`Failed to add admin response to feedback ${feedbackId}`);
+    }
+  }
+
+  // Helpers for mapping between app models and DB models
+  private mapSessionFromDb(data: any): Session {
+    return {
+      id: data.id,
+      sessionId: data.session_id,
+      userType: data.user_type,
+      data: data.data,
+      profileCompleted: data.profile_completed,
+      athleteId: data.athlete_id,
+      businessId: data.business_id,
+      lastLogin: new Date(data.last_login),
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
     };
+  }
 
-    this.partnershipOffers.set(id, updatedOffer);
-    return updatedOffer;
+  private mapUserFromDb(data: any): User {
+    return {
+      id: data.id,
+      email: data.email,
+      username: data.username,
+      password: '', // Password is never returned from DB
+      role: data.role,
+      created_at: new Date(data.created_at),
+      last_login: data.last_login ? new Date(data.last_login) : undefined,
+      auth_id: data.auth_id
+    };
+  }
+
+  private mapAthleteFromDb(data: any): Athlete {
+    return {
+      id: data.id,
+      userId: data.user_id,
+      sessionId: data.session_id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      school: data.school,
+      division: data.division,
+      sport: data.sport,
+      followerCount: data.follower_count,
+      contentStyle: data.content_style,
+      compensationGoals: data.compensation_goals,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private mapAthleteToDb(data: InsertAthlete): any {
+    return {
+      session_id: data.sessionId,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      school: data.school,
+      division: data.division,
+      sport: data.sport,
+      follower_count: data.followerCount,
+      content_style: data.contentStyle,
+      compensation_goals: data.compensationGoals,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+  }
+
+  private mapBusinessFromDb(data: any): Business {
+    return {
+      id: data.id,
+      userId: data.user_id,
+      sessionId: data.session_id,
+      name: data.name,
+      email: data.email,
+      productType: data.product_type,
+      audienceGoals: data.audience_goals,
+      campaignVibe: data.campaign_vibe,
+      values: data.values,
+      targetSchoolsSports: data.target_schools_sports,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private mapBusinessToDb(data: InsertBusiness): any {
+    return {
+      session_id: data.sessionId,
+      name: data.name,
+      email: data.email,
+      product_type: data.productType,
+      audience_goals: data.audienceGoals,
+      campaign_vibe: data.campaignVibe,
+      values: data.values,
+      target_schools_sports: data.targetSchoolsSports,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+  }
+
+  private mapCampaignFromDb(data: any): Campaign {
+    return {
+      id: data.id,
+      businessId: data.business_id,
+      title: data.title,
+      description: data.description,
+      deliverables: data.deliverables,
+      status: data.status,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private mapCampaignToDb(data: InsertCampaign): any {
+    return {
+      business_id: data.businessId,
+      title: data.title,
+      description: data.description,
+      deliverables: data.deliverables,
+      status: 'draft',
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+  }
+
+  private mapMatchFromDb(data: any): Match {
+    return {
+      id: data.id,
+      athleteId: data.athlete_id,
+      businessId: data.business_id,
+      campaignId: data.campaign_id,
+      score: data.score,
+      reason: data.reason,
+      status: data.status,
+      createdAt: new Date(data.created_at)
+    };
+  }
+
+  private mapMatchToDb(data: InsertMatch): any {
+    return {
+      athlete_id: data.athleteId,
+      business_id: data.businessId,
+      campaign_id: data.campaignId,
+      score: data.score,
+      reason: data.reason,
+      status: 'pending',
+      created_at: new Date()
+    };
+  }
+
+  private mapMessageFromDb(data: any): Message {
+    return {
+      id: data.id,
+      sessionId: data.session_id,
+      role: data.role,
+      content: data.content,
+      metadata: data.metadata,
+      createdAt: new Date(data.created_at)
+    };
+  }
+
+  private mapPartnershipOfferFromDb(data: any): PartnershipOffer {
+    return {
+      id: data.id,
+      matchId: data.match_id,
+      businessId: data.business_id,
+      athleteId: data.athlete_id,
+      campaignId: data.campaign_id,
+      compensationType: data.compensation_type,
+      offerAmount: data.offer_amount,
+      usageRights: data.usage_rights,
+      term: data.term,
+      status: data.status,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private mapPartnershipOfferToDb(data: InsertPartnershipOffer): any {
+    return {
+      match_id: data.matchId,
+      business_id: data.businessId,
+      athlete_id: data.athleteId,
+      campaign_id: data.campaignId,
+      compensation_type: data.compensationType,
+      offer_amount: data.offerAmount,
+      usage_rights: data.usageRights,
+      term: data.term,
+      status: 'pending',
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+  }
+
+  private mapFeedbackFromDb(data: any): Feedback {
+    return {
+      id: data.id,
+      userId: data.user_id,
+      userType: data.user_type,
+      matchId: data.match_id,
+      feedbackType: data.feedback_type,
+      content: data.content,
+      status: data.status,
+      createdAt: new Date(data.created_at)
+    };
+  }
+
+  private mapFeedbackToDb(data: InsertFeedback): any {
+    return {
+      user_id: data.userId,
+      user_type: data.userType,
+      match_id: data.matchId,
+      feedback_type: data.feedbackType,
+      content: data.content,
+      status: 'pending',
+      created_at: new Date()
+    };
   }
 }
 
-// Create and export storage instance
-// Temporarily using MemStorage until database connection issue is fixed
-// Use Supabase storage implementation
-// This ensures user data, authentication, and application data go to Supabase
+// Memory storage implementation (simplified version)
+export class MemStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    import('memorystore').then(memorystore => {
+      const MemoryStore = memorystore.default(session);
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      });
+    }).catch(err => {
+      console.error("Failed to initialize session store:", err);
+      // Fallback to in-memory session
+      this.sessionStore = new session.MemoryStore();
+    });
+
+    // Initialize with basic memory store until the import completes
+    this.sessionStore = new session.MemoryStore();
+  }
+
+  // Simplified no-op implementations that return empty values
+  async getSession(sessionId: string): Promise<Session | undefined> { return undefined; }
+  async getSessionByUserId(userId: string): Promise<Session | undefined> { return undefined; }
+  async createSession(session: InsertSession): Promise<Session> { return { id: 1, sessionId: session.sessionId } as Session; }
+  async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> { return { id: 1, sessionId } as Session; }
+  async deleteSession(sessionId: string): Promise<void> {}
+
+  async getAthlete(id: number): Promise<Athlete | undefined> { return undefined; }
+  async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> { return undefined; }
+  async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> { return { id: 1, ...athlete } as Athlete; }
+  async getAllAthletes(): Promise<Athlete[]> { return []; }
+
+  async getBusiness(id: number): Promise<Business | undefined> { return undefined; }
+  async getBusinessBySession(sessionId: string): Promise<Business | undefined> { return undefined; }
+  async storeBusinessProfile(business: InsertBusiness): Promise<Business> { return { id: 1, ...business } as Business; }
+  async getAllBusinesses(): Promise<Business[]> { return []; }
+
+  async getCampaign(id: number): Promise<Campaign | undefined> { return undefined; }
+  async getCampaignsByBusiness(businessId: number): Promise<Campaign[]> { return []; }
+  async storeCampaign(campaign: InsertCampaign): Promise<Campaign> { return { id: 1, ...campaign, status: 'draft' } as Campaign; }
+
+  async getMatch(id: number): Promise<Match | undefined> { return undefined; }
+  async getMatchesForAthlete(athleteId: number): Promise<Match[]> { return []; }
+  async getMatchesForBusiness(businessId: number): Promise<Match[]> { return []; }
+  async storeMatch(match: InsertMatch): Promise<Match> { return { id: 1, ...match, status: 'pending' } as Match; }
+  async getAllMatches(): Promise<Match[]> { return []; }
+
+  async getPartnershipOffer(id: number): Promise<PartnershipOffer | undefined> { return undefined; }
+  async getPartnershipOffersByAthlete(athleteId: number): Promise<PartnershipOffer[]> { return []; }
+  async getPartnershipOffersByBusiness(businessId: number): Promise<PartnershipOffer[]> { return []; }
+  async getPartnershipOffersByMatch(matchId: number): Promise<PartnershipOffer | undefined> { return undefined; }
+  async createPartnershipOffer(offer: InsertPartnershipOffer): Promise<PartnershipOffer> { return { id: 1, ...offer, status: 'pending' } as PartnershipOffer; }
+  async updatePartnershipOfferStatus(id: number, status: string): Promise<PartnershipOffer> { return { id, status } as PartnershipOffer; }
+  async markPartnershipOfferViewed(id: number): Promise<PartnershipOffer> { return { id } as PartnershipOffer; }
+  async updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer> { return { id, compliance_status: status } as unknown as PartnershipOffer; }
+
+  async getMessages(sessionId: string, limit?: number, offset?: number): Promise<Message[]> { return []; }
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> { return { id: 1, sessionId, role, content, metadata } as Message; }
+  async getUnreadMessageCounts(sessionId: string): Promise<number> { return 0; }
+  async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {}
+
+  async getUser(id: string): Promise<User | undefined> { return undefined; }
+  async getUserByEmail(email: string): Promise<User | undefined> { return undefined; }
+  async getAllUsers(): Promise<User[]> { return []; }
+  async createUser(insertUser: Partial<InsertUser>): Promise<User> { return { id: 1, email: insertUser.email || '', username: insertUser.username || '', password: '', role: 'athlete' } as User; }
+  async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> { return { id: Number(userId) } as User; }
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> { return { id: Number(userId) } as User; }
+  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> { return { id: Number(userId) } as User; }
+  async getPasswordHash(userId: string): Promise<string | null> { return null; }
+  async storePasswordHash(userId: string, passwordHash: string): Promise<void> {}
+  async verifyPassword(password: string, storedPassword: string): Promise<boolean> { return false; }
+
+  async getFeedback(id: number): Promise<Feedback | undefined> { return undefined; }
+  async getFeedbackByUser(userId: string): Promise<Feedback[]> { return []; }
+  async getFeedbackByMatch(matchId: number): Promise<Feedback[]> { return []; }
+  async getFeedbackByType(feedbackType: string): Promise<Feedback[]> { return []; }
+  async getPublicFeedback(): Promise<Feedback[]> { return []; }
+  async storeFeedback(feedback: InsertFeedback): Promise<Feedback> { return { id: 1, ...feedback, status: 'pending' } as Feedback; }
+  async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> { return { id: feedbackId, status } as Feedback; }
+  async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> { return { id: feedbackId } as Feedback; }
+}
+
+// Export the storage implementation
+// export const storage = new DatabaseStorage();
 export const storage = new SupabaseStorage();

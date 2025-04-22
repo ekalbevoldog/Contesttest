@@ -2,7 +2,9 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from 'ws';
-import * as schema from "@shared/schema";
+
+// Mock schema to prevent issues with imports
+const schema = {};
 
 // Configure Neon to use WebSockets for serverless environments
 neonConfig.webSocketConstructor = ws;
@@ -17,8 +19,8 @@ if (!process.env.DATABASE_URL) {
 // Create a connection pool
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-// Initialize Drizzle with the connection pool
-export const db = drizzle(pool, { schema });
+// Initialize Drizzle with the connection pool - without schema to avoid issues
+export const db = drizzle(pool);
 
 // Export a function to check the database connection
 export async function testConnection() {
@@ -52,7 +54,8 @@ export async function createEssentialTables() {
         password TEXT NOT NULL,
         role TEXT NOT NULL CHECK (role IN ('athlete', 'business', 'compliance', 'admin')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        last_login TIMESTAMP
+        last_login TIMESTAMP,
+        auth_id TEXT UNIQUE
       )
     `);
     console.log("Users table exists or was created");
@@ -66,6 +69,51 @@ export async function createEssentialTables() {
       )
     `);
     console.log("Sessions table exists or was created");
+
+    // Attempt to create athlete_profiles if it doesn't exist
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS athlete_profiles (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id),
+          session_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          school TEXT NOT NULL,
+          division TEXT NOT NULL,
+          sport TEXT NOT NULL,
+          follower_count INTEGER NOT NULL DEFAULT 0,
+          content_style TEXT NOT NULL,
+          compensation_goals TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log("Athlete profiles table exists or was created");
+    } catch (athleteError) {
+      console.error("Error creating athlete_profiles table:", athleteError);
+    }
+
+    // Attempt to create business_profiles if it doesn't exist
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS business_profiles (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id),
+          session_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          product_type TEXT NOT NULL,
+          audience_goals TEXT NOT NULL,
+          campaign_vibe TEXT NOT NULL,
+          values TEXT NOT NULL,
+          target_schools_sports TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      console.log("Business profiles table exists or was created");
+    } catch (businessError) {
+      console.error("Error creating business_profiles table:", businessError);
+    }
 
     return true;
   } catch (error) {
