@@ -86,21 +86,26 @@ const pendingMessageQueue = new Map<string, any[]>();
 function broadcastToSession(sessionId: string, message: any) {
   let delivered = false;
   
-  // Check new connection map first
-  const connections = wsConnections.get(sessionId);
-  if (connections && connections.size > 0) {
-    console.log(`Broadcasting message to ${connections.size} clients for session ${sessionId}`);
-    
-    connections.forEach(conn => {
-      if (conn.readyState === WebSocket.OPEN) {
-        try {
-          conn.send(JSON.stringify(message));
-          delivered = true;
-        } catch (error) {
-          console.error('Error sending message to client:', error);
+  // Get wsConnections from outer scope
+  try {
+    // Check new connection map first 
+    const connections = wsConnections.get(sessionId);
+    if (connections && connections.size > 0) {
+      console.log(`Broadcasting message to ${connections.size} clients for session ${sessionId}`);
+      
+      connections.forEach(conn => {
+        if (conn.readyState === WebSocket.OPEN) {
+          try {
+            conn.send(JSON.stringify(message));
+            delivered = true;
+          } catch (error) {
+            console.error('Error sending message to client:', error);
+          }
         }
-      }
-    });
+      });
+    }
+  } catch (error) {
+    console.error('Error accessing WebSocket connections:', error);
   }
   
   // Also try legacy connection map
@@ -1719,11 +1724,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Handle profile update message
         else if (data.type === 'profile_update' && data.sessionId) {
+          console.log(`Received profile_update for session ${data.sessionId}`);
           // Forward to all clients for this session
           broadcastToSession(data.sessionId, {
             type: 'profile_update',
             data: data.data
           });
+          
+          // Save this data to the session storage if we have a session service
+          try {
+            if (data.data && typeof data.data === 'object' && Object.keys(data.data).length > 0) {
+              const sessionData = await sessionService.getSession(data.sessionId);
+              if (sessionData) {
+                // Store form data in the session's formData field
+                await sessionService.updateSession(data.sessionId, {
+                  formData: {
+                    ...(sessionData.formData || {}),
+                    ...data.data
+                  }
+                });
+                console.log(`Stored form data in session ${data.sessionId}`);
+              }
+            }
+          } catch (error) {
+            console.error('Error saving form data to session:', error);
+          }
+        }
+        
+        // Handle step change message
+        else if (data.type === 'step_change' && data.sessionId && data.step) {
+          console.log(`Received step_change for session ${data.sessionId} to step ${data.step}`);
+          // Forward to all clients for this session
+          broadcastToSession(data.sessionId, {
+            type: 'step_change',
+            step: data.step
+          });
+          
+          // Save current step to the session storage
+          try {
+            await sessionService.updateSession(data.sessionId, {
+              currentStep: data.step
+            });
+            console.log(`Stored current step (${data.step}) in session ${data.sessionId}`);
+          } catch (error) {
+            console.error('Error saving step to session:', error);
+          }
         }
         
         // Process other message types as needed
