@@ -1184,6 +1184,24 @@ export default function Onboarding() {
     console.log("renderStepContent called, sessionId:", sessionId);
     
     // Display loading indicator while session is being established
+    // Add a 10-second timeout to prevent infinite loading
+    useEffect(() => {
+      let timeoutId: NodeJS.Timeout;
+      
+      if (!sessionId) {
+        console.log("Setting timeout to handle potential session initialization failures");
+        timeoutId = setTimeout(() => {
+          console.log("Session initialization timed out, forcing a sessionId");
+          // Force a sessionId if the API call is failing
+          setSessionId("fallback-" + Date.now().toString());
+        }, 5000); // 5 seconds timeout
+      }
+      
+      return () => {
+        if (timeoutId) clearTimeout(timeoutId);
+      };
+    }, [sessionId]);
+    
     if (!sessionId) {
       console.log("Showing loading indicator because sessionId is not set");
       return (
@@ -1308,38 +1326,27 @@ export default function Onboarding() {
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                   </Button>
                   
-                  {/* Connection status indicator */}
+                  {/* Connection status indicator - disabled */}
                   <div className="flex items-center text-sm">
-                    {connectionStatus === 'open' ? (
-                      <div className="flex items-center text-green-500">
-                        <Wifi className="w-4 h-4 mr-1" />
-                        <span className="hidden sm:inline">Connected</span>
-                      </div>
-                    ) : connectionStatus === 'connecting' ? (
-                      <div className="flex items-center text-yellow-500">
-                        <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                        <span className="hidden sm:inline">Connecting...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-red-500">
-                        <WifiOff className="w-4 h-4 mr-1" />
-                        <span className="hidden sm:inline">Disconnected</span>
-                      </div>
-                    )}
+                    {/* Always show offline status while WebSocket is disabled */}
+                    <div className="flex items-center text-gray-500">
+                      <WifiOff className="w-4 h-4 mr-1" />
+                      <span className="hidden sm:inline">Sync Disabled</span>
+                    </div>
                     
-                    {/* Manual sync button */}
+                    {/* Manual sync button - disabled */}
                     {sessionId && (
                       <button 
                         type="button" 
-                        onClick={syncFormData}
-                        disabled={isSyncing || connectionStatus !== 'open'}
+                        onClick={() => console.log("Sync disabled for debugging")}
+                        disabled={true}
                         className="ml-2 p-1 rounded-full hover:bg-zinc-800 disabled:opacity-50"
-                        title="Manually sync your data"
+                        title="Sync currently disabled for debugging"
                       >
                         {isSyncing ? (
-                          <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                          <RefreshCw className="w-4 h-4 animate-spin text-gray-500" />
                         ) : (
-                          <RefreshCw className="w-4 h-4 text-primary" />
+                          <RefreshCw className="w-4 h-4 text-gray-500" />
                         )}
                       </button>
                     )}
@@ -3340,38 +3347,27 @@ export default function Onboarding() {
                       </button>
                     )}
                     
-                    {/* Connection status indicator */}
+                    {/* Connection status indicator - disabled */}
                     <div className="flex items-center text-sm">
-                      {connectionStatus === 'open' ? (
-                        <div className="flex items-center text-green-500">
-                          <Wifi className="w-4 h-4 mr-1" />
-                          <span className="hidden sm:inline">Connected</span>
-                        </div>
-                      ) : connectionStatus === 'connecting' ? (
-                        <div className="flex items-center text-yellow-500">
-                          <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                          <span className="hidden sm:inline">Connecting...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-red-500">
-                          <WifiOff className="w-4 h-4 mr-1" />
-                          <span className="hidden sm:inline">Disconnected</span>
-                        </div>
-                      )}
+                      {/* Always show offline status while WebSocket is disabled */}
+                      <div className="flex items-center text-gray-500">
+                        <WifiOff className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Sync Disabled</span>
+                      </div>
                       
-                      {/* Manual sync button */}
+                      {/* Manual sync button - disabled */}
                       {sessionId && (
                         <button 
                           type="button" 
-                          onClick={syncFormData}
-                          disabled={isSyncing || connectionStatus !== 'open'}
+                          onClick={() => console.log("Sync disabled for debugging")}
+                          disabled={true}
                           className="ml-2 p-1 rounded-full hover:bg-zinc-800 disabled:opacity-50"
-                          title="Manually sync your data"
+                          title="Sync currently disabled for debugging"
                         >
                           {isSyncing ? (
-                            <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                            <RefreshCw className="w-4 h-4 animate-spin text-gray-500" />
                           ) : (
-                            <RefreshCw className="w-4 h-4 text-primary" />
+                            <RefreshCw className="w-4 h-4 text-gray-500" />
                           )}
                         </button>
                       )}
