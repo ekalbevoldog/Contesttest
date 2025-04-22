@@ -85,14 +85,14 @@ const pendingMessageQueue = new Map<string, any[]>();
 // Helper function to broadcast a message to all connections for a session
 function broadcastToSession(sessionId: string, message: any) {
   let delivered = false;
-
+  
   // Get wsConnections from outer scope
   try {
     // Check new connection map first 
     const connections = wsConnections.get(sessionId);
     if (connections && connections.size > 0) {
       console.log(`Broadcasting message to ${connections.size} clients for session ${sessionId}`);
-
+      
       connections.forEach(conn => {
         if (conn.readyState === WebSocket.OPEN) {
           try {
@@ -107,7 +107,7 @@ function broadcastToSession(sessionId: string, message: any) {
   } catch (error) {
     console.error('Error accessing WebSocket connections:', error);
   }
-
+  
   // Also try legacy connection map
   const legacyConnection = connectedClients.get(sessionId);
   if (legacyConnection && legacyConnection.readyState === WebSocket.OPEN) {
@@ -118,28 +118,28 @@ function broadcastToSession(sessionId: string, message: any) {
       console.error('Error sending message to legacy client:', error);
     }
   }
-
+  
   // If we couldn't deliver, queue the message for later delivery
   if (!delivered) {
     console.log(`No active connections for session ${sessionId}, queueing message`);
-
+    
     if (!pendingMessageQueue.has(sessionId)) {
       pendingMessageQueue.set(sessionId, []);
     }
-
+    
     // Add to pending queue with a timestamp
     pendingMessageQueue.get(sessionId)?.push({
       ...message,
       _queuedAt: new Date().toISOString()
     });
-
+    
     // Limit queue size to prevent memory issues
     const queue = pendingMessageQueue.get(sessionId);
     if (queue && queue.length > 50) {
       queue.shift(); // Remove oldest message if queue gets too large
     }
   }
-
+  
   return delivered;
 }
 
@@ -206,14 +206,14 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
   if (!req.session || !req.session.passport || !req.session.passport.user) {
     return res.status(401).json({ error: "Not authenticated" });
   }
-
+  
   if (requiredRole) {
     try {
       const user = await storage.getUser(req.session.passport.user);
       if (!user || user.role !== requiredRole) {
         return res.status(403).json({ error: `${requiredRole} access required` });
       }
-
+      
       // Attach the user to the request for convenience in route handlers
       req.user = user;
     } catch (err) {
@@ -221,7 +221,7 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
       return res.status(500).json({ error: "Server error checking permissions" });
     }
   }
-
+  
   next();
 };
 
@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
       await sessionService.createSession(sessionId);
-
+      
       return res.status(200).json({
         sessionId,
         message: "Session created successfully",
@@ -266,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId } = sessionResetSchema.parse(req.body);
       await sessionService.resetSession(sessionId);
-
+      
       return res.status(200).json({
         message: "Session reset successfully",
       });
@@ -283,7 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/chat/message", async (req: Request, res: Response) => {
     try {
       const { message, sessionId } = messageSchema.parse(req.body);
-
+      
       // Get current session data
       const sessionData = await sessionService.getSession(sessionId);
       if (!sessionData) {
@@ -291,54 +291,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Session not found",
         });
       }
-
+      
       // Store user message
       await storage.storeMessage(sessionId, "user", message);
-
+      
       // Process message with Gemini
       let response;
-
+      
       // Check if user type has been determined
       if (!sessionData.userType) {
         console.log(`Classifying user based on message: "${message}"`);
         // Classify user as athlete or business
         response = await geminiService.classifyUser(message);
-
+        
         console.log(`User classified as: ${response.userType}`);
-
+        
         // Update session with user type
         if (response.userType) {
           await sessionService.updateSession(sessionId, {
             userType: response.userType
           });
-
+          
           // Log session update for debugging
           console.log(`Session ${sessionId} updated with userType: ${response.userType}`);
-
+          
           // Store this interaction for debugging
           await storage.storeMessage(sessionId, "system", `User classified as: ${response.userType}`);
         }
-
+        
         // Handle follow-up questions based on user type
         console.log(`Generating follow-up for ${response.userType}`);
         response = await geminiService.generateFollowUpQuestions(response.userType, response.reply);
       } else {
         // User type already known, determine the next step in conversation
         const userType = sessionData.userType;
-
+        
         // Check if we should show a form
         // This logic can be expanded based on conversation state
         if (!sessionData.profileCompleted) {
           // Determine if the user message indicates readiness to complete profile
           const shouldShowForm = await geminiService.shouldShowForm(message, userType);
-
+          
           if (shouldShowForm) {
             // Return the form prompt with detailed logging
             console.log(`Showing ${userType} form for session ${sessionId}`);
-
+            
             // Store this interaction for debugging purposes
             await storage.storeMessage(sessionId, "system", `Triggered ${userType} form display`);
-
+            
             return res.status(200).json({
               reply: userType === "athlete" 
                 ? "Great! Let's create your athlete profile. Please fill out the form below to help us match you with the right businesses:" 
@@ -351,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Continue the conversation
             // Get previous messages for this session
             const messageHistory = await storage.getMessages(sessionId);
-
+            
             // Pass message history to the geminiService for context
             response = await geminiService.continueConversation(message, sessionData, messageHistory);
           }
@@ -359,15 +359,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Profile is completed, continue normal conversation
           // Get previous messages for this session
           const messageHistory = await storage.getMessages(sessionId);
-
+          
           // Pass message history to the geminiService for context
           response = await geminiService.continueConversation(message, sessionData, messageHistory);
         }
       }
-
+      
       // Store assistant response
       const savedMessage = await storage.storeMessage(sessionId, "assistant", response.reply);
-
+      
       // Send chat data to n8n webhook
       const webhookData = {
         type: "chat_message",
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileCompleted: sessionData.profileCompleted || false,
         n8n_webhook_url: req.body.n8n_webhook_url // Optional custom webhook URL passed in request
       };
-
+      
       // Send to webhook (non-blocking)
       sendToN8nWebhook(webhookData, req.body.n8n_webhook_url)
         .then(success => {
@@ -399,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .catch(error => {
           console.error(`Error sending chat data to n8n webhook: ${error}`);
         });
-
+      
       return res.status(200).json(response);
     } catch (error) {
       console.error("Error processing message:", error);
@@ -415,7 +415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const profileData = profileSchema.parse(req.body);
       const { sessionId, userType } = profileData;
-
+      
       // Get current session
       const sessionData = await sessionService.getSession(sessionId);
       if (!sessionData) {
@@ -423,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Session not found",
         });
       }
-
+      
       // Store profile in appropriate collection
       if (userType === "athlete") {
         const athleteData = {
@@ -437,22 +437,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           contentStyle: profileData.contentStyle,
           compensationGoals: profileData.compensationGoals,
         };
-
+        
         // Store in local storage
         const athlete = await storage.storeAthleteProfile(athleteData);
-
+        
         // Store in BigQuery
         await bigQueryService.insertAthleteProfile(athleteData);
-
+        
         // Update session
         await sessionService.updateSession(sessionId, {
           profileCompleted: true,
           athleteId: athlete.id
         });
-
+        
         // Generate response message
         const reply = await geminiService.generateProfileConfirmation("athlete", profileData.name);
-
+        
         // Send profile creation event to n8n webhook (non-blocking)
         if (process.env.N8N_WEBHOOK_URL) {
           const webhookData = {
@@ -467,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             platform: "Contested"
           };
-
+          
           sendToN8nWebhook(webhookData)
             .then(success => {
               if (success) {
@@ -478,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error(`Error sending athlete profile data to n8n webhook: ${error}`);
             });
         }
-
+        
         return res.status(200).json({
           message: "Athlete profile created successfully",
           reply,
@@ -510,16 +510,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             businessSize: profileData.businessSize || ""
           })
         };
-
+        
         // Store in local storage
         const business = await storage.storeBusinessProfile(businessData);
-
+        
         // Store in BigQuery
         await bigQueryService.insertBusinessProfile(businessData);
-
+        
         // Generate campaign using Gemini
         const campaignResponse = await geminiService.generateCampaign(businessData);
-
+        
         // Store campaign
         const campaignData = {
           businessId: business.id,
@@ -527,36 +527,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: campaignResponse.description,
           deliverables: campaignResponse.deliverables,
         };
-
+        
         const campaign = await storage.storeCampaign(campaignData);
-
+        
         // Store in BigQuery
         await bigQueryService.insertCampaign({
           ...campaignData,
           businessId: business.id,
         });
-
+        
         // Update session
         await sessionService.updateSession(sessionId, {
           profileCompleted: true,
           businessId: business.id,
           campaignId: campaign.id
         });
-
+        
         // Find matches if there are any athletes
         const athletes = await storage.getAllAthletes();
-
+        
         if (athletes.length > 0) {
           // Get best match
           const bestMatch = await findBestMatch(athletes[0], business, campaign);
-
+          
           if (bestMatch) {
             // Store in BigQuery
             await bigQueryService.insertMatchScore(bestMatch);
-
+            
             // Generate response with match
             const reply = await geminiService.generateMatchAnnouncement(bestMatch.score);
-
+            
             // Format match data for frontend
             const matchData = {
               id: bestMatch.id,
@@ -569,7 +569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
               reason: bestMatch.reason,
             };
-
+            
             // Notify the athlete via WebSocket if they're connected
             if (athletes[0].sessionId) {
               sendWebSocketMessage(athletes[0].sessionId, {
@@ -583,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               });
             }
-
+            
             return res.status(200).json({
               message: "Business profile created and match found",
               reply,
@@ -592,10 +592,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         }
-
+        
         // No matches or couldn't find a match
         const reply = await geminiService.generateProfileConfirmation("business", profileData.name);
-
+        
         // Send profile creation event to n8n webhook (non-blocking)
         if (process.env.N8N_WEBHOOK_URL) {
           const webhookData = {
@@ -618,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             platform: "Contested"
           };
-
+          
           sendToN8nWebhook(webhookData)
             .then(success => {
               if (success) {
@@ -629,7 +629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error(`Error sending business profile data to n8n webhook: ${error}`);
             });
         }
-
+        
         return res.status(200).json({
           message: "Business profile created successfully",
           reply,
@@ -687,41 +687,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.session.passport.user;
-
+      
       // Get the user to determine their type
       const user = await storage.getUser(userId);
-
+      
       if (!user) {
         return res.status(404).json({
           message: "User not found",
         });
       }
-
+      
       let matches = [];
-
+      
       // Filter matches based on user role
       if (user.role === 'athlete') {
         // Get athlete profile
         const athlete = await storage.getAthleteByUserId(userId);
-
+        
         if (!athlete) {
           return res.status(404).json({
             message: "Athlete profile not found",
           });
         }
-
+        
         // Get matches for this athlete only
         matches = await storage.getMatchesForAthlete(athlete.id);
       } else if (user.role === 'business') {
         // Get business profile
         const business = await storage.getBusinessByUserId(userId);
-
+        
         if (!business) {
           return res.status(404).json({
             message: "Business profile not found",
           });
         }
-
+        
         // Get matches for this business only
         matches = await storage.getMatchesForBusiness(business.id);
       } else if (user.role === 'admin' || user.role === 'compliance') {
@@ -732,13 +732,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Unauthorized user type",
         });
       }
-
+      
       // Format matches for the frontend
       const formattedMatches = await Promise.all(matches.map(async (match) => {
         const athlete = await storage.getAthlete(match.athleteId);
         const business = await storage.getBusiness(match.businessId);
         const campaign = await storage.getCampaign(match.campaignId);
-
+        
         return {
           id: match.id,
           score: match.score,
@@ -758,7 +758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           reason: match.reason,
         };
       }));
-
+      
       return res.status(200).json({ 
         matches: formattedMatches
       });
@@ -775,7 +775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/partnership-offers", async (req: Request, res: Response) => {
     try {
       const { athleteId, businessId, campaignId, matchId, compensationType, offerAmount, deliverables, usageRights, term } = req.body;
-
+      
       // Validate required fields
       if (!athleteId || !businessId || !campaignId || !matchId || !compensationType || !offerAmount || !deliverables || !usageRights || !term) {
         return res.status(400).json({ error: "Missing required fields for partnership offer" });
@@ -835,11 +835,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const offer = await storage.getPartnershipOffer(parseInt(id, 10));
-
+      
       if (!offer) {
         return res.status(404).json({ error: "Partnership offer not found" });
       }
-
+      
       res.json(offer);
     } catch (error) {
       console.error("Error fetching partnership offer:", error);
@@ -862,11 +862,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status } = req.body;
-
+      
       if (!status || !['pending', 'accepted', 'declined', 'expired'].includes(status)) {
         return res.status(400).json({ error: "Invalid status value" });
       }
-
+      
       const updatedOffer = await storage.updatePartnershipOfferStatus(parseInt(id, 10), status);
       res.json(updatedOffer);
     } catch (error) {
@@ -879,11 +879,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status, notes } = req.body;
-
+      
       if (!status || !['pending', 'approved', 'rejected'].includes(status)) {
         return res.status(400).json({ error: "Invalid compliance status value" });
       }
-
+      
       const updatedOffer = await storage.updatePartnershipOfferComplianceStatus(parseInt(id, 10), status, notes);
       res.json(updatedOffer);
     } catch (error) {
@@ -897,13 +897,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Extract profile data from request
       const profileData = req.body;
-
+      
       if (!profileData.sessionId) {
         return res.status(400).json({ 
           message: "Missing session ID" 
         });
       }
-
+      
       // Get current session
       let sessionData;
       try {
@@ -924,7 +924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: new Date(),
         };
       }
-
+      
       if (!sessionData) {
         console.log("Creating temporary session for onboarding:", profileData.sessionId);
         // Create a temporary session
@@ -941,9 +941,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: new Date(),
         };
       }
-
+      
       console.log("Processing personalized onboarding data for session:", profileData.sessionId);
-
+      
       // Use a try-catch here to handle any Gemini API issues
       let processedProfile;
       try {
@@ -968,14 +968,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ]
         };
       }
-
+      
       // Store the appropriate profile based on user type with enhanced AI insights
       if (profileData.userType === "athlete") {
         // Extract key information from the AI-processed data
         const aiInsights = processedProfile.enrichedData;
         const contentPreferences = aiInsights.contentSuggestions || [];
         const audienceInsights = aiInsights.audienceInsights || {};
-
+        
         // Build follower count from form data if available
         const followerCount = parseInt(
           profileData.basicInfo?.followerCount || 
@@ -983,7 +983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
            profileData.visualPreferences?.audienceSize === "medium" ? "5000" : "1000"), 
           10
         );
-
+        
         const athleteData = {
           sessionId: profileData.sessionId,
           name: profileData.basicInfo?.name || "",
@@ -1004,29 +1004,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             wizardData: profileData
           })
         };
-
+        
         // Store in local storage
         const athlete = await storage.storeAthleteProfile(athleteData);
-
+        
         // Store in BigQuery (if available)
         try {
           await bigQueryService.insertAthleteProfile(athleteData);
         } catch (bigQueryError) {
           console.warn("BigQuery storage failed, but continuing process:", bigQueryError);
         }
-
+        
         // Update session
         await sessionService.updateSession(profileData.sessionId, {
           profileCompleted: true,
           athleteId: athlete.id
         });
-
+        
         // Generate confirmation message
         const confirmationMessage = await geminiService.generateProfileConfirmation("athlete", athleteData.name);
-
+        
         // Store message in chat history
         await storage.storeMessage(profileData.sessionId, "assistant", confirmationMessage);
-
+        
         return res.status(201).json({
           message: "Athlete profile created successfully with AI insights",
           profile: athlete,
@@ -1037,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (profileData.userType === "business") {
         // Extract key information from the AI-processed data
         const aiInsights = processedProfile.enrichedData;
-
+        
         const businessData = {
           sessionId: profileData.sessionId,
           name: profileData.basicInfo?.name || profileData.basicInfo?.companyName || "",
@@ -1057,26 +1057,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             wizardData: profileData
           })
         };
-
+        
         // Store in local storage
         const business = await storage.storeBusinessProfile(businessData);
-
+        
         // Store in BigQuery (if available)
         try {
           await bigQueryService.insertBusinessProfile(businessData);
         } catch (bigQueryError) {
           console.warn("BigQuery storage failed, but continuing process:", bigQueryError);
         }
-
+        
         // Generate a campaign based on AI insights and business profile
         const enhancedBusinessProfile = {
           ...business,
           aiInsights: processedProfile.enrichedData
         };
-
+        
         // Create a default campaign for the business
         const campaign = await geminiService.generateCampaign(enhancedBusinessProfile);
-
+        
         // Prepare campaign data
         const campaignData = {
           businessId: business.id,
@@ -1090,30 +1090,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           goals: profileData.goalsExpectations?.primaryGoals?.join(", ") || "Brand awareness",
           targetDemographics: profileData.targetAudience?.demographics?.join(", ") || "College students"
         };
-
+        
         // Store campaign
         const storedCampaign = await storage.storeCampaign(campaignData);
-
+        
         // Store in BigQuery (if available)
         try {
           await bigQueryService.insertCampaign(campaignData);
         } catch (bigQueryError) {
           console.warn("BigQuery campaign storage failed, but continuing process:", bigQueryError);
         }
-
+        
         // Update session
         await sessionService.updateSession(profileData.sessionId, {
           profileCompleted: true,
           businessId: business.id,
           campaignId: storedCampaign.id
         });
-
+        
         // Generate confirmation message
         const confirmationMessage = await geminiService.generateProfileConfirmation("business", businessData.name);
-
+        
         // Store message in chat history
         await storage.storeMessage(profileData.sessionId, "assistant", confirmationMessage);
-
+        
         return res.status(201).json({
           message: "Business profile created successfully with AI insights",
           profile: business,
@@ -1140,25 +1140,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/preferences", async (req: Request, res: Response) => {
     try {
       const { sessionId, userType, ...preferencesData } = req.body;
-
+      
       if (userType === "athlete") {
         // Get the athlete ID from the session
         const session = await sessionService.getSession(sessionId);
         if (!session || !session.athleteId) {
           return res.status(400).json({ success: false, message: "Athlete profile not found" });
         }
-
+        
         // Update the athlete profile with preferences
         const athlete = await storage.getAthlete(session.athleteId);
         if (!athlete) {
           return res.status(404).json({ success: false, message: "Athlete profile not found" });
         }
-
+        
         const updatedAthlete = await storage.storeAthleteProfile({
           ...athlete,
           preferences: preferencesData
         });
-
+        
         res.json({ success: true, athlete: updatedAthlete });
       } else if (userType === "business") {
         // Get the business ID from the session
@@ -1166,18 +1166,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!session || !session.businessId) {
           return res.status(400).json({ success: false, message: "Business profile not found" });
         }
-
+        
         // Update the business profile with preferences
         const business = await storage.getBusiness(session.businessId);
         if (!business) {
           return res.status(404).json({ success: false, message: "Business profile not found" });
         }
-
+        
         const updatedBusiness = await storage.storeBusinessProfile({
           ...business,
           preferences: preferencesData
         });
-
+        
         res.json({ success: true, business: updatedBusiness });
       } else {
         res.status(400).json({ success: false, message: "Invalid user type" });
@@ -1187,7 +1187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, message: "Failed to store preferences" });
     }
   });
-
+  
   // Get profile for current session
   app.get("/api/profile", async (req: Request, res: Response) => {
     try {
@@ -1199,23 +1199,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.session.passport.user;
-
+      
       // Get the user to determine their type
       const user = await storage.getUser(userId);
-
+      
       if (!user) {
         return res.status(404).json({
           message: "User not found",
         });
       }
-
+      
       const userRole = user.role;
-
+      
       // Return the appropriate profile based on user role
       if (userRole === 'athlete') {
         // Get athlete profile for the authenticated user
         const athlete = await storage.getAthleteByUserId(userId);
-
+        
         if (athlete) {
           return res.status(200).json({
             id: athlete.id,
@@ -1235,7 +1235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             contentTypes: athlete.contentTypes ? JSON.parse(athlete.contentTypes) : [],
           });
         }
-
+        
         // Fallback to first athlete if no specific athlete profile found
         const athletes = await storage.getAllAthletes();
         if (athletes.length > 0) {
@@ -1250,16 +1250,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             contentStyle: athletes[0].contentStyle,
           });
         }
-
+        
         return res.status(404).json({
           message: "Athlete profile not found",
         });
       }
-
+      
       if (userRole === 'business') {
         // Get business profile for the authenticated user
         const business = await storage.getBusinessByUserId(userId);
-
+        
         if (business) {
           // Return business-specific profile data
           return res.status(200).json({
@@ -1275,7 +1275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             preferences: business.preferences ? JSON.parse(business.preferences) : {},
           });
         }
-
+        
         // Fallback to first business if no specific business profile found
         const businesses = await storage.getAllBusinesses();
         if (businesses.length > 0) {
@@ -1288,12 +1288,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             values: businesses[0].values
           });
         }
-
+        
         return res.status(404).json({
           message: "Business profile not found",
         });
       }
-
+      
       // Handle other user types (admin, compliance, etc.)
       return res.status(404).json({
         message: "Profile type not supported",
@@ -1311,7 +1311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function findBestMatch(athlete: any, business: any, campaign: any) {
     // Use Gemini to generate a comprehensive match score with multi-dimensional analysis
     const matchResponse = await geminiService.generateMatchScore(athlete, business, campaign);
-
+    
     // Store the match with enhanced multi-dimensional data
     const matchData = {
       athleteId: athlete.id,
@@ -1329,9 +1329,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       strengthAreas: matchResponse.strengthAreas ? JSON.stringify(matchResponse.strengthAreas) : null,
       weaknessAreas: matchResponse.weaknessAreas ? JSON.stringify(matchResponse.weaknessAreas) : null
     };
-
+    
     const match = await storage.storeMatch(matchData);
-
+    
     // Send match creation event to n8n webhook (non-blocking)
     if (process.env.N8N_WEBHOOK_URL) {
       try {
@@ -1348,7 +1348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           platform: "Contested"
         };
-
+        
         sendToN8nWebhook(webhookData)
           .then(success => {
             if (success) {
@@ -1363,7 +1363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error preparing match webhook notification:", error);
       }
     }
-
+    
     return match;
   }
 
@@ -1371,45 +1371,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       console.log("Registration request body:", req.body);
-
+      
       const { email, password, fullName, userType } = req.body;
-
+      
       // Log each required field to identify which one might be missing
       console.log("Email:", email);
       console.log("Password:", password ? "***provided***" : "missing");
       console.log("Full Name:", fullName);
       console.log("User Type:", userType);
-
+      
       if (!email || !password || !fullName || !userType) {
         const missingFields = [];
         if (!email) missingFields.push("email");
         if (!password) missingFields.push("password");
         if (!fullName) missingFields.push("fullName");
         if (!userType) missingFields.push("userType");
-
+        
         console.log("Missing fields:", missingFields);
-
+        
         return res.status(400).json({
           error: "Missing required fields",
           missingFields
         });
       }
-
+      
       // Generate username from email (our schema requires username)
       const username = email.split('@')[0] + '_' + Math.floor(Math.random() * 1000);
       console.log("Generated username:", username);
-
+      
       try {
+        // Hash the password before storing
+        const hashedPassword = await hashPassword(password);
+        
         // Create the user in our database using the storage interface
         const newUser = await storage.createUser({
           email,
-          username: email.split('@')[0], // Use email prefix as username
+          password: hashedPassword,
           role: userType, // Map userType to role
           sessionId: null, // Will be updated later
         });
-
+        
         console.log("Created user in storage:", newUser.id);
-
+        
         // Create a session for the new user
         const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
         await sessionService.createSession(sessionId);
@@ -1418,10 +1421,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           profileCompleted: false,
           userId: newUser.id
         });
-
+        
         // Update the user with the session ID
         await storage.updateUser(newUser.id, { sessionId });
-
+        
         return res.status(201).json({
           message: "User registered successfully",
           user: {
@@ -1433,7 +1436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (storageError) {
         console.error("Error creating user in storage:", storageError);
-
+        
         // Fallback to Supabase Auth if our storage fails
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: email,
@@ -1446,7 +1449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         });
-
+        
         if (authError) {
           console.error("Supabase auth error:", authError);
           return res.status(400).json({
@@ -1454,7 +1457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             details: authError.message
           });
         }
-
+        
         // Create a session for the new user
         const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
         await sessionService.createSession(sessionId);
@@ -1463,7 +1466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           profileCompleted: false,
           supabaseUserId: authData.user?.id
         });
-
+        
         return res.status(201).json({
           message: "User registered successfully with Supabase Auth",
           user: {
@@ -1482,32 +1485,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // User login endpoint
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-
+      
       if (!email || !password) {
         return res.status(400).json({
           error: "Missing email or password"
         });
       }
-
+      
       console.log(`Login attempt for email: ${email}`);
-
+      
       try {
         // First try to find the user by email in our database
         const users = await db.query("users", "SELECT * FROM users WHERE email = $1", [email]);
         const user = users && users.length > 0 ? users[0] : null;
-
+        
         if (user) {
           console.log(`Found user in our database: ${user.id}`);
-
+          
           // Verify password
           try {
             const isPasswordValid = await comparePasswords(password, user.password);
-
+            
             if (!isPasswordValid) {
               console.log("Password verification failed");
               return res.status(401).json({
@@ -1521,7 +1524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               details: "Password verification error"
             });
           }
-
+          
           // Create a session for the logged-in user
           const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
           await sessionService.createSession(sessionId);
@@ -1530,10 +1533,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             profileCompleted: true, // Assume profile is completed for now
             userId: user.id
           });
-
+          
           // Update user's sessionId
           await storage.updateUser(user.id, { sessionId });
-
+          
           return res.status(200).json({
             message: "Login successful",
             user: {
@@ -1548,14 +1551,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (storageError) {
         console.error("Error finding user in database:", storageError);
       }
-
+      
       // Fallback to Supabase Auth if our database lookup fails
       console.log("Falling back to Supabase auth");
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
-
+      
       if (authError) {
         console.error("Supabase auth error:", authError);
         return res.status(401).json({
@@ -1563,9 +1566,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: authError.message
         });
       }
-
+      
       const userType = authData.user?.user_metadata?.user_type || 'unknown';
-
+      
       // Create a session for the logged-in user
       const sessionId = createHash('sha256').update(Date.now().toString()).digest('hex').substring(0, 16);
       await sessionService.createSession(sessionId);
@@ -1574,7 +1577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileCompleted: true, // Assume profile is completed for now
         supabaseUserId: authData.user?.id
       });
-
+      
       return res.status(200).json({
         message: "Login successful with Supabase Auth",
         user: {
@@ -1593,7 +1596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Get current authenticated user
   app.get("/api/auth/user", async (req: Request, res: Response) => {
     try {
@@ -1602,18 +1605,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-
+      
       const token = authHeader.split(' ')[1];
-
+      
       // Verify token with Supabase
       const { data: { user }, error } = await supabase.auth.getUser(token);
-
+      
       if (error || !user) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-
+      
       const userType = user.user_metadata?.user_type || 'unknown';
-
+      
       // Return the authenticated user
       return res.status(200).json({
         id: user.id,
@@ -1625,7 +1628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ error: "Not authenticated" });
     }
   });
-
+  
   // Logout endpoint
   app.post("/api/auth/logout", async (req: Request, res: Response) => {
     try {
@@ -1634,10 +1637,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: "Not authenticated" });
       }
-
+      
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
-
+      
       if (error) {
         console.error("Supabase logout error:", error);
         return res.status(500).json({
@@ -1645,7 +1648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           error: error.message
         });
       }
-
+      
       return res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
       console.error("Error logging out:", error);
@@ -1657,55 +1660,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
-
+  
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-
+  
   // Store connected clients by sessionId for easier management and multiple connections support
   const wsConnections = new Map<string, Set<CustomWebSocket>>();
-
+  
   wss.on('connection', (ws: CustomWebSocket) => {
     console.log('WebSocket client connected - waiting for registration');
-
+    
     // Handle incoming messages
     ws.on('message', async (message: string) => {
       try {
         const data = JSON.parse(message);
         console.log('WebSocket message received:', data.type);
-
+        
         // Register the client with their session ID and role if available
         if (data.type === 'register' && data.sessionId) {
           const sessionId = data.sessionId;
-
+          
           // Initialize userData
           ws.userData = {
             role: data.userData?.role || 'unknown',
             userId: data.userData?.userId,
             sessionId // Store sessionId in userData for reconnection handling
           };
-
+          
           // Add to connected clients map
           if (!wsConnections.has(sessionId)) {
             wsConnections.set(sessionId, new Set());
           }
           wsConnections.get(sessionId)?.add(ws);
-
+          
           // Also maintain compatibility with old code
           connectedClients.set(sessionId, ws);
-
+          
           console.log(`Client registered with session ID: ${sessionId} (total connections for this session: ${wsConnections.get(sessionId)?.size || 0})`);
-
+          
           // Send a welcome message
           ws.send(JSON.stringify({
             type: 'system',
             message: 'Connected to Contested real-time updates'
           }));
-
+          
           // If we have any pending messages for this session, send them now
           const pendingMessages = pendingMessageQueue.get(sessionId);
           if (pendingMessages && pendingMessages.length > 0) {
             console.log(`Sending ${pendingMessages.length} pending messages for session ${sessionId}`);
-
+            
             pendingMessages.forEach(pendingMsg => {
               try {
                 ws.send(JSON.stringify(pendingMsg));
@@ -1713,12 +1716,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.error('Error sending pending message:', sendError);
               }
             });
-
+            
             // Clear the pending queue
             pendingMessageQueue.delete(sessionId);
           }
         }
-
+        
         // Handle profile update message
         else if (data.type === 'profile_update' && data.sessionId) {
           console.log(`Received profile_update for session ${data.sessionId}`);
@@ -1727,7 +1730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'profile_update',
             data: data.data
           });
-
+          
           // Save this data to the session storage if we have a session service
           try {
             if (data.data && typeof data.data === 'object' && Object.keys(data.data).length > 0) {
@@ -1747,7 +1750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error('Error saving form data to session:', error);
           }
         }
-
+        
         // Handle step change message
         else if (data.type === 'step_change' && data.sessionId && data.step) {
           console.log(`Received step_change for session ${data.sessionId} to step ${data.step}`);
@@ -1756,7 +1759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'step_change',
             step: data.step
           });
-
+          
           // Save current step to the session storage
           try {
             await sessionService.updateSession(data.sessionId, {
@@ -1767,38 +1770,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error('Error saving step to session:', error);
           }
         }
-
+        
         // Process other message types as needed
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
       }
     });
-
+    
     // Handle disconnection
     ws.on('close', () => {
       console.log('WebSocket client disconnected');
-
+      
       // Remove from the session-specific set if we have session info
       if (ws.userData?.sessionId) {
         const sessionId = ws.userData.sessionId;
         const connections = wsConnections.get(sessionId);
-
+        
         if (connections) {
           // Remove this connection
           connections.delete(ws);
-
+          
           // If no more connections for this session, clean up the map entry
           if (connections.size === 0) {
             wsConnections.delete(sessionId);
-
+            
             // Also remove from old map for compatibility
             connectedClients.delete(sessionId);
           }
-
+          
           console.log(`Client removed from session ${sessionId} (remaining connections: ${connections.size})`);
         }
       }
-
+      
       // For backward compatibility with old code that doesn't track sessionId in userData
       for (const [sessionId, client] of connectedClients.entries()) {
         if (client === ws) {
@@ -1815,7 +1818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     });
   });
-
+  
   // Helper function to send a WebSocket message to a client
   const sendWebSocketMessage = (sessionId: string, data: any) => {
     const client = connectedClients.get(sessionId);
@@ -1825,20 +1828,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     return false;
   };
-
+  
   // Helper function to send data to n8n webhook
   const sendToN8nWebhook = async (data: any, webhookUrl?: string) => {
     try {
       // Use the provided webhook URL or a default one
       const url = webhookUrl || process.env.N8N_WEBHOOK_URL;
-
+      
       if (!url) {
         console.warn('N8N webhook URL not provided and not set in environment variables');
         return false;
       }
-
+      
       console.log(`Sending data to n8n webhook at URL: ${url}`);
-
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -1846,13 +1849,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         body: JSON.stringify(data),
       });
-
+      
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Could not read error response body');
         console.error(`Error response from n8n webhook: Status ${response.status} ${response.statusText}, Body: ${errorText}`);
         throw new Error(`Error sending data to n8n: ${response.status} ${response.statusText}`);
       }
-
+      
       console.log('Successfully sent data to n8n webhook');
       return true;
     } catch (error) {
@@ -1863,15 +1866,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return false;
     }
   };
-
+  
   // Test endpoint to simulate a match notification (for testing WebSocket)
   app.post("/api/test/simulate-match", async (req: Request, res: Response) => {
     const { sessionId } = req.body;
-
+    
     if (!sessionId) {
       return res.status(400).json({ error: "Session ID is required" });
     }
-
+    
     // Simple mock match data
     const mockMatchData = {
       id: Date.now().toString(),
@@ -1891,14 +1894,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: "Jordan Mitchell"
       }
     };
-
+    
     // Send WebSocket notification
     const sent = sendWebSocketMessage(sessionId, {
       type: "match",
       message: `Contested Match Alert: The perfect partnership with ${mockMatchData.business.name} has been identified for you!`,
       matchData: mockMatchData
     });
-
+    
     if (sent) {
       res.json({ success: true, message: "Match notification sent" });
     } else {
@@ -1907,20 +1910,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // n8n webhook integration endpoints
   app.post("/api/n8n/webhook", async (req: Request, res: Response) => {
     try {
       const { webhook_url, event_type, data } = req.body;
-
+      
       if (!webhook_url) {
         return res.status(400).json({ error: "webhook_url is required" });
       }
-
+      
       if (!event_type) {
         return res.status(400).json({ error: "event_type is required" });
       }
-
+      
       // Send data to n8n webhook
       const webhookData = {
         event_type,
@@ -1928,9 +1931,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: data || {},
         platform: "Contested"
       };
-
+      
       const success = await sendToN8nWebhook(webhookData, webhook_url);
-
+      
       if (success) {
         return res.status(200).json({ 
           success: true, 
@@ -1951,20 +1954,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // n8n webhook configuration endpoint
   app.post("/api/n8n/config", async (req: Request, res: Response) => {
     try {
       const { webhook_url } = req.body;
-
+      
       if (!webhook_url) {
         return res.status(400).json({ error: "webhook_url is required" });
       }
-
+      
       // Store the webhook URL in environment variable
       // Note: This is temporary for the current session only
       process.env.N8N_WEBHOOK_URL = webhook_url;
-
+      
       return res.status(200).json({ 
         success: true, 
         message: "n8n webhook configuration updated successfully",
@@ -1981,7 +1984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Feedback API endpoints
-
+  
   // Create new feedback
   app.post("/api/feedback", async (req: Request, res: Response) => {
     try {
@@ -1995,12 +1998,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Optional sentiment analysis prompt for Gemini to analyze
         sentimentPrompt: z.string().optional()
       });
-
+      
       const feedbackData = feedbackSchema.parse(req.body);
-
+      
       // Add user ID from authenticated session
       const userId = req.user.id;
-
+      
       // Process sentiment if sentiment prompt is provided
       let sentiment = null;
       if (feedbackData.sentimentPrompt) {
@@ -2019,7 +2022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Continue without sentiment if analysis fails
         }
       }
-
+      
       // Store feedback
       const feedback = await storage.storeFeedback({
         userId,
@@ -2031,7 +2034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: feedbackData.content,
         isPublic: feedbackData.isPublic || false,
       });
-
+      
       // Notify administrators via WebSocket if a compliance officer is connected
       const complianceUser = Array.from(connectedClients.entries())
         .find(([_, socket]) => {
@@ -2040,7 +2043,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           return false;
         });
-
+      
       if (complianceUser) {
         const [sessionId, socket] = complianceUser;
         sendWebSocketMessage(sessionId, {
@@ -2049,7 +2052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: feedback
         });
       }
-
+      
       return res.status(201).json({
         message: "Feedback submitted successfully",
         feedback
@@ -2062,7 +2065,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Get feedback by user
   app.get("/api/feedback/user", async (req: Request, res: Response) => {
     try {
@@ -2070,10 +2073,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
-
+      
       const userId = req.user.id;
       const feedbacks = await storage.getFeedbackByUser(userId);
-
+      
       return res.status(200).json({ feedbacks });
     } catch (error) {
       console.error("Error retrieving user feedback:", error);
@@ -2083,7 +2086,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Get feedback by match
   app.get("/api/feedback/match/:matchId", async (req: Request, res: Response) => {
     try {
@@ -2091,14 +2094,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
-
+      
       const matchId = parseInt(req.params.matchId);
       if (isNaN(matchId)) {
         return res.status(400).json({ message: "Invalid match ID" });
       }
-
+      
       const feedbacks = await storage.getFeedbackByMatch(matchId);
-
+      
       return res.status(200).json({ feedbacks });
     } catch (error) {
       console.error("Error retrieving match feedback:", error);
@@ -2108,7 +2111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Get public feedback
   app.get("/api/feedback/public", async (req: Request, res: Response) => {
     try {
@@ -2122,7 +2125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Update feedback status (admin/compliance only)
   app.patch("/api/feedback/:feedbackId/status", checkUserAuth("compliance"), async (req: Request, res: Response) => {
     try {
@@ -2130,22 +2133,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
-
+      
       if (req.user.role !== 'compliance') {
         return res.status(403).json({ message: "Not authorized" });
       }
-
+      
       const feedbackId = parseInt(req.params.feedbackId);
       if (isNaN(feedbackId)) {
         return res.status(400).json({ message: "Invalid feedback ID" });
       }
-
+      
       const { status } = z.object({
         status: z.enum(['pending', 'reviewed', 'implemented', 'rejected'])
       }).parse(req.body);
-
+      
       const feedback = await storage.updateFeedbackStatus(feedbackId, status);
-
+      
       return res.status(200).json({
         message: "Feedback status updated successfully",
         feedback
@@ -2158,7 +2161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Add admin response to feedback
   app.patch("/api/feedback/:feedbackId/response", checkUserAuth("compliance"), async (req: Request, res: Response) => {
     try {
@@ -2166,22 +2169,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
-
+      
       if (req.user.role !== 'compliance') {
         return res.status(403).json({ message: "Not authorized" });
       }
-
+      
       const feedbackId = parseInt(req.params.feedbackId);
       if (isNaN(feedbackId)) {
         return res.status(400).json({ message: "Invalid feedback ID" });
       }
-
+      
       const { response } = z.object({
         response: z.string().min(1, "Response is required")
       }).parse(req.body);
-
+      
       const feedback = await storage.addAdminResponse(feedbackId, response);
-
+      
       // Notify the user if they are connected
       const originalFeedback = await storage.getFeedback(feedbackId);
       if (originalFeedback) {
@@ -2202,7 +2205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       }
-
+      
       return res.status(200).json({
         message: "Admin response added successfully",
         feedback
@@ -2215,12 +2218,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   // Get public athlete profile by profile link ID
   app.get("/api/athlete-profile/:profileLinkId", async (req: Request, res: Response) => {
     try {
       const { profileLinkId } = req.params;
-
+      
       // In a real implementation, you would fetch this from the database
       // Mock data for demonstration purposes
       const athleteProfile = {
@@ -2301,7 +2304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         ]
       };
-
+      
       // Check if this is the requested profile or return 404
       if (profileLinkId.toLowerCase() === athleteProfile.profileLinkId.toLowerCase()) {
         res.json(athleteProfile);
@@ -2313,17 +2316,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch athlete profile" });
     }
   });
-
+  
   // Refresh athlete metrics from social platforms
   app.get("/api/athlete-profile/:profileLinkId/refresh-metrics", async (req: Request, res: Response) => {
     try {
       const { profileLinkId } = req.params;
-
+      
       // In a real implementation, this would fetch fresh data from social APIs
       // For demo purposes, we'll return slightly varied metrics
-
+      
       const randomVariance = () => (Math.random() > 0.5 ? 1 : -1) * Math.random() * 0.1;
-
+      
       // Check if profile exists
       if (profileLinkId.toLowerCase() === "jordanmitchell") {
         const updatedMetrics = {
@@ -2358,7 +2361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             weeklyGrowth: parseFloat((3.8 * (1 + randomVariance())).toFixed(1))
           }
         };
-
+        
         res.json({
           success: true,
           metrics: updatedMetrics,
@@ -2372,16 +2375,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to refresh metrics" });
     }
   });
-
+  
   // Update athlete profile link data
   app.post("/api/athlete-profile/:id/profile-link", async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const profileLinkData = req.body;
-
+      
       // In a real implementation, you would validate and update the database
       console.log(`Updating profile link data for athlete ID ${id}:`, profileLinkData);
-
+      
       // Return updated profile data
       res.json({
         id: parseInt(id),
@@ -2393,11 +2396,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to update profile link" });
     }
   });
-
+  
   // Admin API Routes - These should be properly secured in a production environment
   // Use our helper middleware for admin routes
   const requireAdmin = checkUserAuth("admin");
-
+  
   // Admin routes
   app.get("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {
     try {
@@ -2408,7 +2411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch users" });
     }
   });
-
+  
   app.get("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
     try {
       const user = await storage.getUser(parseInt(req.params.id));
@@ -2421,30 +2424,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch user" });
     }
   });
-
+  
   app.put("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.id);
       const userData = req.body;
-
+      
       // Validate the user exists
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-
+      
       // Update the user with our new updateUser method
       const updatedUser = await storage.updateUser(userId, userData);
       if (!updatedUser) {
         return res.status(404).json({ error: "Failed to update user" });
       }
-
+      
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ error: "Failed to update user" });
     }
   });
-
+  
   return httpServer;
 }
