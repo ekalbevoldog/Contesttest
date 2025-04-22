@@ -5,8 +5,9 @@ import { db } from "./db";
 // Use services
 import { geminiService } from "./services/geminiService";
 import { sessionService } from "./services/sessionService";
-// Import Supabase client for auth
+// Import Supabase auth
 import { supabase } from "./supabase";
+import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -174,8 +175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Setup authentication
-  setupAuth(app);
+  // Setup authentication with Supabase
+  setupSupabaseAuth(app);
   // Create a new session
   app.post("/api/chat/session", async (req: Request, res: Response) => {
     try {

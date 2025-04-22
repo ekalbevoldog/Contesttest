@@ -1,34 +1,24 @@
 
-import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from 'ws';
 import * as schema from "@shared/schema";
-import { supabase } from './supabase';
 
-if (!process.env.SUPABASE_URL) {
-  console.error("SUPABASE_URL environment variable is not set");
+// Configure Neon to use WebSockets for serverless environments
+neonConfig.webSocketConstructor = ws;
+
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL environment variable is not set");
   if (process.env.NODE_ENV === 'production') {
-    throw new Error("SUPABASE_URL must be set");
+    throw new Error("DATABASE_URL must be set");
   }
 }
 
-// Construct connection string from components
-const host = 'db.yfkqvuevaykxizpndhke.supabase.co';
-const port = 5432;
-const database = 'postgres';
-const user = 'postgres';
-const connectionString = `postgres://${user}:${process.env.SUPABASE_DB_PASSWORD}@${host}:${port}/${database}`;
+// Create a connection pool
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-// Create a Postgres client
-const client = postgres(connectionString, { 
-  max: 1,
-  ssl: true,
-  connection: {
-    options: `--cluster=db-yfkqvuevaykxizpndhke`
-  }
-});
-
-// Initialize Drizzle with the Postgres client
-export const db = drizzle(client, { schema });
+// Initialize Drizzle with the connection pool
+export const db = drizzle(pool, { schema });
 
 // Export a function to check the database connection
 export async function testConnection() {
@@ -38,12 +28,61 @@ export async function testConnection() {
       return false;
     }
 
-    // Simple test query using Drizzle
-    const result = await db.select().from(schema.users).limit(1);
-    console.log("Successfully connected to Supabase database with Drizzle ORM");
+    // Simple test query
+    const result = await pool.query('SELECT NOW()');
+    console.log("Successfully connected to database:", result.rows[0]);
     return true;
   } catch (error) {
     console.error("Database connection error:", error);
     return false;
   }
 }
+
+/**
+ * This function ensures essential database tables exist
+ */
+export async function createEssentialTables() {
+  try {
+    // Create users table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('athlete', 'business', 'compliance', 'admin')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP
+      )
+    `);
+    console.log("Users table exists or was created");
+
+    // Create sessions table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        sid TEXT NOT NULL PRIMARY KEY,
+        sess JSON NOT NULL,
+        expire TIMESTAMP(6) NOT NULL
+      )
+    `);
+    console.log("Sessions table exists or was created");
+
+    return true;
+  } catch (error) {
+    console.error("Error creating database tables:", error);
+    return false;
+  }
+}
+
+// Initialize the database and create essential tables when this module is imported
+(async function() {
+  try {
+    console.log("Testing database connection...");
+    if (await testConnection()) {
+      console.log("Creating essential database tables...");
+      await createEssentialTables();
+    }
+  } catch (error) {
+    console.error("Error during database initialization:", error);
+  }
+})();

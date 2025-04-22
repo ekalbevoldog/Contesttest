@@ -24,19 +24,20 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Lock, Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 import { FadeIn } from '@/components/animations/FadeIn';
 
 // Form validation schema
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  email: z.string().email('Valid email is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 const registerSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  email: z.string().email('Valid email is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
   role: z.enum(['athlete', 'business', 'compliance', 'admin']).default('athlete'),
 });
 
@@ -47,7 +48,8 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, isLoading, signIn, signUp } = useSupabaseAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Redirect if already logged in
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function AuthPage() {
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
+      email: '',
       password: '',
     },
   });
@@ -69,21 +71,72 @@ export default function AuthPage() {
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: '',
-      password: '',
       email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
       role: 'athlete',
     },
   });
   
   // Handle login form submission
   const onLoginSubmit = async (values: LoginFormValues) => {
-    loginMutation.mutate(values);
+    setIsSubmitting(true);
+    try {
+      const { error } = await signIn(values.email, values.password);
+      if (error) {
+        toast({
+          title: 'Login failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Login failed',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   // Handle register form submission
   const onRegisterSubmit = async (values: RegisterFormValues) => {
-    registerMutation.mutate(values);
+    setIsSubmitting(true);
+    try {
+      const userData = {
+        first_name: values.firstName,
+        last_name: values.lastName,
+        full_name: `${values.firstName} ${values.lastName}`,
+        role: values.role
+      };
+      
+      const { error, user } = await signUp(values.email, values.password, userData);
+      
+      if (error) {
+        toast({
+          title: 'Registration failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Registration successful',
+          description: 'Please check your email to verify your account',
+        });
+        setActiveTab('login');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Registration failed',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -116,14 +169,14 @@ export default function AuthPage() {
                         <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                           <FormField
                             control={loginForm.control}
-                            name="username"
+                            name="email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Username</FormLabel>
+                                <FormLabel>Email</FormLabel>
                                 <FormControl>
                                   <div className="relative">
                                     <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                    <Input placeholder="username" className="pl-10" {...field} />
+                                    <Input placeholder="your@email.com" type="email" className="pl-10" {...field} />
                                   </div>
                                 </FormControl>
                                 <FormMessage />
@@ -148,8 +201,8 @@ export default function AuthPage() {
                             )}
                           />
                           
-                          <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                            {loginMutation.isPending ? (
+                          <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Signing in...
@@ -187,14 +240,31 @@ export default function AuthPage() {
                         <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                           <FormField
                             control={registerForm.control}
-                            name="username"
+                            name="firstName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Username</FormLabel>
+                                <FormLabel>First Name</FormLabel>
                                 <FormControl>
                                   <div className="relative">
                                     <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                    <Input placeholder="username" className="pl-10" {...field} />
+                                    <Input placeholder="John" className="pl-10" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={registerForm.control}
+                            name="lastName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                    <Input placeholder="Doe" className="pl-10" {...field} />
                                   </div>
                                 </FormControl>
                                 <FormMessage />
@@ -275,8 +345,8 @@ export default function AuthPage() {
                             )}
                           />
                           
-                          <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                            {registerMutation.isPending ? (
+                          <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Creating account...

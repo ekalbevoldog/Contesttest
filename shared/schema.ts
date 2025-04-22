@@ -23,47 +23,30 @@ export const insertSessionSchema = createInsertSchema(sessions).omit({
   lastLogin: true,
 });
 
-// Authentication - Adapt to match Supabase structure (no username/password columns)
+// Authentication using direct PostgreSQL
 export const users = pgTable("users", {
-  id: text("id").primaryKey(), // In Supabase, this is a UUID
+  id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
   role: text("role", { enum: ["athlete", "business", "compliance", "admin"] }).notNull(),
   created_at: timestamp("created_at").defaultNow(),
   last_login: timestamp("last_login"),
 });
-
-// User credentials table for secure password storage
-export const userCredentials = pgTable("user_credentials", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull().unique(),  // Use text instead of integer to match the UUID in users table
-  passwordHash: text("password_hash").notNull(),
-  salt: text("salt").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const insertUserCredentialsSchema = createInsertSchema(userCredentials).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type UserCredentials = typeof userCredentials.$inferSelect;
-export type InsertUserCredentials = z.infer<typeof insertUserCredentialsSchema>;
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   created_at: true,
   last_login: true,
 }).extend({
-  // Add password for authentication even though it's not in the DB schema
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  // Add confirm_password for validation, though not stored in DB
+  confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 // Athlete Profiles
 export const athletes = pgTable("athlete_profiles", {
   id: serial("id").primaryKey(),
-  userId: text("user_id"), // Updated to text for UUID compatibility
+  userId: integer("user_id").references(() => users.id),
   sessionId: text("session_id").notNull(),
   name: text("name").notNull(),
   
@@ -152,7 +135,7 @@ export const insertAthleteSchema = createInsertSchema(athletes).omit({
 // Business Profiles
 export const businesses = pgTable("business_profiles", {
   id: serial("id").primaryKey(),
-  userId: text("user_id"), // Updated to text for UUID compatibility
+  userId: integer("user_id").references(() => users.id),
   sessionId: text("session_id").notNull(),
   
   // Basic Information
@@ -349,7 +332,7 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 // Compliance Officer Profiles
 export const complianceOfficers = pgTable("compliance_officers", {
   id: serial("id").primaryKey(),
-  userId: text("user_id"), // Updated to text for UUID compatibility
+  userId: integer("user_id").references(() => users.id),
   name: text("name").notNull(),
   email: text("email").notNull(),
   institution: text("institution").notNull(),
@@ -453,7 +436,7 @@ export type InsertPartnershipOffer = z.infer<typeof insertPartnershipOfferSchema
 // Feedback system
 export const feedbacks = pgTable("feedbacks", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").references(() => users.id).notNull(), // Updated to text for UUID compatibility
+  userId: integer("user_id").references(() => users.id).notNull(),
   userType: text("user_type").notNull(), // athlete, business, compliance, admin
   feedbackType: text("feedback_type").notNull(), // general, match, feature, bug, other
   matchId: integer("match_id").references(() => matches.id),

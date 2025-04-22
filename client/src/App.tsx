@@ -14,8 +14,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { SupabaseAuthProvider } from "@/hooks/use-supabase-auth";
+import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -27,8 +26,8 @@ const ProtectedRoute = ({
   component: React.ComponentType<any>; 
   path: string 
 }) => {
-  // Use the auth state from use-auth hook
-  const { user, isLoading } = useAuth();
+  // Use the auth state from Supabase auth hook
+  const { user, isLoading } = useSupabaseAuth();
   const [, navigate] = useLocation();
 
   if (isLoading) {
@@ -49,7 +48,7 @@ const ProtectedRoute = ({
       <Route
         path={path}
         component={() => {
-          // Redirect to auth page following the blueprint
+          // Redirect to auth page
           navigate('/auth');
           return null;
         }}
@@ -103,12 +102,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SupabaseAuthProvider>
-          <Router />
-          <Toaster />
-        </SupabaseAuthProvider>
-      </AuthProvider>
+      <SupabaseAuthProvider>
+        <Router />
+        <Toaster />
+      </SupabaseAuthProvider>
     </QueryClientProvider>
   );
 }
