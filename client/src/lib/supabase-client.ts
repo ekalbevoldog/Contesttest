@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Supabase credentials provided in the server
 // These are the same as in server/supabase.ts
-const supabaseUrl = 'https://yfkqvuevaykxizpndhke.supabase.co';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlma3F2dWV2YXlreGl6cG5kaGtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3NTExNDMsImV4cCI6MjA2MDMyNzE0M30.fWogNLRxTPk8uEYA8bh3SoeiZoyrpPlv5zt0pSVJu4s';
 
 // Create the Supabase client

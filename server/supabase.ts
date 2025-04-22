@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Hard-coded Supabase credentials from the user-provided details
-const supabaseUrl = 'https://yfkqvuevaykxizpndhke.supabase.co';
+// Get Supabase URL from environment variable
+const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlma3F2dWV2YXlreGl6cG5kaGtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3NTExNDMsImV4cCI6MjA2MDMyNzE0M30.fWogNLRxTPk8uEYA8bh3SoeiZoyrpPlv5zt0pSVJu4s';
 
 // Create the Supabase client
