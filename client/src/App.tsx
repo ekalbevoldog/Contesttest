@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
-import SimpleOnboarding from "@/pages/SimpleOnboarding";
+// SimpleOnboarding and EnhancedOnboarding removed - consolidated to main onboarding
 import Onboarding from "@/pages/Onboarding";
 import SignIn from "@/pages/SignIn";
 import AuthPage from "@/pages/auth-page";
@@ -235,6 +235,21 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Simple redirect component
+const RedirectToOnboarding = () => {
+  const [, navigate] = useLocation();
+  
+  useEffect(() => {
+    navigate('/onboarding');
+  }, [navigate]);
+  
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+};
+
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -270,8 +285,8 @@ function Router() {
             <Route path="/athletes" component={AthleteInfo} />
             <Route path="/businesses" component={BusinessInfo} />
             
-            {/* Simple exploration path */}
-            <Route path="/explore-matches" component={SimpleOnboarding} />
+            {/* Redirect exploration path to main onboarding */}
+            <Route path="/explore-matches" component={RedirectToOnboarding} />
             
             {/* Testing routes */}
             <Route path="/supabase-test" component={SupabaseTest} />
