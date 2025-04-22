@@ -1,28 +1,53 @@
 import { createClient } from '@supabase/supabase-js';
 
-// For client-side, we need the credentials passed through Vite environment variables
-// The server can't directly share environment variables with the client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+// Instead of using environment variables directly, we'll initialize with empty values
+// and then fetch the actual configuration from our server
+let supabaseUrl = '';
+let supabaseKey = '';
 
-// Log for debugging - should see the environment variables being loaded
-console.log(`[Client] Supabase URL available: ${!!supabaseUrl}`);
-console.log(`[Client] Supabase URL: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
-console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
-console.log(`[Client] Supabase Key length: ${supabaseKey ? supabaseKey.length : 0}`);
-
-// Create the Supabase client with enhanced options for browser environment
-export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseKey || '', 
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      storageKey: 'nil-connect-auth'
-    }
+// Create the Supabase client with placeholder values first
+export let supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    storageKey: 'nil-connect-auth'
   }
-);
+});
+
+// Function to initialize the Supabase client with config from our server
+export async function initializeSupabase() {
+  try {
+    console.log('[Client] Fetching Supabase configuration from server...');
+    const response = await fetch('/api/config/supabase');
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Supabase config: ${response.status}`);
+    }
+    
+    const config = await response.json();
+    supabaseUrl = config.url;
+    supabaseKey = config.key;
+    
+    console.log(`[Client] Supabase URL available: ${!!supabaseUrl}`);
+    console.log(`[Client] Supabase URL: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
+    console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
+    console.log(`[Client] Supabase Key length: ${supabaseKey ? supabaseKey.length : 0}`);
+    
+    // Re-initialize the Supabase client with the fetched configuration
+    supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        storageKey: 'nil-connect-auth'
+      }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('[Client] Error initializing Supabase:', error);
+    return false;
+  }
+}
 
 // Helper functions for athlete onboarding
 export const registerAthlete = async (userData: {

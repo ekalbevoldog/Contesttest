@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerPublicRoutes } from "./routes-public";
 import { setupVite, serveStatic, log } from "./vite";
 import { testSupabaseConnection } from "./supabase";
 
@@ -46,6 +47,9 @@ app.use((req, res, next) => {
     console.error('Error setting up Supabase:', error);
     // Continue with server startup even if Supabase setup fails
   }
+  
+  // Register public routes first, so they're available even if other routes fail
+  registerPublicRoutes(app);
   
   const server = await registerRoutes(app);
 

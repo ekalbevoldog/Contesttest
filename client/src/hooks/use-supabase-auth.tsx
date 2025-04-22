@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase-client';
+import { supabase, initializeSupabase } from '@/lib/supabase-client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -22,29 +22,59 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  const [isSupabaseInitialized, setIsSupabaseInitialized] = useState(false);
   const { toast } = useToast();
   const [location, navigate] = useLocation();
 
-  // Initial session check
+  // Initialize Supabase
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (data?.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-        
-        // Fetch additional user data if needed
-        const { data: profileData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('auth_id', data.session.user.id)
-          .single();
-          
-        if (profileData) {
-          setUserData(profileData);
+    async function initSupabase() {
+      try {
+        const success = await initializeSupabase();
+        setIsSupabaseInitialized(success);
+        if (!success) {
+          toast({
+            title: 'Connection Error',
+            description: 'Failed to initialize Supabase connection. Please refresh and try again.',
+            variant: 'destructive',
+          });
         }
+      } catch (error) {
+        console.error('Failed to initialize Supabase:', error);
+        setIsSupabaseInitialized(false);
       }
-      setIsLoading(false);
+    }
+    
+    initSupabase();
+  }, [toast]);
+
+  // Initial session check - only run after Supabase is initialized
+  useEffect(() => {
+    if (!isSupabaseInitialized) return;
+    
+    const fetchSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (data?.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+          
+          // Fetch additional user data if needed
+          const { data: profileData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_id', data.session.user.id)
+            .single();
+            
+          if (profileData) {
+            setUserData(profileData);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchSession();
@@ -89,7 +119,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, isSupabaseInitialized]);
 
   const signIn = async (email: string, password: string) => {
     try {
