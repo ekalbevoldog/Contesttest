@@ -38,6 +38,7 @@ interface CustomWebSocket extends WebSocket {
   userData?: {
     role: 'athlete' | 'business' | 'compliance' | 'admin';
     userId?: string;
+    sessionId?: string; // Add sessionId to track connections by session
   };
 }
 
@@ -75,8 +76,67 @@ import { insertFeedbackSchema, Feedback } from "@shared/schema";
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';
 
-// Map to store connected WebSocket clients
+// Map to store connected WebSocket clients (legacy approach)
 const connectedClients = new Map<string, CustomWebSocket>();
+
+// Map to store pending messages for sessions without active connections
+const pendingMessageQueue = new Map<string, any[]>();
+
+// Helper function to broadcast a message to all connections for a session
+function broadcastToSession(sessionId: string, message: any) {
+  let delivered = false;
+  
+  // Check new connection map first
+  const connections = wsConnections.get(sessionId);
+  if (connections && connections.size > 0) {
+    console.log(`Broadcasting message to ${connections.size} clients for session ${sessionId}`);
+    
+    connections.forEach(conn => {
+      if (conn.readyState === WebSocket.OPEN) {
+        try {
+          conn.send(JSON.stringify(message));
+          delivered = true;
+        } catch (error) {
+          console.error('Error sending message to client:', error);
+        }
+      }
+    });
+  }
+  
+  // Also try legacy connection map
+  const legacyConnection = connectedClients.get(sessionId);
+  if (legacyConnection && legacyConnection.readyState === WebSocket.OPEN) {
+    try {
+      legacyConnection.send(JSON.stringify(message));
+      delivered = true;
+    } catch (error) {
+      console.error('Error sending message to legacy client:', error);
+    }
+  }
+  
+  // If we couldn't deliver, queue the message for later delivery
+  if (!delivered) {
+    console.log(`No active connections for session ${sessionId}, queueing message`);
+    
+    if (!pendingMessageQueue.has(sessionId)) {
+      pendingMessageQueue.set(sessionId, []);
+    }
+    
+    // Add to pending queue with a timestamp
+    pendingMessageQueue.get(sessionId)?.push({
+      ...message,
+      _queuedAt: new Date().toISOString()
+    });
+    
+    // Limit queue size to prevent memory issues
+    const queue = pendingMessageQueue.get(sessionId);
+    if (queue && queue.length > 50) {
+      queue.shift(); // Remove oldest message if queue gets too large
+    }
+  }
+  
+  return delivered;
+}
 
 // Schema for session creation
 const sessionCreateSchema = z.object({});
@@ -1599,33 +1659,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
+  // Store connected clients by sessionId for easier management and multiple connections support
+  const wsConnections = new Map<string, Set<CustomWebSocket>>();
+  
   wss.on('connection', (ws: CustomWebSocket) => {
-    console.log('WebSocket client connected');
+    console.log('WebSocket client connected - waiting for registration');
     
     // Handle incoming messages
     ws.on('message', async (message: string) => {
       try {
         const data = JSON.parse(message);
+        console.log('WebSocket message received:', data.type);
         
         // Register the client with their session ID and role if available
         if (data.type === 'register' && data.sessionId) {
-          // Initialize userData
-          if (data.userData && data.userData.role) {
-            ws.userData = {
-              role: data.userData.role,
-              userId: data.userData.userId
-            };
-          }
+          const sessionId = data.sessionId;
           
-          connectedClients.set(data.sessionId, ws);
-          console.log(`Client registered with session ID: ${data.sessionId}`);
+          // Initialize userData
+          ws.userData = {
+            role: data.userData?.role || 'unknown',
+            userId: data.userData?.userId,
+            sessionId // Store sessionId in userData for reconnection handling
+          };
+          
+          // Add to connected clients map
+          if (!wsConnections.has(sessionId)) {
+            wsConnections.set(sessionId, new Set());
+          }
+          wsConnections.get(sessionId)?.add(ws);
+          
+          // Also maintain compatibility with old code
+          connectedClients.set(sessionId, ws);
+          
+          console.log(`Client registered with session ID: ${sessionId} (total connections for this session: ${wsConnections.get(sessionId)?.size || 0})`);
           
           // Send a welcome message
           ws.send(JSON.stringify({
             type: 'system',
             message: 'Connected to Contested real-time updates'
           }));
+          
+          // If we have any pending messages for this session, send them now
+          const pendingMessages = pendingMessageQueue.get(sessionId);
+          if (pendingMessages && pendingMessages.length > 0) {
+            console.log(`Sending ${pendingMessages.length} pending messages for session ${sessionId}`);
+            
+            pendingMessages.forEach(pendingMsg => {
+              try {
+                ws.send(JSON.stringify(pendingMsg));
+              } catch (sendError) {
+                console.error('Error sending pending message:', sendError);
+              }
+            });
+            
+            // Clear the pending queue
+            pendingMessageQueue.delete(sessionId);
+          }
         }
+        
+        // Handle profile update message
+        else if (data.type === 'profile_update' && data.sessionId) {
+          // Forward to all clients for this session
+          broadcastToSession(data.sessionId, {
+            type: 'profile_update',
+            data: data.data
+          });
+        }
+        
+        // Process other message types as needed
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
       }
@@ -1635,8 +1736,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('close', () => {
       console.log('WebSocket client disconnected');
       
-      // Remove the client from the connected clients map
-      // Use Array.from to avoid the MapIterator issue
+      // Remove from the session-specific set if we have session info
+      if (ws.userData?.sessionId) {
+        const sessionId = ws.userData.sessionId;
+        const connections = wsConnections.get(sessionId);
+        
+        if (connections) {
+          // Remove this connection
+          connections.delete(ws);
+          
+          // If no more connections for this session, clean up the map entry
+          if (connections.size === 0) {
+            wsConnections.delete(sessionId);
+            
+            // Also remove from old map for compatibility
+            connectedClients.delete(sessionId);
+          }
+          
+          console.log(`Client removed from session ${sessionId} (remaining connections: ${connections.size})`);
+        }
+      }
+      
+      // For backward compatibility with old code that doesn't track sessionId in userData
+      for (const [sessionId, client] of connectedClients.entries()) {
+        if (client === ws) {
+          connectedClients.delete(sessionId);
+          console.log(`Removed client from old map for session ${sessionId}`);
+          break;
+        }
+      }
       Array.from(connectedClients.entries()).forEach(([sessionId, client]) => {
         if (client === ws) {
           connectedClients.delete(sessionId);

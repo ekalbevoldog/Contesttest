@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { supabase } from '../lib/supabase-client';
 
 type WebSocketMessage = {
   type: string;
@@ -17,6 +18,7 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'open' | 'closed'>('closed');
   const socketRef = useRef<WebSocket | null>(null);
+  const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
@@ -25,7 +27,51 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
   // Function reference for attempting reconnect
   const attemptReconnectRef = useRef<() => void>();
   
-  // Function to establish a WebSocket connection
+  // Initialize Supabase realtime channel for redundancy
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    try {
+      console.log('Setting up Supabase realtime channel for session:', sessionId);
+      
+      // Create a channel specific to this session
+      const channel = supabase.channel(`session-${sessionId}`, {
+        config: {
+          broadcast: { self: true }
+        }
+      });
+      
+      // Subscribe to events on this channel
+      channel
+        .on('broadcast', { event: 'message' }, (payload) => {
+          console.log('Supabase realtime message received:', payload);
+          setLastMessage(payload.payload);
+        })
+        .subscribe((status) => {
+          console.log('Supabase channel status:', status);
+          
+          // If direct WebSocket isn't connected but Supabase is, we'll still be "open"
+          if (status === 'SUBSCRIBED' && connectionStatus !== 'open') {
+            setConnectionStatus('open');
+          }
+        });
+      
+      // Store channel reference
+      channelRef.current = channel;
+      
+      // Clean up on unmount
+      return () => {
+        if (channelRef.current) {
+          channelRef.current.unsubscribe();
+          channelRef.current = null;
+        }
+      };
+    } catch (error) {
+      console.error('Error setting up Supabase realtime channel:', error);
+    }
+  }, [sessionId, connectionStatus]);
+  
+  // Function to establish a direct WebSocket connection
   const connectWebSocket = useCallback(() => {
     if (!sessionId) return;
     
@@ -67,7 +113,11 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
 
       socket.onclose = (event) => {
         console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
-        setConnectionStatus('closed');
+        
+        // Only set status to closed if Supabase channel isn't connected
+        if (!channelRef.current || channelRef.current.state !== 'joined') {
+          setConnectionStatus('closed');
+        }
 
         // Attempt to reconnect if not a normal closure
         if (event.code !== 1000 && attemptReconnectRef.current) {
@@ -77,11 +127,18 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
 
       socket.onerror = (error) => {
         console.error('WebSocket error:', error);
-        setConnectionStatus('closed');
+        // Only set status to closed if Supabase channel isn't connected
+        if (!channelRef.current || channelRef.current.state !== 'joined') {
+          setConnectionStatus('closed');
+        }
       };
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
-      setConnectionStatus('closed');
+      // Only set status to closed if Supabase channel isn't connected
+      if (!channelRef.current || channelRef.current.state !== 'joined') {
+        setConnectionStatus('closed');
+      }
+      
       if (attemptReconnectRef.current) {
         attemptReconnectRef.current();
       }
@@ -125,19 +182,42 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
     };
   }, [sessionId, connectWebSocket]);
 
-  // Send a message through the WebSocket
+  // Send a message through both WebSocket and Supabase for redundancy
   const sendMessage = useCallback((message: any) => {
+    let messageSent = false;
+    
+    // Try direct WebSocket first
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       try {
         socketRef.current.send(JSON.stringify(message));
         console.log('WebSocket message sent successfully:', message.type);
+        messageSent = true;
       } catch (error) {
         console.error('Error sending WebSocket message:', error);
         connectWebSocket(); // Try to reconnect on send error
       }
     } else {
-      console.error('WebSocket is not connected, cannot send message. Current state:', 
-        socketRef.current ? socketRef.current.readyState : 'No socket');
+      console.warn('Direct WebSocket is not connected, trying Supabase channel');
+    }
+    
+    // Also try Supabase channel as backup
+    if (channelRef.current) {
+      try {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'message',
+          payload: message
+        });
+        console.log('Message sent via Supabase channel:', message.type);
+        messageSent = true;
+      } catch (supabaseError) {
+        console.error('Error sending via Supabase channel:', supabaseError);
+      }
+    }
+    
+    // If neither method worked, try to reconnect WebSocket
+    if (!messageSent) {
+      console.error('Both WebSocket and Supabase channel failed to send message');
       
       // If no connection, attempt to reconnect
       if (!socketRef.current || socketRef.current.readyState === WebSocket.CLOSED) {
@@ -151,10 +231,26 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
             socketRef.current.send(JSON.stringify(message));
           } else {
             console.error('Failed to send message after reconnection attempt');
+            
+            // Final attempt via Supabase
+            if (channelRef.current) {
+              try {
+                channelRef.current.send({
+                  type: 'broadcast',
+                  event: 'message',
+                  payload: message
+                });
+                console.log('Delayed message sent via Supabase channel');
+              } catch (finalError) {
+                console.error('All communication methods failed:', finalError);
+              }
+            }
           }
         }, 1000); // Wait 1 second for connection to establish
       }
     }
+    
+    return messageSent;
   }, [connectWebSocket]);
 
   return { lastMessage, sendMessage, connectionStatus };

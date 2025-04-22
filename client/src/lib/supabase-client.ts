@@ -49,8 +49,7 @@ export async function initializeSupabase(): Promise<boolean> {
     console.log(`[Client] Supabase URL prefix: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
     console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
     
-    // Initialize the Supabase client
-    // Configure explicitly to fix WebSocket connection issues
+    // Initialize the Supabase client with proper real-time configuration
     supabase = createClient(supabaseUrl, supabaseKey, {
       auth: {
         autoRefreshToken: true,
@@ -69,9 +68,33 @@ export async function initializeSupabase(): Promise<boolean> {
       }
     });
     
-    // Disable realtime subscriptions as they can cause issues with onboarding
-    // This is safer than relying on them to work correctly
-    supabase.realtime.setAuth(null);
+    // Initialize real-time connection
+    console.log('[Client] Initializing real-time connection...');
+    
+    // Connect to the realtime service
+    const channel = supabase.channel('public:users', {
+      config: {
+        broadcast: { self: true }
+      }
+    });
+    
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        console.log('[Client] Realtime presence synced');
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('[Client] Realtime user joined:', key, newPresences);
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('[Client] Realtime user left:', key, leftPresences);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Client] Realtime connection established successfully');
+        } else {
+          console.warn('[Client] Realtime connection status:', status);
+        }
+      });
     
     // Test the connection
     const { error } = await supabase.from('users').select('count').limit(1);
