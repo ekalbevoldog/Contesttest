@@ -1,6 +1,8 @@
+
+import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { supabase } from './supabase';
 import * as schema from "@shared/schema";
+import { supabase } from './supabase';
 
 if (!process.env.SUPABASE_URL) {
   console.error("SUPABASE_URL environment variable is not set");
@@ -9,8 +11,14 @@ if (!process.env.SUPABASE_URL) {
   }
 }
 
-// Initialize Drizzle with Supabase's underlying Postgres connection
-export const db = drizzle(supabase, { schema });
+// Get the connection string from Supabase config
+const connectionString = process.env.SUPABASE_URL;
+
+// Create a Postgres client
+const client = postgres(connectionString, { max: 1 });
+
+// Initialize Drizzle with the Postgres client
+export const db = drizzle(client, { schema });
 
 // Export a function to check the database connection
 export async function testConnection() {
