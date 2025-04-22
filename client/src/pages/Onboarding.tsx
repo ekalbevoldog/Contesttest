@@ -1078,21 +1078,54 @@ export default function Onboarding() {
           variant: "default",
         });
         
-        // Manually reload the page to ensure fresh session data
-        // This is simpler than trying to use refreshProfile which requires 
-        // calling Supabase and can trigger the WebSocket error again
+        // Automatically log in the user after successful registration
+        console.log("Registration and profile creation successful, now logging in...");
         
-        // First set a user type cookie to ensure proper redirect after reload
+        try {
+          // Use the login API with the same credentials
+          const loginResponse = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password
+            }),
+          });
+          
+          if (!loginResponse.ok) {
+            console.warn("Auto-login failed, redirecting anyway...");
+          } else {
+            const loginData = await loginResponse.json();
+            console.log("Auto-login successful:", loginData);
+          }
+        } catch (loginError) {
+          // If auto-login fails, log but continue with redirect
+          console.warn("Auto-login error:", loginError);
+        }
+        
+        // Set a user type cookie to ensure proper redirect
         document.cookie = `user_type=${formData.userType};path=/;max-age=60`;
         
-        // Redirect to the appropriate dashboard based on user type
-        if (formData.userType === "athlete") {
-          window.location.href = "/athlete/dashboard";
-        } else if (formData.userType === "business") {
-          window.location.href = "/business/dashboard";
-        } else {
-          window.location.href = "/dashboard";
-        }
+        // Show success message with redirect info
+        toast({
+          title: "Success! Redirecting...",
+          description: `Your ${formData.userType} account was created. Taking you to your dashboard...`,
+          variant: "default",
+        });
+        
+        // Short delay for the toast to be visible
+        setTimeout(() => {
+          // Redirect to the appropriate dashboard based on user type
+          if (formData.userType === "athlete") {
+            window.location.href = "/athlete/dashboard";
+          } else if (formData.userType === "business") {
+            window.location.href = "/business/dashboard";
+          } else {
+            window.location.href = "/dashboard";
+          }
+        }, 1500);
       } catch (error) {
         console.error("Onboarding error:", error);
         toast({
@@ -1215,7 +1248,7 @@ export default function Onboarding() {
                       name="athleteCategory"
                       value="college"
                       checked={formData.athleteCategory === "college"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "college")}
                       title="College Athlete"
                       description="Currently enrolled student competing at collegiate level"
                       icon={<GraduationCap className="h-5 w-5 mr-2" />}
@@ -1225,7 +1258,7 @@ export default function Onboarding() {
                       name="athleteCategory"
                       value="professional"
                       checked={formData.athleteCategory === "professional"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "professional")}
                       title="Professional Athlete"
                       description="Competing at the highest level in your sport"
                       icon={<Trophy className="h-5 w-5 mr-2" />}
@@ -1235,7 +1268,7 @@ export default function Onboarding() {
                       name="athleteCategory"
                       value="semi_professional"
                       checked={formData.athleteCategory === "semi_professional"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "semi_professional")}
                       title="Semi-Professional"
                       description="Competing at developmental or minor league level"
                       icon={<Award className="h-5 w-5 mr-2" />}
@@ -1245,7 +1278,7 @@ export default function Onboarding() {
                       name="athleteCategory"
                       value="esports"
                       checked={formData.athleteCategory === "esports"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "esports")}
                       title="Esports Athlete"
                       description="Competitive gamer or esports professional"
                       icon={<Gamepad2 className="h-5 w-5 mr-2" />}
@@ -1255,7 +1288,7 @@ export default function Onboarding() {
                       name="athleteCategory"
                       value="influencer"
                       checked={formData.athleteCategory === "influencer"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "influencer")}
                       title="Sports Influencer"
                       description="Content creator with sports focus"
                       icon={<Users className="h-5 w-5 mr-2" />}
@@ -1265,7 +1298,7 @@ export default function Onboarding() {
                       name="athleteCategory"
                       value="other"
                       checked={formData.athleteCategory === "other"}
-                      onChange={handleChange}
+                      onChange={(e) => handleRadioChange(e, "other")}
                       title="Other"
                       description="Doesn't fit in the categories above"
                       icon={<Dumbbell className="h-5 w-5 mr-2" />}
@@ -1418,7 +1451,7 @@ export default function Onboarding() {
                               name="gender"
                               value={gender}
                               checked={formData.gender === gender}
-                              onChange={handleChange}
+                              onChange={(e) => handleRadioChange(e, gender)}
                               className="mr-2"
                             />
                             <label htmlFor={`gender-${gender}`} className="text-white text-sm">{gender}</label>
