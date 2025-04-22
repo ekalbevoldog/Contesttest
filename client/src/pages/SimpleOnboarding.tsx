@@ -805,27 +805,54 @@ export default function SimpleOnboarding() {
           }
         };
         
-        // Submit profile data to API
-        const response = await apiRequest("POST", "/api/personalized-onboarding", profileData);
-        const result = await response.json();
+        // Submit profile data to API with a reliable approach using standard fetch
+        // that doesn't depend on WebSocket connections
+        console.log("Submitting profile with session ID:", sessionId);
         
-        if (response.ok) {
+        const submitResponse = await fetch('/api/personalized-onboarding', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(profileData),
+        });
+        
+        if (!submitResponse.ok) {
+          // If the standard fetch approach fails, try a fallback approach
+          console.warn("First submission approach failed, trying fallback...");
+          
+          // Try the apiRequest as a fallback
+          const fallbackResponse = await apiRequest("POST", "/api/personalized-onboarding", profileData);
+          const fallbackResult = await fallbackResponse.json();
+          
+          if (!fallbackResponse.ok) {
+            throw new Error(fallbackResult.message || "Failed to create profile");
+          }
+          
+          // Fallback succeeded
+          toast({
+            title: "Profile Created (Fallback)",
+            description: "Your profile has been created successfully!",
+          });
+        } else {
+          // Standard approach succeeded
+          const result = await submitResponse.json();
+          console.log("Profile created successfully:", result);
+          
           toast({
             title: "Profile Created",
             description: "Your profile has been created successfully!",
           });
-          
-          // Redirect based on user type
-          setTimeout(() => {
-            if (formData.userType === "athlete") {
-              setLocation("/athlete-dashboard");
-            } else {
-              setLocation("/business-dashboard");
-            }
-          }, 1500);
-        } else {
-          throw new Error(result.message || "Failed to create profile");
         }
+        
+        // Redirect based on user type - do this regardless of which approach succeeded
+        setTimeout(() => {
+          if (formData.userType === "athlete") {
+            setLocation("/athlete-dashboard");
+          } else {
+            setLocation("/business-dashboard");
+          }
+        }, 1500);
       } catch (error) {
         console.error("Error submitting profile:", error);
         toast({

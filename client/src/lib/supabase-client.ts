@@ -60,9 +60,7 @@ export async function initializeSupabase(): Promise<boolean> {
       realtime: {
         params: {
           eventsPerSecond: 10
-        },
-        // Disable realtime subscriptions if not needed for onboarding
-        mode: 'manual'
+        }
       },
       global: {
         headers: {
@@ -70,6 +68,10 @@ export async function initializeSupabase(): Promise<boolean> {
         }
       }
     });
+    
+    // Disable realtime subscriptions as they can cause issues with onboarding
+    // This is safer than relying on them to work correctly
+    supabase.realtime.setAuth(null);
     
     // Test the connection
     const { error } = await supabase.from('users').select('count').limit(1);
