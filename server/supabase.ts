@@ -53,15 +53,7 @@ const supabaseOptions = {
   }
 };
 
-// Set the WebSocket constructor for Neon database
-// This is critical for real-time updates to work properly
-try {
-  const { neonConfig } = require('@neondatabase/serverless');
-  neonConfig.webSocketConstructor = ws;
-  console.log('Neon WebSocket constructor configured');
-} catch (error) {
-  console.warn('Neon configuration not available:', error);
-}
+// Configure WebSocket for Supabase only - NO NEON CONFIGURATION
 
 // Create the standard Supabase client with anon key (for normal operations)
 export const supabase = createClient(

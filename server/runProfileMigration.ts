@@ -1,4 +1,4 @@
-import { pool } from './db';
+import { supabaseAdmin } from './supabase';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,8 +25,14 @@ export async function runProfileMigration() {
     // Execute each statement
     for (const statement of statements) {
       try {
-        await pool.query(statement);
-        console.log('Executed SQL statement successfully');
+        // Use Supabase to execute raw SQL
+        const { data, error } = await supabaseAdmin.rpc('run_sql', { query: statement });
+        
+        if (error) {
+          console.error('Error executing SQL statement:', error);
+        } else {
+          console.log('Executed SQL statement successfully');
+        }
       } catch (error) {
         console.error('Error executing SQL statement:', error);
       }
