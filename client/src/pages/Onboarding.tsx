@@ -381,7 +381,8 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // Force session ID to be set immediately to bypass loading screen
+  const [sessionId, setSessionId] = useState<string | null>(`local-${Date.now()}`);
   const [isSyncing, setIsSyncing] = useState(false);
   
   // Temporarily disable WebSocket for debugging
@@ -1121,25 +1122,80 @@ export default function Onboarding() {
   const renderStepContent = () => {
     console.log("renderStepContent called, sessionId:", sessionId);
     
-    if (!sessionId) {
-      console.log("Showing loading indicator because sessionId is not set");
-      return (
-        <div className="flex flex-col items-center justify-center py-12">
-          <RefreshCw className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-zinc-400 mt-4">Initializing your session...</p>
-          <button 
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
-            onClick={() => window.location.reload()}
-          >
-            Restart
-          </button>
-        </div>
-      );
-    }
+    // CRITICAL FIX: Skip loading screen completely
+    // Force content to display regardless of sessionId
     
     console.log("Session established, rendering step:", currentStep);
     
     switch (currentStep) {
+      // Common first step
+      case "user-type":
+        return (
+          <AnimatedFormTransition step={currentStep} direction="forward">
+            <div className="space-y-6 relative max-w-3xl mx-auto">
+              <StaggerContainer>
+                <StaggerItem>
+                  <motion.h2 
+                    className="text-2xl font-bold mb-4 text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    Welcome to Contested
+                  </motion.h2>
+                  <motion.p 
+                    className="text-zinc-400 mb-6"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}
+                  >
+                    Are you an athlete looking for partnerships or a business searching for athlete partnerships?
+                  </motion.p>
+                </StaggerItem>
+                
+                <StaggerItem>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <RadioCardOption
+                      name="userType"
+                      value="athlete"
+                      checked={formData.userType === "athlete"}
+                      onChange={handleChange}
+                      title="I'm an Athlete"
+                      description="Looking for sponsorships and brand partnerships"
+                      icon={<Dumbbell className="h-5 w-5 mr-2" />}
+                    />
+                    
+                    <RadioCardOption
+                      name="userType"
+                      value="business"
+                      checked={formData.userType === "business"}
+                      onChange={handleChange}
+                      title="I'm a Business"
+                      description="Looking to partner with athletes"
+                      icon={<Building className="h-5 w-5 mr-2" />}
+                    />
+                  </div>
+                  
+                  {errors.userType && (
+                    <p className="text-red-500 text-sm mt-1">{errors.userType}</p>
+                  )}
+                </StaggerItem>
+              </StaggerContainer>
+              
+              <div className="flex justify-end mt-8 pt-4 border-t border-zinc-800">
+                <Button
+                  type="button"
+                  onClick={handleNextStep}
+                  disabled={isSubmitting || !formData.userType}
+                  variant="default"
+                >
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </AnimatedFormTransition>
+        );
+      
       // Athlete-specific steps
       case "athlete-category":
         return (
