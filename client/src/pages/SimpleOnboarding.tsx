@@ -368,19 +368,35 @@ export default function SimpleOnboarding() {
   useEffect(() => {
     const getSessionId = async () => {
       try {
-        const response = await fetch('/api/session/new');
-        const data = await response.json();
-        if (data.success) {
-          setSessionId(data.sessionId);
-          console.log("New session created:", data.sessionId);
+        // Generate a client-side unique ID that doesn't rely on server storage
+        // This is more reliable than depending on WebSocket connections
+        const localSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+        setSessionId(localSessionId);
+        console.log("New local session created:", localSessionId);
+        
+        // Also try the server approach as backup
+        try {
+          const response = await fetch('/api/session/new');
+          const data = await response.json();
+          if (data.success) {
+            // Only update if we got a valid session ID
+            setSessionId(data.sessionId);
+            console.log("Server session created:", data.sessionId);
+          }
+        } catch (serverError) {
+          // If server approach fails, we already have the local ID as fallback
+          console.warn("Server session creation failed, using local ID instead:", serverError);
         }
       } catch (error) {
-        console.error("Failed to create session:", error);
+        console.error("Failed to initialize session:", error);
         toast({
-          title: "Connection Error",
-          description: "Failed to initialize onboarding session. Please try again.",
-          variant: "destructive",
+          title: "Connection Issue",
+          description: "There was a problem initializing your session. We'll continue with a local session.",
         });
+        
+        // Final fallback - set a simple random ID
+        const fallbackId = `fallback_${Math.random().toString(36).substring(2, 9)}`;
+        setSessionId(fallbackId);
       }
     };
     
