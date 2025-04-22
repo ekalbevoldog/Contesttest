@@ -40,7 +40,7 @@ const ProtectedRoute = ({
     } else if (!isLoading && user && requiredRole) {
       // Check if user has the required role
       const userRole = user.role || 'visitor';
-      
+
       if (Array.isArray(requiredRole)) {
         if (!requiredRole.includes(userRole)) {
           // Redirect based on actual role
@@ -98,7 +98,7 @@ const ProtectedRoute = ({
   // Role-based check
   if (requiredRole) {
     const userRole = user.role || 'visitor';
-    
+
     if (Array.isArray(requiredRole)) {
       if (!requiredRole.includes(userRole)) {
         return (
@@ -187,7 +187,7 @@ const ProfileRequiredRoute = ({
       } else if (requiredRole) {
         // Check if user has the required role
         const userRole = user.role || 'visitor';
-        
+
         if (Array.isArray(requiredRole)) {
           if (!requiredRole.includes(userRole)) {
             // Redirect based on actual role
@@ -245,11 +245,11 @@ const routes = {
 // Simple redirect component
 const RedirectToOnboarding = () => {
   const [, navigate] = useLocation();
-  
+
   useEffect(() => {
     navigate('/onboarding');
   }, [navigate]);
-  
+
   return (
     <div className="flex items-center justify-center h-screen">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -266,12 +266,13 @@ function Router() {
           <Switch>
             {/* Public routes accessible to everyone */}
             <Route path="/" component={Home} />
+            <Route path="/onboarding" component={Onboarding} />
             <Route path="/auth" component={AuthPage} />
             <Route path="/sign-in" component={SignIn} />
-            
+
             {/* Onboarding routes - accessible after authentication */}
             <ProtectedRoute path="/onboarding" component={Onboarding} />
-            
+
             {/* Role-specific onboarding routes */}
             <ProtectedRoute 
               path="/athlete-onboarding" 
@@ -283,20 +284,20 @@ function Router() {
               component={Onboarding} 
               requiredRole="business"
             />
-            
+
             {/* Alternate paths for onboarding */}
             <ProtectedRoute path="/athlete/sign-up" component={Onboarding} requiredRole="athlete" />
             <ProtectedRoute path="/business/sign-up" component={Onboarding} requiredRole="business" />
-            
+
             {/* Public info pages */}
             <Route path="/athletes" component={AthleteInfo} />
             <Route path="/businesses" component={BusinessInfo} />
-            
+
             {/* Redirect exploration path to main onboarding */}
             <Route path="/explore-matches" component={RedirectToOnboarding} />
-            
+
             {/* Testing routes - disabled */}
-            
+
             {/* Role-specific protected dashboard routes with profile completion check */}
             <ProfileRequiredRoute 
               path="/athlete/dashboard" 
@@ -315,10 +316,10 @@ function Router() {
               component={AdminDashboard} 
               requiredRole="admin"
             />
-            
+
             {/* Main dashboard redirect */}
             <RoleRedirect path="/dashboard" />
-            
+
             {/* All other routes redirect to home */}
             <Route component={Home} />
           </Switch>
