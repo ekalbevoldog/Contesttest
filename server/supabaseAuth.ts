@@ -97,15 +97,13 @@ export function setupSupabaseAuth(app: Express) {
       }
       
       // Store user data in our database
-      // Handle the case where we get full name instead of first/last name
-      // (For simplicity, we'll use the full name as both first name and full name)
+      // Using only the columns that exist in the users table
       const { data, error } = await supabase
         .from('users')
         .insert({
           email: email,
-          username: email.split('@')[0], // Generate username from email
+          username: fullName, // We'll use fullName as username since there's no full_name column
           password: password, // This will be hashed by supabase
-          full_name: fullName,
           role: role,
           created_at: new Date()
         })
@@ -130,6 +128,11 @@ export function setupSupabaseAuth(app: Express) {
   // User profile endpoint - get the user's profile data
   app.get("/api/auth/profile", verifySupabaseToken, async (req: Request, res: Response) => {
     try {
+      // Make sure we have req.user
+      if (!req.user || !req.user.email) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
       // Query additional user data from our database
       const { data, error } = await supabase
         .from('users')
@@ -152,22 +155,26 @@ export function setupSupabaseAuth(app: Express) {
   // Update user profile endpoint
   app.patch("/api/auth/profile", verifySupabaseToken, async (req: Request, res: Response) => {
     try {
-      const { firstName, lastName, ...otherData } = req.body;
+      const { fullName, ...otherData } = req.body;
       
       // Only update allowed fields
       const updateData: Record<string, any> = {};
       
-      if (firstName) updateData.first_name = firstName;
-      if (lastName) updateData.last_name = lastName;
-      if (firstName && lastName) updateData.full_name = `${firstName} ${lastName}`;
+      // Update username if fullName is provided
+      if (fullName) updateData.username = fullName;
       
       // Add any other allowed fields
       Object.keys(otherData).forEach(key => {
         // Skip sensitive fields like role, id, email
-        if (!['role', 'id', 'email', 'created_at'].includes(key)) {
+        if (!['role', 'id', 'email', 'created_at', 'password'].includes(key)) {
           updateData[key] = otherData[key];
         }
       });
+      
+      // Make sure we have req.user
+      if (!req.user || !req.user.email) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
       
       // Update the user data
       const { data, error } = await supabase
