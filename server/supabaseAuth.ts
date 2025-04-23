@@ -359,19 +359,30 @@ export function setupSupabaseAuth(app: Express) {
               } else {
                 // User exists in Auth but not in app database - create app record
                 console.log('Creating app record for existing auth user');
-                // Map our role names to match the database enum constraints
-                // This handles potential enum requirements in the database schema
-                let dbRole = role;
-                // Check what role values are allowed in the schema and map accordingly
-                if (role === 'business') {
-                  dbRole = 'business_owner'; // Use the correct enum value
-                } else if (role === 'athlete') {
-                  dbRole = 'athlete'; // Keep as is 
-                } else if (role === 'admin') {
-                  dbRole = 'admin'; // Keep as is
-                } else if (role === 'compliance') {
-                  dbRole = 'compliance_officer'; // Use the correct enum value
+                // Let's determine what enum values are allowed in the database
+                console.log('ROLE DEBUG: Trying to identify allowed values for user_role enum');
+                
+                // Try a test query with each possible value to identify what's allowed
+                const testValues = ['athlete', 'business', 'business_owner', 'admin', 'compliance', 'compliance_officer'];
+                
+                for (const val of testValues) {
+                  console.log(`ROLE DEBUG: Testing if '${val}' is an allowed enum value...`);
+                  const { data: testData, error: testError } = await supabase
+                    .from('users')
+                    .select('email')
+                    .eq('role', val)
+                    .limit(1);
+                  
+                  if (testError) {
+                    console.log(`ROLE DEBUG: Value '${val}' caused error:`, testError.message);
+                  } else {
+                    console.log(`ROLE DEBUG: Value '${val}' is allowed in the schema`);
+                  }
                 }
+                
+                // Map our role names based on our best understanding
+                let dbRole = role;
+                // Keep the role value as is for now
                 
                 console.log(`Mapping role '${role}' to database role '${dbRole}'`);
                 
@@ -439,19 +450,30 @@ export function setupSupabaseAuth(app: Express) {
       
       console.log('Auth account created successfully, storing additional user data...');
       
-      // Map our role names to match the database enum constraints
-      // This handles potential enum requirements in the database schema
-      let dbRole = role;
-      // Check what role values are allowed in the schema and map accordingly
-      if (role === 'business') {
-        dbRole = 'business_owner'; // Use the correct enum value
-      } else if (role === 'athlete') {
-        dbRole = 'athlete'; // Keep as is 
-      } else if (role === 'admin') {
-        dbRole = 'admin'; // Keep as is
-      } else if (role === 'compliance') {
-        dbRole = 'compliance_officer'; // Use the correct enum value
+      // Let's determine what enum values are allowed in the database
+      console.log('ROLE DEBUG: Trying to identify allowed values for user_role enum');
+      
+      // Try a test query with each possible value to identify what's allowed
+      const testValues = ['athlete', 'business', 'business_owner', 'admin', 'compliance', 'compliance_officer'];
+      
+      for (const val of testValues) {
+        console.log(`ROLE DEBUG: Testing if '${val}' is an allowed enum value...`);
+        const { data: testData, error: testError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('role', val)
+          .limit(1);
+        
+        if (testError) {
+          console.log(`ROLE DEBUG: Value '${val}' caused error:`, testError.message);
+        } else {
+          console.log(`ROLE DEBUG: Value '${val}' is allowed in the schema`);
+        }
       }
+      
+      // Map our role names based on our best understanding
+      let dbRole = role;
+      // Keep the role value as is for now
       
       console.log(`Mapping role '${role}' to database role '${dbRole}'`);
       
