@@ -32,8 +32,8 @@ export const verifySupabaseToken = async (
     req.user = {
       id: data.user.id,
       email: data.user.email || '',
-      role: data.user.user_metadata.role || 'user',
-      ...data.user.user_metadata
+      role: data.user.user_metadata?.role || 'user',
+      ...(data.user.user_metadata || {})
     };
     
     next();
@@ -401,7 +401,7 @@ declare global {
         email: string;
         role: string;
         [key: string]: any;
-      };
+      }
     }
   }
 }
