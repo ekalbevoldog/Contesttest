@@ -5,6 +5,7 @@ import { ValidationFeedback, AnimatedInput } from './ValidationFeedback';
 interface AnimatedFormFieldProps {
   type: string;
   name: string;
+  id?: string; // Add id prop to support direct element reference
   value: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   label?: string;
@@ -24,6 +25,7 @@ interface AnimatedFormFieldProps {
 export const AnimatedFormField: React.FC<AnimatedFormFieldProps> = ({
   type,
   name,
+  id,
   value,
   onChange,
   label,
@@ -106,7 +108,7 @@ export const AnimatedFormField: React.FC<AnimatedFormFieldProps> = ({
       <div className="relative">
         {label && (
           <motion.label
-            htmlFor={name}
+            htmlFor={id || name}
             className="absolute left-3 pointer-events-none z-10 px-1 bg-zinc-800 rounded"
             style={{ top: '50%', transformOrigin: 'left' }}
             initial="blurred"
@@ -132,7 +134,7 @@ export const AnimatedFormField: React.FC<AnimatedFormFieldProps> = ({
             
             <motion.input
               type={type}
-              id={name}
+              id={id || name}
               name={name}
               value={value}
               onChange={onChange}

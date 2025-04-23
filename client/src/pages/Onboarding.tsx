@@ -3125,18 +3125,20 @@ export default function Onboarding() {
                     <AnimatedFormField
                       type="password"
                       name="password"
+                      id="password"
                       value={formData.password}
                       onChange={handleChange}
                       label="Create Password"
-                      placeholder="Minimum 8 characters"
+                      placeholder="Minimum 10 characters with uppercase, lowercase, numbers, and special characters"
                       required={true}
-                      minLength={8}
+                      minLength={10}
                       errorMessage={errors.password}
                     />
                     
                     <AnimatedFormField
                       type="password"
                       name="confirmPassword"
+                      id="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       label="Confirm Password"
