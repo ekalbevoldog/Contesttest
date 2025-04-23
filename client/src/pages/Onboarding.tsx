@@ -3291,7 +3291,7 @@ export default function Onboarding() {
               {renderStepContent()}
               
               {/* Only render these buttons if we're not loading and not already on a page with custom buttons */}
-              {sessionId && !['athlete-category'].includes(currentStep) && (
+              {sessionId && !['athlete-category', 'user-type'].includes(currentStep) && (
                 <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
                   <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start gap-4">
                     {currentStep !== "user-type" && (
