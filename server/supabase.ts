@@ -45,10 +45,10 @@ const supabaseOptions = {
       'X-Client-Info': 'nil-connect-server'
     }
   },
-  // Add WebSocket configuration for real-time capabilities
+  // Completely disable realtime to avoid interference with our custom WebSocket
   realtime: {
     params: {
-      eventsPerSecond: 10
+      eventsPerSecond: 0 // Set to 0 to disable
     }
   }
 };
