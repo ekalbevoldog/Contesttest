@@ -2,8 +2,8 @@ import { Express, Request, Response, NextFunction } from "express";
 import { supabase } from "./supabase";
 import { storage } from "./storage";
 
-// Define the User interface for our request object
-interface User {
+// Define the User interface for our request object - using just string type properties
+export interface User {
   id: string;
   email: string;
   role: string;
@@ -411,12 +411,7 @@ export function setupSupabaseAuth(app: Express) {
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        id: string;
-        email: string;
-        role: string;
-        [key: string]: any;
-      }
+      user?: User;
     }
   }
 }
