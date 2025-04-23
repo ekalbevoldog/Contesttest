@@ -263,14 +263,14 @@ export function setupSupabaseAuth(app: Express) {
       
       console.log('Auth account created successfully, storing additional user data...');
       
-      // Also store in the users table for our application
+      // Also store in the users table for our application - exclude password field
       const userDataToInsert = {
         email: email,
         username: fullName, // We'll use fullName as username since there's no full_name column
-        password: '**MANAGED_BY_SUPABASE_AUTH**', // Don't store actual password in our table
         role: role,
-        created_at: new Date()
-        // Note: We'd ideally store auth_id but the users table doesn't have that column yet
+        created_at: new Date(),
+        // Store the auth user ID to link accounts
+        auth_id: authData.user?.id
       };
       
       console.log('Inserting user data into users table:', userDataToInsert);
