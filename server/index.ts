@@ -43,6 +43,16 @@ app.use((req, res, next) => {
   try {
     const { setupSupabase } = await import('./supabaseSetup');
     await setupSupabase();
+    
+    // Run all migrations including UUID migration
+    try {
+      const { runAllMigrations } = await import('./runMigrations');
+      await runAllMigrations();
+      console.log('All database migrations completed successfully');
+    } catch (migrationError) {
+      console.error('Error running migrations:', migrationError);
+      // Continue with server startup even if migrations fail
+    }
   } catch (error) {
     console.error('Error setting up Supabase:', error);
     // Continue with server startup even if Supabase setup fails

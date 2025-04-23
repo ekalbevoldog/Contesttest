@@ -24,15 +24,5 @@ export async function runAllMigrations() {
   }
 }
 
-// Allow direct execution of this script
-if (require.main === module) {
-  runAllMigrations()
-    .then(() => {
-      console.log('Migrations completed successfully');
-      process.exit(0);
-    })
-    .catch(error => {
-      console.error('Migrations failed:', error);
-      process.exit(1);
-    });
-}
+// For direct execution, this check needs to be done differently in ESM
+// We'll just export the function for now
