@@ -144,11 +144,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           setUser(newSession.user);
           
           try {
-            // Fetch additional user data
+            // Fetch additional user data - use email as the key since auth_id doesn't exist
             const { data: profileData } = await supabase
               .from('users')
               .select('*')
-              .eq('auth_id', newSession.user.id)
+              .eq('email', newSession.user.email)
               .single();
               
             if (profileData) {
