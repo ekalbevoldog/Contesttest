@@ -102,12 +102,9 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
     try {
       // Create WebSocket connection - use relative path with host for cross-compatibility
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Fixed issue with WebSocket URL - this should work more reliably
-      // Always include explicit host and port for better compatibility
-      const host = window.location.hostname;
-      const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
-      // Make sure the path matches the server-side WebSocket path configuration
-      const wsUrl = `${protocol}//${host}:${port}/api/ws`;
+      // Use the same origin as the current page to avoid CORS issues
+      // Don't specify port - let the browser handle it automatically based on current location
+      const wsUrl = `${protocol}//${window.location.host}/api/ws`;
       console.log(`Attempting to connect to WebSocket at ${wsUrl}`);
       
       const socket = new WebSocket(wsUrl);
