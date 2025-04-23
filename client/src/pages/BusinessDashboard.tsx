@@ -66,6 +66,10 @@ export default function BusinessDashboard() {
     audienceGoals?: string;
     values?: string;
     email?: string;
+    industry?: string;
+    businessType?: string;
+    companySize?: string;
+    preferencesJson?: string;
   };
   
   // Get profile info from localStorage if available or fallback to API
@@ -90,8 +94,8 @@ export default function BusinessDashboard() {
       if (userId) {
         console.log(`Using userId ${userId} to fetch business profile`);
         
-        // Try to directly fetch from business_profiles
-        fetch(`/api/profile/business/${userId}`)
+        // Try to fetch from our new Supabase business profile endpoint
+        fetch(`/api/supabase/business-profile/${userId}`)
           .then(res => {
             if (!res.ok) {
               throw new Error('Failed to fetch business profile');
@@ -100,7 +104,24 @@ export default function BusinessDashboard() {
           })
           .then(data => {
             console.log('Successfully fetched business profile:', data);
-            setProfileData(data);
+            // Map the Supabase profile data to our ProfileData format
+            if (data?.profile) {
+              const profile: ProfileData = {
+                id: data.profile.id,
+                name: data.profile.name,
+                industry: data.profile.industry,
+                businessType: data.profile.business_type,
+                companySize: data.profile.company_size,
+                email: data.profile.email,
+                preferencesJson: data.profile.preferences
+              };
+              setProfileData(profile);
+              
+              // Store in localStorage for next time
+              localStorage.setItem('contestedUserData', JSON.stringify(profile));
+            } else {
+              setProfileData(data);
+            }
             setIsLoadingProfile(false);
           })
           .catch(err => {
@@ -132,13 +153,8 @@ export default function BusinessDashboard() {
           })
           .catch(err => {
             console.error('Error fetching profile:', err);
+            // Don't set any profile data if we can't fetch it
             setIsLoadingProfile(false);
-            
-            // Create mock profile if everything fails
-            setProfileData({
-              name: 'Your Business',
-              email: 'example@email.com'
-            });
           });
       }
     }

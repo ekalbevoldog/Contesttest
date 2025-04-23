@@ -67,6 +67,56 @@ async function safelyUpdateUserProfile(userId: string, profileId: string | numbe
   }
 }
 
+/**
+ * Get athlete profile by user UUID
+ */
+export async function getAthleteByUserId(userId: string) {
+  try {
+    console.log(`Getting athlete profile for user ID ${userId}`);
+    
+    const { data, error } = await supabase
+      .from('athlete_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error fetching athlete profile:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (err) {
+    console.error('Exception fetching athlete profile:', err);
+    return null;
+  }
+}
+
+/**
+ * Get business profile by user UUID
+ */
+export async function getBusinessByUserId(userId: string) {
+  try {
+    console.log(`Getting business profile for user ID ${userId}`);
+    
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error fetching business profile:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (err) {
+    console.error('Exception fetching business profile:', err);
+    return null;
+  }
+}
+
 export function setupProfileEndpoints(app: Express) {
   // CREATE PROFILE ENDPOINT
   app.post("/api/supabase/profile", async (req: Request, res: Response) => {
@@ -325,5 +375,55 @@ export function setupProfileEndpoints(app: Express) {
     }
   });
   
-  // Other profile-related endpoints can be added here
+  // ADD NEW PROFILE-RELATED ENDPOINTS
+  
+  // Get athlete profile by user ID
+  app.get("/api/supabase/athlete-profile/:userId", async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+      
+      const profile = await getAthleteByUserId(userId);
+      
+      if (!profile) {
+        return res.status(404).json({ error: "Athlete profile not found" });
+      }
+      
+      return res.status(200).json({ profile });
+    } catch (error) {
+      console.error("Error fetching athlete profile:", error);
+      return res.status(500).json({ 
+        error: "Failed to fetch athlete profile",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Get business profile by user ID
+  app.get("/api/supabase/business-profile/:userId", async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+      
+      const profile = await getBusinessByUserId(userId);
+      
+      if (!profile) {
+        return res.status(404).json({ error: "Business profile not found" });
+      }
+      
+      return res.status(200).json({ profile });
+    } catch (error) {
+      console.error("Error fetching business profile:", error);
+      return res.status(500).json({ 
+        error: "Failed to fetch business profile",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
 }

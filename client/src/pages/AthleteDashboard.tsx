@@ -191,8 +191,8 @@ export default function AthleteDashboard() {
       if (userId) {
         console.log(`Using userId ${userId} to fetch athlete profile`);
         
-        // Try to directly fetch from athlete_profiles
-        fetch(`/api/profile/athlete/${userId}`)
+        // Try to fetch from our new Supabase athlete profile endpoint
+        fetch(`/api/supabase/athlete-profile/${userId}`)
           .then(res => {
             if (!res.ok) {
               throw new Error('Failed to fetch athlete profile');
@@ -201,7 +201,25 @@ export default function AthleteDashboard() {
           })
           .then(data => {
             console.log('Successfully fetched athlete profile:', data);
-            setProfileData(data);
+            // Map the Supabase profile data to our ProfileData format
+            if (data?.profile) {
+              const profile: ProfileData = {
+                id: data.profile.id,
+                name: data.profile.name,
+                sport: data.profile.sport,
+                school: data.profile.school,
+                email: data.profile.email,
+                socialMedia: {
+                  instagram: data.profile.social_handles
+                }
+              };
+              setProfileData(profile);
+              
+              // Store in localStorage for next time
+              localStorage.setItem('contestedUserData', JSON.stringify(profile));
+            } else {
+              setProfileData(data);
+            }
             setIsLoadingProfile(false);
           })
           .catch(err => {
