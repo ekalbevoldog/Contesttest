@@ -239,7 +239,26 @@ export function setupSupabaseAuth(app: Express) {
       
       if (authError) {
         console.error('Error creating Supabase auth account:', authError);
-        return res.status(500).json({ error: 'Failed to create user account' });
+        
+        // Check for specific error codes and provide more helpful error messages
+        if (authError.code === 'weak_password') {
+          return res.status(400).json({ 
+            error: 'Password too weak',
+            message: 'Please use a stronger password. Include a mix of uppercase and lowercase letters, numbers, and symbols. Avoid common passwords.'
+          });
+        } else if (authError.code === 'user_already_exists') {
+          return res.status(400).json({ 
+            error: 'Email already in use',
+            message: 'This email is already registered. Please use a different email or try signing in.'
+          });
+        } else {
+          // For any other errors, return a generic message
+          return res.status(500).json({ 
+            error: 'Registration failed',
+            message: 'Account creation failed. Please try again with different credentials.',
+            code: authError.code || 'unknown'
+          });
+        }
       }
       
       console.log('Auth account created successfully, storing additional user data...');

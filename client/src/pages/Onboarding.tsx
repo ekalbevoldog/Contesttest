@@ -676,9 +676,26 @@ export default function Onboarding() {
         // We already have name and email at this point, just validate password
         if (!formData.password) {
           newErrors.password = "Please enter a password";
-        } else if (formData.password.length < 8) {
-          newErrors.password = "Password must be at least 8 characters";
+        } else if (formData.password.length < 10) {
+          newErrors.password = "Password must be at least 10 characters";
+        } else {
+          // Check for password complexity - must contain uppercase, lowercase, number, and special character
+          const hasUppercase = /[A-Z]/.test(formData.password);
+          const hasLowercase = /[a-z]/.test(formData.password);
+          const hasNumber = /[0-9]/.test(formData.password);
+          const hasSpecial = /[^A-Za-z0-9]/.test(formData.password);
+          
+          if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+            newErrors.password = "Password must include uppercase and lowercase letters, numbers, and special characters";
+          }
+          
+          // Check for common, easily guessable passwords
+          const easyPasswords = ['Password123!', 'Qwerty123!', 'Test123!', 'Admin123!'];
+          if (easyPasswords.includes(formData.password)) {
+            newErrors.password = "This password is too common and easily guessed. Please choose a more unique password";
+          }
         }
+        
         if (formData.password !== formData.confirmPassword) {
           newErrors.confirmPassword = "Passwords do not match";
         }
@@ -957,9 +974,48 @@ export default function Onboarding() {
         });
         
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Registration API failed:', errorText);
-          throw new Error('Registration failed: ' + (errorText || response.statusText));
+          // Try to parse the error response as JSON
+          let errorMessage = '';
+          try {
+            const errorResponse = await response.json();
+            console.error('Registration API failed:', errorResponse);
+            
+            // Use detailed error message if available
+            if (errorResponse.message) {
+              errorMessage = errorResponse.message;
+            } else if (errorResponse.error) {
+              errorMessage = errorResponse.error;
+            } else {
+              errorMessage = 'Registration failed with status ' + response.status;
+            }
+            
+            // If it's a password error, set it directly in the form errors
+            if (errorResponse.error === 'Password too weak') {
+              setErrors(prev => ({
+                ...prev,
+                password: errorResponse.message || 'Please use a stronger password'
+              }));
+              
+              // Scroll to password field
+              const passwordField = document.getElementById('password');
+              if (passwordField) {
+                passwordField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                passwordField.focus();
+              }
+              
+              // Set current step back to password step
+              setCurrentStep('create-password');
+              throw new Error(errorMessage);
+            }
+            
+          } catch (parseError) {
+            // If we can't parse as JSON, use the text response
+            const errorText = await response.text();
+            console.error('Registration API failed with unparseable response:', errorText);
+            errorMessage = 'Registration failed: ' + (errorText || response.statusText);
+          }
+          
+          throw new Error(errorMessage);
         }
         
         const registrationData = await response.json();
