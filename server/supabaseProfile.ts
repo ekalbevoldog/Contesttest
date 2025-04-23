@@ -2,6 +2,71 @@ import { Request, Response } from "express";
 import { Express } from "express";
 import { supabase } from './supabase';
 
+/**
+ * Safely update a user record with profile data, handling potential schema mismatches
+ */
+async function safelyUpdateUserProfile(userId: string, profileId: string | number) {
+  console.log(`Attempting to update user ${userId} with profile ${profileId}`);
+  
+  try {
+    // First check which columns actually exist in the users table
+    const { data: columns, error: columnsError } = await supabase
+      .from('users')
+      .select('*')
+      .limit(1);
+      
+    if (columnsError) {
+      console.error('Error checking users table schema:', columnsError);
+      return { success: false, error: columnsError };
+    } 
+    
+    // Only include fields that we know exist in our update
+    const updateFields: Record<string, any> = {};
+    
+    // First sample record shows us available columns
+    if (columns && columns.length > 0) {
+      const sampleRecord = columns[0];
+      
+      // Check if these fields exist in the schema
+      if ('profile_id' in sampleRecord) {
+        updateFields.profile_id = profileId;
+      }
+      
+      if ('has_completed_profile' in sampleRecord) {
+        updateFields.has_completed_profile = true;
+      }
+    } else {
+      // We couldn't get schema info, just try with profile_id
+      updateFields.profile_id = profileId;
+    }
+    
+    console.log('Updating user record with:', updateFields);
+    
+    // Only do the update if we have fields to update
+    if (Object.keys(updateFields).length > 0) {
+      const { error: updateError } = await supabase
+        .from('users')
+        .update(updateFields)
+        .eq('id', userId);
+        
+      if (updateError) {
+        console.error('Error updating user profile status:', updateError);
+        console.log('Error details:', updateError.details);
+        console.log('Error hint:', updateError.hint);
+        return { success: false, error: updateError };
+      }
+      
+      console.log('User record updated successfully');
+      return { success: true };
+    }
+    
+    return { success: true, message: 'No fields to update' };
+  } catch (updateErr) {
+    console.error('Exception when updating user record:', updateErr);
+    return { success: false, error: updateErr };
+  }
+}
+
 export function setupProfileEndpoints(app: Express) {
   // CREATE PROFILE ENDPOINT
   app.post("/api/supabase/profile", async (req: Request, res: Response) => {
@@ -119,18 +184,11 @@ export function setupProfileEndpoints(app: Express) {
           });
         }
         
-        // Update the users table to mark profile as completed
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ 
-            has_completed_profile: true,
-            profile_id: profile.id 
-          })
-          .eq('id', userId);
-          
-        if (updateError) {
-          console.error('Error updating user profile status:', updateError);
-          // Continue anyway since the profile was created
+        // Update the users table to mark profile as completed using our safe function
+        const updateResult = await safelyUpdateUserProfile(userId, profile.id);
+        
+        if (!updateResult.success) {
+          console.error('User profile record update failed, but continuing since profile was created');
         }
         
         console.log('Athlete profile created successfully');
@@ -238,18 +296,11 @@ export function setupProfileEndpoints(app: Express) {
           });
         }
         
-        // Update the users table to mark profile as completed
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ 
-            has_completed_profile: true,
-            profile_id: profile.id 
-          })
-          .eq('id', userId);
-          
-        if (updateError) {
-          console.error('Error updating user profile status:', updateError);
-          // Continue anyway since the profile was created
+        // Update the users table to mark profile as completed using our safe function
+        const updateResult = await safelyUpdateUserProfile(userId, profile.id);
+        
+        if (!updateResult.success) {
+          console.error('User profile record update failed, but continuing since profile was created');
         }
         
         console.log('Business profile created successfully');
