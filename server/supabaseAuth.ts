@@ -2,6 +2,14 @@ import { Express, Request, Response, NextFunction } from "express";
 import { supabase } from "./supabase";
 import { storage } from "./storage";
 
+// Define the User interface for our request object
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  [key: string]: any;
+}
+
 /**
  * Middleware to verify Supabase JWT token
  */
@@ -30,7 +38,7 @@ export const verifySupabaseToken = async (
     
     // Set user data for the request
     req.user = {
-      id: data.user.id,
+      id: data.user.id, // This is a string in Supabase
       email: data.user.email || '',
       role: data.user.user_metadata?.role || 'user',
       ...(data.user.user_metadata || {})
@@ -292,9 +300,16 @@ export function setupSupabaseAuth(app: Express) {
         return res.status(500).json({ error: 'Failed to store user data' });
       }
       
+      // Return success only after storing all user data
       return res.status(201).json({ 
         message: 'Registration successful. Account details stored.',
-        user: data
+        user: {
+          ...data,
+          id: authData?.user?.id || data.id, // Include the auth ID which may be needed on client
+          auth_id: authData?.user?.id, // Additional field to make it clear this is from auth
+          email: email,
+          role: role
+        }
       });
     } catch (error) {
       console.error('Registration error:', error);
