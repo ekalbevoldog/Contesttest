@@ -1821,8 +1821,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Updated WebSocket server path to match client-side configuration
   const wss = new WebSocketServer({ server: httpServer, path: '/api/ws' });
   
-  // Store connected clients by sessionId for easier management and multiple connections support
-  const wsConnections = new Map<string, Set<CustomWebSocket>>();
+  // Using the globally defined wsConnections Map (defined at the top of the file)
+  // to store connected clients by sessionId
   
   wss.on('connection', (ws: CustomWebSocket) => {
     console.log('WebSocket client connected - waiting for registration');
