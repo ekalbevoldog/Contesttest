@@ -31,12 +31,14 @@ export interface IStorage {
   // Athlete operations
   getAthlete(id: number): Promise<Athlete | undefined>;
   getAthleteBySession(sessionId: string): Promise<Athlete | undefined>;
+  getAthleteByUserId(userId: string): Promise<Athlete | undefined>;
   storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete>;
   getAllAthletes(): Promise<Athlete[]>;
 
   // Business operations
   getBusiness(id: number): Promise<Business | undefined>;
   getBusinessBySession(sessionId: string): Promise<Business | undefined>;
+  getBusinessByUserId(userId: string): Promise<Business | undefined>;
   storeBusinessProfile(business: InsertBusiness): Promise<Business>;
   getAllBusinesses(): Promise<Business[]>;
 
@@ -289,6 +291,28 @@ export class SupabaseStorage implements IStorage {
     }
   }
 
+  async getAthleteByUserId(userId: string): Promise<Athlete | undefined> {
+    try {
+      console.log(`Getting athlete profile for user ID ${userId}`);
+      
+      const { data, error } = await supabase
+        .from('athlete_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error fetching athlete profile by user ID:', error);
+        return undefined;
+      }
+      
+      return this.mapAthleteFromDb(data);
+    } catch (error) {
+      console.error('Exception getting athlete by user ID:', error);
+      return undefined;
+    }
+  }
+
   async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> {
     try {
       const dbAthlete = this.mapAthleteToDb(athlete);
@@ -365,6 +389,28 @@ export class SupabaseStorage implements IStorage {
       return this.mapBusinessFromDb(data);
     } catch (error) {
       console.error('Exception getting business by session:', error);
+      return undefined;
+    }
+  }
+  
+  async getBusinessByUserId(userId: string): Promise<Business | undefined> {
+    try {
+      console.log(`Getting business profile for user ID ${userId}`);
+      
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error fetching business profile by user ID:', error);
+        return undefined;
+      }
+      
+      return this.mapBusinessFromDb(data);
+    } catch (error) {
+      console.error('Exception getting business by user ID:', error);
       return undefined;
     }
   }

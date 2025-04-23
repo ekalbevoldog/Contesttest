@@ -20,9 +20,10 @@ export const StaggerContainer: React.FC<StaggerContainerProps> = ({
       {React.Children.map(children, (child, index) => {
         if (React.isValidElement(child)) {
           // Apply delay based on child index
+          // Use data- attribute format for custom props to avoid React DOM warnings
           return React.cloneElement(child, {
             ...child.props,
-            customDelay: delayChildren + (index * staggerChildren)
+            'data-delay': delayChildren + (index * staggerChildren)
           });
         }
         return child;
@@ -36,6 +37,7 @@ interface StaggerItemProps {
   className?: string;
   customVariants?: any;
   customDelay?: number;
+  'data-delay'?: number;
 }
 
 export const StaggerItem: React.FC<StaggerItemProps> = ({
@@ -43,7 +45,11 @@ export const StaggerItem: React.FC<StaggerItemProps> = ({
   className = '',
   customVariants,
   customDelay = 0,
+  'data-delay': dataDelay,
+  ...otherProps
 }) => {
+  // Use data-delay if provided, otherwise fallback to customDelay
+  const delay = dataDelay !== undefined ? dataDelay : customDelay;
   return (
     <motion.div
       className={className}
@@ -53,8 +59,9 @@ export const StaggerItem: React.FC<StaggerItemProps> = ({
         type: 'spring',
         stiffness: 300,
         damping: 24,
-        delay: customDelay,
+        delay: delay,
       }}
+      {...otherProps}
     >
       {children}
     </motion.div>
