@@ -1380,28 +1380,7 @@ export default function Onboarding() {
                   
                   {/* Connection status indicator - disabled */}
                   <div className="flex items-center text-sm">
-                    {/* Always show offline status while WebSocket is disabled */}
-                    <div className="flex items-center text-gray-500">
-                      <WifiOff className="w-4 h-4 mr-1" />
-                      <span className="hidden sm:inline">Sync Disabled</span>
-                    </div>
-                    
-                    {/* Manual sync button - disabled */}
-                    {sessionId && (
-                      <button 
-                        type="button" 
-                        onClick={() => console.log("Sync disabled for debugging")}
-                        disabled={true}
-                        className="ml-2 p-1 rounded-full hover:bg-zinc-800 disabled:opacity-50"
-                        title="Sync currently disabled for debugging"
-                      >
-                        {isSyncing ? (
-                          <RefreshCw className="w-4 h-4 animate-spin text-gray-500" />
-                        ) : (
-                          <RefreshCw className="w-4 h-4 text-gray-500" />
-                        )}
-                      </button>
-                    )}
+                    {/* Connection status indicator removed */}
                   </div>
                 </div>
                 
@@ -3324,28 +3303,7 @@ export default function Onboarding() {
                     
                     {/* Connection status indicator - disabled */}
                     <div className="flex items-center text-sm">
-                      {/* Always show offline status while WebSocket is disabled */}
-                      <div className="flex items-center text-gray-500">
-                        <WifiOff className="w-4 h-4 mr-1" />
-                        <span className="hidden sm:inline">Sync Disabled</span>
-                      </div>
-                      
-                      {/* Manual sync button - disabled */}
-                      {sessionId && (
-                        <button 
-                          type="button" 
-                          onClick={() => console.log("Sync disabled for debugging")}
-                          disabled={true}
-                          className="ml-2 p-1 rounded-full hover:bg-zinc-800 disabled:opacity-50"
-                          title="Sync currently disabled for debugging"
-                        >
-                          {isSyncing ? (
-                            <RefreshCw className="w-4 h-4 animate-spin text-gray-500" />
-                          ) : (
-                            <RefreshCw className="w-4 h-4 text-gray-500" />
-                          )}
-                        </button>
-                      )}
+                      {/* Connection status indicator removed */}
                     </div>
                   </div>
                   
