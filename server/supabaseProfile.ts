@@ -87,6 +87,7 @@ export function setupProfileEndpoints(app: Express) {
         // Ensure we're using snake_case for field names as that's what our tables use
         const athleteProfile = {
           user_id: userId, // Now we can use UUID directly
+          session_id: sessionId || `session-${Date.now()}`, // Ensure we have a session_id, generate one if not provided
           name: name || email?.split('@')[0] || 'Athlete',
           email: email,
           
@@ -201,6 +202,7 @@ export function setupProfileEndpoints(app: Express) {
         // Transform business data to match our table schema
         const businessProfile = {
           user_id: userId, // Now we can use UUID directly
+          session_id: sessionId || `session-${Date.now()}`, // Ensure we have a session_id, generate one if not provided
           name: name || email?.split('@')[0] || 'Business',
           email: email,
           
