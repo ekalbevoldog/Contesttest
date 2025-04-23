@@ -330,11 +330,87 @@ export function setupSupabaseAuth(app: Express) {
           });
         } else if (authError.code === 'user_already_exists') {
           // User exists in Supabase Auth but our login attempt above failed
-          // This means the password is incorrect
-          return res.status(400).json({ 
-            error: 'Email already in use',
-            message: 'This email is already registered but the password does not match. Please try signing in with the correct password.'
-          });
+          // Let's try to sign in with the provided credentials
+          try {
+            console.log('User already exists in Auth, attempting to sign in...');
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email,
+              password
+            });
+            
+            if (signInData?.user) {
+              // Credentials match an existing user, retrieve or create their app record
+              const { data: existingUser, error: userError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', email)
+                .single();
+                
+              if (existingUser) {
+                // User exists in both Auth and app database
+                return res.status(200).json({ 
+                  message: 'Login successful. Account already exists.',
+                  user: {
+                    ...existingUser,
+                    id: signInData.user.id,
+                    auth_id: signInData.user.id
+                  }
+                });
+              } else {
+                // User exists in Auth but not in app database - create app record
+                console.log('Creating app record for existing auth user');
+                const userDataToInsert = {
+                  email: email,
+                  role: role,
+                  created_at: new Date()
+                };
+                
+                try {
+                  const { data: newUserData, error: insertError } = await supabase
+                    .from('users')
+                    .insert(userDataToInsert)
+                    .select()
+                    .single();
+                    
+                  if (insertError) {
+                    console.error('Error creating app record for existing auth user:', insertError);
+                    return res.status(400).json({ 
+                      error: 'Account exists but profile setup failed',
+                      message: 'Your account exists but we could not complete the profile setup. Please contact support.'
+                    });
+                  }
+                  
+                  return res.status(200).json({ 
+                    message: 'Login successful. Profile created.',
+                    user: {
+                      ...newUserData,
+                      id: signInData.user.id,
+                      auth_id: signInData.user.id
+                    }
+                  });
+                } catch (insertError) {
+                  console.error('Exception creating app record:', insertError);
+                  return res.status(500).json({ 
+                    error: 'Account exists but profile setup failed',
+                    message: 'Your account exists but we could not complete the profile setup. Please contact support.'
+                  });
+                }
+              }
+            } else {
+              // Credentials don't match existing user
+              console.log('User exists but credentials do not match');
+              return res.status(400).json({ 
+                error: 'Email already in use',
+                message: 'This email is already registered but the password does not match. Please try signing in with the correct password.'
+              });
+            }
+          } catch (signInError) {
+            console.error('Error signing in existing user:', signInError);
+            return res.status(400).json({ 
+              error: 'Email already in use',
+              message: 'This email is already registered. Please use a different email or try signing in.'
+            });
+          }
         } else {
           // For any other errors, return a generic message
           return res.status(500).json({ 
