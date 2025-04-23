@@ -852,7 +852,8 @@ export class SupabaseStorage implements IStorage {
         return 0;
       }
       
-      return data && data.length > 0 ? parseInt(data[0].count, 10) : 0;
+      // For count operations, convert the count to number if needed
+      return data && data.length > 0 ? parseInt(String(data[0].count), 10) : 0;
     } catch (error) {
       console.error('Exception getting unread message count:', error);
       return 0;

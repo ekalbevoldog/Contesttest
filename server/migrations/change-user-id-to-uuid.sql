@@ -1,6 +1,3 @@
--- Start transaction to ensure all operations succeed or fail together
-BEGIN;
-
 -- 1. First drop the existing indexes that use user_id
 DROP INDEX IF EXISTS idx_athlete_profiles_user_id;
 DROP INDEX IF EXISTS idx_business_profiles_user_id;
@@ -33,5 +30,4 @@ CREATE INDEX IF NOT EXISTS idx_business_profiles_user_id ON business_profiles(us
 ALTER TABLE athlete_profiles DROP COLUMN IF EXISTS original_user_id;
 ALTER TABLE business_profiles DROP COLUMN IF EXISTS original_user_id;
 
--- Commit the transaction
-COMMIT;
+-- No transaction - each statement is executed individually

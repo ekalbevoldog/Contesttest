@@ -36,9 +36,9 @@ export const verifySupabaseToken = async (
       return res.status(401).json({ error: 'Invalid token' });
     }
     
-    // Set user data for the request
+    // Set user data for the request - ensure id is treated as a string
     req.user = {
-      id: data.user.id, // This is a string in Supabase
+      id: String(data.user.id), // Ensure this is a string
       email: data.user.email || '',
       role: data.user.user_metadata?.role || 'user',
       ...(data.user.user_metadata || {})

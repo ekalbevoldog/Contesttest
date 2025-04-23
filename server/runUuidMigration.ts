@@ -19,15 +19,30 @@ export async function runUuidMigration() {
     const migrationSql = fs.readFileSync(migrationFilePath, 'utf8');
     
     console.log('Successfully loaded migration file for UUID conversion');
-    console.log('Executing SQL migration...');
     
-    // Execute the migration SQL - using the same method as in runProfileMigration
-    const { error } = await supabase.rpc('exec_sql', { sql: migrationSql });
+    // Split the SQL statements - similar to runProfileMigration
+    const statements = migrationSql
+      .split(';')
+      .filter(statement => statement.trim().length > 0)
+      .map(statement => statement.trim() + ';');
     
-    if (error) {
-      console.error('Error executing UUID migration:', error);
-      throw new Error(`Migration failed: ${error.message}`);
+    console.log(`Found ${statements.length} SQL statements to execute`);
+    
+    // Execute each statement individually
+    for (const statement of statements) {
+      console.log('Executing SQL statement:', statement.substring(0, 50) + '...');
+      
+      const { error } = await supabase.rpc('exec_sql', { sql: statement });
+      
+      if (error) {
+        console.error('Error executing SQL statement:', error);
+        throw new Error(`Migration statement failed: ${error.message}`);
+      }
+      
+      console.log('SQL statement executed successfully');
     }
+    
+    // All statements executed successfully at this point
     
     console.log('UUID migration completed successfully!');
     return true;
