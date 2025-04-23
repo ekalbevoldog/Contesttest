@@ -263,14 +263,12 @@ export function setupSupabaseAuth(app: Express) {
       
       console.log('Auth account created successfully, storing additional user data...');
       
-      // Also store in the users table for our application - exclude password field
+      // Also store in the users table for our application - only include columns that actually exist
       const userDataToInsert = {
         email: email,
-        username: fullName, // We'll use fullName as username since there's no full_name column
         role: role,
-        created_at: new Date(),
-        // Store the auth user ID to link accounts
-        auth_id: authData.user?.id
+        created_at: new Date()
+        // Note: The actual schema only has id, email, role, created_at, last_login
       };
       
       console.log('Inserting user data into users table:', userDataToInsert);
@@ -338,21 +336,36 @@ export function setupSupabaseAuth(app: Express) {
       
       // Only update allowed fields
       const updateData: Record<string, any> = {};
-      
-      // Update username if fullName is provided
-      if (fullName) updateData.username = fullName;
-      
-      // Add any other allowed fields
-      Object.keys(otherData).forEach(key => {
-        // Skip sensitive fields like role, id, email
-        if (!['role', 'id', 'email', 'created_at', 'password'].includes(key)) {
-          updateData[key] = otherData[key];
-        }
-      });
+            
+      // Add only fields that exist in the schema (id, email, role, created_at, last_login)
+      // We're only allowing last_login to be updated
+      if (otherData.last_login) {
+        updateData.last_login = otherData.last_login;
+      }
       
       // Make sure we have req.user
       if (!req.user || !req.user.email) {
         return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // Only perform the update if there's data to update
+      if (Object.keys(updateData).length === 0) {
+        // Return the current user profile instead
+        const { data: userData, error: fetchError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', req.user.email)
+          .single();
+          
+        if (fetchError) {
+          console.error('Error fetching user profile:', fetchError);
+          return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+        
+        return res.status(200).json({ 
+          message: 'No update needed',
+          user: userData
+        });
       }
       
       // Update the user data
