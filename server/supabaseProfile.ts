@@ -6,7 +6,7 @@ export function setupProfileEndpoints(app: Express) {
   // CREATE PROFILE ENDPOINT
   app.post("/api/supabase/profile", async (req: Request, res: Response) => {
     try {
-      const { userId, email, name, userType, ...otherData } = req.body;
+      const { userId, email, name, userType, sessionId = null, ...otherData } = req.body;
       
       console.log(`Creating ${userType} profile for user ID ${userId}`);
       
@@ -72,12 +72,44 @@ export function setupProfileEndpoints(app: Express) {
         
         console.log('Creating athlete profile with data:', athleteProfile);
         
-        // Insert into Supabase athlete_profiles table
-        const { data: profile, error } = await supabase
-          .from('athlete_profiles')
-          .insert(athleteProfile)
-          .select()
-          .single();
+        console.log('Attempting to insert athlete profile into table...');
+        // Try to insert into Supabase athlete_profiles table
+        let profile;
+        let error;
+        
+        try {
+          // First check if the table exists and has the right structure
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('athlete_profiles')
+            .select('*')
+            .limit(1);
+            
+          if (tableError) {
+            console.error('Error checking athlete_profiles table:', tableError);
+            if (tableError.message.includes('does not exist')) {
+              return res.status(500).json({
+                error: 'Database table does not exist',
+                details: 'The athlete_profiles table has not been created yet'
+              });
+            }
+          }
+          
+          // Now try the insert
+          const result = await supabase
+            .from('athlete_profiles')
+            .insert(athleteProfile)
+            .select()
+            .single();
+            
+          profile = result.data;
+          error = result.error;
+        } catch (insertError) {
+          console.error('Exception during profile insert:', insertError);
+          return res.status(500).json({
+            error: 'Database error during profile creation',
+            details: insertError instanceof Error ? insertError.message : 'Unknown error'
+          });
+        }
           
         if (error) {
           console.error('Error creating athlete profile:', error);
@@ -159,12 +191,44 @@ export function setupProfileEndpoints(app: Express) {
         
         console.log('Creating business profile with data:', businessProfile);
         
-        // Insert into Supabase business_profiles table
-        const { data: profile, error } = await supabase
-          .from('business_profiles')
-          .insert(businessProfile)
-          .select()
-          .single();
+        console.log('Attempting to insert business profile into table...');
+        // Try to insert into Supabase business_profiles table
+        let profile;
+        let error;
+        
+        try {
+          // First check if the table exists and has the right structure
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('business_profiles')
+            .select('*')
+            .limit(1);
+            
+          if (tableError) {
+            console.error('Error checking business_profiles table:', tableError);
+            if (tableError.message.includes('does not exist')) {
+              return res.status(500).json({
+                error: 'Database table does not exist',
+                details: 'The business_profiles table has not been created yet'
+              });
+            }
+          }
+          
+          // Now try the insert
+          const result = await supabase
+            .from('business_profiles')
+            .insert(businessProfile)
+            .select()
+            .single();
+            
+          profile = result.data;
+          error = result.error;
+        } catch (insertError) {
+          console.error('Exception during profile insert:', insertError);
+          return res.status(500).json({
+            error: 'Database error during profile creation',
+            details: insertError instanceof Error ? insertError.message : 'Unknown error'
+          });
+        }
           
         if (error) {
           console.error('Error creating business profile:', error);

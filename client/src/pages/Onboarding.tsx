@@ -1035,6 +1035,7 @@ export default function Onboarding() {
           // Create athlete profile data
           profileData = {
             userId: newUser.id,
+            userType: formData.userType, // Make sure userType is included
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
@@ -1074,6 +1075,7 @@ export default function Onboarding() {
           // Create business profile data
           profileData = {
             userId: newUser.id,
+            userType: formData.userType, // Make sure userType is included
             name: formData.name,
             email: formData.email,
             
@@ -1109,9 +1111,9 @@ export default function Onboarding() {
           };
         }
         
-        // Use direct API to create profile to avoid WebSocket issues
-        console.log("Using direct API call for profile creation");
-        const profileResponse = await fetch('/api/profile', {
+        // Use our new Supabase-specific profile endpoint
+        console.log("Using Supabase profile API for profile creation");
+        const profileResponse = await fetch('/api/supabase/profile', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

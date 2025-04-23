@@ -48,6 +48,20 @@ app.use((req, res, next) => {
     // Continue with server startup even if Supabase setup fails
   }
   
+  // Set up Supabase auth endpoints
+  try {
+    const { setupSupabaseAuth } = await import('./supabaseAuth');
+    setupSupabaseAuth(app);
+    
+    const { setupProfileEndpoints } = await import('./supabaseProfile');
+    setupProfileEndpoints(app);
+    
+    console.log('Supabase auth and profile endpoints registered successfully');
+  } catch (error) {
+    console.error('Error setting up Supabase auth endpoints:', error);
+    // Continue with server startup even if Supabase auth setup fails
+  }
+  
   // Register public routes first, so they're available even if other routes fail
   registerPublicRoutes(app);
   
