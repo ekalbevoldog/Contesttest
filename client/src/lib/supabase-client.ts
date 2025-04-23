@@ -341,13 +341,17 @@ export const updateBusinessProfile = async (userId: string, profileData: any) =>
 
 export const checkUserProfile = async (userId: string, role: string) => {
   try {
+    console.log(`Checking profile for user ${userId} with role ${role}`);
+    
     if (role === 'athlete') {
       const profile = await getAthleteProfile(userId);
+      console.log('Athlete profile check result:', !!profile);
       return !!profile;
     }
     
     if (role === 'business') {
       const profile = await getBusinessProfile(userId);
+      console.log('Business profile check result:', !!profile);
       return !!profile;
     }
     

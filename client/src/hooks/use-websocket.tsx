@@ -83,24 +83,34 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
     }
 
     try {
-      // Create WebSocket connection
+      // Create WebSocket connection - use just path, not full URL with domain
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      const socket = new WebSocket(wsUrl);
+      // Use relative path to avoid issues with hostname resolution
+      const wsUrl = `/ws`;
+      console.log(`Attempting to connect to WebSocket at ${protocol}//${window.location.host}${wsUrl}`);
+      
+      const socket = new WebSocket(`${protocol}//${window.location.host}${wsUrl}`);
       socketRef.current = socket;
       
       setConnectionStatus('connecting');
 
       socket.onopen = () => {
-        console.log('WebSocket connection established');
+        console.log('WebSocket connection established successfully');
         setConnectionStatus('open');
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts
         
         // Register with the server using the session ID
-        socket.send(JSON.stringify({
+        const registrationMessage = {
           type: 'register',
-          sessionId
-        }));
+          sessionId,
+          userData: {
+            // Add user data from localStorage if available
+            userId: localStorage.getItem('userId'),
+            role: localStorage.getItem('userRole') || 'visitor'
+          }
+        };
+        console.log('Sending registration message:', registrationMessage);
+        socket.send(JSON.stringify(registrationMessage));
       };
 
       socket.onmessage = (event) => {
