@@ -1506,11 +1506,19 @@ export class MemStorage implements IStorage {
 
   async getAthlete(id: number): Promise<Athlete | undefined> { return undefined; }
   async getAthleteBySession(sessionId: string): Promise<Athlete | undefined> { return undefined; }
+  async getAthleteByUserId(userId: string): Promise<Athlete | undefined> { 
+    console.log(`Getting athlete profile for user ID ${userId} from memory storage`);
+    return undefined; 
+  }
   async storeAthleteProfile(athlete: InsertAthlete): Promise<Athlete> { return { id: 1, ...athlete } as Athlete; }
   async getAllAthletes(): Promise<Athlete[]> { return []; }
 
   async getBusiness(id: number): Promise<Business | undefined> { return undefined; }
   async getBusinessBySession(sessionId: string): Promise<Business | undefined> { return undefined; }
+  async getBusinessByUserId(userId: string): Promise<Business | undefined> { 
+    console.log(`Getting business profile for user ID ${userId} from memory storage`);
+    return undefined; 
+  }
   async storeBusinessProfile(business: InsertBusiness): Promise<Business> { return { id: 1, ...business } as Business; }
   async getAllBusinesses(): Promise<Business[]> { return []; }
 
