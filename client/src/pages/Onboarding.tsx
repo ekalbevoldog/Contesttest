@@ -1260,14 +1260,17 @@ export default function Onboarding() {
               </StaggerContainer>
               
               <div className="flex justify-end mt-8 pt-4 border-t border-zinc-800">
-                <Button
+                <button
                   type="button"
                   onClick={handleNextStep}
                   disabled={isSubmitting || !formData.userType}
-                  variant="default"
+                  className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Continue <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                  <span className="flex items-center justify-center">
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </span>
+                </button>
               </div>
             </div>
           </AnimatedFormTransition>
@@ -1384,14 +1387,17 @@ export default function Onboarding() {
                   </div>
                 </div>
                 
-                <Button
+                <button
                   type="button"
                   onClick={handleNextStep}
                   disabled={isSubmitting || !formData.athleteCategory}
-                  variant="default"
+                  className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-red-600 to-amber-600 text-white font-bold rounded-lg hover:from-red-700 hover:to-amber-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Continue <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                  <span className="flex items-center justify-center">
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </span>
+                </button>
               </div>
             </div>
           </AnimatedFormTransition>
