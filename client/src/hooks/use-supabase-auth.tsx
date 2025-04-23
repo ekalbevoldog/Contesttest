@@ -123,8 +123,14 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           // Check if profile is complete
           if (currentUser && currentUser.id) {
             const userRole = userData.profile?.role || currentUser.role || 'visitor';
+            console.log(`Checking profile completion for user ${currentUser.id} with role ${userRole}`);
             const hasProfile = await checkUserProfile(currentUser.id, userRole);
+            console.log(`Profile completion check result: ${hasProfile}`);
             setHasCompletedProfile(hasProfile);
+            
+            // Store user info in localStorage for easier access
+            localStorage.setItem('userId', currentUser.id);
+            localStorage.setItem('userRole', userRole);
           }
         }
       } catch (error) {

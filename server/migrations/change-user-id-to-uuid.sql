@@ -18,7 +18,11 @@ ALTER TABLE business_profiles DROP COLUMN IF EXISTS user_id CASCADE;
 ALTER TABLE athlete_profiles RENAME COLUMN user_id_uuid TO user_id;
 ALTER TABLE business_profiles RENAME COLUMN user_id_uuid TO user_id;
 
--- 5. Make user_id NOT NULL and create new indexes
+-- 5. Set a default UUID for any NULL values before making NOT NULL
+UPDATE athlete_profiles SET user_id = gen_random_uuid() WHERE user_id IS NULL;
+UPDATE business_profiles SET user_id = gen_random_uuid() WHERE user_id IS NULL;
+
+-- Now make user_id NOT NULL 
 ALTER TABLE athlete_profiles ALTER COLUMN user_id SET NOT NULL;
 ALTER TABLE business_profiles ALTER COLUMN user_id SET NOT NULL;
 
