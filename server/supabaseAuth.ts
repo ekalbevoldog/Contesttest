@@ -227,7 +227,44 @@ export function setupSupabaseAuth(app: Express) {
         .single();
         
       if (userData) {
-        return res.status(400).json({ error: 'User already exists' });
+        console.log('User already exists in our database:', userData);
+        
+        // Let's check with Supabase auth as well
+        try {
+          // Try logging in with these credentials to see if they match
+          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (loginData?.user) {
+            // Credentials are valid - return success with existing user data
+            console.log('Credentials match existing user - returning user data');
+            return res.status(200).json({ 
+              message: 'Login successful. Account already exists.',
+              user: {
+                ...userData,
+                id: loginData.user.id,
+                auth_id: loginData.user.id
+              }
+            });
+          } else {
+            // Credentials don't match
+            console.log('User exists but credentials do not match');
+            return res.status(400).json({ 
+              error: 'Email already registered',
+              message: 'This email is already registered. Please use a different email or try signing in with the correct password.'
+            });
+          }
+        } catch (loginErr) {
+          console.error('Error checking existing credentials:', loginErr);
+        }
+        
+        // Default error response if the above checks fail
+        return res.status(400).json({ 
+          error: 'Account exists',
+          message: 'An account with this email already exists. Please sign in or use a different email address.'
+        });
       }
       
       console.log('\n==== SUPABASE REGISTRATION DATA ====');

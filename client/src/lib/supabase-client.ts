@@ -146,14 +146,31 @@ export const registerUser = async (userData: {
       body: JSON.stringify(userData),
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Registration failed:', errorText);
-      throw new Error('Registration failed: ' + (errorText || response.statusText));
+    const responseData = await response.json();
+    
+    // Special case: If status is 200 but not 201, it means user exists but credentials are valid
+    // - This is a case where the server found an existing account with matching credentials 
+    if (response.status === 200 && responseData.user) {
+      console.log('Account already exists but credentials are valid - treating as successful login');
+      return {
+        message: 'Account exists, logging in',
+        user: responseData.user
+      };
     }
     
-    const registrationData = await response.json();
-    return registrationData;
+    // Handle error responses
+    if (!response.ok) {
+      console.error('Registration failed:', responseData);
+      
+      // Enhanced error message if server provides one
+      const errorMessage = responseData.message || 
+                          (typeof responseData === 'string' ? responseData : 'Registration failed') ||
+                          response.statusText;
+                          
+      throw new Error(errorMessage);
+    }
+    
+    return responseData;
   } catch (serverError) {
     console.error('Server registration failed:', serverError);
     throw serverError;

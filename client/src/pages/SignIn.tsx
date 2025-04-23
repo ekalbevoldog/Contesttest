@@ -107,22 +107,40 @@ export default function SignIn() {
     const userData = {
       role: values.userType,
       email: values.email,
+      fullName: values.email.split('@')[0] // Basic fallback name from email
     };
     
-    const { error, user } = await signUp(values.email, values.password, userData);
-    
-    if (!error && user) {
-      // Registration successful
-      registerForm.reset();
-      setActiveTab('login');
+    try {
+      const { error, user } = await signUp(values.email, values.password, userData);
       
-      toast({
-        title: 'Registration successful',
-        description: 'Please check your email to confirm your account.',
-      });
-      
-      // Redirect to onboarding flow
-      navigate(`/onboarding?userType=${values.userType}`);
+      if (!error && user) {
+        // Registration successful
+        registerForm.reset();
+        
+        if (user.role === values.userType) {
+          // User exists with right role or new user successfully created
+          toast({
+            title: 'Account ready',
+            description: 'Redirecting to onboarding...',
+          });
+          
+          // Redirect to onboarding flow
+          navigate(`/onboarding?userType=${values.userType}`);
+        } else {
+          // User exists but with different role
+          toast({
+            title: 'Account exists with different role',
+            description: `This email is already registered as a ${user.role}. Please use a different email or login.`,
+            variant: 'destructive'
+          });
+          
+          // Switch to login tab
+          setActiveTab('login');
+        }
+      }
+    } catch (e: any) {
+      // Error is already handled by the hook, but might want to do something else here
+      console.error('Registration error in component:', e);
     }
   };
   
