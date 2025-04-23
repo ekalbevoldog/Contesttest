@@ -77,23 +77,26 @@ import { insertFeedbackSchema, Feedback } from "@shared/schema";
 import { websocketService } from './services/websocketService';
 
 // Map to store connected WebSocket clients (legacy approach)
+// Store WebSocket connections - old method (legacy)
 const connectedClients = new Map<string, CustomWebSocket>();
+
+// Store WebSocket connections - new method (supports multiple connections per session)
+const wsConnections = new Map<string, Set<CustomWebSocket>>();
 
 // Map to store pending messages for sessions without active connections
 const pendingMessageQueue = new Map<string, any[]>();
 
 // Helper function to broadcast a message to all connections for a session
-function broadcastToSession(sessionId: string, message: any) {
+function broadcastToSession(sessionId: string, message: any): boolean {
   let delivered = false;
   
-  // Get wsConnections from outer scope
   try {
     // Check new connection map first 
     const connections = wsConnections.get(sessionId);
     if (connections && connections.size > 0) {
       console.log(`Broadcasting message to ${connections.size} clients for session ${sessionId}`);
       
-      connections.forEach(conn => {
+      connections.forEach((conn: CustomWebSocket) => {
         if (conn.readyState === WebSocket.OPEN) {
           try {
             conn.send(JSON.stringify(message));
@@ -104,43 +107,44 @@ function broadcastToSession(sessionId: string, message: any) {
         }
       });
     }
+    
+    // Also try legacy connection map
+    const legacyConnection = connectedClients.get(sessionId);
+    if (legacyConnection && legacyConnection.readyState === WebSocket.OPEN) {
+      try {
+        legacyConnection.send(JSON.stringify(message));
+        delivered = true;
+      } catch (error) {
+        console.error('Error sending message to legacy client:', error);
+      }
+    }
+    
+    // If we couldn't deliver, queue the message for later delivery
+    if (!delivered) {
+      console.log(`No active connections for session ${sessionId}, queueing message`);
+      
+      if (!pendingMessageQueue.has(sessionId)) {
+        pendingMessageQueue.set(sessionId, []);
+      }
+      
+      // Add to pending queue with a timestamp
+      pendingMessageQueue.get(sessionId)?.push({
+        ...message,
+        _queuedAt: new Date().toISOString()
+      });
+      
+      // Limit queue size to prevent memory issues
+      const queue = pendingMessageQueue.get(sessionId);
+      if (queue && queue.length > 50) {
+        queue.shift(); // Remove oldest message if queue gets too large
+      }
+    }
+    
+    return delivered;
   } catch (error) {
-    console.error('Error accessing WebSocket connections:', error);
+    console.error('Error broadcasting message:', error);
+    return false;
   }
-  
-  // Also try legacy connection map
-  const legacyConnection = connectedClients.get(sessionId);
-  if (legacyConnection && legacyConnection.readyState === WebSocket.OPEN) {
-    try {
-      legacyConnection.send(JSON.stringify(message));
-      delivered = true;
-    } catch (error) {
-      console.error('Error sending message to legacy client:', error);
-    }
-  }
-  
-  // If we couldn't deliver, queue the message for later delivery
-  if (!delivered) {
-    console.log(`No active connections for session ${sessionId}, queueing message`);
-    
-    if (!pendingMessageQueue.has(sessionId)) {
-      pendingMessageQueue.set(sessionId, []);
-    }
-    
-    // Add to pending queue with a timestamp
-    pendingMessageQueue.get(sessionId)?.push({
-      ...message,
-      _queuedAt: new Date().toISOString()
-    });
-    
-    // Limit queue size to prevent memory issues
-    const queue = pendingMessageQueue.get(sessionId);
-    if (queue && queue.length > 50) {
-      queue.shift(); // Remove oldest message if queue gets too large
-    }
-  }
-  
-  return delivered;
 }
 
 // Schema for session creation
@@ -1814,7 +1818,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // Updated WebSocket server path to match client-side configuration
+  const wss = new WebSocketServer({ server: httpServer, path: '/api/ws' });
   
   // Store connected clients by sessionId for easier management and multiple connections support
   const wsConnections = new Map<string, Set<CustomWebSocket>>();

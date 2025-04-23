@@ -77,19 +77,40 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
   const connectWebSocket = useCallback(() => {
     if (!sessionId) return;
     
+    // Get user authentication data
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      try {
+        // Try to get from Supabase auth
+        const authData = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}');
+        userId = authData?.currentSession?.user?.id;
+        if (userId) {
+          console.log('Found user ID from Supabase auth:', userId);
+          // Store it for easier access later
+          localStorage.setItem('userId', userId);
+        }
+      } catch (error) {
+        console.error('Error parsing Supabase auth data:', error);
+      }
+    }
+    
     // Clear any existing socket
     if (socketRef.current) {
       socketRef.current.close();
     }
 
     try {
-      // Create WebSocket connection - use just path, not full URL with domain
+      // Create WebSocket connection - use relative path with host for cross-compatibility
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Use relative path to avoid issues with hostname resolution
-      const wsUrl = `/ws`;
-      console.log(`Attempting to connect to WebSocket at ${protocol}//${window.location.host}${wsUrl}`);
+      // Fixed issue with WebSocket URL - this should work more reliably
+      // Always include explicit host and port for better compatibility
+      const host = window.location.hostname;
+      const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+      // Make sure the path matches the server-side WebSocket path configuration
+      const wsUrl = `${protocol}//${host}:${port}/api/ws`;
+      console.log(`Attempting to connect to WebSocket at ${wsUrl}`);
       
-      const socket = new WebSocket(`${protocol}//${window.location.host}${wsUrl}`);
+      const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
       
       setConnectionStatus('connecting');
@@ -100,15 +121,21 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts
         
         // Register with the server using the session ID
+        // Get the userId that we fetched earlier
+        const userId = localStorage.getItem('userId');
+        
         const registrationMessage = {
           type: 'register',
           sessionId,
           userData: {
-            // Add user data from localStorage if available
-            userId: localStorage.getItem('userId'),
+            // Add user data from localStorage
+            userId: userId || null,
             role: localStorage.getItem('userRole') || 'visitor'
           }
         };
+        
+        // Log the userId for debugging
+        console.log('Registering WebSocket with userId:', registrationMessage.userData.userId);
         console.log('Sending registration message:', registrationMessage);
         socket.send(JSON.stringify(registrationMessage));
       };
