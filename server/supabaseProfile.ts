@@ -84,9 +84,22 @@ export function setupProfileEndpoints(app: Express) {
       
       if (userType === 'athlete') {
         // Transform the data to match our table schema
+        // Check if we need to convert the UUID to a number
+        let numericUserId;
+        // If userId is a valid number string, use it as a number
+        if (/^\d+$/.test(userId)) {
+          numericUserId = parseInt(userId, 10);
+        } else {
+          // For UUID strings, just store a reference number instead
+          // Use a simple number derived from current time to avoid integer conversion errors
+          numericUserId = Math.floor(Date.now() / 1000);
+          console.log(`Converting UUID ${userId} to numeric ID ${numericUserId}`);
+        }
+        
         // Ensure we're using snake_case for field names as that's what our tables use
         const athleteProfile = {
-          user_id: userId,
+          user_id: numericUserId, // Use numeric ID for database
+          original_user_id: userId, // Store original UUID as string if needed
           name: name || email?.split('@')[0] || 'Athlete',
           email: email,
           
@@ -199,8 +212,21 @@ export function setupProfileEndpoints(app: Express) {
         
       } else if (userType === 'business') {
         // Transform business data to match our table schema
+        // Check if we need to convert the UUID to a number
+        let numericUserId;
+        // If userId is a valid number string, use it as a number
+        if (/^\d+$/.test(userId)) {
+          numericUserId = parseInt(userId, 10);
+        } else {
+          // For UUID strings, just store a reference number instead
+          // Use a simple number derived from current time to avoid integer conversion errors
+          numericUserId = Math.floor(Date.now() / 1000);
+          console.log(`Converting UUID ${userId} to numeric ID ${numericUserId}`);
+        }
+          
         const businessProfile = {
-          user_id: userId,
+          user_id: numericUserId, // Use numeric ID for database
+          original_user_id: userId, // Store original UUID as string if needed
           name: name || email?.split('@')[0] || 'Business',
           email: email,
           
