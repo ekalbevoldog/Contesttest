@@ -4,7 +4,7 @@ import { storage } from "./storage";
 
 // Define the User interface for our request object - using just string type properties
 export interface User {
-  id: string;
+  id: string | number; // Allow both string and number types for id
   email: string;
   role: string;
   [key: string]: any;
@@ -359,9 +359,25 @@ export function setupSupabaseAuth(app: Express) {
               } else {
                 // User exists in Auth but not in app database - create app record
                 console.log('Creating app record for existing auth user');
+                // Map our role names to match the database enum constraints
+                // This handles potential enum requirements in the database schema
+                let dbRole = role;
+                // Check what role values are allowed in the schema and map accordingly
+                if (role === 'business') {
+                  dbRole = 'business_owner'; // Use the correct enum value
+                } else if (role === 'athlete') {
+                  dbRole = 'athlete'; // Keep as is 
+                } else if (role === 'admin') {
+                  dbRole = 'admin'; // Keep as is
+                } else if (role === 'compliance') {
+                  dbRole = 'compliance_officer'; // Use the correct enum value
+                }
+                
+                console.log(`Mapping role '${role}' to database role '${dbRole}'`);
+                
                 const userDataToInsert = {
                   email: email,
-                  role: role,
+                  role: dbRole, // Use the mapped role value that matches the database enum
                   created_at: new Date()
                 };
                 
@@ -423,10 +439,26 @@ export function setupSupabaseAuth(app: Express) {
       
       console.log('Auth account created successfully, storing additional user data...');
       
+      // Map our role names to match the database enum constraints
+      // This handles potential enum requirements in the database schema
+      let dbRole = role;
+      // Check what role values are allowed in the schema and map accordingly
+      if (role === 'business') {
+        dbRole = 'business_owner'; // Use the correct enum value
+      } else if (role === 'athlete') {
+        dbRole = 'athlete'; // Keep as is 
+      } else if (role === 'admin') {
+        dbRole = 'admin'; // Keep as is
+      } else if (role === 'compliance') {
+        dbRole = 'compliance_officer'; // Use the correct enum value
+      }
+      
+      console.log(`Mapping role '${role}' to database role '${dbRole}'`);
+      
       // Also store in the users table for our application - only include columns that actually exist
       const userDataToInsert = {
         email: email,
-        role: role,
+        role: dbRole, // Use the mapped role value that matches the database enum
         created_at: new Date()
         // Note: The actual schema only has id, email, role, created_at, last_login
       };
