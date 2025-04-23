@@ -1306,6 +1306,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // New endpoints to directly fetch profiles by user ID without authentication
+  
+  // Get business profile by user ID
+  app.get("/api/profile/business/:userId", async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({
+          message: "Missing user ID parameter",
+        });
+      }
+      
+      console.log(`Fetching business profile for user ID: ${userId}`);
+      
+      // First try to fetch directly from Supabase
+      try {
+        const { data, error } = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (!error && data) {
+          console.log('Found business profile via Supabase:', data);
+          return res.status(200).json({
+            id: data.id,
+            name: data.name,
+            userType: "business",
+            productType: data.product_type,
+            audienceGoals: data.audience_goals,
+            values: data.values,
+            industry: data.industry,
+            email: data.email,
+            // Parse the preferences if it exists
+            preferences: data.preferences ? JSON.parse(data.preferences) : {},
+          });
+        }
+      } catch (supabaseErr) {
+        console.error('Supabase query error:', supabaseErr);
+        // Continue to fallback method
+      }
+      
+      // Fallback to storage method
+      const business = await storage.getBusinessByUserId(userId);
+      
+      if (business) {
+        console.log('Found business profile via storage:', business);
+        return res.status(200).json({
+          id: business.id,
+          name: business.name,
+          userType: "business",
+          productType: business.productType,
+          audienceGoals: business.audienceGoals,
+          values: business.values,
+          industry: business.industry,
+          email: business.email,
+          // Parse the preferences if it exists
+          preferences: business.preferences ? JSON.parse(business.preferences) : {},
+        });
+      }
+      
+      return res.status(404).json({
+        message: "Business profile not found",
+      });
+    } catch (error) {
+      console.error("Error getting business profile by ID:", error);
+      return res.status(500).json({
+        message: "Failed to retrieve business profile",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+  
+  // Get athlete profile by user ID
+  app.get("/api/profile/athlete/:userId", async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({
+          message: "Missing user ID parameter",
+        });
+      }
+      
+      console.log(`Fetching athlete profile for user ID: ${userId}`);
+      
+      // First try to fetch directly from Supabase
+      try {
+        const { data, error } = await supabase
+          .from('athlete_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (!error && data) {
+          console.log('Found athlete profile via Supabase:', data);
+          return res.status(200).json({
+            id: data.id,
+            name: data.name,
+            userType: "athlete",
+            sport: data.sport,
+            school: data.school,
+            division: data.division,
+            followerCount: data.follower_count,
+            contentStyle: data.content_style,
+            email: data.email,
+            // Parse JSON fields if they exist
+            socialHandles: data.social_handles ? JSON.parse(data.social_handles) : {},
+            personalValues: data.personal_values ? JSON.parse(data.personal_values) : [],
+            contentTypes: data.content_types ? JSON.parse(data.content_types) : [],
+          });
+        }
+      } catch (supabaseErr) {
+        console.error('Supabase query error:', supabaseErr);
+        // Continue to fallback method
+      }
+      
+      // Fallback to storage method
+      const athlete = await storage.getAthleteByUserId(userId);
+      
+      if (athlete) {
+        console.log('Found athlete profile via storage:', athlete);
+        return res.status(200).json({
+          id: athlete.id,
+          name: athlete.name,
+          userType: "athlete",
+          sport: athlete.sport,
+          school: athlete.school,
+          division: athlete.division,
+          followerCount: athlete.followerCount,
+          contentStyle: athlete.contentStyle,
+          email: athlete.email,
+          // Parse JSON fields if they exist
+          socialHandles: athlete.socialHandles ? JSON.parse(athlete.socialHandles) : {},
+          personalValues: athlete.personalValues ? JSON.parse(athlete.personalValues) : [],
+          contentTypes: athlete.contentTypes ? JSON.parse(athlete.contentTypes) : [],
+        });
+      }
+      
+      return res.status(404).json({
+        message: "Athlete profile not found",
+      });
+    } catch (error) {
+      console.error("Error getting athlete profile by ID:", error);
+      return res.status(500).json({
+        message: "Failed to retrieve athlete profile",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
 
   // Helper function to find the best match
   async function findBestMatch(athlete: any, business: any, campaign: any) {

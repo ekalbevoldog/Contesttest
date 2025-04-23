@@ -172,27 +172,70 @@ export default function AthleteDashboard() {
   // Get profile info from localStorage if available or fallback to API
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-
+  
   useEffect(() => {
     if (loading) return;
-
+    
+    console.log('AthleteDashboard: fetching profile data');
+    
     // Try to get profile data from localStorage first
     const storedUserData = localStorage.getItem('contestedUserData');
     if (storedUserData) {
+      console.log('Found profile data in localStorage');
       setProfileData(JSON.parse(storedUserData));
       setIsLoadingProfile(false);
     } else {
-      // Fallback to API call if no localStorage data
-      fetch('/api/profile')
-        .then(res => res.json())
-        .then(data => {
-          setProfileData(data);
-          setIsLoadingProfile(false);
-        })
-        .catch(err => {
-          console.error('Error fetching profile:', err);
-          setIsLoadingProfile(false);
-        });
+      // Get user ID from localStorage if available
+      const userId = localStorage.getItem('userId');
+      
+      if (userId) {
+        console.log(`Using userId ${userId} to fetch athlete profile`);
+        
+        // Try to directly fetch from athlete_profiles
+        fetch(`/api/profile/athlete/${userId}`)
+          .then(res => {
+            if (!res.ok) {
+              throw new Error('Failed to fetch athlete profile');
+            }
+            return res.json();
+          })
+          .then(data => {
+            console.log('Successfully fetched athlete profile:', data);
+            setProfileData(data);
+            setIsLoadingProfile(false);
+          })
+          .catch(err => {
+            console.error('Error fetching athlete profile:', err);
+            
+            // Fallback to general profile API
+            console.log('Falling back to general profile API');
+            return fetch('/api/profile')
+              .then(res => res.json())
+              .then(data => {
+                console.log('Fallback profile data:', data);
+                setProfileData(data);
+                setIsLoadingProfile(false);
+              })
+              .catch(generalErr => {
+                console.error('Error fetching general profile:', generalErr);
+                setIsLoadingProfile(false);
+              });
+          });
+      } else {
+        // Standard API call if no user ID in localStorage
+        console.log('No userId in localStorage, using general profile endpoint');
+        fetch('/api/profile')
+          .then(res => res.json())
+          .then(data => {
+            console.log('Profile data from general endpoint:', data);
+            setProfileData(data);
+            setIsLoadingProfile(false);
+          })
+          .catch(err => {
+            console.error('Error fetching profile:', err);
+            setIsLoadingProfile(false);
+          });
+      }
     }
   }, [loading]);
 
