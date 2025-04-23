@@ -47,7 +47,7 @@ export const insertSessionSchema = sessionSchema.omit({
 // Athlete profile type definitions
 export const athleteSchema = z.object({
   id: z.number(),
-  userId: z.number().optional(),
+  userId: z.string().uuid().optional(), // UUID string from Supabase Auth
   sessionId: z.string(),
   name: z.string(),
   email: z.string().email().optional(),
@@ -72,7 +72,7 @@ export const insertAthleteSchema = athleteSchema.omit({
 // Business profile type definitions
 export const businessSchema = z.object({
   id: z.number(),
-  userId: z.number().optional(),
+  userId: z.string().uuid().optional(), // UUID string from Supabase Auth
   sessionId: z.string(),
   name: z.string(),
   email: z.string().email().optional(),
@@ -147,7 +147,7 @@ export const insertMessageSchema = messageSchema.omit({
 // Compliance Officer type definitions
 export const complianceOfficerSchema = z.object({
   id: z.number(),
-  userId: z.number().optional(),
+  userId: z.string().uuid().optional(), // UUID string from Supabase Auth
   name: z.string(),
   email: z.string().email(),
   institution: z.string(),
@@ -190,7 +190,7 @@ export const insertPartnershipOfferSchema = partnershipOfferSchema.omit({
 // Feedback type definitions
 export const feedbackSchema = z.object({
   id: z.number(),
-  userId: z.number(),
+  userId: z.string().uuid(), // UUID string from Supabase Auth
   userType: z.string(),
   matchId: z.number().optional(),
   feedbackType: z.string(),
