@@ -92,49 +92,136 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSupabaseInitialized || !supabase) return;
     
+    console.log('[Auth] Checking for existing session...');
+    
     const fetchSession = async () => {
       try {
-        // Use our getCurrentUser function for a complete user profile
-        const userData = await getCurrentUser();
+        // First check if we have a session directly from Supabase
+        const { data: sessionData } = await supabase.auth.getSession();
         
-        if (userData) {
-          // If we get valid user data
-          const { data } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          console.log('[Auth] Found existing session in Supabase');
+          setSession(sessionData.session);
           
-          if (data?.session) {
-            setSession(data.session);
-          }
+          // If we have a session, get the user from it
+          const supabaseUser = sessionData.session.user;
           
-          // Set up user data
-          let currentUser = null;
-          if (userData.auth) {
-            currentUser = userData.auth;
-            setUser(userData.auth);
-          } else if (userData.user) {
-            // Different response structure depending on which path succeeded
-            currentUser = userData.user;
-            setUser(userData.user);
-          }
-          
-          if (userData.profile) {
-            setUserData(userData.profile);
-          }
-          
-          // Check if profile is complete
-          if (currentUser && currentUser.id) {
-            const userRole = userData.profile?.role || currentUser.role || 'visitor';
-            console.log(`Checking profile completion for user ${currentUser.id} with role ${userRole}`);
-            const hasProfile = await checkUserProfile(currentUser.id, userRole);
-            console.log(`Profile completion check result: ${hasProfile}`);
-            setHasCompletedProfile(hasProfile);
+          if (supabaseUser) {
+            console.log('[Auth] Setting user from session:', supabaseUser.email);
+            setUser(supabaseUser);
             
-            // Store user info in localStorage for easier access
-            localStorage.setItem('userId', currentUser.id);
-            localStorage.setItem('userRole', userRole);
+            try {
+              // Now try to fetch the user profile data
+              console.log('[Auth] Fetching user profile data...');
+              // First from users table by auth_id
+              const { data: profileData } = await supabase
+                .from('users')
+                .select('*')
+                .eq('auth_id', supabaseUser.id)
+                .maybeSingle();
+                
+              if (profileData) {
+                console.log('[Auth] Found user profile by auth_id');
+                setUserData(profileData);
+                setUser({
+                  ...supabaseUser,
+                  role: profileData.role
+                });
+                
+                // Check if profile is complete
+                if (profileData.role) {
+                  console.log(`[Auth] Checking profile completion for user ${supabaseUser.id} with role ${profileData.role}`);
+                  const hasProfile = await checkUserProfile(supabaseUser.id, profileData.role);
+                  console.log(`[Auth] Profile completion check result: ${hasProfile}`);
+                  setHasCompletedProfile(hasProfile);
+                  
+                  // Store user info in localStorage for easier access
+                  localStorage.setItem('userId', supabaseUser.id);
+                  localStorage.setItem('userRole', profileData.role);
+                }
+              } else {
+                // Try by email as fallback
+                console.log('[Auth] No profile found by auth_id, trying email');
+                const { data: emailProfileData } = await supabase
+                  .from('users')
+                  .select('*')
+                  .eq('email', supabaseUser.email)
+                  .maybeSingle();
+                  
+                if (emailProfileData) {
+                  console.log('[Auth] Found user profile by email');
+                  setUserData(emailProfileData);
+                  setUser({
+                    ...supabaseUser,
+                    role: emailProfileData.role
+                  });
+                  
+                  // Check if profile is complete
+                  if (emailProfileData.role) {
+                    console.log(`[Auth] Checking profile completion for user ${supabaseUser.id} with role ${emailProfileData.role}`);
+                    const hasProfile = await checkUserProfile(supabaseUser.id, emailProfileData.role);
+                    console.log(`[Auth] Profile completion check result: ${hasProfile}`);
+                    setHasCompletedProfile(hasProfile);
+                    
+                    // Store user info in localStorage for easier access
+                    localStorage.setItem('userId', supabaseUser.id);
+                    localStorage.setItem('userRole', emailProfileData.role);
+                  }
+                } else {
+                  console.log('[Auth] No user profile found');
+                }
+              }
+            } catch (profileError) {
+              console.error('[Auth] Error fetching user profile:', profileError);
+            }
+          }
+        } else {
+          // No session found in Supabase, try our server API as fallback
+          console.log('[Auth] No session found in Supabase, trying server API');
+          try {
+            const userData = await getCurrentUser();
+            
+            if (userData) {
+              console.log('[Auth] Found user data from server API');
+              
+              // Set up user data
+              let currentUser = null;
+              if (userData.auth) {
+                currentUser = userData.auth;
+                setUser(userData.auth);
+              } else if (userData.user) {
+                // Different response structure depending on which path succeeded
+                currentUser = userData.user;
+                setUser(userData.user);
+              }
+              
+              if (userData.profile) {
+                setUserData(userData.profile);
+              }
+              
+              // Check if profile is complete
+              if (currentUser && currentUser.id) {
+                const userRole = userData.profile?.role || currentUser.role || 'visitor';
+                console.log(`[Auth] Checking profile completion for user ${currentUser.id} with role ${userRole}`);
+                const hasProfile = await checkUserProfile(currentUser.id, userRole);
+                console.log(`[Auth] Profile completion check result: ${hasProfile}`);
+                setHasCompletedProfile(hasProfile);
+                
+                // Store user info in localStorage for easier access
+                localStorage.setItem('userId', currentUser.id);
+                localStorage.setItem('userRole', userRole);
+              }
+            } else {
+              console.log('[Auth] No user data found');
+              setIsLoading(false);
+            }
+          } catch (error) {
+            console.error('[Auth] Error fetching user from server:', error);
+            setIsLoading(false);
           }
         }
       } catch (error) {
-        console.error("Error fetching session:", error);
+        console.error('[Auth] Error fetching session:', error);
       } finally {
         setIsLoading(false);
       }
@@ -145,19 +232,28 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('[Auth] Auth state change event:', event);
+        
         if (event === 'SIGNED_IN' && newSession) {
+          console.log('[Auth] User signed in:', newSession.user?.email);
           setSession(newSession);
           setUser(newSession.user);
           
           try {
-            // Fetch additional user data - use email as the key since auth_id doesn't exist
-            const { data: profileData } = await supabase
+            // First try to find user by auth_id
+            console.log('[Auth] Fetching user profile after sign in');
+            const { data: profileData, error: profileError } = await supabase
               .from('users')
               .select('*')
-              .eq('email', newSession.user.email)
-              .single();
+              .eq('auth_id', newSession.user.id)
+              .maybeSingle();
+              
+            if (profileError && profileError.code !== 'PGRST116') {
+              console.error('[Auth] Error fetching profile by auth_id:', profileError);
+            }
               
             if (profileData) {
+              console.log('[Auth] Found user profile by auth_id:', profileData);
               setUserData(profileData);
               
               // Redirect based on user type
@@ -170,12 +266,39 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               } else if (profileData?.role === 'admin') {
                 navigate('/admin/dashboard');
               }
+            } else {
+              // Try by email as fallback
+              console.log('[Auth] No profile found by auth_id, trying email');
+              const { data: emailProfileData } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', newSession.user.email)
+                .maybeSingle();
+                
+              if (emailProfileData) {
+                console.log('[Auth] Found user profile by email:', emailProfileData);
+                setUserData(emailProfileData);
+                
+                // Redirect based on user type
+                if (emailProfileData?.role === 'athlete') {
+                  navigate('/athlete/dashboard');
+                } else if (emailProfileData?.role === 'business') {
+                  navigate('/business/dashboard');
+                } else if (emailProfileData?.role === 'compliance') {
+                  navigate('/compliance/dashboard');
+                } else if (emailProfileData?.role === 'admin') {
+                  navigate('/admin/dashboard');
+                }
+              } else {
+                console.log('[Auth] No user profile found, not redirecting');
+              }
             }
           } catch (err) {
-            console.error("Error fetching user profile:", err);
+            console.error('[Auth] Error fetching user profile after sign in:', err);
             // Don't redirect if we couldn't get profile data
           }
         } else if (event === 'SIGNED_OUT') {
+          console.log('[Auth] User signed out');
           setSession(null);
           setUser(null);
           setUserData(null);

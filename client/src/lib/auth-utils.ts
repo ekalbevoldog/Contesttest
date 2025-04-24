@@ -8,12 +8,71 @@ import { supabase } from './supabase-client';
  */
 export async function loginWithEmail(email: string, password: string) {
   try {
+    console.log('[Auth Utils] Attempting login with email');
+    
+    // First attempt to sign in directly with Supabase for better session handling
+    const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (!supabaseError && supabaseData?.session) {
+      console.log('[Auth Utils] Direct Supabase login successful');
+      
+      // Now call our API endpoint to sync the user data properly
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseData.session.access_token}`,
+          },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          console.log('[Auth Utils] API login sync successful');
+          const apiData = await response.json();
+          
+          // Return combined data from both sources
+          return {
+            user: supabaseData.user,
+            session: supabaseData.session,
+            profile: apiData.profile || null,
+            redirectTo: apiData.redirectTo || null,
+            ...apiData
+          };
+        }
+        
+        // Even if API call fails, we still have a successful Supabase login
+        console.log('[Auth Utils] API login sync failed, but Supabase login succeeded');
+        return {
+          user: supabaseData.user,
+          session: supabaseData.session
+        };
+      } catch (apiError) {
+        console.error('[Auth Utils] API login sync error:', apiError);
+        // Non-blocking - return Supabase data anyway
+        return {
+          user: supabaseData.user,
+          session: supabaseData.session
+        };
+      }
+    }
+    
+    // If Supabase login failed, try our API endpoint
+    if (supabaseError) {
+      console.log('[Auth Utils] Direct Supabase login failed, trying API endpoint');
+    }
+    
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password }),
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -21,9 +80,21 @@ export async function loginWithEmail(email: string, password: string) {
       throw new Error(errorData.error || errorData.message || 'Login failed');
     }
 
-    return await response.json();
+    const apiData = await response.json();
+    console.log('[Auth Utils] API login successful');
+    
+    // If API login succeeded but we don't have a Supabase session, set it
+    if (apiData.session && !supabaseData?.session) {
+      console.log('[Auth Utils] Setting Supabase session from API response');
+      await supabase.auth.setSession({
+        access_token: apiData.session.access_token,
+        refresh_token: apiData.session.refresh_token
+      });
+    }
+
+    return apiData;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('[Auth Utils] Login error:', error);
     throw error;
   }
 }

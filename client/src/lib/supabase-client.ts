@@ -95,7 +95,57 @@ export const loginUser = async (credentials: {
   password: string;
 }) => {
   try {
-    // First, try to use our server endpoint for more complete data
+    // Try direct Supabase auth first
+    console.log('[Client] Attempting direct Supabase login first...');
+    const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password
+    });
+    
+    // If direct Supabase auth works
+    if (!supabaseError && supabaseData.session) {
+      console.log('[Client] Direct Supabase login successful');
+      
+      // Now call server endpoint to ensure proper user record and session
+      try {
+        console.log('[Client] Syncing login with server endpoint...');
+        const serverResponse = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseData.session.access_token}`,
+          },
+          body: JSON.stringify(credentials),
+          credentials: 'include', // Important: include cookies in the request
+        });
+        
+        if (serverResponse.ok) {
+          const serverLoginData = await serverResponse.json();
+          console.log('[Client] Server sync successful');
+          
+          // Merge server data with Supabase data
+          return {
+            ...supabaseData,
+            server: serverLoginData
+          };
+        } else {
+          console.log('[Client] Server sync returned non-OK status:', serverResponse.status);
+          // Non-blocking error, still return Supabase data
+        }
+      } catch (syncError) {
+        console.warn('[Client] Server sync failed, continuing with Supabase data:', syncError);
+        // Non-blocking error, still return Supabase data
+      }
+      
+      return supabaseData;
+    }
+    
+    // If direct Supabase auth fails, fall back to server endpoint
+    if (supabaseError) {
+      console.log('[Client] Direct Supabase login failed, trying server endpoint:', supabaseError.message);
+    }
+    
+    // Use our server endpoint for login
     console.log('[Client] Attempting to login via server endpoint...');
     const response = await fetch('/api/auth/login', {
       method: 'POST',
@@ -103,15 +153,17 @@ export const loginUser = async (credentials: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(credentials),
+      credentials: 'include', // Important: include cookies in the request
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Login failed:', errorText);
+      console.error('[Client] Login failed:', errorText);
       throw new Error('Login failed: ' + (errorText || response.statusText));
     }
     
     const loginData = await response.json();
+    console.log('[Client] Server login successful');
     
     // Store session in Supabase auth client to ensure persistence
     if (loginData.session && loginData.session.access_token) {
@@ -121,24 +173,29 @@ export const loginUser = async (credentials: {
         access_token: loginData.session.access_token,
         refresh_token: loginData.session.refresh_token
       });
+    } else if (loginData.token) {
+      // Handle older response format
+      console.log('[Client] Setting session from token in older response format');
+      try {
+        const session = await supabase.auth.getSession();
+        if (!session.data.session) {
+          // If we have token but Supabase doesn't have active session
+          console.log('[Client] No active Supabase session, falling back to signInWithPassword');
+          // Re-authenticate with the credentials
+          await supabase.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password
+          });
+        }
+      } catch (sessionError) {
+        console.error('[Client] Error handling fallback session creation:', sessionError);
+      }
     }
     
     return loginData;
-  } catch (serverError) {
-    console.error('Server login failed, falling back to direct Supabase auth:', serverError);
-    
-    // Fallback to direct Supabase Auth if server endpoint fails
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password
-    });
-    
-    if (error) {
-      console.error('Supabase login error:', error);
-      throw new Error(error.message);
-    }
-    
-    return data;
+  } catch (error) {
+    console.error('[Client] Login error:', error);
+    throw error;
   }
 };
 
@@ -149,13 +206,15 @@ export const registerUser = async (userData: {
   role: 'athlete' | 'business' | 'compliance' | 'admin';
 }) => {
   try {
-    // Use our server endpoint for registration
+    console.log('[Client] Registering new user via server endpoint');
+    // Use our server endpoint for registration first
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(userData),
+      credentials: 'include', // Important: include cookies in the request
     });
     
     const responseData = await response.json();
@@ -163,7 +222,7 @@ export const registerUser = async (userData: {
     // Special case: If status is 200 but not 201, it means user exists but credentials are valid
     // - This is a case where the server found an existing account with matching credentials 
     if (response.status === 200 && responseData.user) {
-      console.log('Account already exists but credentials are valid - treating as successful login');
+      console.log('[Client] Account already exists but credentials are valid - treating as successful login');
       return {
         message: 'Account exists, logging in',
         user: responseData.user
@@ -172,7 +231,7 @@ export const registerUser = async (userData: {
     
     // Handle error responses
     if (!response.ok) {
-      console.error('Registration failed:', responseData);
+      console.error('[Client] Registration failed:', responseData);
       
       // Enhanced error message if server provides one
       const errorMessage = responseData.message || 
@@ -182,10 +241,108 @@ export const registerUser = async (userData: {
       throw new Error(errorMessage);
     }
     
+    console.log('[Client] Registration successful with server endpoint');
+    
+    // If server registration was successful but didn't return a session,
+    // also register directly with Supabase to ensure a proper session
+    if (!responseData.session) {
+      try {
+        console.log('[Client] No session from server, registering directly with Supabase');
+        const { data, error } = await supabase.auth.signUp({
+          email: userData.email,
+          password: userData.password,
+          options: {
+            data: {
+              full_name: userData.fullName,
+              user_type: userData.role
+            }
+          }
+        });
+        
+        if (error) {
+          console.warn('[Client] Supabase direct registration failed, but server registration successful:', error);
+          // Not fatal, continue with server registration data
+        } else {
+          console.log('[Client] Supabase direct registration successful, merging data');
+          // Merge the data from both sources
+          return {
+            ...responseData,
+            supabaseData: data
+          };
+        }
+      } catch (supabaseError) {
+        console.warn('[Client] Error during Supabase direct registration, but server registration successful:', supabaseError);
+        // Not fatal, continue with server registration data
+      }
+    }
+    
     return responseData;
   } catch (serverError) {
-    console.error('Server registration failed:', serverError);
-    throw serverError;
+    console.error('[Client] Server registration failed, trying direct Supabase registration:', serverError);
+    
+    // If server registration fails, try direct Supabase Auth
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            full_name: userData.fullName,
+            user_type: userData.role
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('[Client] Supabase direct registration also failed:', error);
+        throw error;
+      }
+      
+      console.log('[Client] Supabase direct registration successful');
+      
+      // When using Supabase direct registration, also create a user record in our database
+      try {
+        console.log('[Client] Creating user record in database after Supabase registration');
+        // We got a Supabase user but need to create a record in our database
+        if (data?.user) {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${data.session?.access_token || ''}`,
+            },
+            body: JSON.stringify({
+              ...userData,
+              auth_id: data.user.id // Link to Supabase Auth user
+            }),
+            credentials: 'include',
+          });
+          
+          if (response.ok) {
+            console.log('[Client] Successfully created user record in database');
+            const serverData = await response.json();
+            
+            return {
+              ...data,
+              serverData
+            };
+          } else {
+            console.warn('[Client] Failed to create user record in database, but Supabase registration successful');
+          }
+        }
+      } catch (dbError) {
+        console.warn('[Client] Error creating user record in database, but Supabase registration successful:', dbError);
+      }
+      
+      return {
+        message: 'Registration successful with Supabase',
+        user: data.user,
+        session: data.session
+      };
+    } catch (supabaseError) {
+      console.error('[Client] Both server and Supabase registration failed:', supabaseError);
+      throw supabaseError;
+    }
   }
 };
 
