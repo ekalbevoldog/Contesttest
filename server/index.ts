@@ -6,8 +6,8 @@ import { setupVite, serveStatic, log } from "./vite.js";
 import { testSupabaseConnection } from "./supabase.js";
 
 // Import storage with error handling
-import { storage } from './storage';
-import { objectStorage } from './objectStorage';
+import { storage } from './storage.js';
+import { objectStorage } from './objectStorage.js';
 
 // Verify storage modules are available with graceful fallback
 console.log('Storage modules initialized - continuing even if Object Storage is unavailable');

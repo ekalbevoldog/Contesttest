@@ -1,13 +1,13 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { db } from "./db";
+import { storage } from "./storage.js";
+import { db } from "./db.js";
 // Use services
-import { geminiService } from "./services/geminiService";
-import { sessionService } from "./services/sessionService";
+import { geminiService } from "./services/geminiService.js";
+import { sessionService } from "./services/sessionService.js";
 // Import Supabase auth
-import { supabase } from "./supabase";
-import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth";
+import { supabase } from "./supabase.js";
+import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
 
 // Mock service for BigQuery
 const bigQueryService = {

@@ -2,12 +2,12 @@ import {
   InsertSession, InsertAthlete, InsertBusiness, 
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
-} from "@shared/schema";
+} from "@shared/schema.js";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
-import { pool } from "./db";
-import { supabase } from "./supabase";
+import { pool } from "./db.js";
+import { supabase } from "./supabase.js";
 
 // Helper for password hashing
 const scryptAsync = promisify(scrypt);
