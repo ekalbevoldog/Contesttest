@@ -73,6 +73,7 @@ export interface IStorage {
   // Auth operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByAuthId(authId: string): Promise<User | undefined>; // New method to find user by Supabase Auth ID
   getAllUsers(): Promise<User[]>;
   createUser(insertUser: Partial<InsertUser>): Promise<User>;
   updateUser(userId: string, userData: Partial<User>): Promise<User | undefined>;
