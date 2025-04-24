@@ -1,8 +1,22 @@
 
 import { Client } from '@replit/object-storage';
 
-// Create a client instance 
-const storageClient = new Client();
+// Create a client instance with proper error handling
+let storageClient;
+try {
+  storageClient = new Client();
+} catch (error) {
+  console.error('Failed to initialize Object Storage:', error);
+  // Create a mock client to prevent app crashes
+  storageClient = {
+    async uploadFromText() { return { ok: false, error: 'Storage not available' }; },
+    async uploadFromBuffer() { return { ok: false, error: 'Storage not available' }; },
+    async downloadAsText() { return { ok: false, error: 'Storage not available' }; },
+    async downloadAsBuffer() { return { ok: false, error: 'Storage not available' }; },
+    async list() { return { ok: false, value: [], error: 'Storage not available' }; },
+    async delete() { return { ok: false, error: 'Storage not available' }; }
+  };
+}
 
 /**
  * Simple wrapper around Replit Object Storage

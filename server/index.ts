@@ -9,8 +9,8 @@ import { testSupabaseConnection } from "./supabase.js";
 import { storage } from './storage';
 import { objectStorage } from './objectStorage';
 
-// Verify storage modules are available
-console.log('Storage modules initialized');
+// Verify storage modules are available with graceful fallback
+console.log('Storage modules initialized - continuing even if Object Storage is unavailable');
 
 const app = express();
 app.use(express.json());
