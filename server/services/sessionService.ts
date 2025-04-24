@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db } from "../db.js";
 
 class SessionService {
   // Create a new session
