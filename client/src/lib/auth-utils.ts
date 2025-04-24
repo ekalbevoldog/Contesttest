@@ -104,12 +104,91 @@ export async function loginWithEmail(email: string, password: string) {
  */
 export async function registerWithEmail(email: string, password: string, fullName: string, role: string) {
   try {
+    console.log('[Auth Utils] Attempting registration with email');
+    
+    // First try to register directly with Supabase for better session handling
+    const { data: supabaseData, error: supabaseError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          role: role,
+          user_type: role
+        }
+      }
+    });
+    
+    if (!supabaseError && supabaseData?.session) {
+      console.log('[Auth Utils] Direct Supabase registration successful');
+      
+      // Now call our API endpoint to create the corresponding database record
+      try {
+        console.log('[Auth Utils] Creating user record in database after Supabase registration');
+        const serverResponse = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseData.session.access_token}`,
+          },
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            fullName, 
+            role,
+            auth_id: supabaseData.user?.id // Include auth ID to link records
+          }),
+          credentials: 'include', // Important: include cookies in the request
+        });
+        
+        if (serverResponse.ok) {
+          console.log('[Auth Utils] Server registration sync successful');
+          const serverData = await serverResponse.json();
+          
+          // Return combined data from both sources
+          return {
+            user: supabaseData.user,
+            session: supabaseData.session,
+            profile: serverData.profile || null,
+            redirectTo: serverData.redirectTo || null,
+            needsProfile: serverData.needsProfile || false,
+            serverData
+          };
+        }
+        
+        // Even if API call fails, we still have a successful Supabase registration
+        console.log('[Auth Utils] Server registration sync failed, but Supabase registration succeeded');
+        return {
+          user: supabaseData.user,
+          session: supabaseData.session,
+          // Assume profile needs to be created if server sync failed
+          needsProfile: true
+        };
+      } catch (apiError) {
+        console.error('[Auth Utils] Server registration sync error:', apiError);
+        // Non-blocking error, still return Supabase data
+        return {
+          user: supabaseData.user,
+          session: supabaseData.session,
+          // Assume profile needs to be created if server sync failed
+          needsProfile: true
+        };
+      }
+    }
+    
+    // If Supabase registration failed or returned errors, try our server endpoint
+    if (supabaseError) {
+      console.log('[Auth Utils] Direct Supabase registration failed, trying server endpoint:', supabaseError.message);
+    }
+    
+    console.log('[Auth Utils] Using server endpoint for registration');
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password, fullName, role }),
+      credentials: 'include', // Important: include cookies in the request
     });
 
     if (!response.ok) {
@@ -117,9 +196,25 @@ export async function registerWithEmail(email: string, password: string, fullNam
       throw new Error(errorData.error || errorData.message || 'Registration failed');
     }
 
-    return await response.json();
+    const apiData = await response.json();
+    console.log('[Auth Utils] Server registration successful');
+    
+    // If server registration succeeded but we don't have a Supabase session, set it
+    if (apiData.session && !supabaseData?.session) {
+      console.log('[Auth Utils] Setting Supabase session from server response');
+      try {
+        await supabase.auth.setSession({
+          access_token: apiData.session.access_token,
+          refresh_token: apiData.session.refresh_token
+        });
+      } catch (sessionError) {
+        console.error('[Auth Utils] Error setting session:', sessionError);
+      }
+    }
+
+    return apiData;
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('[Auth Utils] Registration error:', error);
     throw error;
   }
 }
