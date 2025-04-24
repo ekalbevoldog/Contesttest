@@ -188,7 +188,19 @@ export default function AuthPage() {
                             )}
                           />
                           
-                          <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                          <Button 
+                            type="submit" 
+                            className="w-full" 
+                            disabled={loginMutation.isPending}
+                            onClick={(e) => {
+                              if (!loginForm.formState.isValid) {
+                                // If form is invalid, let the form validation handle it
+                                return;
+                              }
+                              // Otherwise submit the form
+                              loginForm.handleSubmit(onLoginSubmit)(e);
+                            }}
+                          >
                             {loginMutation.isPending ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -332,7 +344,19 @@ export default function AuthPage() {
                             )}
                           />
                           
-                          <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                          <Button 
+                            type="submit" 
+                            className="w-full" 
+                            disabled={registerMutation.isPending}
+                            onClick={(e) => {
+                              if (!registerForm.formState.isValid) {
+                                // If form is invalid, let the form validation handle it
+                                return;
+                              }
+                              // Otherwise submit the form
+                              registerForm.handleSubmit(onRegisterSubmit)(e);
+                            }}
+                          >
                             {registerMutation.isPending ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
