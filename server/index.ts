@@ -1,8 +1,9 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { registerPublicRoutes } from "./routes-public";
-import { setupVite, serveStatic, log } from "./vite";
-import { testSupabaseConnection } from "./supabase";
+import express from "express";
+import type { Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes.js";
+import { registerPublicRoutes } from "./routes-public.js";
+import { setupVite, serveStatic, log } from "./vite.js";
+import { testSupabaseConnection } from "./supabase.js";
 
 const app = express();
 app.use(express.json());
