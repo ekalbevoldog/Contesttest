@@ -1819,7 +1819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
   // Updated WebSocket server path to match client-side configuration
-  const wss = new WebSocketServer({ server: httpServer, path: '/api/ws' });
+  const wss = new WebSocketServer({ server: httpServer, path: '/api/contested-ws' });
   
   // Using the globally defined wsConnections Map (defined at the top of the file)
   // to store connected clients by sessionId

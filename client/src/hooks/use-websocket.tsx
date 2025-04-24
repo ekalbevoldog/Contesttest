@@ -65,7 +65,8 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       // Use the same origin as the current page to avoid CORS issues
       // Don't specify port - let the browser handle it automatically based on current location
-      const wsUrl = `${protocol}//${window.location.host}/api/ws`;
+      // Use a distinct path to avoid conflicts with Vite's WebSocket
+      const wsUrl = `${protocol}//${window.location.host}/api/contested-ws`;
       console.log(`Attempting to connect to WebSocket at ${wsUrl}`);
       
       const socket = new WebSocket(wsUrl);
