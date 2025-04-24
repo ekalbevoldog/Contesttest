@@ -97,57 +97,7 @@ export const loginUser = async (credentials: {
   password: string;
 }) => {
   try {
-    // Try direct Supabase auth first
-    console.log('[Client] Attempting direct Supabase login first...');
-    const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password
-    });
-    
-    // If direct Supabase auth works
-    if (!supabaseError && supabaseData.session) {
-      console.log('[Client] Direct Supabase login successful');
-      
-      // Now call server endpoint to ensure proper user record and session
-      try {
-        console.log('[Client] Syncing login with server endpoint...');
-        const serverResponse = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseData.session.access_token}`,
-          },
-          body: JSON.stringify(credentials),
-          credentials: 'include', // Important: include cookies in the request
-        });
-        
-        if (serverResponse.ok) {
-          const serverLoginData = await serverResponse.json();
-          console.log('[Client] Server sync successful');
-          
-          // Merge server data with Supabase data
-          return {
-            ...supabaseData,
-            server: serverLoginData
-          };
-        } else {
-          console.log('[Client] Server sync returned non-OK status:', serverResponse.status);
-          // Non-blocking error, still return Supabase data
-        }
-      } catch (syncError) {
-        console.warn('[Client] Server sync failed, continuing with Supabase data:', syncError);
-        // Non-blocking error, still return Supabase data
-      }
-      
-      return supabaseData;
-    }
-    
-    // If direct Supabase auth fails, fall back to server endpoint
-    if (supabaseError) {
-      console.log('[Client] Direct Supabase login failed, trying server endpoint:', supabaseError.message);
-    }
-    
-    // Use our server endpoint for login
+    // Use server-first approach to ensure complete synchronization
     console.log('[Client] Attempting to login via server endpoint...');
     const response = await fetch('/api/auth/login', {
       method: 'POST',
@@ -167,30 +117,79 @@ export const loginUser = async (credentials: {
     const loginData = await response.json();
     console.log('[Client] Server login successful');
     
-    // Store session in Supabase auth client to ensure persistence
+    // Store both user and profile data in localStorage for persistence
+    if (typeof window !== 'undefined') {
+      // Store user profile data for quick access
+      if (loginData.user) {
+        localStorage.setItem('contestedUserData', JSON.stringify({
+          ...loginData.user,
+          timestamp: Date.now()
+        }));
+        console.log('[Client] Stored user data in localStorage');
+      }
+    }
+    
+    // Ensure Supabase auth state is synchronized
     if (loginData.session && loginData.session.access_token) {
-      console.log('[Client] Setting session from server login response');
-      // Store the session received from server to Supabase's internal storage
-      await supabase.auth.setSession({
-        access_token: loginData.session.access_token,
-        refresh_token: loginData.session.refresh_token
-      });
-    } else if (loginData.token) {
-      // Handle older response format
-      console.log('[Client] Setting session from token in older response format');
+      console.log('[Client] Setting session in Supabase from server login response');
       try {
-        const session = await supabase.auth.getSession();
-        if (!session.data.session) {
-          // If we have token but Supabase doesn't have active session
-          console.log('[Client] No active Supabase session, falling back to signInWithPassword');
-          // Re-authenticate with the credentials
-          await supabase.auth.signInWithPassword({
+        // Store the session received from server to Supabase's internal storage
+        await supabase.auth.setSession({
+          access_token: loginData.session.access_token,
+          refresh_token: loginData.session.refresh_token
+        });
+        console.log('[Client] Supabase session successfully set');
+      } catch (sessionError) {
+        console.error('[Client] Error setting Supabase session:', sessionError);
+        
+        // If setting session fails, try the direct sign-in approach as fallback
+        try {
+          console.log('[Client] Falling back to direct Supabase auth...');
+          const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password
           });
+          
+          if (error) {
+            console.warn('[Client] Direct Supabase auth fallback failed:', error);
+          } else {
+            console.log('[Client] Direct Supabase auth fallback successful');
+            // Return combined data
+            return {
+              ...loginData,
+              supabaseData: data
+            };
+          }
+        } catch (signInError) {
+          console.error('[Client] Error in direct Supabase auth fallback:', signInError);
+          // Not critical, still proceed with server data
         }
-      } catch (sessionError) {
-        console.error('[Client] Error handling fallback session creation:', sessionError);
+      }
+    } else {
+      console.warn('[Client] No session token received from server, trying direct Supabase auth');
+      
+      try {
+        // Use direct Supabase auth as a fallback
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password
+        });
+        
+        if (error) {
+          console.warn('[Client] Direct Supabase auth failed:', error);
+          // Not critical if we already have server user data
+        } else {
+          console.log('[Client] Direct Supabase auth successful');
+          
+          // Merge with login data
+          return {
+            ...loginData,
+            supabaseData: data
+          };
+        }
+      } catch (directAuthError) {
+        console.error('[Client] Error in direct Supabase auth:', directAuthError);
+        // Not critical, still proceed with server data
       }
     }
     
@@ -350,7 +349,30 @@ export const registerUser = async (userData: {
 
 export const getCurrentUser = async () => {
   try {
-    // First check if we have a session in Supabase
+    // First check local storage for recent cached user data
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedUserData = localStorage.getItem('contestedUserData');
+        if (cachedUserData) {
+          const parsedData = JSON.parse(cachedUserData);
+          // Only use cached data if it's recent (less than 5 minutes old)
+          const isCacheValid = parsedData.timestamp && 
+                              (Date.now() - parsedData.timestamp < 5 * 60 * 1000);
+                              
+          if (isCacheValid) {
+            console.log('[Client] Using recent cached user data from localStorage');
+            return parsedData;
+          } else {
+            console.log('[Client] Cached user data exists but expired, will refresh');
+          }
+        }
+      } catch (cacheError) {
+        console.warn('[Client] Error accessing cached user data:', cacheError);
+        // Continue with normal flow if cache access fails
+      }
+    }
+
+    // Check if we have a session in Supabase
     const { data: sessionData } = await supabase.auth.getSession();
     
     if (!sessionData.session) {
@@ -383,11 +405,40 @@ export const getCurrentUser = async () => {
     
     const userData = await response.json();
     console.log('[Client] Successfully retrieved user data from server:', userData?.email);
+    
+    // Cache the data for next time
+    if (typeof window !== 'undefined' && userData) {
+      try {
+        localStorage.setItem('contestedUserData', JSON.stringify({
+          ...userData,
+          timestamp: Date.now()
+        }));
+        console.log('[Client] Updated user data cache in localStorage');
+      } catch (cacheError) {
+        console.warn('[Client] Failed to cache user data:', cacheError);
+        // Non-critical error, continue
+      }
+    }
+    
     return userData;
   } catch (serverError) {
     console.error('[Client] Server user fetch failed, falling back to direct Supabase auth:', serverError);
     
-    // Fallback to direct Supabase Auth
+    // Try getting user data from localStorage as fallback
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedUserData = localStorage.getItem('contestedUserData');
+        if (cachedUserData) {
+          const parsedData = JSON.parse(cachedUserData);
+          console.log('[Client] Using cached user data as fallback after server error');
+          return parsedData;
+        }
+      } catch (cacheError) {
+        console.warn('[Client] Error accessing cached user data during fallback:', cacheError);
+      }
+    }
+    
+    // Final fallback to direct Supabase Auth
     const { data, error } = await supabase.auth.getUser();
     
     if (error) {
@@ -401,7 +452,43 @@ export const getCurrentUser = async () => {
     
     if (data.user) {
       console.log('[Client] Successfully retrieved user from Supabase:', data.user.email);
+      
+      // Try to enhance the basic user data with additional profile data
+      try {
+        // Check if we can find a user profile for this auth user
+        const { data: profileData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('auth_id', data.user.id)
+          .maybeSingle();
+        
+        if (profileData) {
+          console.log('[Client] Found matching profile record for Supabase user');
+          // Cache the combined data for next time
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('contestedUserData', JSON.stringify({
+                ...data.user,
+                profile: profileData,
+                timestamp: Date.now()
+              }));
+              console.log('[Client] Cached enhanced user data in localStorage');
+            } catch (cacheError) {
+              console.warn('[Client] Failed to cache enhanced user data:', cacheError);
+            }
+          }
+          
+          return {
+            ...data.user,
+            profile: profileData
+          };
+        }
+      } catch (profileError) {
+        console.warn('[Client] Error fetching additional profile data:', profileError);
+        // Not critical, return the basic user data
+      }
     }
+    
     return data.user;
   }
 };
