@@ -17,10 +17,13 @@ import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerCo
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 
 
+import { WebSocketTester } from "@/components/WebSocketTester";
+
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
   const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
+  const [showWebSocketTester, setShowWebSocketTester] = useState(false);
   
   // Listen for the custom event to toggle the AI assistant
   useEffect(() => {
@@ -136,6 +139,37 @@ export default function Home() {
             </FadeIn>
           </div>
         </div>
+        
+        {/* WebSocket Tester Button */}
+        <div className="absolute bottom-10 right-10">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="border-zinc-700 bg-black/50 text-white hover:bg-black/70"
+            onClick={() => setShowWebSocketTester(prev => !prev)}
+          >
+            {showWebSocketTester ? 'Hide' : 'Show'} WebSocket Tester
+          </Button>
+        </div>
+        
+        {/* WebSocket Tester Overlay */}
+        {showWebSocketTester && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="max-w-md w-full">
+              <WebSocketTester />
+              <div className="mt-4 text-center">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="text-zinc-400 hover:text-white"
+                  onClick={() => setShowWebSocketTester(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Divider */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>

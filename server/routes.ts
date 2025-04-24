@@ -1928,6 +1928,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
+        // Handle test message
+        else if (data.type === 'test') {
+          console.log(`Received test message for session ${data.sessionId}`);
+          const responseMessage = {
+            type: 'test_response',
+            message: 'Server received your test message successfully',
+            receivedMessage: data,
+            timestamp: new Date().toISOString()
+          };
+          
+          // Echo back to the client
+          ws.send(JSON.stringify(responseMessage));
+          
+          // Also broadcast to all clients in this session
+          broadcastToSession(data.sessionId, responseMessage);
+        }
+        
         // Process other message types as needed
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
