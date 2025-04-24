@@ -4,8 +4,26 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 let supabaseUrl = '';
 let supabaseKey = '';
 
-// Create a reference to hold the Supabase client - will be properly initialized before use
-export let supabase: SupabaseClient;
+// Declare supabase as a singleton to prevent multiple instances
+// This is the root cause of the "Multiple GoTrueClient instances" warning
+let _supabaseInstance: SupabaseClient | null = null;
+
+// Create a function to get the Supabase client - singleton pattern
+export const getSupabase = () => {
+  if (!_supabaseInstance) {
+    throw new Error('Supabase client not initialized. Call initializeSupabase() first.');
+  }
+  return _supabaseInstance;
+};
+
+// Export a supabase proxy that ensures initialization and redirects all calls to the singleton
+export const supabase = new Proxy({} as SupabaseClient, {
+  get: (target, prop) => {
+    const instance = getSupabase();
+    // @ts-ignore
+    return instance[prop];
+  }
+});
 
 // We'll use a flag to track initialization state
 let isInitialized = false;
@@ -49,28 +67,31 @@ export async function initializeSupabase(): Promise<boolean> {
     console.log(`[Client] Supabase URL prefix: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
     console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
     
-    // Initialize the Supabase client WITHOUT real-time configuration
-    // IMPORTANT: Disabling realtime to avoid WebSocket errors
-    supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        // Explicitly tell Supabase to use the browser's localStorage
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        storageKey: 'contested-auth'
-      },
-      // Explicitly disable realtime to prevent WebSocket connection attempts
-      realtime: {
-        params: {
-          eventsPerSecond: 0
+    // Create only ONE instance of the Supabase client WITHOUT real-time configuration
+    // This is the key fix for the "Multiple GoTrueClient instances" warning
+    if (!_supabaseInstance) {
+      console.log('[Client] Creating new Supabase client instance');
+      _supabaseInstance = createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          // Explicitly tell Supabase to use the browser's localStorage
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+          storageKey: 'contested-auth'
+        },
+        // Explicitly disable realtime to prevent WebSocket connection attempts
+        realtime: {
+          params: {
+            eventsPerSecond: 0
+          }
+        },
+        global: {
+          headers: {
+            'X-Client-Info': 'nil-connect' // Identify our app to Supabase
+          }
         }
-      },
-      global: {
-        headers: {
-          'X-Client-Info': 'nil-connect' // Identify our app to Supabase
-        }
-      }
-    });
+      });
+    }
     
     console.log('[Client] Supabase initialized with realtime DISABLED');
     

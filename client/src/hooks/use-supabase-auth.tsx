@@ -6,7 +6,8 @@ import {
   logoutUser, 
   getCurrentUser, 
   checkUserProfile,
-  initializeSupabase
+  initializeSupabase,
+  getSupabase
 } from '@/lib/supabase-client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
@@ -109,49 +110,85 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     getSessionAndUser();
   }, [isInitializing]);
 
-  // 2) Subscribe to future auth changes
+  // 2) Subscribe to future auth changes with improved error handling
   useEffect(() => {
+    if (isInitializing) {
+      return; // Don't set up the listener until Supabase is initialized
+    }
+    
     console.log('[Auth] Setting up auth state change listener');
     
     let subscription: any = null;
+    let retryCount = 0;
+    const maxRetries = 3;
     
-    try {
-      const { data } = supabase.auth.onAuthStateChange(
-        async (event, newSession) => {
-          console.log('[Auth] Auth state change event:', event);
-          
-          if (newSession) {
-            console.log('[Auth] Auth state change - setting new session');
-            setSession(newSession);
-            setUser(newSession?.user ?? null);
-          } else {
-            console.log('[Auth] Auth state change - clearing session');
-            setSession(null);
-            setUser(null);
-            setUserData(null);
+    const setupAuthListener = () => {
+      try {
+        if (!_supabaseInstance) {
+          console.warn('[Auth] Supabase instance not available for auth listener');
+          return null;
+        }
+        
+        // Get the singleton instance directly instead of using the proxy
+        // This is important to avoid multiple GoTrueClient instances
+        const { data } = getSupabase().auth.onAuthStateChange(
+          async (event, newSession) => {
+            console.log('[Auth] Auth state change event:', event);
             
-            if (event === 'SIGNED_OUT') {
-              // Add delay to make sure state is updated before redirection
-              setTimeout(() => {
-                navigate('/');
-              }, 100);
+            if (newSession) {
+              console.log('[Auth] Auth state change - setting new session');
+              setSession(newSession);
+              setUser(newSession?.user ?? null);
+            } else {
+              console.log('[Auth] Auth state change - clearing session');
+              setSession(null);
+              setUser(null);
+              setUserData(null);
+              
+              if (event === 'SIGNED_OUT') {
+                // Add delay to make sure state is updated before redirection
+                setTimeout(() => {
+                  navigate('/');
+                }, 100);
+              }
             }
           }
+        );
+        
+        console.log('[Auth] Auth state change listener successfully set up');
+        return data.subscription;
+      } catch (error) {
+        console.error('[Auth] Error setting up auth state change listener:', error);
+        
+        // Retry logic
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`[Auth] Retrying to set up auth listener (${retryCount}/${maxRetries})...`);
+          
+          // Wait a bit before retrying
+          setTimeout(() => {
+            subscription = setupAuthListener();
+          }, 1000 * retryCount); // Increasing backoff
         }
-      );
-      
-      subscription = data.subscription;
-    } catch (error) {
-      console.error('[Auth] Error setting up auth state change listener:', error);
-    }
+        
+        return null;
+      }
+    };
+    
+    // Initial setup
+    subscription = setupAuthListener();
     
     return () => {
       if (subscription) {
         console.log('[Auth] Cleaning up auth state change listener');
-        subscription.unsubscribe();
+        try {
+          subscription.unsubscribe();
+        } catch (error) {
+          console.warn('[Auth] Error unsubscribing from auth changes:', error);
+        }
       }
     };
-  }, [navigate]);
+  }, [navigate, isInitializing]);
 
   // 3) Whenever `user` changes, fetch profile once
   useEffect(() => {
