@@ -2,6 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
 import { db } from "./db.js";
+// Use local schema module instead of @shared to fix production build path resolution
+import * as schema from "../shared/schema.js";
 // Use services
 import { geminiService } from "./services/geminiService.js";
 import { sessionService } from "./services/sessionService.js";
@@ -71,7 +73,8 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   }
 }
 import { setupAuth } from "./auth";
-import { insertFeedbackSchema, Feedback } from "@shared/schema";
+// Use local schema import instead of @shared alias to fix production build
+import { insertFeedbackSchema, Feedback } from "../shared/schema.js";
 
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';
