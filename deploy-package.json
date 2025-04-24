@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI-powered platform connecting college athletes with businesses",
   "main": "server.js",
+  "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
