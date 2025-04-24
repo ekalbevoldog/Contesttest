@@ -94,11 +94,19 @@ export default function SignIn() {
   
   // Handle login form submission
   const onLoginSubmit = async (values: LoginFormValues) => {
-    const { error } = await signIn(values.email, values.password);
-    
-    if (!error) {
-      // Login successful, redirect happens via the auth provider
-      loginForm.reset();
+    try {
+      console.log("Starting login process for:", values.email);
+      const { error } = await signIn(values.email, values.password);
+      
+      if (!error) {
+        // Login successful, redirect happens via the auth provider
+        console.log("Login successful, form will be reset");
+        loginForm.reset();
+      } else {
+        console.error("Login error returned:", error);
+      }
+    } catch (e) {
+      console.error("Unexpected login error:", e);
     }
   };
   
@@ -111,13 +119,19 @@ export default function SignIn() {
     };
     
     try {
+      console.log("Starting registration process for:", values.email, "with role:", values.userType);
       const { error, user } = await signUp(values.email, values.password, userData);
       
       if (!error && user) {
         // Registration successful
+        console.log("Registration successful, user created:", user.id);
         registerForm.reset();
         
-        if (user.role === values.userType) {
+        // Use the user role from the response if available
+        const userRole = user.role || values.userType;
+        console.log("User role for redirection:", userRole);
+        
+        if (userRole === values.userType) {
           // User exists with right role or new user successfully created
           toast({
             title: 'Account ready',
@@ -128,15 +142,18 @@ export default function SignIn() {
           navigate(`/onboarding?userType=${values.userType}`);
         } else {
           // User exists but with different role
+          console.log("Role mismatch - expected:", values.userType, "got:", userRole);
           toast({
             title: 'Account exists with different role',
-            description: `This email is already registered as a ${user.role}. Please use a different email or login.`,
+            description: `This email is already registered as a ${userRole}. Please use a different email or login.`,
             variant: 'destructive'
           });
           
           // Switch to login tab
           setActiveTab('login');
         }
+      } else {
+        console.error("Registration returned error:", error);
       }
     } catch (e: any) {
       // Error is already handled by the hook, but might want to do something else here

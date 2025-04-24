@@ -202,27 +202,41 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (authError) {
+      // Use our updated login function that handles both direct and server auth
+      const loginData = await loginUser({ email, password });
+      
+      // Our custom method might return different structure based on success path
+      if (loginData.error) {
         toast({
           title: 'Login failed',
-          description: authError.message,
+          description: loginData.error.message || loginData.error,
           variant: 'destructive',
         });
-        return { error: authError };
+        return { error: loginData.error };
       }
-
+      
       toast({
         title: 'Login successful',
         description: 'You have been logged in successfully.',
       });
-
-      return { error: null, user: authData.user as EnhancedUser };
+      
+      // After successful login, check user data
+      let userData = null;
+      
+      if (loginData.user) {
+        userData = loginData.user;
+      } else if (loginData.session?.user) {
+        userData = loginData.session.user;
+      } else if (loginData.data?.user) {
+        userData = loginData.data.user;
+      }
+      
+      // Refresh profile data to ensure we have the latest
+      await refreshProfile();
+      
+      return { error: null, user: userData as EnhancedUser };
     } catch (e: any) {
+      console.error('Login error:', e);
       toast({
         title: 'Login failed',
         description: e.message,
