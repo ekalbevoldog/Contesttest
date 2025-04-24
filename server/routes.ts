@@ -1693,6 +1693,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update user's sessionId
           await storage.updateUser(user.id, { sessionId });
           
+          // Also sign in with Supabase to get a proper session token
+          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+          });
+          
+          if (authError) {
+            console.warn("Warning: Couldn't get Supabase session during login:", authError);
+          }
+          
           return res.status(200).json({
             message: "Login successful",
             user: {
@@ -1701,7 +1711,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userType: user.userType,
               username: user.username
             },
-            sessionId
+            sessionId,
+            session: authData?.session || null
           });
         }
       } catch (storageError) {
@@ -1734,6 +1745,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         supabaseUserId: authData.user?.id
       });
       
+      // Ensure we have a user record in our database for this Supabase user
+      try {
+        const existingUser = await storage.getUserByEmail(authData.user?.email || '');
+        
+        if (!existingUser) {
+          console.log('Creating user record in database for Supabase Auth user:', authData.user?.id);
+          // Create the user in our database
+          await storage.createUser({
+            email: authData.user?.email || '',
+            password: 'SUPABASE_AUTH_USER', // This is a placeholder as auth is handled by Supabase
+            role: userType,
+            auth_id: authData.user?.id
+          });
+        }
+      } catch (dbError) {
+        console.warn('Warning: Could not ensure user record exists in database:', dbError);
+      }
+      
       return res.status(200).json({
         message: "Login successful with Supabase Auth",
         user: {
@@ -1742,7 +1771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userType: userType
         },
         sessionId,
-        token: authData.session?.access_token
+        session: authData.session // Include complete session for client-side storage
       });
     } catch (error) {
       console.error("Error logging in:", error);

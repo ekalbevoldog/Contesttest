@@ -96,6 +96,7 @@ export const loginUser = async (credentials: {
 }) => {
   try {
     // First, try to use our server endpoint for more complete data
+    console.log('[Client] Attempting to login via server endpoint...');
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
@@ -111,6 +112,17 @@ export const loginUser = async (credentials: {
     }
     
     const loginData = await response.json();
+    
+    // Store session in Supabase auth client to ensure persistence
+    if (loginData.session && loginData.session.access_token) {
+      console.log('[Client] Setting session from server login response');
+      // Store the session received from server to Supabase's internal storage
+      await supabase.auth.setSession({
+        access_token: loginData.session.access_token,
+        refresh_token: loginData.session.refresh_token
+      });
+    }
+    
     return loginData;
   } catch (serverError) {
     console.error('Server login failed, falling back to direct Supabase auth:', serverError);
@@ -179,69 +191,109 @@ export const registerUser = async (userData: {
 
 export const getCurrentUser = async () => {
   try {
-    // Try server endpoint first for complete profile data
+    // First check if we have a session in Supabase
+    const { data: sessionData } = await supabase.auth.getSession();
+    
+    if (!sessionData.session) {
+      console.log('[Client] No active session found in Supabase');
+      return null;
+    }
+    
+    console.log('[Client] Active session found, fetching user data from server');
+    // Try server endpoint for complete profile data
     const response = await fetch('/api/auth/user', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
+        'Authorization': `Bearer ${sessionData.session?.access_token || ''}`,
       },
+      credentials: 'include', // Important: include cookies in the request
     });
     
     if (!response.ok) {
       // If server endpoint fails with auth error, return null (not authenticated)
       if (response.status === 401) {
+        console.log('[Client] Server returned 401, user not authenticated');
         return null;
       }
       
       // For other errors, we'll try the direct Supabase approach
       const errorText = await response.text();
-      console.error('Server user fetch failed:', errorText);
+      console.error('[Client] Server user fetch failed:', errorText);
       throw new Error('Failed to fetch user: ' + (errorText || response.statusText));
     }
     
     const userData = await response.json();
+    console.log('[Client] Successfully retrieved user data from server:', userData?.email);
     return userData;
   } catch (serverError) {
-    console.error('Server user fetch failed, falling back to direct Supabase auth:', serverError);
+    console.error('[Client] Server user fetch failed, falling back to direct Supabase auth:', serverError);
     
     // Fallback to direct Supabase Auth
     const { data, error } = await supabase.auth.getUser();
     
     if (error) {
       if (error.status === 401) {
+        console.log('[Client] Supabase returned 401, user not authenticated');
         return null; // Not authenticated
       }
-      console.error('Supabase getUser error:', error);
+      console.error('[Client] Supabase getUser error:', error);
       throw new Error(error.message);
     }
     
+    if (data.user) {
+      console.log('[Client] Successfully retrieved user from Supabase:', data.user.email);
+    }
     return data.user;
   }
 };
 
 export const logoutUser = async () => {
   try {
-    // Call server logout endpoint
+    console.log('[Client] Logging out user');
+    
+    // Get session first to include in logout request
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token || '';
+    
+    // Call server logout endpoint first
+    console.log('[Client] Logging out from server endpoint');
     const response = await fetch('/api/auth/logout', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ''}`,
+        'Authorization': `Bearer ${token}`,
       },
+      credentials: 'include', // Important: include cookies in the request
     });
     
-    // Also perform client-side logout with Supabase
-    await supabase.auth.signOut();
+    if (!response.ok) {
+      console.warn('[Client] Server logout may have failed:', response.status);
+    }
     
+    // Then perform client-side logout with Supabase
+    console.log('[Client] Signing out from Supabase Auth');
+    await supabase.auth.signOut({ scope: 'global' }); // Ensure all sessions are removed
+    
+    // Clear any localStorage items that might contain auth data
+    localStorage.removeItem('supabase.auth.token');
+    localStorage.removeItem('sb-auth-token');
+    
+    console.log('[Client] Logout complete');
     return true;
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('[Client] Logout error:', error);
     
     // Try direct Supabase logout as fallback
     try {
-      await supabase.auth.signOut();
+      console.log('[Client] Attempting direct Supabase signOut as fallback');
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Clear any localStorage items that might contain auth data
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-auth-token');
+      
       return true;
     } catch (directError) {
-      console.error('Direct Supabase logout failed:', directError);
+      console.error('[Client] Direct Supabase logout failed:', directError);
       throw directError;
     }
   }
