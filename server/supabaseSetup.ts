@@ -353,7 +353,7 @@ export async function initializeSupabaseTables() {
 }
 
 // Import the profile migration function
-import { runProfileMigration } from './runProfileMigration';
+import { runProfileMigration } from './runProfileMigration.js';
 
 // Export a function to initialize everything at once
 export async function setupSupabase() {

@@ -1,4 +1,4 @@
-// Production server entry point with enhanced error handling and fallback mechanisms
+// Production server entry point with enhanced error handling
 // This script handles TypeScript compilation issues during deployment
 // by providing multiple fallback options to load the server
 
@@ -25,7 +25,7 @@ process.on("unhandledRejection", (reason, promise) => {
 // Load environment variables from multiple possible locations
 try {
   // Try to load from .env files in various locations
-  const dotenv = require("dotenv");
+  const dotenv = await import("dotenv");
 
   // Order of priority (later overrides earlier)
   const envFiles = [
@@ -100,64 +100,13 @@ if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL) {
 // Try different ways to start the server with fallbacks
 console.log("Starting server in production mode...");
 
-// Return true if successful, false if failed
-function tryRequire(path) {
-  try {
-    require(path);
-    return true;
-  } catch (error) {
-    console.error(`Failed to load ${path}:`, error.message);
-    return false;
-  }
-}
-
-// Try multiple loading strategies in order of preference
-const strategies = [
-  // Strategy 1: Regular compiled JavaScript
-  () => {
-    console.log("Trying to load compiled JavaScript...");
-    return tryRequire("./dist/server/index.js");
-  },
-
-  // Strategy 2: Server-ts.js fallback (when TypeScript compilation failed)
-  () => {
-    console.log("Trying fallback ts-node loader...");
-    return tryRequire("./dist/server-ts.js");
-  },
-
-  // Strategy 3: Direct ts-node usage
-  () => {
-    console.log("Trying direct ts-node compilation...");
-    try {
-      // Dynamically load ts-node and register it
-      require("ts-node").register({
-        transpileOnly: true,
-        compilerOptions: {
-          module: "commonjs",
-        },
-      });
-
-      // Load the original TypeScript entry point
-      require("./server/index.ts");
-      return true;
-    } catch (error) {
-      console.error("Failed with direct ts-node:", error.message);
-      return false;
-    }
-  },
-];
-
-// Try each strategy in order until one succeeds
-let started = false;
-for (const strategy of strategies) {
-  started = strategy();
-  if (started) {
-    console.log("Server started successfully.");
-    break;
-  }
-}
-
-if (!started) {
+// Import and start the server
+try {
+  console.log("Loading compiled JavaScript...");
+  await import("./dist/server/index.js");
+  console.log("Server started successfully.");
+} catch (error) {
+  console.error(`Failed to load compiled JavaScript:`, error.message);
   console.error("All server startup strategies failed.");
   console.error("Please rebuild the application or check the server code.");
   process.exit(1);
