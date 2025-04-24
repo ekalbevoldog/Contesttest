@@ -286,27 +286,11 @@ export default function SignIn() {
                           />
                           
                           <Button 
-                            type="button" // Changed from submit to button
+                            type="submit"
                             className="w-full" 
-                            disabled={loginForm.formState.isSubmitting || isLoading}
-                            onClick={() => {
-                              console.log("Login button clicked");
-                              // Simple values with hardcoded test account for now
-                              onLoginSubmit({
-                                email: loginForm.getValues().email || "test@example.com",
-                                password: loginForm.getValues().password || "password123"
-                              });
-                            }}
+                            disabled={loginForm.formState.isSubmitting}
                           >
-                            {loginForm.formState.isSubmitting || isLoading ? (
-                              <div className="flex items-center justify-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Signing in...
-                              </div>
-                            ) : "Sign In"}
+                            {loginForm.formState.isSubmitting ? "Signing in..." : "Sign In"}
                           </Button>
                         </form>
                       </Form>
@@ -429,29 +413,11 @@ export default function SignIn() {
                           />
                           
                           <Button 
-                            type="button" // Changed from submit to button
+                            type="submit"
                             className="w-full" 
-                            disabled={registerForm.formState.isSubmitting || isLoading}
-                            onClick={() => {
-                              console.log("Register button clicked");
-                              // Get values from the form
-                              onRegisterSubmit({
-                                email: registerForm.getValues().email || "newuser@example.com",
-                                password: registerForm.getValues().password || "password123",
-                                confirmPassword: registerForm.getValues().confirmPassword || "password123",
-                                userType: registerForm.getValues().userType || "athlete"
-                              });
-                            }}
+                            disabled={registerForm.formState.isSubmitting}
                           >
-                            {registerForm.formState.isSubmitting || isLoading ? (
-                              <div className="flex items-center justify-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Creating account...
-                              </div>
-                            ) : "Create Account"}
+                            {registerForm.formState.isSubmitting ? "Creating account..." : "Create Account"}
                           </Button>
                         </form>
                       </Form>
