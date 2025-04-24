@@ -192,14 +192,6 @@ export default function AuthPage() {
                             type="submit" 
                             className="w-full" 
                             disabled={loginMutation.isPending}
-                            onClick={(e) => {
-                              if (!loginForm.formState.isValid) {
-                                // If form is invalid, let the form validation handle it
-                                return;
-                              }
-                              // Otherwise submit the form
-                              loginForm.handleSubmit(onLoginSubmit)(e);
-                            }}
                           >
                             {loginMutation.isPending ? (
                               <>
@@ -348,14 +340,6 @@ export default function AuthPage() {
                             type="submit" 
                             className="w-full" 
                             disabled={registerMutation.isPending}
-                            onClick={(e) => {
-                              if (!registerForm.formState.isValid) {
-                                // If form is invalid, let the form validation handle it
-                                return;
-                              }
-                              // Otherwise submit the form
-                              registerForm.handleSubmit(onRegisterSubmit)(e);
-                            }}
                           >
                             {registerMutation.isPending ? (
                               <>
