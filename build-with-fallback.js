@@ -36,7 +36,7 @@ try {
       '--outdir=dist ' +
       '--platform=node ' +
       '--target=node16 ' +
-      '--format=cjs ' +
+      '--format=esm ' +
       '--bundle=false ' +
       '--sourcemap ' +
       '--allow-overwrite';

@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "moduleResolution": "Node",
     "target": "ES2020",
-    "module": "CommonJS",
+    "module": "ESNext",
     "resolveJsonModule": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
