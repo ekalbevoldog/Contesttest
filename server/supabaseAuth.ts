@@ -1,6 +1,6 @@
 import { Express, Request, Response, NextFunction } from "express";
-import { supabase } from "./supabase";
-import { storage } from "./storage";
+import { supabase } from "./supabase.js";
+import { storage } from "./storage.js";
 
 // Define the User interface for our request object - using just string type properties
 export interface User {
