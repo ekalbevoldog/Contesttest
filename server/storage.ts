@@ -497,6 +497,34 @@ export class SupabaseStorage implements IStorage {
     }
   }
   
+  async getUserByAuthId(authId: string): Promise<User | undefined> {
+    try {
+      console.log(`Looking up user by auth_id: ${authId}`);
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', authId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error getting user by auth_id:', error);
+        return undefined;
+      }
+      
+      if (data) {
+        console.log(`Found user with auth_id ${authId}: ${data.email}`);
+        return this.mapUserFromDb(data);
+      } else {
+        console.log(`No user found with auth_id ${authId}`);
+        return undefined;
+      }
+    } catch (error) {
+      console.error('Exception getting user by auth_id:', error);
+      return undefined;
+    }
+  }
+  
   async getAllUsers(): Promise<User[]> {
     try {
       const { data, error } = await supabase
@@ -1549,6 +1577,7 @@ export class MemStorage implements IStorage {
 
   async getUser(id: string): Promise<User | undefined> { return undefined; }
   async getUserByEmail(email: string): Promise<User | undefined> { return undefined; }
+  async getUserByAuthId(authId: string): Promise<User | undefined> { return undefined; }
   async getAllUsers(): Promise<User[]> { return []; }
   async createUser(insertUser: Partial<InsertUser>): Promise<User> { return { id: 1, email: insertUser.email || '', username: insertUser.username || '', password: '', role: 'athlete' } as User; }
   async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> { return { id: Number(userId) } as User; }
