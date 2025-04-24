@@ -79,7 +79,8 @@ export default function BusinessDashboard() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
   useEffect(() => {
-    if (loading || isLoadingAuth) return;
+    // If we're still loading the auth state, wait
+    if (isLoadingAuth) return;
     
     console.log('BusinessDashboard: fetching profile data');
     
@@ -103,26 +104,12 @@ export default function BusinessDashboard() {
       
       setProfileData(profileToUse);
       setIsLoadingProfile(false);
+      setLoading(false);
       return;
     }
     
-    // Second priority: try localStorage cache
-    const storedUserData = localStorage.getItem('contestedUserData');
-    if (storedUserData) {
-      console.log('Found profile data in localStorage');
-      try {
-        const parsedData = JSON.parse(storedUserData);
-        setProfileData(parsedData);
-        setIsLoadingProfile(false);
-        return;
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        // Continue to other methods if JSON parse fails
-      }
-    }
-    
-    // Third priority: if we have a user ID but no profile, fetch from API
-    if (user?.id) {
+    // If we have user but no profile yet - this happens after registration
+    if (user && !authProfile) {
       console.log(`Using userId ${user.id} to fetch business profile`);
       
       fetch(`/api/supabase/business-profile/${user.id}`)
@@ -153,59 +140,43 @@ export default function BusinessDashboard() {
             setProfileData(data);
           }
           setIsLoadingProfile(false);
+          setLoading(false);
         })
         .catch(err => {
           console.error('Error fetching business profile:', err);
           
-          // Fourth priority: try the generic profile endpoint
-          console.log('Falling back to general profile API');
-          return fetch('/api/profile')
-            .then(res => res.json())
-            .then(data => {
-              console.log('Fallback profile data:', data);
-              setProfileData(data);
-              setIsLoadingProfile(false);
-            })
-            .catch(generalErr => {
-              console.error('Error fetching general profile:', generalErr);
-              setIsLoadingProfile(false);
-              
-              // If everything fails, display an error toast
-              toast({
-                title: "Profile Error",
-                description: "Could not load your profile data",
-                variant: "destructive"
-              });
-            });
-        });
-    } else {
-      console.log('No authenticated user found, using general profile API');
-      // No authenticated user, try general profile API
-      fetch('/api/profile')
-        .then(res => res.json())
-        .then(data => {
-          console.log('Profile data from general API:', data);
-          setProfileData(data);
-          setIsLoadingProfile(false);
-        })
-        .catch(err => {
-          console.error('Error fetching profile:', err);
-          setIsLoadingProfile(false);
-          
-          // If all attempts fail and we don't have a user, navigate to login
-          if (!user) {
-            toast({
-              title: "Authentication Required",
-              description: "Please log in to view your dashboard",
-              variant: "destructive"
-            });
-            
-            // Delay navigation to allow the toast to be seen
-            setTimeout(() => navigate("/auth"), 2000);
+          // Set a default profile with basic user info if we at least have the user
+          if (user) {
+            const defaultProfile: ProfileData = {
+              name: user.fullName || '',
+              email: user.email || ''
+            };
+            setProfileData(defaultProfile);
           }
+          
+          setIsLoadingProfile(false);
+          setLoading(false);
         });
+    } else if (!user) {
+      console.log('No authenticated user found, redirecting to login');
+      setIsLoadingProfile(false);
+      setLoading(false);
+      
+      // If no user, show a toast and redirect
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to view your dashboard",
+        variant: "destructive"
+      });
+      
+      // Navigate to auth page
+      navigate("/auth");
+    } else {
+      // Fallback case - we have a user but something else went wrong
+      setIsLoadingProfile(false);
+      setLoading(false);
     }
-  }, [loading, user, authProfile, isLoadingAuth, navigate, toast]);
+  }, [user, authProfile, isLoadingAuth, navigate, toast]);
   
   if (loading || isLoadingProfile) {
     return (
