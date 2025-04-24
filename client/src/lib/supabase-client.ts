@@ -4,15 +4,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 let supabaseUrl = '';
 let supabaseKey = '';
 
-// Create the Supabase client with placeholder values first - will be updated after initialization
-export let supabase: SupabaseClient = createClient('https://placeholder-url.supabase.co', 'placeholder-key', {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'contested-auth'
-  }
-});
+// Create a reference to hold the Supabase client - will be properly initialized before use
+export let supabase: SupabaseClient;
 
 // We'll use a flag to track initialization state
 let isInitialized = false;
