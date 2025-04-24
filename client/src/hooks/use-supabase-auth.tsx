@@ -122,17 +122,18 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     let retryCount = 0;
     const maxRetries = 3;
     
+    // Helper function to set up the auth state change listener
     const setupAuthListener = () => {
       try {
-        if (!_supabaseInstance) {
-          console.warn('[Auth] Supabase instance not available for auth listener');
+        // First check if Supabase is initialized and get the instance
+        if (!supabase) {
+          console.error('[Auth] Supabase client not available yet');
           return null;
         }
         
-        // Get the singleton instance directly instead of using the proxy
-        // This is important to avoid multiple GoTrueClient instances
-        const { data } = getSupabase().auth.onAuthStateChange(
-          async (event, newSession) => {
+        // Create the listener for auth state changes
+        const subscription = supabase.auth.onAuthStateChange(
+          async (event: string, newSession: any) => {
             console.log('[Auth] Auth state change event:', event);
             
             if (newSession) {
@@ -156,16 +157,16 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         );
         
         console.log('[Auth] Auth state change listener successfully set up');
-        return data.subscription;
+        return subscription.data.subscription;
       } catch (error) {
         console.error('[Auth] Error setting up auth state change listener:', error);
         
-        // Retry logic
+        // Retry logic with exponential backoff
         if (retryCount < maxRetries) {
           retryCount++;
           console.log(`[Auth] Retrying to set up auth listener (${retryCount}/${maxRetries})...`);
           
-          // Wait a bit before retrying
+          // Wait a bit before retrying with increasing delay
           setTimeout(() => {
             subscription = setupAuthListener();
           }, 1000 * retryCount); // Increasing backoff
