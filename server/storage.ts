@@ -1600,6 +1600,12 @@ export class MemStorage implements IStorage {
   async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> { return { id: feedbackId } as Feedback; }
 }
 
+// Import the object storage
+import { objectStorage } from './objectStorage';
+
 // Export the storage implementation
 // export const storage = new DatabaseStorage();
 export const storage = new SupabaseStorage();
+
+// Export object storage for file operations
+export { objectStorage };
