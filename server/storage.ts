@@ -1577,7 +1577,10 @@ export class MemStorage implements IStorage {
 
   async getUser(id: string): Promise<User | undefined> { return undefined; }
   async getUserByEmail(email: string): Promise<User | undefined> { return undefined; }
-  async getUserByAuthId(authId: string): Promise<User | undefined> { return undefined; }
+  async getUserByAuthId(authId: string): Promise<User | undefined> { 
+    console.log(`MemStorage.getUserByAuthId called with authId: ${authId}`);
+    return undefined; 
+  }
   async getAllUsers(): Promise<User[]> { return []; }
   async createUser(insertUser: Partial<InsertUser>): Promise<User> { return { id: 1, email: insertUser.email || '', username: insertUser.username || '', password: '', role: 'athlete' } as User; }
   async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> { return { id: Number(userId) } as User; }
