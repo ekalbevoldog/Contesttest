@@ -1,6 +1,4 @@
 
-// build-with-fallback.js
-// This script attempts to build the project with TypeScript
 // If TypeScript compilation fails, it falls back to using esbuild directly
 // which is more permissive and will generate JavaScript output even with TS errors
 
