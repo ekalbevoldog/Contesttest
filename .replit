@@ -14,6 +14,10 @@ build = ["sh", "-c", "NODE_ENV=production node build-with-fallback.js"]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 5001
+externalPort = 3000
+
 [workflows]
 runButton = "Dev"
 
