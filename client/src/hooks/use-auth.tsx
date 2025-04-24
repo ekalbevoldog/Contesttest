@@ -439,9 +439,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setProfile(null);
       
-      // Clear localStorage
-      localStorage.removeItem('contestedUserData');
-      localStorage.removeItem('userId');
+      // Clear localStorage completely
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('contestedUserData');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('contested-auth');
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-auth-token');
+      }
       
       // Clear query cache
       queryClient.setQueryData(["/api/auth/user"], null);
@@ -465,8 +471,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Even if logout fails, clear state locally
       setUser(null);
       setProfile(null);
-      localStorage.removeItem('contestedUserData');
-      localStorage.removeItem('userId');
+      
+      // Clear localStorage completely
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('contestedUserData');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('contested-auth');
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-auth-token');
+      }
       queryClient.setQueryData(["/api/auth/user"], null);
       
       toast({

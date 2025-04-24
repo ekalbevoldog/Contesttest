@@ -5,7 +5,14 @@ let supabaseUrl = '';
 let supabaseKey = '';
 
 // Create the Supabase client with placeholder values first - will be updated after initialization
-export let supabase: SupabaseClient;
+export let supabase: SupabaseClient = createClient('https://placeholder-url.supabase.co', 'placeholder-key', {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'contested-auth'
+  }
+});
 
 // We'll use a flag to track initialization state
 let isInitialized = false;
@@ -55,7 +62,9 @@ export async function initializeSupabase(): Promise<boolean> {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
-        storageKey: 'nil-connect-auth'
+        // Explicitly tell Supabase to use the browser's localStorage
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: 'contested-auth'
       },
       // Explicitly disable realtime to prevent WebSocket connection attempts
       realtime: {
@@ -431,8 +440,21 @@ export const logoutUser = async () => {
     await supabase.auth.signOut({ scope: 'global' }); // Ensure all sessions are removed
     
     // Clear any localStorage items that might contain auth data
-    localStorage.removeItem('supabase.auth.token');
-    localStorage.removeItem('sb-auth-token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-auth-token');
+      localStorage.removeItem('contested-auth');
+      localStorage.removeItem('contestedUserData');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+      
+      // Clear any other potential Supabase tokens
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     
     console.log('[Client] Logout complete');
     return true;
@@ -445,8 +467,21 @@ export const logoutUser = async () => {
       await supabase.auth.signOut({ scope: 'global' });
       
       // Clear any localStorage items that might contain auth data
-      localStorage.removeItem('supabase.auth.token');
-      localStorage.removeItem('sb-auth-token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-auth-token');
+        localStorage.removeItem('contested-auth');
+        localStorage.removeItem('contestedUserData');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        
+        // Clear any other potential Supabase tokens
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
       
       return true;
     } catch (directError) {

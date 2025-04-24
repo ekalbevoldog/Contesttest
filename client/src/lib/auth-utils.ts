@@ -309,8 +309,14 @@ export async function logout() {
     await supabase.auth.signOut();
     
     // Clear any local storage items
-    localStorage.removeItem('contestedUserData');
-    localStorage.removeItem('userId');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('contestedUserData');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('contested-auth');
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-auth-token');
+    }
     
     return true;
   } catch (error) {
@@ -319,6 +325,17 @@ export async function logout() {
     // Try direct Supabase logout as fallback
     try {
       await supabase.auth.signOut();
+      
+      // Also clear localStorage in the fallback path
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('contestedUserData');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('contested-auth');
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-auth-token');
+      }
+      
       return true;
     } catch (directError) {
       console.error('Direct Supabase logout failed:', directError);

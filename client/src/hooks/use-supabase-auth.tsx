@@ -19,12 +19,13 @@ interface AuthContextType {
   user: EnhancedUser | null;
   session: any | null;
   isLoading: boolean;
+  loadingProfile: boolean;
+  userData: any; // Profile data
   hasCompletedProfile: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any, user?: EnhancedUser }>;
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any, user: any }>;
   signOut: () => Promise<void>;
   setUserData: (data: any) => void;
-  userData: any;
   refreshProfile: () => Promise<void>;
 }
 
@@ -34,302 +35,254 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<EnhancedUser | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
-  const [isSupabaseInitialized, setIsSupabaseInitialized] = useState(false);
   const { toast } = useToast();
   const [location, navigate] = useLocation();
 
-  // Supabase is now initialized in main.tsx before the app renders
+  // 1) On mount, rehydrate session & user
   useEffect(() => {
-    // Mark as initialized since we know Supabase is already initialized
-    setIsSupabaseInitialized(true);
-  }, []);
-
-  // Function to refresh the user's profile data
-  const refreshProfile = async () => {
-    if (!user || !user.id) return;
-    
-    try {
-      setIsLoading(true);
-      // Get the basic user information
-      const userData = await getCurrentUser();
-      
-      if (!userData) return;
-      
-      // Set user session data
-      const { data } = await supabase.auth.getSession();
-      if (data?.session) {
+    console.log('[Auth] Initializing auth state...');
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        console.log('[Auth] Found existing session on mount');
         setSession(data.session);
-      }
-      
-      // Set user data based on what's available
-      if (userData.auth) {
-        setUser(userData.auth);
-      } else if (userData.user) {
-        setUser(userData.user);
-      }
-      
-      // Set profile data if available
-      if (userData.profile) {
-        setUserData(userData.profile);
-      }
-      
-      // Check if the user has completed their profile
-      const userRole = userData.profile?.role || userData.user?.role || userData.auth?.role;
-      if (userRole && user.id) {
-        const hasProfile = await checkUserProfile(user.id, userRole);
-        setHasCompletedProfile(hasProfile);
-      }
-    } catch (error) {
-      console.error("Error refreshing user profile:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Initial session check - only run after Supabase is initialized
-  useEffect(() => {
-    if (!isSupabaseInitialized || !supabase) return;
-    
-    console.log('[Auth] Checking for existing session...');
-    
-    const fetchSession = async () => {
-      try {
-        // First check if we have a session directly from Supabase
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        if (sessionData?.session) {
-          console.log('[Auth] Found existing session in Supabase');
-          setSession(sessionData.session);
-          
-          // If we have a session, get the user from it
-          const supabaseUser = sessionData.session.user;
-          
-          if (supabaseUser) {
-            console.log('[Auth] Setting user from session:', supabaseUser.email);
-            setUser(supabaseUser);
-            
-            try {
-              // Now try to fetch the user profile data
-              console.log('[Auth] Fetching user profile data...');
-              // First from users table by auth_id
-              const { data: profileData } = await supabase
-                .from('users')
-                .select('*')
-                .eq('auth_id', supabaseUser.id)
-                .maybeSingle();
-                
-              if (profileData) {
-                console.log('[Auth] Found user profile by auth_id');
-                setUserData(profileData);
-                setUser({
-                  ...supabaseUser,
-                  role: profileData.role
-                });
-                
-                // Check if profile is complete
-                if (profileData.role) {
-                  console.log(`[Auth] Checking profile completion for user ${supabaseUser.id} with role ${profileData.role}`);
-                  const hasProfile = await checkUserProfile(supabaseUser.id, profileData.role);
-                  console.log(`[Auth] Profile completion check result: ${hasProfile}`);
-                  setHasCompletedProfile(hasProfile);
-                  
-                  // Store user info in localStorage for easier access
-                  localStorage.setItem('userId', supabaseUser.id);
-                  localStorage.setItem('userRole', profileData.role);
-                }
-              } else {
-                // Try by email as fallback
-                console.log('[Auth] No profile found by auth_id, trying email');
-                const { data: emailProfileData } = await supabase
-                  .from('users')
-                  .select('*')
-                  .eq('email', supabaseUser.email)
-                  .maybeSingle();
-                  
-                if (emailProfileData) {
-                  console.log('[Auth] Found user profile by email');
-                  setUserData(emailProfileData);
-                  setUser({
-                    ...supabaseUser,
-                    role: emailProfileData.role
-                  });
-                  
-                  // Check if profile is complete
-                  if (emailProfileData.role) {
-                    console.log(`[Auth] Checking profile completion for user ${supabaseUser.id} with role ${emailProfileData.role}`);
-                    const hasProfile = await checkUserProfile(supabaseUser.id, emailProfileData.role);
-                    console.log(`[Auth] Profile completion check result: ${hasProfile}`);
-                    setHasCompletedProfile(hasProfile);
-                    
-                    // Store user info in localStorage for easier access
-                    localStorage.setItem('userId', supabaseUser.id);
-                    localStorage.setItem('userRole', emailProfileData.role);
-                  }
-                } else {
-                  console.log('[Auth] No user profile found');
-                }
-              }
-            } catch (profileError) {
-              console.error('[Auth] Error fetching user profile:', profileError);
-            }
-          }
-        } else {
-          // No session found in Supabase, try our server API as fallback
-          console.log('[Auth] No session found in Supabase, trying server API');
-          try {
-            const userData = await getCurrentUser();
-            
-            if (userData) {
-              console.log('[Auth] Found user data from server API');
-              
-              // Set up user data
-              let currentUser = null;
-              if (userData.auth) {
-                currentUser = userData.auth;
-                setUser(userData.auth);
-              } else if (userData.user) {
-                // Different response structure depending on which path succeeded
-                currentUser = userData.user;
-                setUser(userData.user);
-              }
-              
-              if (userData.profile) {
-                setUserData(userData.profile);
-              }
-              
-              // Check if profile is complete
-              if (currentUser && currentUser.id) {
-                const userRole = userData.profile?.role || currentUser.role || 'visitor';
-                console.log(`[Auth] Checking profile completion for user ${currentUser.id} with role ${userRole}`);
-                const hasProfile = await checkUserProfile(currentUser.id, userRole);
-                console.log(`[Auth] Profile completion check result: ${hasProfile}`);
-                setHasCompletedProfile(hasProfile);
-                
-                // Store user info in localStorage for easier access
-                localStorage.setItem('userId', currentUser.id);
-                localStorage.setItem('userRole', userRole);
-              }
-            } else {
-              console.log('[Auth] No user data found');
-              setIsLoading(false);
-            }
-          } catch (error) {
-            console.error('[Auth] Error fetching user from server:', error);
-            setIsLoading(false);
-          }
-        }
-      } catch (error) {
-        console.error('[Auth] Error fetching session:', error);
-      } finally {
+        setUser(data.session?.user ?? null);
+      } else {
+        console.log('[Auth] No session found on mount');
         setIsLoading(false);
       }
-    };
+    }).catch(error => {
+      console.error('[Auth] Error getting session on mount:', error);
+      setIsLoading(false);
+    });
+  }, []);
 
-    fetchSession();
-
-    // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log('[Auth] Auth state change event:', event);
-        
-        if (event === 'SIGNED_IN' && newSession) {
-          console.log('[Auth] User signed in:', newSession.user?.email);
-          setSession(newSession);
-          setUser(newSession.user);
+  // 2) Subscribe to future auth changes
+  useEffect(() => {
+    console.log('[Auth] Setting up auth state change listener');
+    
+    let subscription: any = null;
+    
+    try {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event, newSession) => {
+          console.log('[Auth] Auth state change event:', event);
           
+          if (newSession) {
+            console.log('[Auth] Auth state change - setting new session');
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+          } else {
+            console.log('[Auth] Auth state change - clearing session');
+            setSession(null);
+            setUser(null);
+            setUserData(null);
+            
+            if (event === 'SIGNED_OUT') {
+              // Add delay to make sure state is updated before redirection
+              setTimeout(() => {
+                navigate('/');
+              }, 100);
+            }
+          }
+        }
+      );
+      
+      subscription = data.subscription;
+    } catch (error) {
+      console.error('[Auth] Error setting up auth state change listener:', error);
+    }
+    
+    return () => {
+      if (subscription) {
+        console.log('[Auth] Cleaning up auth state change listener');
+        subscription.unsubscribe();
+      }
+    };
+  }, [navigate]);
+
+  // 3) Whenever `user` changes, fetch profile once
+  useEffect(() => {
+    if (!user) {
+      console.log('[Auth] No user, clearing profile data');
+      setUserData(null);
+      setHasCompletedProfile(false);
+      setIsLoading(false);
+      return;
+    }
+    
+    console.log('[Auth] User changed, fetching profile for:', user.email);
+    let cancelled = false;
+    setLoadingProfile(true);
+
+    const fetchProfile = async () => {
+      try {
+        // Try our server API to get complete user data
+        const serverData = await getCurrentUser();
+        
+        if (cancelled) return;
+        
+        if (serverData) {
+          console.log('[Auth] Server returned user data');
+          
+          // Detect which response format we got
+          let profileData = null;
+          let roleValue = null;
+          
+          if (serverData.profile) {
+            profileData = serverData.profile;
+            roleValue = profileData.role || user?.user_metadata?.role || 'user';
+          } else if (serverData.user) {
+            // Might have profile data embedded in user object
+            profileData = serverData.user;
+            roleValue = profileData.role || user?.user_metadata?.role || 'user';
+          }
+          
+          if (profileData) {
+            console.log('[Auth] Setting profile data from server');
+            setUserData(profileData);
+            
+            // Check if the profile is complete based on role
+            if (roleValue) {
+              console.log(`[Auth] Checking profile completion for role: ${roleValue}`);
+              const hasProfile = await checkUserProfile(user.id, roleValue);
+              setHasCompletedProfile(hasProfile);
+            }
+          } else {
+            console.log('[Auth] No profile data in server response');
+          }
+        } else {
+          console.log('[Auth] Server did not return user data, falling back to Supabase');
+          
+          // Fall back to direct Supabase query
           try {
-            // First try to find user by auth_id
-            console.log('[Auth] Fetching user profile after sign in');
-            const { data: profileData, error: profileError } = await supabase
+            // First try by auth_id
+            const { data: profileData } = await supabase
               .from('users')
               .select('*')
-              .eq('auth_id', newSession.user.id)
+              .eq('auth_id', user.id)
               .maybeSingle();
               
-            if (profileError && profileError.code !== 'PGRST116') {
-              console.error('[Auth] Error fetching profile by auth_id:', profileError);
-            }
+            if (cancelled) return;
               
             if (profileData) {
-              console.log('[Auth] Found user profile by auth_id:', profileData);
+              console.log('[Auth] Found user profile by auth_id');
               setUserData(profileData);
               
-              // Redirect based on user type
-              if (profileData?.role === 'athlete') {
-                navigate('/athlete/dashboard');
-              } else if (profileData?.role === 'business') {
-                navigate('/business/dashboard');
-              } else if (profileData?.role === 'compliance') {
-                navigate('/compliance/dashboard');
-              } else if (profileData?.role === 'admin') {
-                navigate('/admin/dashboard');
+              // Check if profile is complete
+              if (profileData.role) {
+                const hasProfile = await checkUserProfile(user.id, profileData.role);
+                setHasCompletedProfile(hasProfile);
               }
             } else {
               // Try by email as fallback
-              console.log('[Auth] No profile found by auth_id, trying email');
               const { data: emailProfileData } = await supabase
                 .from('users')
                 .select('*')
-                .eq('email', newSession.user.email)
+                .eq('email', user.email)
                 .maybeSingle();
                 
+              if (cancelled) return;
+                
               if (emailProfileData) {
-                console.log('[Auth] Found user profile by email:', emailProfileData);
+                console.log('[Auth] Found user profile by email');
                 setUserData(emailProfileData);
                 
-                // Redirect based on user type
-                if (emailProfileData?.role === 'athlete') {
-                  navigate('/athlete/dashboard');
-                } else if (emailProfileData?.role === 'business') {
-                  navigate('/business/dashboard');
-                } else if (emailProfileData?.role === 'compliance') {
-                  navigate('/compliance/dashboard');
-                } else if (emailProfileData?.role === 'admin') {
-                  navigate('/admin/dashboard');
+                // Check if profile is complete
+                if (emailProfileData.role) {
+                  const hasProfile = await checkUserProfile(user.id, emailProfileData.role);
+                  setHasCompletedProfile(hasProfile);
                 }
               } else {
-                console.log('[Auth] No user profile found, not redirecting');
+                console.log('[Auth] No user profile found');
               }
             }
-          } catch (err) {
-            console.error('[Auth] Error fetching user profile after sign in:', err);
-            // Don't redirect if we couldn't get profile data
+          } catch (error) {
+            if (cancelled) return;
+            console.error('[Auth] Error fetching profile from Supabase:', error);
           }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('[Auth] User signed out');
-          setSession(null);
-          setUser(null);
-          setUserData(null);
-          navigate('/');
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.error('[Auth] Error in profile fetch effect:', error);
+      } finally {
+        if (!cancelled) {
+          setLoadingProfile(false);
+          setIsLoading(false);
         }
       }
-    );
-
-    return () => {
-      if (authListener?.subscription) {
-        authListener.subscription.unsubscribe();
-      }
     };
-  }, [navigate, isSupabaseInitialized]);
+
+    fetchProfile();
+
+    return () => { 
+      cancelled = true; 
+    };
+  }, [user]);
+
+  // Function to refresh the user's profile data
+  const refreshProfile = async () => {
+    if (!user) {
+      console.log('[Auth] Cannot refresh profile: no user');
+      return;
+    }
+    
+    console.log('[Auth] Manually refreshing profile...');
+    setLoadingProfile(true);
+    
+    try {
+      // Get the latest user data from server
+      const serverData = await getCurrentUser();
+      
+      if (serverData) {
+        console.log('[Auth] Received refreshed user data from server');
+        
+        // Detect which response format we got
+        let profileData = null;
+        let roleValue = null;
+        
+        if (serverData.profile) {
+          profileData = serverData.profile;
+          roleValue = profileData.role || user?.user_metadata?.role || 'user';
+        } else if (serverData.user) {
+          // Might have profile data embedded in user object
+          profileData = serverData.user;
+          roleValue = profileData.role || user?.user_metadata?.role || 'user';
+        }
+        
+        if (profileData) {
+          console.log('[Auth] Updating profile data from server refresh');
+          setUserData(profileData);
+          
+          // Check if the profile is complete based on role
+          if (roleValue) {
+            console.log(`[Auth] Checking profile completion for role: ${roleValue}`);
+            const hasProfile = await checkUserProfile(user.id, roleValue);
+            setHasCompletedProfile(hasProfile);
+          }
+        }
+      } else {
+        console.log('[Auth] Server did not return user data on refresh');
+      }
+    } catch (error) {
+      console.error('[Auth] Error refreshing profile:', error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) {
-      toast({
-        title: 'Connection Error',
-        description: 'Supabase is not initialized. Please refresh the page and try again.',
-        variant: 'destructive',
-      });
-      return { error: new Error('Supabase not initialized') };
-    }
-
+    console.log('[Auth] Attempting sign in for:', email);
+    
     try {
       // Use our updated login function that handles both direct and server auth
       const loginData = await loginUser({ email, password });
       
       // Our custom method might return different structure based on success path
       if (loginData.error) {
+        console.error('[Auth] Login error:', loginData.error);
         toast({
           title: 'Login failed',
           description: loginData.error.message || loginData.error,
@@ -338,12 +291,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         return { error: loginData.error };
       }
       
+      console.log('[Auth] Login successful');
       toast({
         title: 'Login successful',
         description: 'You have been logged in successfully.',
       });
       
-      // After successful login, check user data
+      // Extract user data from different possible response formats
       let userData = null;
       
       if (loginData.user) {
@@ -354,12 +308,9 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         userData = loginData.data.user;
       }
       
-      // Refresh profile data to ensure we have the latest
-      await refreshProfile();
-      
       return { error: null, user: userData as EnhancedUser };
     } catch (e: any) {
-      console.error('Login error:', e);
+      console.error('[Auth] Login error:', e);
       toast({
         title: 'Login failed',
         description: e.message,
@@ -370,15 +321,8 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userData: any) => {
-    if (!supabase) {
-      toast({
-        title: 'Connection Error',
-        description: 'Supabase is not initialized. Please refresh the page and try again.',
-        variant: 'destructive',
-      });
-      return { error: new Error('Supabase not initialized'), user: null };
-    }
-
+    console.log('[Auth] Attempting sign up for:', email);
+    
     try {
       // Use our registerUser function that handles both auth and profile creation
       const registrationData = await registerUser({
@@ -388,6 +332,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         role: userData.role || 'athlete' // Default to athlete if no role provided
       });
       
+      console.log('[Auth] Registration successful');
       toast({
         title: 'Registration successful',
         description: 'Your account has been created successfully.',
@@ -395,6 +340,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       
       return { error: null, user: registrationData.user };
     } catch (e: any) {
+      console.error('[Auth] Registration error:', e);
       toast({
         title: 'Registration failed',
         description: e.message,
@@ -405,37 +351,51 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    if (!supabase) {
-      toast({
-        title: 'Connection Error',
-        description: 'Supabase is not initialized. Please refresh the page and try again.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    console.log('[Auth] Signing out...');
+    
     try {
       // Use our logoutUser function that notifies the server
       await logoutUser();
       
-      // Update UI state
-      setUser(null);
-      setSession(null);
-      setUserData(null);
-      
+      console.log('[Auth] Sign out successful');
       toast({
         title: 'Logged out',
         description: 'You have been logged out successfully.',
       });
       
-      navigate('/');
+      // The auth state change event will handle redirecting
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('[Auth] Error signing out:', error);
       toast({
         title: 'Error',
         description: 'Failed to sign out. Please try again.',
         variant: 'destructive',
       });
+      
+      // Still attempt to clean up local state
+      setUser(null);
+      setSession(null);
+      setUserData(null);
+      
+      // Manually clear localStorage as a fallback
+      if (typeof window !== 'undefined') {
+        console.log('[Auth] Manual localStorage cleanup during fallback logout');
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-auth-token');
+        localStorage.removeItem('contested-auth');
+        localStorage.removeItem('contestedUserData');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        
+        // Clear any other potential Supabase tokens
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+      
+      navigate('/');
     }
   };
 
@@ -445,13 +405,14 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         isLoading,
-        hasCompletedProfile,
+        loadingProfile,
+        userData,
         signIn,
         signUp,
         signOut,
-        userData,
         setUserData,
-        refreshProfile
+        hasCompletedProfile,
+        refreshProfile,
       }}
     >
       {children}

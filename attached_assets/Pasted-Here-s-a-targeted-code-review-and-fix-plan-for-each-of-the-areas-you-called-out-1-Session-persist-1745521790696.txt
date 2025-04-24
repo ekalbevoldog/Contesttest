@@ -1,0 +1,133 @@
+Here’s a targeted code review and fix-plan for each of the areas you called out:
+
+1. Session persistence configuration
+
+What’s wrong
+You’re passing a storageKey to Supabase, but the client only recognizes a storage object (e.g. window.localStorage), not a storageKey option. As a result, persistence is effectively disabled.
+
+How to fix
+In your supabase-client.ts initialize like this:
+
+import { createClient } from '@supabase/supabase-js';
+
+export const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      // explicitly tell Supabase to use the browser’s localStorage:
+      storage: window.localStorage,
+      // you can still customize the key prefix if you like:
+      storageKey: 'nil-connect-auth'  // optional, but storage _must_ be set
+    }
+  }
+);
+If you omit the storage field, Supabase falls back to an in-memory store which won’t survive a page reload.
+
+2. Auth state management in your React hook
+
+What’s wrong
+You’re calling supabase.auth.getSession() synchronously, but that API is asynchronous.
+Your onAuthStateChange cleanup may be firing before you ever fetch the profile.
+You’re mixing the raw session object with userData fetches in the same effect, causing race conditions.
+How to fix
+Here’s a more bulletproof useSupabaseAuth pattern:
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase-client';
+
+export function useSupabaseAuth() {
+  const [session, setSession]     = useState(null);
+  const [user, setUser]           = useState(null);
+  const [userData, setUserData]   = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  // 1) On mount, rehydrate session & user
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+    });
+  }, []);
+
+  // 2) Subscribe to future auth changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+      }
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 3) Whenever `user` changes, fetch profile once
+  useEffect(() => {
+    if (!user) {
+      setUserData(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingProfile(true);
+
+    supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (!cancelled) {
+          if (error) {
+            console.error('Profile load error', error);
+            setUserData(null);
+          } else {
+            setUserData(data);
+          }
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingProfile(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [user]);
+
+  return {
+    session,
+    user,
+    userData,
+    isLoading: !session && user === null,   // initial loading state
+    loadingProfile,
+    signIn:  supabase.auth.signInWithPassword,
+    signOut: supabase.auth.signOut,
+    signUp:  supabase.auth.signUp
+  };
+}
+Why this helps:
+
+Explicit storage→ real persistence.
+Async getSession()→ correct initial state.
+Single onAuthStateChange subscriber→ won’t tear down your listener prematurely.
+Dedicated effect for userData→ avoids racing session vs. profile fetch.
+3. Token refresh / race conditions
+
+autoRefreshToken: true will silently refresh your JWT behind the scenes, but only if persistSession is working (see #1).
+By splitting your “session” effect from your “profile” effect, you avoid the double-fetch or out-of-order issues that can lead to 401s.
+4. Server-side validation sync
+
+If you still have a custom /api/auth/* endpoint in front of Supabase, make sure it reads the Supabase session cookie or authorization header on each request:
+
+// example Express/Koa handler
+const accessToken = req.headers.authorization?.split(' ')[1]
+  || req.cookies['sb-access-token'];
+supabase.auth.setAuth(accessToken);
+Otherwise your server will see every call as “anonymous.”
+
+Next steps
+Update your Supabase client to explicitly use window.localStorage.
+Revamp your useSupabaseAuth to the pattern above.
+Verify in the browser’s DevTools → Application → Local Storage that you see a nil-connect-auth.access_token entry pop in.
+Reload the page—your session and userData should instantly rehydrate, and your dashboards will load without bouncing you back to login.
+Let me know once you’ve tried those changes, and we can tackle any remaining edge cases!
