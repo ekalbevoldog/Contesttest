@@ -1,29 +1,48 @@
 import { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import {
-  useQuery,
-  useMutation,
-  UseMutationResult,
-} from "@tanstack/react-query";
-import { User, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  loginWithEmail, 
+  registerWithEmail, 
+  logout as logoutUser, 
+  getCurrentUser 
+} from "@/lib/auth-utils";
+import { useLocation } from "wouter";
+
+interface User {
+  id: string;
+  email: string;
+  role: "athlete" | "business" | "compliance" | "admin";
+  [key: string]: any;
+}
+
+interface Profile {
+  id: string | number;
+  name: string;
+  email?: string;
+  [key: string]: any;
+}
 
 interface AuthContextType {
   user: User | null;
+  profile: Profile | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<User, Error, LoginData>;
+  loginMutation: UseMutationResult<any, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<User, Error, RegisterData>;
+  registerMutation: UseMutationResult<any, Error, RegisterData>;
 }
 
 interface LoginData {
-  username: string;
+  email: string;
   password: string;
 }
 
-interface RegisterData extends LoginData {
+interface RegisterData {
   email: string;
+  password: string;
+  fullName: string;
   role: "athlete" | "business" | "compliance" | "admin";
 }
 
@@ -31,48 +50,122 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   
   const {
     data: userData,
     error,
     isLoading,
     refetch,
-  } = useQuery<User | null, Error>({
+  } = useQuery({
     queryKey: ["/api/auth/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: async () => {
+      try {
+        const data = await getCurrentUser();
+        return data;
+      } catch (err) {
+        console.error("Error fetching user:", err);
+        return null;
+      }
+    },
     retry: false,
   });
 
   useEffect(() => {
     if (userData) {
-      setUser(userData);
+      // Extract auth and profile data
+      const authUser = userData.auth;
+      const profileData = userData.profile;
+
+      if (authUser) {
+        setUser({
+          id: authUser.id,
+          email: authUser.email || '',
+          role: authUser.user_metadata?.role || 'user',
+          ...authUser.user_metadata
+        });
+
+        if (profileData) {
+          setProfile(profileData);
+          
+          // Store profile ID in localStorage for quick access
+          localStorage.setItem('userId', authUser.id);
+          
+          // Store basic profile info in localStorage
+          localStorage.setItem('contestedUserData', JSON.stringify({
+            id: profileData.id,
+            name: profileData.name,
+            userType: authUser.user_metadata?.role || 'user',
+            ...profileData
+          }));
+        }
+      }
+    } else {
+      // Clear localStorage if no user data
+      setUser(null);
+      setProfile(null);
     }
   }, [userData]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/auth/login", credentials);
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Login failed");
-      }
-      return await res.json();
+      const data = await loginWithEmail(credentials.email, credentials.password);
+      return data;
     },
-    onSuccess: (user: User) => {
-      setUser(user);
-      queryClient.setQueryData(["/api/auth/user"], user);
+    onSuccess: (data) => {
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email || '',
+          role: data.user.user_metadata?.role || 'user',
+          ...data.user.user_metadata
+        });
+        
+        if (data.profile) {
+          setProfile(data.profile);
+          
+          // Store user ID in localStorage
+          localStorage.setItem('userId', data.user.id);
+          
+          // Store profile data in localStorage
+          localStorage.setItem('contestedUserData', JSON.stringify({
+            id: data.profile.id,
+            name: data.profile.name,
+            userType: data.user.user_metadata?.role || 'user',
+            ...data.profile
+          }));
+        }
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
       toast({
         title: "Login successful",
         description: `Welcome back!`,
       });
       
-      // Dispatch custom login event with user details including role
+      // Redirect based on user role
+      const role = data.user?.user_metadata?.role || data.profile?.role;
+      if (role === 'athlete') {
+        setLocation('/athlete/dashboard');
+      } else if (role === 'business') {
+        setLocation('/business/dashboard');
+      } else if (role === 'compliance') {
+        setLocation('/compliance/dashboard');
+      } else if (role === 'admin') {
+        setLocation('/admin/dashboard');
+      } else {
+        setLocation('/');
+      }
+      
+      // Dispatch custom login event
       const loginEvent = new CustomEvent("contestedLogin", { 
         detail: { 
-          id: user.id,
-          email: user.email, 
-          role: user.role 
+          id: data.user?.id,
+          email: data.user?.email, 
+          role: data.user?.user_metadata?.role || 'user'
         } 
       });
       window.dispatchEvent(loginEvent);
@@ -88,30 +181,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      const res = await apiRequest("POST", "/api/auth/register", credentials);
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Registration failed");
-      }
-      return await res.json();
+      const data = await registerWithEmail(
+        credentials.email, 
+        credentials.password, 
+        credentials.fullName, 
+        credentials.role
+      );
+      return data;
     },
-    onSuccess: (user: User) => {
-      setUser(user);
-      queryClient.setQueryData(["/api/auth/user"], user);
+    onSuccess: (data) => {
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email || '',
+          role: data.user.role,
+          ...data.user
+        });
+        
+        // Store the user ID for profile creation
+        localStorage.setItem('userId', data.user.id);
+        
+        // If a profile was created during registration
+        if (data.profile) {
+          setProfile(data.profile);
+          localStorage.setItem('contestedUserData', JSON.stringify({
+            id: data.profile.id,
+            name: data.profile.name || data.user.fullName,
+            userType: data.user.role,
+            ...data.profile
+          }));
+        }
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
       toast({
         title: "Registration successful",
         description: "Welcome to Contested!",
       });
       
-      // Dispatch custom registration event (separate from login)
+      // Dispatch custom registration event
       const registrationEvent = new CustomEvent("contestedRegistration", { 
         detail: { 
-          id: user.id,
-          email: user.email, 
-          role: user.role 
+          id: data.user?.id,
+          email: data.user?.email, 
+          role: data.user?.role
         } 
       });
       window.dispatchEvent(registrationEvent);
+      
+      // Redirect to onboarding or dashboard based on response
+      if (data.redirectTo) {
+        setLocation(data.redirectTo);
+      } else if (data.needsProfile) {
+        setLocation('/onboarding');
+      } else {
+        // Redirect based on user role
+        const role = data.user?.role;
+        if (role === 'athlete') {
+          setLocation('/athlete/dashboard');
+        } else if (role === 'business') {
+          setLocation('/business/dashboard');
+        } else {
+          setLocation('/');
+        }
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -124,17 +258,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/auth/logout-direct");
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Logout failed");
-      }
+      await logoutUser();
     },
     onSuccess: () => {
-      // Immediately set user to null without waiting for server
+      // Clear user state
       setUser(null);
+      setProfile(null);
+      
+      // Clear localStorage
+      localStorage.removeItem('contestedUserData');
+      localStorage.removeItem('userId');
+      
+      // Clear query cache
       queryClient.setQueryData(["/api/auth/user"], null);
       queryClient.invalidateQueries();
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
@@ -144,21 +282,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const logoutEvent = new CustomEvent("contestedLogout");
       window.dispatchEvent(logoutEvent);
       
-      // Force a page reload to clear any remaining state
-      window.location.href = "/";
+      // Redirect to home
+      setLocation('/');
     },
     onError: (error: Error) => {
-      // Even if the server call fails, still clear local session state
+      console.error("Logout error:", error);
+      
+      // Even if logout fails, clear state locally
       setUser(null);
+      setProfile(null);
+      localStorage.removeItem('contestedUserData');
+      localStorage.removeItem('userId');
       queryClient.setQueryData(["/api/auth/user"], null);
-      queryClient.invalidateQueries();
       
       toast({
         title: "Logged out",
         description: "Your session has been cleared locally.",
       });
       
-      window.location.href = "/";
+      setLocation('/');
     },
   });
 
@@ -166,6 +308,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        profile,
         isLoading,
         error,
         loginMutation,
@@ -185,7 +328,7 @@ export function useAuth() {
   }
   
   // Add a convenience method for logout
-  const logoutUser = () => {
+  const logout = () => {
     if (context.logoutMutation) {
       context.logoutMutation.mutate();
     }
@@ -193,6 +336,6 @@ export function useAuth() {
   
   return {
     ...context,
-    logoutUser
+    logout,
   };
 }
