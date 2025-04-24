@@ -100,11 +100,48 @@ if (process.env.NODE_ENV === "production" && process.env.DATABASE_URL) {
 // Try different ways to start the server with fallbacks
 console.log("Starting server in production mode...");
 
+// Determine file paths based on execution context
+import { existsSync } from 'fs';
+import { dirname, resolve, join } from 'path';
+import { fileURLToPath } from 'url';
+
+// Get current file directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // Import and start the server
 try {
   console.log("Loading compiled JavaScript...");
-  await import("./dist/server/index.js");
-  console.log("Server started successfully.");
+  console.log("Current directory:", __dirname);
+  
+  // Check each possible server entry point
+  const possiblePaths = [
+    join(__dirname, 'server', 'index.js'),
+    join(__dirname, 'dist', 'server', 'index.js'),
+    resolve(__dirname, '..', 'dist', 'server', 'index.js'),
+    resolve(__dirname, 'server', 'index.js'),
+  ];
+  
+  let serverModule = null;
+  let loadedPath = null;
+  
+  for (const path of possiblePaths) {
+    console.log(`Checking for server at: ${path}`);
+    if (existsSync(path)) {
+      console.log(`Found server at: ${path}`);
+      loadedPath = path;
+      // Using dynamic import with string concatenation for file URL
+      const fileUrl = `file://${path}`;
+      serverModule = await import(fileUrl);
+      break;
+    }
+  }
+  
+  if (serverModule) {
+    console.log(`Server started successfully from: ${loadedPath}`);
+  } else {
+    throw new Error("No valid server entry point found");
+  }
 } catch (error) {
   console.error(`Failed to load compiled JavaScript:`, error.message);
   console.error("All server startup strategies failed.");
