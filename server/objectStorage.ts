@@ -4,9 +4,13 @@ import { Client } from '@replit/object-storage';
 // Create a client instance with proper error handling
 let storageClient;
 try {
+  // Wrap initialization in try/catch to handle missing bucket configurations
   storageClient = new Client();
+  console.log('Object Storage initialized successfully');
 } catch (error) {
-  console.error('Failed to initialize Object Storage:', error);
+  console.warn('Object Storage initialization failed:', error instanceof Error ? error.message : String(error));
+  console.log('Creating mock storage client to prevent application crashes');
+  
   // Create a mock client to prevent app crashes
   storageClient = {
     async uploadFromText() { return { ok: false, error: 'Storage not available' }; },
