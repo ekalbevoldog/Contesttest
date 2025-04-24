@@ -206,8 +206,20 @@ export default function SignIn() {
                             )}
                           />
                           
-                          <Button type="submit" className="w-full" disabled={loginForm.formState.isSubmitting || isLoading}>
-                            {loginForm.formState.isSubmitting ? "Signing in..." : "Sign In"}
+                          <Button 
+                            type="submit" 
+                            className="w-full" 
+                            disabled={loginForm.formState.isSubmitting || isLoading}
+                            onClick={(e) => {
+                              if (!loginForm.formState.isValid) {
+                                // If form is invalid, let the form validation handle it
+                                return;
+                              }
+                              // Otherwise submit the form
+                              loginForm.handleSubmit(onLoginSubmit)(e);
+                            }}
+                          >
+                            {loginForm.formState.isSubmitting || isLoading ? "Signing in..." : "Sign In"}
                           </Button>
                         </form>
                       </Form>
