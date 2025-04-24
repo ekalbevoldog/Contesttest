@@ -1,11 +1,12 @@
+
 // build-with-fallback.js
 // This script attempts to build the project with TypeScript
 // If TypeScript compilation fails, it falls back to using esbuild directly
 // which is more permissive and will generate JavaScript output even with TS errors
 
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 console.log('🔄 Starting build process with error handling...');
 
