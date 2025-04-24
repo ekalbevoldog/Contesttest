@@ -174,12 +174,65 @@ export function setupSupabaseAuth(app: Express) {
       }
       
       // Get additional user data from our users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', user.email)
-        .single();
-        
+      console.log(`Fetching user data for email: ${user.email}`);
+      
+      let userData = null;
+      let userError = null;
+      
+      try {
+        // First look for user by auth_id since that's most reliable
+        const { data: authIdUserData, error: authIdError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('auth_id', user.id)
+          .maybeSingle();
+          
+        if (authIdError) {
+          console.error('Error fetching user by auth_id:', authIdError);
+          userError = authIdError;
+        } else if (authIdUserData) {
+          console.log('Found user data by auth_id');
+          userData = authIdUserData;
+        } else {
+          console.log('No user found by auth_id, trying by email');
+          // Fall back to email lookup
+          const { data: emailUserData, error: emailError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', user.email)
+            .maybeSingle();
+            
+          if (emailError) {
+            console.error('Error fetching user by email:', emailError);
+            userError = emailError;
+          } else if (emailUserData) {
+            console.log('Found user data by email');
+            userData = emailUserData;
+            
+            // If user record exists by email but doesn't have auth_id, update it
+            if (!emailUserData.auth_id) {
+              console.log('User found by email has no auth_id, updating...');
+              
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({ auth_id: user.id })
+                .eq('id', emailUserData.id);
+                
+              if (updateError) {
+                console.error('Error updating user auth_id:', updateError);
+              } else {
+                console.log('Successfully updated user auth_id');
+                // Update our local userData with the change
+                userData.auth_id = user.id;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Exception during user profile lookup:', error);
+        userError = error;
+      }
+      
       if (userError) {
         console.error('Error fetching user data:', userError);
         // We can still return just the auth user
