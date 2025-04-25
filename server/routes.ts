@@ -72,9 +72,7 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
     return false;
   }
 }
-import { setupAuth } from "./auth";
-// Use local schema import instead of @shared alias to fix production build
-import { insertFeedbackSchema, Feedback } from "../shared/schema.js";
+import { setupAuth } from "./auth.js";
 
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';

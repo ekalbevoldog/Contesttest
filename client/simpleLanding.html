@@ -1,348 +1,371 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contested - Athlete and Business Connections</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f7fa;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    
-    header {
-      background-color: #1a202c;
-      color: #fff;
-      padding: 1rem 0;
-    }
-    
-    header .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-    
-    nav ul {
-      display: flex;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    
-    nav li {
-      margin-left: 1.5rem;
-    }
-    
-    nav a {
-      color: #fff;
-      text-decoration: none;
-    }
-    
-    nav a:hover {
-      text-decoration: underline;
-    }
-    
-    .hero {
-      padding: 3rem 0;
-      text-align: center;
-    }
-    
-    .hero h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-    
-    .hero p {
-      font-size: 1.25rem;
-      max-width: 800px;
-      margin: 0 auto 2rem;
-      color: #4a5568;
-    }
-    
-    .cta-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    
-    .button {
-      display: inline-block;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.25rem;
-      text-decoration: none;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .button-primary {
-      background-color: #3182ce;
-      color: white;
-    }
-    
-    .button-primary:hover {
-      background-color: #2c5282;
-    }
-    
-    .button-secondary {
-      background-color: #e2e8f0;
-      color: #1a202c;
-    }
-    
-    .button-secondary:hover {
-      background-color: #cbd5e0;
-    }
-    
-    .card {
-      background-color: white;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 2rem;
-      margin-bottom: 2rem;
-    }
-    
-    .error-message {
-      background-color: #fed7d7;
-      color: #c53030;
-      border-radius: 0.25rem;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      display: none;
-    }
-    
-    .success-message {
-      background-color: #c6f6d5;
-      color: #2f855a;
-      border-radius: 0.25rem;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      display: none;
-    }
-    
-    .loading {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-    }
-    
-    .spinner {
-      width: 2.5rem;
-      height: 2.5rem;
-      border: 0.25rem solid #e2e8f0;
-      border-top-color: #3182ce;
-      border-radius: 50%;
-      animation: spinner 0.8s linear infinite;
-    }
-    
-    @keyframes spinner {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    
-    footer {
-      background-color: #1a202c;
-      color: #a0aec0;
-      padding: 2rem 0;
-      margin-top: 3rem;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contested - Authentication</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            display: flex;
+            width: 900px;
+            max-width: 95%;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .form-container {
+            flex: 1;
+            padding: 30px;
+        }
+        .hero {
+            flex: 1;
+            background-color: #4f46e5;
+            color: white;
+            padding: 50px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 28px;
+            color: #111827;
+        }
+        .hero h1 {
+            color: white;
+            font-size: 32px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        .tab.active {
+            color: #4f46e5;
+            border-bottom: 2px solid #4f46e5;
+        }
+        .form-content {
+            display: none;
+        }
+        .form-content.active {
+            display: block;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .btn {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #4338ca;
+        }
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert.error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .alert.success {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+        .user-info {
+            display: none;
+            padding: 20px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .hero {
+                padding: 30px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
     <div class="container">
-      <div class="logo">Contested</div>
-      <nav>
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/auth">Sign In</a></li>
-          <li><a href="/about">About</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-  
-  <div class="container">
-    <div class="hero">
-      <h1>Welcome to Contested</h1>
-      <p>Connect athletes and businesses for meaningful partnerships that drive results.</p>
-      <div class="cta-buttons">
-        <a href="/auth" class="button button-primary">Get Started</a>
-        <a href="/api/config/supabase" class="button button-secondary">Check API Status</a>
-      </div>
-    </div>
-    
-    <div class="card" id="api-status-card">
-      <h2>API Status Check</h2>
-      <div id="error-message" class="error-message"></div>
-      <div id="success-message" class="success-message"></div>
-      <div id="loading" class="loading">
-        <div class="spinner"></div>
-      </div>
-      <div id="status-details" style="display:none;">
-        <table style="width:100%; border-collapse: collapse;">
-          <tr>
-            <th style="text-align:left; padding:0.5rem; border-bottom:1px solid #e2e8f0;">Service</th>
-            <th style="text-align:left; padding:0.5rem; border-bottom:1px solid #e2e8f0;">Status</th>
-          </tr>
-          <tr>
-            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Supabase Connection</td>
-            <td id="supabase-status" style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Checking...</td>
-          </tr>
-          <tr>
-            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Authentication</td>
-            <td id="auth-status" style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Checking...</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    
-    <div class="card" id="login-card">
-      <h2>Quick Login</h2>
-      <div id="login-error" class="error-message"></div>
-      <form id="login-form">
-        <div style="margin-bottom:1rem;">
-          <label for="email" style="display:block; margin-bottom:0.5rem; font-weight:500;">Email</label>
-          <input type="email" id="email" name="email" placeholder="your@email.com" required 
-            style="width:100%; padding:0.75rem; border:1px solid #e2e8f0; border-radius:0.25rem;">
+        <div class="form-container">
+            <h1>Welcome to Contested</h1>
+            <div class="tabs">
+                <div class="tab active" data-tab="login">Login</div>
+                <div class="tab" data-tab="register">Register</div>
+            </div>
+            
+            <div class="alert" id="alertBox"></div>
+            
+            <div class="form-content active" id="login-form">
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" name="username" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+            </div>
+            
+            <div class="form-content" id="register-form">
+                <form id="registerForm">
+                    <div class="input-group">
+                        <label for="register-username">Username</label>
+                        <input type="text" id="register-username" name="username" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" name="email" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="register-password">Password</label>
+                        <input type="password" id="register-password" name="password" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="register-confirm-password">Confirm Password</label>
+                        <input type="password" id="register-confirm-password" name="confirmPassword" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="register-role">User Type</label>
+                        <select id="register-role" name="role" required>
+                            <option value="athlete">Athlete</option>
+                            <option value="business">Business</option>
+                            <option value="compliance">Compliance Officer</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Register</button>
+                </form>
+            </div>
+            
+            <div class="user-info" id="userInfo">
+                <h3>User Information</h3>
+                <div id="userDetails"></div>
+                <button id="logoutBtn" class="btn" style="margin-top: 15px;">Logout</button>
+            </div>
         </div>
-        <div style="margin-bottom:1.5rem;">
-          <label for="password" style="display:block; margin-bottom:0.5rem; font-weight:500;">Password</label>
-          <input type="password" id="password" name="password" placeholder="••••••••" required 
-            style="width:100%; padding:0.75rem; border:1px solid #e2e8f0; border-radius:0.25rem;">
+        
+        <div class="hero">
+            <h1>Connecting Athletes and Businesses</h1>
+            <p>Welcome to Contested - the platform revolutionizing the way athletes and businesses connect for marketing opportunities.</p>
+            <ul>
+                <li>For athletes: Showcase your talents and connect with brands</li>
+                <li>For businesses: Find the perfect athlete to represent your brand</li>
+                <li>Secure, easy, and intelligent matching system</li>
+            </ul>
         </div>
-        <button type="submit" class="button button-primary" style="width:100%;">Log In</button>
-      </form>
-      <div style="margin-top:1rem; text-align:center;">
-        <a href="/auth" style="color:#3182ce; text-decoration:none;">Go to full login page</a>
-      </div>
     </div>
-  </div>
-  
-  <footer>
-    <div class="container">
-      <p>&copy; 2025 Contested. All rights reserved.</p>
-    </div>
-  </footer>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      checkApiStatus();
-      
-      document.getElementById('login-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        login(email, password);
-      });
-    });
-    
-    async function checkApiStatus() {
-      const errorMessage = document.getElementById('error-message');
-      const successMessage = document.getElementById('success-message');
-      const loadingIndicator = document.getElementById('loading');
-      const statusDetails = document.getElementById('status-details');
-      const supabaseStatus = document.getElementById('supabase-status');
-      const authStatus = document.getElementById('auth-status');
-      
-      try {
-        // Check Supabase config
-        const configResponse = await fetch('/api/config/supabase');
-        if (!configResponse.ok) {
-          throw new Error('Failed to fetch Supabase configuration');
-        }
-        
-        const configData = await configResponse.json();
-        if (configData && configData.url) {
-          supabaseStatus.textContent = '✅ Connected';
-          supabaseStatus.style.color = '#2f855a';
-        } else {
-          supabaseStatus.textContent = '❌ Configuration missing';
-          supabaseStatus.style.color = '#c53030';
-        }
-        
-        // Check authentication status
-        const authResponse = await fetch('/api/auth/user');
-        if (authResponse.status === 401) {
-          authStatus.textContent = '⚠️ Not logged in';
-          authStatus.style.color = '#dd6b20';
-        } else if (authResponse.ok) {
-          const userData = await authResponse.json();
-          authStatus.textContent = `✅ Logged in as ${userData.email || userData.username}`;
-          authStatus.style.color = '#2f855a';
-          
-          successMessage.textContent = 'You are currently logged in!';
-          successMessage.style.display = 'block';
-        } else {
-          authStatus.textContent = '❌ Authentication error';
-          authStatus.style.color = '#c53030';
-        }
-        
-        loadingIndicator.style.display = 'none';
-        statusDetails.style.display = 'block';
-      } catch (error) {
-        errorMessage.textContent = 'Error checking API status: ' + error.message;
-        errorMessage.style.display = 'block';
-        loadingIndicator.style.display = 'none';
-      }
-    }
-    
-    async function login(email, password) {
-      const loginError = document.getElementById('login-error');
-      const loginForm = document.getElementById('login-form');
-      const submitButton = loginForm.querySelector('button[type="submit"]');
-      
-      loginError.style.display = 'none';
-      submitButton.disabled = true;
-      submitButton.textContent = 'Logging in...';
-      
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password }),
-          credentials: 'include'
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.form-content').forEach(f => f.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-form`).classList.add('active');
+            });
         });
-        
-        if (!response.ok) {
-          const errorData = await response.text();
-          throw new Error(errorData || 'Login failed');
+
+        // Alert function
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert ${type}`;
+            alertBox.style.display = 'block';
+            
+            setTimeout(() => {
+                alertBox.style.display = 'none';
+            }, 5000);
         }
-        
-        const userData = await response.json();
-        console.log('Login successful:', userData);
-        
-        // Redirect to dashboard or refresh the page
-        window.location.href = '/dashboard';
-      } catch (error) {
-        loginError.textContent = 'Login failed: ' + error.message;
-        loginError.style.display = 'block';
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Log In';
-      }
-    }
-  </script>
+
+        // Check if user is logged in
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/user');
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    displayUserInfo(userData);
+                }
+            } catch (error) {
+                console.error('Error checking authentication:', error);
+            }
+        }
+
+        // Display user info
+        function displayUserInfo(user) {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'none';
+            document.querySelector('.tabs').style.display = 'none';
+            
+            const userInfo = document.getElementById('userInfo');
+            userInfo.style.display = 'block';
+            
+            document.getElementById('userDetails').innerHTML = `
+                <p><strong>Username:</strong> ${user.username}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Role:</strong> ${user.role}</p>
+                <p><strong>User ID:</strong> ${user.id}</p>
+            `;
+        }
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    showAlert('Login successful!', 'success');
+                    displayUserInfo(userData);
+                } else {
+                    const errorData = await response.json();
+                    showAlert(errorData.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('An error occurred during login', 'error');
+            }
+        });
+
+        // Registration form submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const role = document.getElementById('register-role').value;
+            
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password, confirmPassword, role })
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    showAlert('Registration successful!', 'success');
+                    displayUserInfo(userData);
+                } else {
+                    const errorData = await response.json();
+                    showAlert(errorData.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showAlert('An error occurred during registration', 'error');
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('Logged out successfully', 'success');
+                    
+                    // Reset UI
+                    document.getElementById('userInfo').style.display = 'none';
+                    document.getElementById('login-form').style.display = 'block';
+                    document.getElementById('login-form').classList.add('active');
+                    document.querySelector('.tabs').style.display = 'flex';
+                    document.querySelectorAll('.tab')[0].classList.add('active');
+                    document.querySelectorAll('.tab')[1].classList.remove('active');
+                    
+                    // Clear form fields
+                    document.getElementById('login-username').value = '';
+                    document.getElementById('login-password').value = '';
+                    document.getElementById('register-username').value = '';
+                    document.getElementById('register-email').value = '';
+                    document.getElementById('register-password').value = '';
+                    document.getElementById('register-confirm-password').value = '';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                showAlert('Error during logout', 'error');
+            }
+        });
+
+        // Check auth on page load
+        window.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
 </body>
 </html>

@@ -66,18 +66,32 @@ app.use((req, res, next) => {
     // Continue with server startup even if Supabase setup fails
   }
 
-  // Set up Supabase auth endpoints
+  // Set up PostgreSQL database
   try {
-    const { setupSupabaseAuth } = await import('./supabaseAuth');
-    setupSupabaseAuth(app);
-
-    const { setupProfileEndpoints } = await import('./supabaseProfile');
-    setupProfileEndpoints(app);
-
-    console.log('Supabase auth and profile endpoints registered successfully');
+    const { testConnection, createEssentialTables } = await import('./db.js');
+    
+    // Test database connection
+    const connected = await testConnection();
+    if (!connected) {
+      console.error("Warning: Failed to connect to database. Some features may not work.");
+    } else {
+      // Create essential tables
+      await createEssentialTables();
+      console.log('Database tables initialized successfully');
+    }
   } catch (error) {
-    console.error('Error setting up Supabase auth endpoints:', error);
-    // Continue with server startup even if Supabase auth setup fails
+    console.error('Error setting up database:', error);
+    // Continue with server startup even if database setup fails
+  }
+
+  // Set up authentication endpoints
+  try {
+    const { setupAuth } = await import('./auth.js');
+    setupAuth(app);
+    console.log('Authentication endpoints registered successfully');
+  } catch (error) {
+    console.error('Error setting up authentication endpoints:', error);
+    // Continue with server startup even if auth setup fails
   }
 
   // Register public routes first, so they're available even if other routes fail
