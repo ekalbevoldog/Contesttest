@@ -15,7 +15,8 @@ import { Parallax } from "@/components/animations/Parallax";
 import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
 import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
-
+import { useAuth } from "@/hooks/use-supabase-auth";
+import { SessionTester } from "@/components/SessionTester";
 
 import { WebSocketTester } from "@/components/WebSocketTester";
 
@@ -24,6 +25,8 @@ export default function Home() {
   const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
   const [showWebSocketTester, setShowWebSocketTester] = useState(false);
+  const [showSessionTester, setShowSessionTester] = useState(false);
+  const { user } = useAuth();
   
   // Listen for the custom event to toggle the AI assistant
   useEffect(() => {
@@ -140,8 +143,16 @@ export default function Home() {
           </div>
         </div>
         
-        {/* WebSocket Tester Button */}
-        <div className="absolute bottom-10 right-10">
+        {/* Testing Tools */}
+        <div className="absolute bottom-10 right-10 flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="border-zinc-700 bg-black/50 text-white hover:bg-black/70"
+            onClick={() => setShowSessionTester(prev => !prev)}
+          >
+            {showSessionTester ? 'Hide' : 'Show'} Session Tester
+          </Button>
           <Button 
             size="sm" 
             variant="outline" 
@@ -151,6 +162,25 @@ export default function Home() {
             {showWebSocketTester ? 'Hide' : 'Show'} WebSocket Tester
           </Button>
         </div>
+        
+        {/* SessionTester Overlay */}
+        {showSessionTester && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="max-w-3xl w-full">
+              <SessionTester />
+              <div className="mt-4 text-center">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="text-zinc-400 hover:text-white"
+                  onClick={() => setShowSessionTester(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* WebSocket Tester Overlay */}
         {showWebSocketTester && (

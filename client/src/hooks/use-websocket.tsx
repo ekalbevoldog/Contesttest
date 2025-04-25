@@ -36,6 +36,12 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
   
   // Function to establish a direct WebSocket connection
   const connectWebSocket = useCallback(() => {
+    // TEMPORARILY DISABLED - WebSocket connection is causing app to fail
+    console.log('WebSocket connections are temporarily disabled');
+    setConnectionStatus('closed');
+    return;
+    
+    /*
     if (!sessionId) return;
     
     // Get user authentication data
@@ -71,7 +77,9 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
       
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
+    */
       
+      /*
       setConnectionStatus('connecting');
 
       socket.onopen = () => {
@@ -126,6 +134,8 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
         // Always set status to closed
         setConnectionStatus('closed');
       };
+      */
+    /*
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
       // Always set status to closed
@@ -135,6 +145,7 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
         attemptReconnectRef.current();
       }
     }
+    */
   }, [sessionId]);
 
   // Define the reconnect function and store in ref to avoid dependency cycles
@@ -174,8 +185,12 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
     };
   }, [sessionId, connectWebSocket]);
 
-  // Send a message through WebSocket only - Supabase realtime has been disabled
+  // Send a message through WebSocket - TEMPORARILY DISABLED
   const sendMessage = useCallback((message: any) => {
+    console.log('WebSocket messaging is temporarily disabled', message);
+    return false;
+    
+    /*
     let messageSent = false;
     
     // Try direct WebSocket first
@@ -210,7 +225,8 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
     }
     
     return messageSent;
-  }, [connectWebSocket]);
+    */
+  }, []);
 
   return { lastMessage, sendMessage, connectionStatus };
 }

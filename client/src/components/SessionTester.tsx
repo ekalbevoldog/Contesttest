@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { useAuth } from '@/hooks/use-supabase-auth';
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 import { supabase } from '@/lib/supabase-client';
 
 /**
  * Component for testing session persistence
+ * This component helps verify that authentication
+ * sessions persist properly between page loads
  */
 export function SessionTester() {
-  const { user, session } = useAuth();
+  const auth = useSupabaseAuth();
+  const { user, session, refreshSession } = auth;
   const [sessionInfo, setSessionInfo] = useState<any>(null);
   const [cookieInfo, setCookieInfo] = useState<string>('');
   const [localStorageKeys, setLocalStorageKeys] = useState<string[]>([]);
@@ -29,42 +32,21 @@ export function SessionTester() {
     setLocalStorageKeys(keys);
   }, [session]);
 
-  const refreshSession = async () => {
-    // Get current session
-    const { data, error } = await supabase.auth.getSession();
+  // Function to handle session refresh and update display
+  const handleRefreshSession = async () => {
+    await refreshSession();
     
-    if (error) {
-      console.error('Error getting session:', error);
-      return;
-    }
+    // Update display after refreshing
+    setSessionInfo(session);
+    setCookieInfo(document.cookie);
     
-    if (!data.session) {
-      console.log('No active session to refresh');
-      return;
+    // Also update localStorage keys
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) keys.push(key);
     }
-    
-    try {
-      // Call our refresh endpoint
-      const response = await fetch('/api/auth/refresh-session', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${data.session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        console.log('Session successfully refreshed');
-        // Update the display
-        setSessionInfo(data.session);
-        setCookieInfo(document.cookie);
-      } else {
-        console.error('Failed to refresh session:', await response.text());
-      }
-    } catch (error) {
-      console.error('Error refreshing session:', error);
-    }
+    setLocalStorageKeys(keys);
   };
 
   const testSessionPersistence = () => {
@@ -112,7 +94,7 @@ export function SessionTester() {
         </div>
       </CardContent>
       <CardFooter className="flex gap-2 justify-end">
-        <Button variant="outline" onClick={refreshSession}>
+        <Button variant="outline" onClick={handleRefreshSession}>
           Refresh Session
         </Button>
         <Button onClick={testSessionPersistence}>

@@ -30,6 +30,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   setUserData: (data: any) => void;
   refreshProfile: () => Promise<void>;
+  refreshSession: () => Promise<void>; // Add the refreshSession function
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -109,6 +110,60 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, [toast]);
 
+  // Function to refresh the session with the server
+  const refreshSession = useCallback(async () => {
+    if (!session || !user) {
+      console.log('[Auth] No session to refresh');
+      return;
+    }
+    
+    try {
+      console.log('[Auth] Refreshing session');
+      
+      // Get the current session from Supabase
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error || !data.session) {
+        console.error('[Auth] Error getting current session for refresh:', error);
+        return;
+      }
+      
+      // Call our refresh endpoint
+      const response = await fetch('/api/auth/refresh-session', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${data.session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        console.log('[Auth] Session successfully refreshed with server');
+      } else {
+        console.error('[Auth] Failed to refresh session with server:', await response.text());
+      }
+    } catch (error) {
+      console.error('[Auth] Error during session refresh:', error);
+    }
+  }, [session, user]);
+
+  // Session refresh interval
+  useEffect(() => {
+    // Only set up the interval if we have a session and user
+    if (session && user) {
+      console.log('[Auth] Setting up session refresh interval');
+      
+      // Refresh every 15 minutes (900000 ms)
+      const refreshInterval = setInterval(refreshSession, 900000);
+      
+      return () => {
+        console.log('[Auth] Clearing session refresh interval');
+        clearInterval(refreshInterval);
+      };
+    }
+  }, [session, user, refreshSession]);
+
   // 1) Once Supabase is initialized, rehydrate session & user
   useEffect(() => {
     if (isInitializing) {
@@ -139,6 +194,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               }
               if (userData.session) {
                 setSession(userData.session);
+                
+                // Immediately refresh the session to ensure cookies are up-to-date
+                setTimeout(() => {
+                  refreshSession();
+                }, 1000);
               }
               setIsLoading(false);
               return;
@@ -644,6 +704,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         setUserData,
         hasCompletedProfile,
         refreshProfile,
+        refreshSession,
       }}
     >
       {children}
