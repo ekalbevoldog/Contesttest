@@ -159,6 +159,10 @@ export const loginUser = async (credentials: {
       credentials: 'include', // Important: include cookies in the request
     });
 
+    // Log the response status for debugging
+    console.log(`[Client] Login response status: ${response.status} ${response.statusText}`);
+    console.log('[Client] Response headers:', response.headers);
+
     if (!response.ok) {
       // Safely handle error responses that might be HTML instead of text
       try {
@@ -166,15 +170,15 @@ export const loginUser = async (credentials: {
         if (contentType && contentType.includes('application/json')) {
           const errorJson = await response.json();
           console.error('[Client] Login failed (JSON):', errorJson);
-          throw new Error(errorJson.error || errorJson.message || 'Login failed');
+          return { error: errorJson.error || errorJson.message || 'Login failed' };
         } else {
           const errorText = await response.text();
           console.error('[Client] Login failed (text):', errorText.substring(0, 150) + '...');
-          throw new Error('Login failed. Please try again later.');
+          return { error: 'Login failed. Please try again later.' };
         }
       } catch (parseError) {
         console.error('[Client] Error parsing login error response:', parseError);
-        throw new Error(`Login failed: ${response.status} ${response.statusText}`);
+        return { error: `Login failed: ${response.status} ${response.statusText}` };
       }
     }
 
@@ -182,16 +186,19 @@ export const loginUser = async (credentials: {
     let loginData;
     try {
       const contentType = response.headers.get('content-type');
+      console.log('[Client] Response content-type:', contentType);
+      
       if (contentType && contentType.includes('application/json')) {
         loginData = await response.json();
+        console.log('[Client] Parsed JSON login response successfully');
       } else {
         const textResponse = await response.text();
         console.error('[Client] Received non-JSON login response:', textResponse.substring(0, 150) + '...');
-        throw new Error('Server returned an invalid response format. Please try again later.');
+        return { error: 'Server returned an invalid response format. Please try again later.' };
       }
     } catch (jsonError) {
       console.error('[Client] Error parsing login response:', jsonError);
-      throw new Error('Failed to process login response. Please try again later.');
+      return { error: 'Failed to process login response. Please try again later.' };
     }
     console.log('[Client] Server login successful');
 

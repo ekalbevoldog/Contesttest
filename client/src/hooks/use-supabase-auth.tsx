@@ -572,12 +572,17 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       // Use our updated login function that handles both direct and server auth
       const loginData = await loginUser({ email, password });
 
+      // Debug the returned data
+      console.log('[Auth] Login response data:', loginData);
+
       // Our custom method might return different structure based on success path
       if (loginData.error) {
         console.error('[Auth] Login error:', loginData.error);
         toast({
           title: 'Login failed',
-          description: loginData.error.message || loginData.error,
+          description: typeof loginData.error === 'string' 
+            ? loginData.error 
+            : (loginData.error.message || 'Invalid credentials'),
           variant: 'destructive',
         });
         return { error: loginData.error };
