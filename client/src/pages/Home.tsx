@@ -15,7 +15,7 @@ import { Parallax } from "@/components/animations/Parallax";
 import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
 import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
-import { useAuth } from "@/hooks/use-supabase-auth";
+import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { SessionTester } from "@/components/SessionTester";
 
 import { WebSocketTester } from "@/components/WebSocketTester";
@@ -26,7 +26,7 @@ export default function Home() {
   const [singleCampaign, setSingleCampaign] = useState(true);
   const [showWebSocketTester, setShowWebSocketTester] = useState(false);
   const [showSessionTester, setShowSessionTester] = useState(false);
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   
   // Listen for the custom event to toggle the AI assistant
   useEffect(() => {
