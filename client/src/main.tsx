@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import AppSimple from "./AppSimple";
 import "./index.css";
 import { initializeSupabase } from "./lib/supabase-client";
 
@@ -12,7 +12,7 @@ async function initApp() {
     console.log("Supabase initialized, rendering app");
     
     // Then render the application
-    createRoot(document.getElementById("root")!).render(<App />);
+    createRoot(document.getElementById("root")!).render(<AppSimple />);
   } catch (error) {
     console.error("Failed to initialize application:", error);
     const rootElement = document.getElementById("root");
