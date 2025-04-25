@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser'
 import { registerRoutes } from './routes.js'
 import { registerPublicRoutes } from './routes-public.js'
 import { setupSupabaseAuth } from './supabaseAuth.js'
+import { setupProfileEndpoints } from './supabaseProfile.js'
 
 // Load environment variables (including SUPABASE_URL, SUPABASE_ANON_KEY)
 dotenv.config()
@@ -16,6 +17,7 @@ app.use(cookieParser()) // Add cookie parser middleware
 
 // 1️⃣ Supabase Auth & Profile API endpoints
 setupSupabaseAuth(app)
+setupProfileEndpoints(app) // Register profile management endpoints
 
 // 2️⃣ Config endpoint for client-side initialization
 type SupabaseConfig = { url: string; key: string }
