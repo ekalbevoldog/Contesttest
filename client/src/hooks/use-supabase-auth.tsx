@@ -629,6 +629,22 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         role: userData.role || 'athlete' // Default to athlete if no role provided
       });
 
+      // Handle case where registration might return error object
+      if (registrationData.error) {
+        console.error('[Auth] Registration returned error:', registrationData.error);
+        const errorMsg = typeof registrationData.error === 'string' 
+          ? registrationData.error 
+          : registrationData.error.message || 'Registration failed';
+        
+        toast({
+          title: 'Registration failed',
+          description: errorMsg,
+          variant: 'destructive',
+        });
+        
+        return { error: registrationData.error, user: null };
+      }
+
       console.log('[Auth] Registration successful');
       toast({
         title: 'Registration successful',
@@ -638,11 +654,22 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       return { error: null, user: registrationData.user };
     } catch (e: any) {
       console.error('[Auth] Registration error:', e);
+      
+      // Format error message for better user experience
+      let errorMessage = 'Registration failed';
+      
+      if (e.message && e.message.includes('<!DOCTYPE')) {
+        errorMessage = 'Error communicating with the server. Please try again later.';
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+      
       toast({
         title: 'Registration failed',
-        description: e.message,
+        description: errorMessage,
         variant: 'destructive',
       });
+      
       return { error: e, user: null };
     }
   };

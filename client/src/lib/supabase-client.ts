@@ -320,13 +320,46 @@ export const registerUser = async (userData: {
     let responseData;
     const contentType = response.headers.get('content-type');
     
+    console.log('[Client] Registration response status:', response.status, response.statusText);
+    console.log('[Client] Registration response content-type:', contentType);
+    
     if (contentType && contentType.includes('application/json')) {
-      responseData = await response.json();
+      try {
+        responseData = await response.json();
+        console.log('[Client] Registration response parsed as JSON successfully');
+      } catch (jsonError) {
+        console.error('[Client] Error parsing JSON response:', jsonError);
+        const textResponse = await response.text();
+        console.error('[Client] Response text:', textResponse.substring(0, 150) + '...');
+        
+        // Return a proper error object instead of throwing
+        return {
+          error: 'Server returned invalid JSON. Please try again later.'
+        };
+      }
     } else {
       // Handle HTML or other non-JSON responses
-      const textResponse = await response.text();
-      console.error('[Client] Received non-JSON response:', textResponse.substring(0, 150) + '...');
-      throw new Error('Server returned an invalid response format. Please try again later.');
+      try {
+        const textResponse = await response.text();
+        console.error('[Client] Received non-JSON response:', textResponse.substring(0, 150) + '...');
+        
+        // Check if it's the common DOCTYPE HTML error
+        if (textResponse.includes('<!DOCTYPE')) {
+          return {
+            error: 'Server communication error. Please try again later.'
+          };
+        }
+        
+        // Return a proper error object instead of throwing
+        return {
+          error: 'Server returned an invalid response format. Please try again later.'
+        };
+      } catch (textError) {
+        console.error('[Client] Error reading response text:', textError);
+        return {
+          error: 'Unable to process server response. Please try again later.'
+        };
+      }
     }
 
     // Special case: If status is 200 but not 201, it means user exists but credentials are valid
