@@ -128,20 +128,55 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       
-      // Call our refresh endpoint
-      const response = await fetch('/api/auth/refresh-session', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${data.session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        console.log('[Auth] Session successfully refreshed with server');
-      } else {
-        console.error('[Auth] Failed to refresh session with server:', await response.text());
+      try {
+        console.log('[Auth] Calling server refresh endpoint');
+        // Call our refresh endpoint
+        const response = await fetch('/api/auth/refresh-session', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${data.session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          console.log('[Auth] Session successfully refreshed with server');
+          
+          // Get latest user data
+          await getCurrentUser();
+        } else {
+          const responseText = await response.text();
+          console.error('[Auth] Failed to refresh session with server:', response.status, responseText);
+          
+          // Fall back to manually update localStorage as a last resort
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('auth-status', 'authenticated');
+            localStorage.setItem('supabase-auth', JSON.stringify({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+              expires_at: data.session.expires_at,
+              user_id: user.id,
+              timestamp: Date.now()
+            }));
+            console.log('[Auth] Updated local storage as fallback');
+          }
+        }
+      } catch (fetchError) {
+        console.error('[Auth] Error calling refresh endpoint:', fetchError);
+        
+        // Fall back to manually update localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth-status', 'authenticated');
+          localStorage.setItem('supabase-auth', JSON.stringify({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at,
+            user_id: user.id,
+            timestamp: Date.now()
+          }));
+          console.log('[Auth] Updated local storage as fallback after fetch error');
+        }
       }
     } catch (error) {
       console.error('[Auth] Error during session refresh:', error);
