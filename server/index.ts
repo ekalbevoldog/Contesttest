@@ -83,6 +83,16 @@ app.use((req, res, next) => {
   // Register public routes first, so they're available even if other routes fail
   registerPublicRoutes(app);
 
+  // Set up direct landing page that doesn't depend on Vite
+  try {
+    const { setupDirectLanding } = await import('./directLanding.js');
+    setupDirectLanding(app);
+    console.log('Direct landing page registered successfully');
+  } catch (error) {
+    console.error('Error setting up direct landing page:', error);
+    // Continue with server startup even if direct landing setup fails
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

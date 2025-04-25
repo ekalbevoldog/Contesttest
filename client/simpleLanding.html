@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contested - Athlete and Business Connections</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      background-color: #1a202c;
+      color: #fff;
+      padding: 1rem 0;
+    }
+    
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    
+    nav ul {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    
+    nav li {
+      margin-left: 1.5rem;
+    }
+    
+    nav a {
+      color: #fff;
+      text-decoration: none;
+    }
+    
+    nav a:hover {
+      text-decoration: underline;
+    }
+    
+    .hero {
+      padding: 3rem 0;
+      text-align: center;
+    }
+    
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .hero p {
+      font-size: 1.25rem;
+      max-width: 800px;
+      margin: 0 auto 2rem;
+      color: #4a5568;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    .button {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .button-primary {
+      background-color: #3182ce;
+      color: white;
+    }
+    
+    .button-primary:hover {
+      background-color: #2c5282;
+    }
+    
+    .button-secondary {
+      background-color: #e2e8f0;
+      color: #1a202c;
+    }
+    
+    .button-secondary:hover {
+      background-color: #cbd5e0;
+    }
+    
+    .card {
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .error-message {
+      background-color: #fed7d7;
+      color: #c53030;
+      border-radius: 0.25rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    
+    .success-message {
+      background-color: #c6f6d5;
+      color: #2f855a;
+      border-radius: 0.25rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    
+    .spinner {
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 0.25rem solid #e2e8f0;
+      border-top-color: #3182ce;
+      border-radius: 50%;
+      animation: spinner 0.8s linear infinite;
+    }
+    
+    @keyframes spinner {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    footer {
+      background-color: #1a202c;
+      color: #a0aec0;
+      padding: 2rem 0;
+      margin-top: 3rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo">Contested</div>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/auth">Sign In</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="hero">
+      <h1>Welcome to Contested</h1>
+      <p>Connect athletes and businesses for meaningful partnerships that drive results.</p>
+      <div class="cta-buttons">
+        <a href="/auth" class="button button-primary">Get Started</a>
+        <a href="/api/config/supabase" class="button button-secondary">Check API Status</a>
+      </div>
+    </div>
+    
+    <div class="card" id="api-status-card">
+      <h2>API Status Check</h2>
+      <div id="error-message" class="error-message"></div>
+      <div id="success-message" class="success-message"></div>
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+      </div>
+      <div id="status-details" style="display:none;">
+        <table style="width:100%; border-collapse: collapse;">
+          <tr>
+            <th style="text-align:left; padding:0.5rem; border-bottom:1px solid #e2e8f0;">Service</th>
+            <th style="text-align:left; padding:0.5rem; border-bottom:1px solid #e2e8f0;">Status</th>
+          </tr>
+          <tr>
+            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Supabase Connection</td>
+            <td id="supabase-status" style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Checking...</td>
+          </tr>
+          <tr>
+            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Authentication</td>
+            <td id="auth-status" style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Checking...</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    
+    <div class="card" id="login-card">
+      <h2>Quick Login</h2>
+      <div id="login-error" class="error-message"></div>
+      <form id="login-form">
+        <div style="margin-bottom:1rem;">
+          <label for="email" style="display:block; margin-bottom:0.5rem; font-weight:500;">Email</label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" required 
+            style="width:100%; padding:0.75rem; border:1px solid #e2e8f0; border-radius:0.25rem;">
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label for="password" style="display:block; margin-bottom:0.5rem; font-weight:500;">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required 
+            style="width:100%; padding:0.75rem; border:1px solid #e2e8f0; border-radius:0.25rem;">
+        </div>
+        <button type="submit" class="button button-primary" style="width:100%;">Log In</button>
+      </form>
+      <div style="margin-top:1rem; text-align:center;">
+        <a href="/auth" style="color:#3182ce; text-decoration:none;">Go to full login page</a>
+      </div>
+    </div>
+  </div>
+  
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Contested. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      checkApiStatus();
+      
+      document.getElementById('login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        login(email, password);
+      });
+    });
+    
+    async function checkApiStatus() {
+      const errorMessage = document.getElementById('error-message');
+      const successMessage = document.getElementById('success-message');
+      const loadingIndicator = document.getElementById('loading');
+      const statusDetails = document.getElementById('status-details');
+      const supabaseStatus = document.getElementById('supabase-status');
+      const authStatus = document.getElementById('auth-status');
+      
+      try {
+        // Check Supabase config
+        const configResponse = await fetch('/api/config/supabase');
+        if (!configResponse.ok) {
+          throw new Error('Failed to fetch Supabase configuration');
+        }
+        
+        const configData = await configResponse.json();
+        if (configData && configData.url) {
+          supabaseStatus.textContent = '✅ Connected';
+          supabaseStatus.style.color = '#2f855a';
+        } else {
+          supabaseStatus.textContent = '❌ Configuration missing';
+          supabaseStatus.style.color = '#c53030';
+        }
+        
+        // Check authentication status
+        const authResponse = await fetch('/api/auth/user');
+        if (authResponse.status === 401) {
+          authStatus.textContent = '⚠️ Not logged in';
+          authStatus.style.color = '#dd6b20';
+        } else if (authResponse.ok) {
+          const userData = await authResponse.json();
+          authStatus.textContent = `✅ Logged in as ${userData.email || userData.username}`;
+          authStatus.style.color = '#2f855a';
+          
+          successMessage.textContent = 'You are currently logged in!';
+          successMessage.style.display = 'block';
+        } else {
+          authStatus.textContent = '❌ Authentication error';
+          authStatus.style.color = '#c53030';
+        }
+        
+        loadingIndicator.style.display = 'none';
+        statusDetails.style.display = 'block';
+      } catch (error) {
+        errorMessage.textContent = 'Error checking API status: ' + error.message;
+        errorMessage.style.display = 'block';
+        loadingIndicator.style.display = 'none';
+      }
+    }
+    
+    async function login(email, password) {
+      const loginError = document.getElementById('login-error');
+      const loginForm = document.getElementById('login-form');
+      const submitButton = loginForm.querySelector('button[type="submit"]');
+      
+      loginError.style.display = 'none';
+      submitButton.disabled = true;
+      submitButton.textContent = 'Logging in...';
+      
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(errorData || 'Login failed');
+        }
+        
+        const userData = await response.json();
+        console.log('Login successful:', userData);
+        
+        // Redirect to dashboard or refresh the page
+        window.location.href = '/dashboard';
+      } catch (error) {
+        loginError.textContent = 'Login failed: ' + error.message;
+        loginError.style.display = 'block';
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Log In';
+      }
+    }
+  </script>
+</body>
+</html>
