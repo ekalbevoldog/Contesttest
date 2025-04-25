@@ -2,4 +2,4 @@
 // This file exists for compatibility with deployment systems that expect server.js
 
 console.log('Starting Contested platform via deploy-server.js');
-require('./deploy-server');
+import './deploy-server.js';
