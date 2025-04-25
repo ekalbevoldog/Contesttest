@@ -819,6 +819,76 @@ export function setupSupabaseAuth(app: Express) {
       return res.status(500).json({ error: 'Failed to update profile' });
     }
   });
+
+  // Session refresh endpoint - updates cookies with current session data
+  app.post('/api/auth/refresh-session', async (req: Request, res: Response) => {
+    try {
+      console.log('Processing session refresh request');
+      
+      // Check for authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
+      // Extract token
+      const token = authHeader.split(' ')[1];
+      
+      // Verify token with Supabase
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !user) {
+        console.error('Invalid token in refresh-session:', error);
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+      
+      // Get the current session data
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !data.session) {
+        console.error('No active session in refresh-session:', sessionError);
+        return res.status(401).json({ error: 'No active session' });
+      }
+      
+      console.log('Session found, refreshing cookies');
+      
+      // Update the cookies with fresh session data
+      const sessionObj = {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: data.session.expires_at,
+        user_id: user.id
+      };
+      
+      // Set the cookie with appropriate settings
+      res.cookie('supabase-auth', JSON.stringify(sessionObj), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
+      // Set a non-http-only cookie as a flag for client-side checks
+      res.cookie('auth-status', 'authenticated', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
+      console.log('Session cookies refreshed successfully');
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Session refreshed successfully' 
+      });
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+      return res.status(500).json({ error: 'Session refresh failed' });
+    }
+  });
 }
 
 // Declare the user property on the Express Request object
