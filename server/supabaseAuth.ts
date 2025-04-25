@@ -115,13 +115,39 @@ export function setupSupabaseAuth(app: Express) {
       if (userError) {
         console.error('Error fetching user data after login:', userError);
         
-        // If no user record exists (PGRST116 error), we'll return a specific error
+        // If no user record exists (PGRST116 error), create one
         if (userError.code === 'PGRST116') {
           console.log('No user record found in database for:', email);
-          return res.status(401).json({ 
-            error: 'User profile not found', 
-            message: 'You have valid login credentials but no user profile in the system. Please contact support.'
-          });
+          
+          // Get user metadata to extract role
+          const role = data.user?.user_metadata?.role || data.user?.app_metadata?.role || 'athlete';
+          
+          // Create a new user record in our database
+          try {
+            console.log('Creating user record in database for:', email);
+            const { data: newUserData, error: createError } = await supabase
+              .from('users')
+              .insert({
+                email: email,
+                auth_id: data.user.id,
+                role: role,
+                created_at: new Date(),
+                last_login: new Date()
+              })
+              .select()
+              .single();
+              
+            if (createError) {
+              console.error('Error creating user record:', createError);
+            } else {
+              console.log('Created user record:', newUserData);
+              // Use this new user data going forward
+              userData = newUserData;
+            }
+          } catch (createError) {
+            console.error('Exception creating user record:', createError);
+            // We'll still proceed with just the auth data
+          }
         }
         // For other errors, we'll still proceed with just the auth data
       }
