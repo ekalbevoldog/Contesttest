@@ -208,6 +208,32 @@ export function setupSupabaseAuth(app: Express) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
       
+      // First, ensure the auth_id column exists
+      try {
+        // Check if auth_id column exists by attempting to query it
+        const { data: testData, error: testError } = await supabase
+          .from('users')
+          .select('auth_id')
+          .limit(1);
+          
+        if (testError && testError.message && testError.message.includes('column "auth_id" does not exist')) {
+          console.error('auth_id column missing, attempting to add it');
+          
+          // The auth_id column doesn't exist, try to add it
+          const { error: alterError } = await supabase.rpc('exec_sql', {
+            sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id TEXT UNIQUE"
+          });
+          
+          if (alterError) {
+            console.error('Error adding auth_id column:', alterError);
+          } else {
+            console.log('Successfully added auth_id column to users table');
+          }
+        }
+      } catch (schemaError) {
+        console.error('Error checking/updating schema:', schemaError);
+      }
+      
       // Get additional user data from our users table
       console.log(`Fetching user data for email: ${user.email}`);
       
@@ -241,7 +267,7 @@ export function setupSupabaseAuth(app: Express) {
             console.error('Error fetching user by email:', emailError);
             userError = emailError;
           } else if (emailUserData) {
-            console.log('Found user data by email');
+            console.log('Found user data by email, but no auth_id link');
             userData = emailUserData;
             
             // If user record exists by email but doesn't have auth_id, update it
@@ -260,6 +286,37 @@ export function setupSupabaseAuth(app: Express) {
                 // Update our local userData with the change
                 userData.auth_id = user.id;
               }
+            }
+          } else {
+            // No user found by either method - create a new user record
+            console.log('No user record found, creating one for:', user.email);
+            
+            // Get role from user metadata or default to 'athlete'
+            const role = user.user_metadata?.role || 'athlete';
+            
+            try {
+              // Create a new user record
+              const { data: newUserData, error: createError } = await supabase
+                .from('users')
+                .insert({
+                  email: user.email,
+                  auth_id: user.id,
+                  username: user.email.split('@')[0], // Use part of email as username
+                  password: 'managed-by-supabase-auth', // Placeholder since we use Supabase Auth
+                  role: role,
+                  created_at: new Date()
+                })
+                .select()
+                .single();
+                
+              if (createError) {
+                console.error('Error creating user record:', createError);
+              } else {
+                console.log('Successfully created new user record with auth_id');
+                userData = newUserData;
+              }
+            } catch (createError) {
+              console.error('Exception creating user record:', createError);
             }
           }
         }
