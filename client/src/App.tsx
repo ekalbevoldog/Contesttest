@@ -318,8 +318,9 @@ function Router() {
               requiredRole="admin"
             />
 
-            {/* Profile route */}
+            {/* Profile routes - added both formats to ensure it works */}
             <Route path="/profile" component={ProfilePage} />
+            <ProtectedRoute path="/profile" component={ProfilePage} />
             
             {/* Main dashboard redirect */}
             <RoleRedirect path="/dashboard" />
