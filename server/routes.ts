@@ -10,6 +10,7 @@ import { sessionService } from "./services/sessionService.js";
 // Import Supabase auth
 import { supabase } from "./supabase.js";
 import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
+import { pool } from "./db.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -249,6 +250,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup authentication with Supabase
   setupSupabaseAuth(app);
+  
+  // Database schema diagnostic endpoint
+  app.get("/api/db/schema/check", async (req: Request, res: Response) => {
+    try {
+      console.log("Checking database schema...");
+      
+      // Check if users table has auth_id column
+      const { data: usersColumns, error: columnsError } = await supabase
+        .from('users')
+        .select('auth_id')
+        .limit(1);
+      
+      let hasAuthIdColumn = !columnsError;
+      
+      console.log(`auth_id column exists: ${hasAuthIdColumn}`);
+      
+      if (!hasAuthIdColumn) {
+        console.log("Attempting to add auth_id column to users table...");
+        
+        try {
+          // Try to add the auth_id column using raw SQL
+          const { error: alterError } = await supabaseAdmin.rpc('exec_sql', {
+            sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id TEXT UNIQUE"
+          });
+          
+          if (alterError) {
+            console.error("Error adding auth_id column:", alterError);
+            return res.status(500).json({
+              message: "Failed to add auth_id column to users table",
+              error: alterError
+            });
+          }
+          
+          console.log("auth_id column added successfully!");
+          
+          return res.status(200).json({
+            message: "Database schema updated: auth_id column added to users table",
+            schema: {
+              hasAuthIdColumn: true,
+              fixed: true
+            }
+          });
+        } catch (alterError) {
+          console.error("Exception adding auth_id column:", alterError);
+          return res.status(500).json({
+            message: "Exception adding auth_id column to users table",
+            error: alterError instanceof Error ? alterError.message : String(alterError)
+          });
+        }
+      }
+      
+      return res.status(200).json({
+        message: "Database schema check completed",
+        schema: {
+          hasAuthIdColumn
+        }
+      });
+    } catch (error) {
+      console.error("Error checking database schema:", error);
+      return res.status(500).json({
+        message: "Failed to check database schema",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
   // Create a new session
   app.post("/api/chat/session", async (req: Request, res: Response) => {
     try {
