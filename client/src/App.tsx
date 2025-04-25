@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import Onboarding from "@/pages/Onboarding";
 import SignIn from "@/pages/SignIn";
 import AuthPage from "@/pages/auth-page";
+import ProfilePage from "@/pages/ProfilePage";
 import AthleteInfo from "@/pages/AthleteInfo";
 import BusinessInfo from "@/pages/BusinessInfo";
 import BusinessDashboard from "@/pages/BusinessDashboard";
@@ -317,6 +318,9 @@ function Router() {
               requiredRole="admin"
             />
 
+            {/* Profile route */}
+            <Route path="/profile" component={ProfilePage} />
+            
             {/* Main dashboard redirect */}
             <RoleRedirect path="/dashboard" />
 
