@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
+import { createContext, ReactNode, useContext, useState, useEffect, useCallback } from 'react';
 import { 
   supabase, 
   loginUser, 
@@ -52,6 +52,39 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
   const { toast } = useToast();
   const [location, navigate] = useLocation();
+  
+  // Define signOut function with useCallback to avoid dependency issues
+  const signOut = useCallback(async () => {
+    console.log('[Auth] Signing out...');
+    
+    try {
+      // Use our logout helper that handles both server and direct logout
+      await logoutUser();
+      console.log('[Auth] Signed out successfully');
+      
+      // Clear our local storage data
+      if (typeof window !== 'undefined') {
+        console.log('[Auth] Clearing localStorage data');
+        // Clear our custom storage
+        localStorage.removeItem('contested-auth');
+        localStorage.removeItem('contestedUserData');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+
+        // Clear any other potential Supabase tokens
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+
+      navigate('/');
+    } catch (error) {
+      console.error('[Auth] Error signing out:', error);
+      navigate('/');
+    }
+  }, [navigate]);
 
   // 0) Initialize Supabase client first
   useEffect(() => {
@@ -497,53 +530,47 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signOut = async () => {
-    console.log('[Auth] Signing out...');
+  // signOut function was moved to the top of the component using useCallback
+  const refreshToast = () => {
+    toast({
+      title: 'Logged out',
+      description: 'You have been logged out successfully.',
+    });
+  };
+  
+  // This is an empty placeholder to maintain code structure
+  const handleLogoutError = (error: any) => {
+    console.error('[Auth] Error signing out:', error);
+    toast({
+      title: 'Error',
+      description: 'Failed to sign out. Please try again.',
+      variant: 'destructive'
+    });
 
-    try {
-      // Use our logoutUser function that notifies the server
-      await logoutUser();
+    // Still attempt to clean up local state
+    setUser(null);
+    setSession(null);
+    setUserData(null);
 
-      console.log('[Auth] Sign out successful');
-      toast({
-        title: 'Logged out',
-        description: 'You have been logged out successfully.',
+    // Manually clear localStorage as a fallback
+    if (typeof window !== 'undefined') {
+      console.log('[Auth] Manual localStorage cleanup during fallback logout');
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-auth-token');
+      localStorage.removeItem('contested-auth');
+      localStorage.removeItem('contestedUserData');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userRole');
+
+      // Clear any other potential Supabase tokens
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
+          localStorage.removeItem(key);
+        }
       });
-
-      // The auth state change event will handle redirecting
-    } catch (error) {
-      console.error('[Auth] Error signing out:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to sign out. Please try again.',
-        variant: 'destructive',
-      });
-
-      // Still attempt to clean up local state
-      setUser(null);
-      setSession(null);
-      setUserData(null);
-
-      // Manually clear localStorage as a fallback
-      if (typeof window !== 'undefined') {
-        console.log('[Auth] Manual localStorage cleanup during fallback logout');
-        localStorage.removeItem('supabase.auth.token');
-        localStorage.removeItem('sb-auth-token');
-        localStorage.removeItem('contested-auth');
-        localStorage.removeItem('contestedUserData');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userRole');
-
-        // Clear any other potential Supabase tokens
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
-            localStorage.removeItem(key);
-          }
-        });
-      }
-
-      navigate('/');
     }
+
+    navigate('/');
   };
 
   // Show initialization loader while Supabase client is being set up
