@@ -1,6 +1,7 @@
 import express from 'express'
 import path from 'path'
 import dotenv from 'dotenv'
+import cookieParser from 'cookie-parser'
 import { registerRoutes } from './routes.js'
 import { registerPublicRoutes } from './routes-public.js'
 import { setupSupabaseAuth } from './supabaseAuth.js'
@@ -11,6 +12,7 @@ dotenv.config()
 const app = express()
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
+app.use(cookieParser()) // Add cookie parser middleware
 
 // 1️⃣ Supabase Auth & Profile API endpoints
 setupSupabaseAuth(app)

@@ -178,6 +178,19 @@ export const loginUser = async (credentials: {
         }));
         console.log('[Client] Stored user data in localStorage');
       }
+      
+      // Store session data for persistence
+      if (loginData.session) {
+        // Store auth status separately to help check logged-in status quickly
+        localStorage.setItem('auth-status', 'authenticated');
+        
+        // Store full session data
+        localStorage.setItem('supabase-auth', JSON.stringify({
+          ...loginData.session,
+          timestamp: Date.now()
+        }));
+        console.log('[Client] Stored session data in localStorage');
+      }
     }
 
     // Ensure Supabase auth state is synchronized

@@ -120,12 +120,43 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     // Properly handle potential errors with supabase.auth.getSession
     const getSessionAndUser = async () => {
       try {
-        // First check localStorage for existing session data as fallback
+        // First check for auth-status cookie indicator
+        const hasAuthStatusCookie = document.cookie
+          .split('; ')
+          .some(cookie => cookie.startsWith('auth-status=authenticated'));
+
+        if (hasAuthStatusCookie) {
+          console.log('[Auth] Found auth-status cookie, user is logged in');
+          // The cookie is set which means our server-side auth is valid
+          // We'll check with the server to get the full user data
+          try {
+            console.log('[Auth] Attempting to get user data from server');
+            const userData = await getCurrentUser();
+            if (userData) {
+              console.log('[Auth] Successfully retrieved user data from server');
+              if (userData.auth) {
+                setUser(userData.auth);
+              }
+              if (userData.session) {
+                setSession(userData.session);
+              }
+              setIsLoading(false);
+              return;
+            } else {
+              console.log('[Auth] Server did not return user data');
+            }
+          } catch (serverError) {
+            console.error('[Auth] Error getting user data from server:', serverError);
+          }
+        }
+
+        // Next check localStorage for existing session data as fallback
         let localSessionData = null;
 
         try {
           // Check for multiple possible storage keys
           const storageKeys = [
+            'supabase-auth',
             'sb-access-token',
             'supabase.auth.token',
             'sb-auth-token',
@@ -155,17 +186,38 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           console.error('[Auth] Error from supabase.auth.getSession:', error);
 
           // If we have local data, try to use that as fallback
-          if (localSessionData && localSessionData.session?.access_token) {
+          if (localSessionData && (localSessionData.access_token || localSessionData.session?.access_token)) {
             console.log('[Auth] Attempting to restore session from localStorage');
+            
+            // Extract tokens from the structure based on format
+            const accessToken = localSessionData.access_token || localSessionData.session?.access_token;
+            const refreshToken = localSessionData.refresh_token || localSessionData.session?.refresh_token || '';
+            
             const { data: refreshData, error: refreshError } = await supabase.auth.setSession({
-              access_token: localSessionData.session.access_token,
-              refresh_token: localSessionData.session.refresh_token || ''
+              access_token: accessToken,
+              refresh_token: refreshToken
             });
 
             if (!refreshError && refreshData.session) {
               console.log('[Auth] Successfully restored session from localStorage');
               setSession(refreshData.session);
               setUser(refreshData.session.user);
+              
+              // Now also update the auth cookies by calling our server endpoint
+              try {
+                console.log('[Auth] Refreshing server-side session state');
+                await fetch('/api/auth/refresh-session', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                  },
+                  credentials: 'include'
+                });
+              } catch (refreshServerError) {
+                console.warn('[Auth] Error refreshing server session (non-critical):', refreshServerError);
+              }
+              
               return;
             } else {
               console.error('[Auth] Failed to restore session from localStorage:', refreshError);

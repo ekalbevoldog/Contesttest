@@ -154,6 +154,33 @@ export function setupSupabaseAuth(app: Express) {
       
       console.log('Login successful for:', email);
       
+      // Configure cookies for persistent sessions
+      // Create a secure, http-only cookie with session data
+      const sessionObj = {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: data.session.expires_at,
+        user_id: data.user.id
+      };
+      
+      // Set the cookie with appropriate settings
+      res.cookie('supabase-auth', JSON.stringify(sessionObj), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
+      // Set a non-http-only cookie as a flag for client-side checks
+      res.cookie('auth-status', 'authenticated', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
       // Return both auth data and profile data
       return res.status(200).json({
         user: data.user,
@@ -173,6 +200,7 @@ export function setupSupabaseAuth(app: Express) {
   // Logout endpoint
   app.post("/api/auth/logout", async (req: Request, res: Response) => {
     try {
+      console.log('Processing logout request');
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {
         // Extract token
@@ -180,7 +208,20 @@ export function setupSupabaseAuth(app: Express) {
         
         // Sign out using Supabase Auth
         await supabase.auth.signOut();
+        console.log('Supabase signOut called successfully');
       }
+      
+      // Clear all auth-related cookies regardless of auth header
+      res.clearCookie('supabase-auth', { path: '/' });
+      res.clearCookie('auth-status', { path: '/' });
+      
+      // Clear any other session cookies that might exist
+      res.clearCookie('sb-access-token', { path: '/' });
+      res.clearCookie('sb-refresh-token', { path: '/' });
+      res.clearCookie('contest-session', { path: '/' });
+      res.clearCookie('connect.sid', { path: '/' });
+      
+      console.log('All auth cookies cleared');
       
       return res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
@@ -192,14 +233,42 @@ export function setupSupabaseAuth(app: Express) {
   // User endpoint - get current authenticated user
   app.get("/api/auth/user", async (req: Request, res: Response) => {
     try {
-      // Check for authorization header
+      console.log('Checking authentication status');
+      let token = null;
+      
+      // First try to get token from authorization header
       const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Not authenticated' });
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        // Extract token from header
+        token = authHeader.split(' ')[1];
+        console.log('Found auth token in header');
+      } 
+      
+      // If no token in header, check cookies
+      if (!token && req.cookies && req.cookies['supabase-auth']) {
+        try {
+          // Parse the cookie to get the session
+          const sessionData = JSON.parse(req.cookies['supabase-auth']);
+          if (sessionData && sessionData.access_token) {
+            token = sessionData.access_token;
+            console.log('Found auth token in cookie');
+          }
+        } catch (cookieError) {
+          console.error('Error parsing auth cookie:', cookieError);
+        }
       }
       
-      // Extract token
-      const token = authHeader.split(' ')[1];
+      // If still no token, try to get it from the session
+      if (!token && req.cookies && req.cookies['sb-access-token']) {
+        token = req.cookies['sb-access-token'];
+        console.log('Found auth token in sb-access-token cookie');
+      }
+      
+      // If no token found, user is not authenticated
+      if (!token) {
+        console.log('No authentication token found');
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
       
       // Verify token with Supabase
       const { data: { user }, error } = await supabase.auth.getUser(token);
