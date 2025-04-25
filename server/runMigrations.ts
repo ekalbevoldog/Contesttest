@@ -1,5 +1,5 @@
-import { runProfileMigration } from './runProfileMigration.js';
-import { runUuidMigration } from './runUuidMigration.js';
+import { runProfileMigration } from './runProfileMigration';
+import { runUuidMigration } from './runUuidMigration';
 
 /**
  * Run all migrations to prepare the database for use
@@ -7,15 +7,15 @@ import { runUuidMigration } from './runUuidMigration.js';
 export async function runAllMigrations() {
   try {
     console.log('Starting all database migrations...');
-
+    
     // First run the profile tables migration (create athlete_profiles and business_profiles)
     await runProfileMigration();
     console.log('Profile tables migration completed');
-
+    
     // Then run the UUID migration to convert user_id columns to UUID type
     await runUuidMigration();
     console.log('UUID migration completed');
-
+    
     console.log('All migrations completed successfully!');
     return true;
   } catch (error) {

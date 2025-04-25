@@ -1,16 +1,8 @@
-import express from "express";
-import type { Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./simplified-routes.js";
-import { registerPublicRoutes } from "./routes-public.js";
-import { setupVite, serveStatic, log } from "./vite.js";
-import { testSupabaseConnection } from "./supabase.js";
-
-// Import storage with error handling
-import { storage } from './storage.js';
-import { objectStorage } from './objectStorage.js';
-
-// Verify storage modules are available with graceful fallback
-console.log('Storage modules initialized - continuing even if Object Storage is unavailable');
+import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes";
+import { registerPublicRoutes } from "./routes-public";
+import { setupVite, serveStatic, log } from "./vite";
+import { testSupabaseConnection } from "./supabase";
 
 const app = express();
 app.use(express.json());
@@ -51,7 +43,7 @@ app.use((req, res, next) => {
   try {
     const { setupSupabase } = await import('./supabaseSetup');
     await setupSupabase();
-
+    
     // Run all migrations including UUID migration
     try {
       const { runAllMigrations } = await import('./runMigrations');
@@ -65,48 +57,24 @@ app.use((req, res, next) => {
     console.error('Error setting up Supabase:', error);
     // Continue with server startup even if Supabase setup fails
   }
-
-  // Set up PostgreSQL database
+  
+  // Set up Supabase auth endpoints
   try {
-    const { testConnection, createEssentialTables } = await import('./db.js');
+    const { setupSupabaseAuth } = await import('./supabaseAuth');
+    setupSupabaseAuth(app);
     
-    // Test database connection
-    const connected = await testConnection();
-    if (!connected) {
-      console.error("Warning: Failed to connect to database. Some features may not work.");
-    } else {
-      // Create essential tables
-      await createEssentialTables();
-      console.log('Database tables initialized successfully');
-    }
+    const { setupProfileEndpoints } = await import('./supabaseProfile');
+    setupProfileEndpoints(app);
+    
+    console.log('Supabase auth and profile endpoints registered successfully');
   } catch (error) {
-    console.error('Error setting up database:', error);
-    // Continue with server startup even if database setup fails
+    console.error('Error setting up Supabase auth endpoints:', error);
+    // Continue with server startup even if Supabase auth setup fails
   }
-
-  // Set up authentication endpoints
-  try {
-    const { setupAuth } = await import('./auth.js');
-    setupAuth(app);
-    console.log('Authentication endpoints registered successfully');
-  } catch (error) {
-    console.error('Error setting up authentication endpoints:', error);
-    // Continue with server startup even if auth setup fails
-  }
-
+  
   // Register public routes first, so they're available even if other routes fail
   registerPublicRoutes(app);
-
-  // Set up direct landing page that doesn't depend on Vite
-  try {
-    const { setupDirectLanding } = await import('./directLanding.js');
-    setupDirectLanding(app);
-    console.log('Direct landing page registered successfully');
-  } catch (error) {
-    console.error('Error setting up direct landing page:', error);
-    // Continue with server startup even if direct landing setup fails
-  }
-
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -138,23 +106,3 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 })();
-
-// Minimal placeholder implementations for storage modules
-// Replace these with your actual implementation
-export const storage = {
-  getItem: async (key: string): Promise<string | null> => {
-    return null; // Replace with actual storage retrieval
-  },
-  setItem: async (key: string, value: string): Promise<void> => {
-    // Replace with actual storage setting
-  },
-};
-
-export const objectStorage = {
-  upload: async (file: any, path: string) => {
-    //Replace with actual object storage upload
-  },
-  download: async (path: string) => {
-    //Replace with actual object storage download
-  }
-};

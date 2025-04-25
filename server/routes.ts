@@ -1,15 +1,13 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage.js";
-import { db } from "./db.js";
-// Use local schema module instead of @shared to fix production build path resolution
-import * as schema from "../shared/schema.js";
+import { storage } from "./storage";
+import { db } from "./db";
 // Use services
-import { geminiService } from "./services/geminiService.js";
-import { sessionService } from "./services/sessionService.js";
+import { geminiService } from "./services/geminiService";
+import { sessionService } from "./services/sessionService";
 // Import Supabase auth
-import { supabase } from "./supabase.js";
-import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
+import { supabase } from "./supabase";
+import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -72,7 +70,8 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
     return false;
   }
 }
-import { setupAuth } from "./auth.js";
+import { setupAuth } from "./auth";
+import { insertFeedbackSchema, Feedback } from "@shared/schema";
 
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';
@@ -1783,7 +1782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get current authenticated user with profile data
+  // Get current authenticated user
   app.get("/api/auth/user", async (req: Request, res: Response) => {
     try {
       // Check if there's a token in the request headers
@@ -1801,170 +1800,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const userType = user.user_metadata?.user_type || user.app_metadata?.role || 'unknown';
-      console.log(`Fetching profile data for user ${user.id} with type ${userType}`);
+      const userType = user.user_metadata?.user_type || 'unknown';
       
-      // First, try to get user record from our database using auth_id
-      try {
-        // Check storage for user with matching auth_id
-        const dbUser = await storage.getUserByAuthId(user.id);
-        
-        if (dbUser) {
-          console.log(`Found user record in database with auth_id=${user.id}`);
-          
-          // Get associated profile based on role/user type
-          let profileData = null;
-          
-          if (userType === 'athlete') {
-            try {
-              const { data: athleteProfile } = await supabase
-                .from('athlete_profiles')
-                .select('*')
-                .eq('user_id', user.id)
-                .maybeSingle();
-                
-              if (athleteProfile) {
-                console.log(`Found athlete profile for user ${user.id}`);
-                profileData = athleteProfile;
-              }
-            } catch (profileErr) {
-              console.warn(`Error fetching athlete profile: ${profileErr}`);
-            }
-          } else if (userType === 'business') {
-            try {
-              const { data: businessProfile } = await supabase
-                .from('business_profiles')
-                .select('*')
-                .eq('user_id', user.id)
-                .maybeSingle();
-                
-              if (businessProfile) {
-                console.log(`Found business profile for user ${user.id}`);
-                profileData = businessProfile;
-              }
-            } catch (profileErr) {
-              console.warn(`Error fetching business profile: ${profileErr}`);
-            }
-          }
-          
-          // Return complete user data with profile
-          return res.status(200).json({
-            user: {
-              id: user.id,
-              email: user.email,
-              userType: userType,
-              ...dbUser
-            },
-            profile: profileData
-          });
-        } else {
-          console.log(`No user record found with auth_id=${user.id}, trying email lookup`);
-          
-          // Try fallback to email search
-          const emailUser = await storage.getUserByEmail(user.email || '');
-          
-          if (emailUser) {
-            console.log(`Found user record by email: ${user.email}`);
-            
-            // Update the user record with auth_id for future lookups
-            await storage.updateUser(emailUser.id, { auth_id: user.id });
-            console.log(`Updated user record with auth_id=${user.id}`);
-            
-            // Get associated profile based on role/user type
-            let profileData = null;
-            
-            if (userType === 'athlete') {
-              try {
-                const { data: athleteProfile } = await supabase
-                  .from('athlete_profiles')
-                  .select('*')
-                  .eq('user_id', user.id)
-                  .maybeSingle();
-                  
-                if (athleteProfile) {
-                  profileData = athleteProfile;
-                }
-              } catch (profileErr) {
-                console.warn(`Error fetching athlete profile: ${profileErr}`);
-              }
-            } else if (userType === 'business') {
-              try {
-                const { data: businessProfile } = await supabase
-                  .from('business_profiles')
-                  .select('*')
-                  .eq('user_id', user.id)
-                  .maybeSingle();
-                  
-                if (businessProfile) {
-                  profileData = businessProfile;
-                }
-              } catch (profileErr) {
-                console.warn(`Error fetching business profile: ${profileErr}`);
-              }
-            }
-            
-            // Return complete user data with profile
-            return res.status(200).json({
-              user: {
-                id: user.id,
-                email: user.email,
-                userType: userType,
-                ...emailUser
-              },
-              profile: profileData
-            });
-          } else {
-            // No user record found, create one
-            console.log(`No user record found for ${user.email}, creating one`);
-            
-            try {
-              const newUser = await storage.createUser({
-                email: user.email || '',
-                password: 'SUPABASE_AUTH_USER', // This is a placeholder as auth is handled by Supabase
-                role: userType as any,
-                auth_id: user.id
-              });
-              
-              console.log(`Created new user record: ${newUser.id}`);
-              
-              // Return basic user data
-              return res.status(200).json({
-                user: {
-                  id: user.id,
-                  email: user.email,
-                  userType: userType,
-                  ...newUser
-                },
-                profile: null
-              });
-            } catch (createErr) {
-              console.error(`Error creating user record: ${createErr}`);
-              
-              // Return basic auth user data if we can't create a user record
-              return res.status(200).json({
-                user: {
-                  id: user.id,
-                  email: user.email,
-                  userType: userType
-                },
-                profile: null
-              });
-            }
-          }
-        }
-      } catch (storageError) {
-        console.error(`Error querying user storage: ${storageError}`);
-        
-        // Return basic auth user data on error
-        return res.status(200).json({
-          user: {
-            id: user.id,
-            email: user.email,
-            userType: userType
-          },
-          profile: null
-        });
-      }
+      // Return the authenticated user
+      return res.status(200).json({
+        id: user.id,
+        email: user.email,
+        userType: userType
+      });
     } catch (error) {
       console.error("Error getting authenticated user:", error);
       return res.status(401).json({ error: "Not authenticated" });

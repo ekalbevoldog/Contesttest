@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Express } from "express";
-import { supabase } from './supabase.js';
+import { supabase } from './supabase';
 
 /**
  * Safely update a user record with profile data, handling potential schema mismatches
