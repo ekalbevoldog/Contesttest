@@ -1,136 +1,63 @@
-import express from "express";
-import type { Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes.js";
-import { registerPublicRoutes } from "./routes-public.js";
-import { setupVite, serveStatic, log } from "./vite.js";
-import { testSupabaseConnection } from "./supabase.js";
+import express from 'express'
+import path from 'path'
+import dotenv from 'dotenv'
+import { registerRoutes } from './routes.js'
+import { registerPublicRoutes } from './routes-public.js'
+import { setupSupabaseAuth } from './supabaseAuth.js'
 
-// Import storage with error handling
-import { storage } from './storage.js';
-import { objectStorage } from './objectStorage.js';
+// Load environment variables (including SUPABASE_URL, SUPABASE_ANON_KEY)
+dotenv.config()
 
-// Verify storage modules are available with graceful fallback
-console.log('Storage modules initialized - continuing even if Object Storage is unavailable');
+const app = express()
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// 1️⃣ Supabase Auth & Profile API endpoints
+setupSupabaseAuth(app)
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
-});
-
-(async () => {
-  // Initialize Supabase tables first
-  try {
-    const { setupSupabase } = await import('./supabaseSetup');
-    await setupSupabase();
-
-    // Run all migrations including UUID migration
-    try {
-      const { runAllMigrations } = await import('./runMigrations');
-      await runAllMigrations();
-      console.log('All database migrations completed successfully');
-    } catch (migrationError) {
-      console.error('Error running migrations:', migrationError);
-      // Continue with server startup even if migrations fail
-    }
-  } catch (error) {
-    console.error('Error setting up Supabase:', error);
-    // Continue with server startup even if Supabase setup fails
+// 2️⃣ Config endpoint for client-side initialization
+type SupabaseConfig = { url: string; key: string }
+app.get('/api/config/supabase', (_req, res) => {
+  const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return res.status(500).json({ error: 'Missing Supabase credentials' })
   }
+  res.json({ url: SUPABASE_URL, key: SUPABASE_ANON_KEY } as SupabaseConfig)
+})
 
-  // Set up Supabase auth endpoints
-  try {
-    const { setupSupabaseAuth } = await import('./supabaseAuth');
-    setupSupabaseAuth(app);
+// 3️⃣ Public and custom routes
+registerPublicRoutes(app)
+const httpServer = await registerRoutes(app)
 
-    const { setupProfileEndpoints } = await import('./supabaseProfile');
-    setupProfileEndpoints(app);
+// 4️⃣ Serve static assets and fallback for React app
+import { fileURLToPath } from 'url'
+import { setupVite, serveStatic } from './vite.js'
 
-    console.log('Supabase auth and profile endpoints registered successfully');
-  } catch (error) {
-    console.error('Error setting up Supabase auth endpoints:', error);
-    // Continue with server startup even if Supabase auth setup fails
-  }
+const isDev = process.env.NODE_ENV !== 'production'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-  // Register public routes first, so they're available even if other routes fail
-  registerPublicRoutes(app);
+if (isDev) {
+  // In development mode, set up Vite middleware
+  console.log('Running in development mode with Vite middleware')
+  await setupVite(app, httpServer)
+} else {
+  // In production mode, serve static files
+  console.log('Running in production mode with static files')
+  const clientDist = path.join(__dirname, '../client/dist')
+  app.use(express.static(clientDist))
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'))
+  })
+}
 
-  const server = await registerRoutes(app);
+// 5️⃣ Global error handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const status = err.status || 500
+  console.error('Server error:', err)
+  res.status(status).json({ message: err.message || 'Internal Server Error' })
+})
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    console.error("Server error:", err);
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
-
-// Minimal placeholder implementations for storage modules
-// Replace these with your actual implementation
-export const storage = {
-  getItem: async (key: string): Promise<string | null> => {
-    return null; // Replace with actual storage retrieval
-  },
-  setItem: async (key: string, value: string): Promise<void> => {
-    // Replace with actual storage setting
-  },
-};
-
-export const objectStorage = {
-  upload: async (file: any, path: string) => {
-    //Replace with actual object storage upload
-  },
-  download: async (path: string) => {
-    //Replace with actual object storage download
-  }
-};
+// Start server
+const port = parseInt(process.env.PORT || '5000', 10)
+httpServer.listen(port, '0.0.0.0', () => console.log(`Server listening on port ${port}`))
