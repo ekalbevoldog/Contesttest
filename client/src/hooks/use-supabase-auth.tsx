@@ -72,7 +72,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     }
-    
+
     initializeAuth();
   }, [toast]);
 
@@ -81,15 +81,15 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     if (isInitializing) {
       return; // Wait until Supabase is initialized
     }
-    
+
     console.log('[Auth] Initializing auth state...');
-    
+
     // Properly handle potential errors with supabase.auth.getSession
     const getSessionAndUser = async () => {
       try {
         // First check localStorage for existing session data as fallback
         let localSessionData = null;
-        
+
         try {
           // Check for multiple possible storage keys
           const storageKeys = [
@@ -98,7 +98,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             'sb-auth-token',
             'contested-auth'
           ];
-          
+
           for (const key of storageKeys) {
             const storedData = localStorage.getItem(key);
             if (storedData) {
@@ -114,13 +114,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         } catch (storageError) {
           console.warn('[Auth] Error accessing localStorage:', storageError);
         }
-        
+
         // Try to get the session from Supabase
         const { data, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('[Auth] Error from supabase.auth.getSession:', error);
-          
+
           // If we have local data, try to use that as fallback
           if (localSessionData && localSessionData.session?.access_token) {
             console.log('[Auth] Attempting to restore session from localStorage');
@@ -128,7 +128,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               access_token: localSessionData.session.access_token,
               refresh_token: localSessionData.session.refresh_token || ''
             });
-            
+
             if (!refreshError && refreshData.session) {
               console.log('[Auth] Successfully restored session from localStorage');
               setSession(refreshData.session);
@@ -138,10 +138,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               console.error('[Auth] Failed to restore session from localStorage:', refreshError);
             }
           }
-          
+
           throw error;
         }
-        
+
         if (data.session) {
           console.log('[Auth] Found existing session');
           setSession(data.session);
@@ -155,7 +155,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     };
-    
+
     getSessionAndUser();
   }, [isInitializing]);
 
@@ -164,13 +164,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     if (isInitializing) {
       return; // Don't set up the listener until Supabase is initialized
     }
-    
+
     console.log('[Auth] Setting up auth state change listener');
-    
+
     let subscription: any = null;
     let retryCount = 0;
     const maxRetries = 3;
-    
+
     // Helper function to set up the auth state change listener
     const setupAuthListener = () => {
       try {
@@ -179,12 +179,12 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           console.error('[Auth] Supabase client not available yet');
           return null;
         }
-        
+
         // Create the listener for auth state changes
         const subscription = supabase.auth.onAuthStateChange(
           async (event: string, newSession: any) => {
             console.log('[Auth] Auth state change event:', event);
-            
+
             if (newSession) {
               console.log('[Auth] Auth state change - setting new session');
               setSession(newSession);
@@ -194,7 +194,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               setSession(null);
               setUser(null);
               setUserData(null);
-              
+
               if (event === 'SIGNED_OUT') {
                 // Add delay to make sure state is updated before redirection
                 setTimeout(() => {
@@ -204,30 +204,30 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             }
           }
         );
-        
+
         console.log('[Auth] Auth state change listener successfully set up');
         return subscription.data.subscription;
       } catch (error) {
         console.error('[Auth] Error setting up auth state change listener:', error);
-        
+
         // Retry logic with exponential backoff
         if (retryCount < maxRetries) {
           retryCount++;
           console.log(`[Auth] Retrying to set up auth listener (${retryCount}/${maxRetries})...`);
-          
+
           // Wait a bit before retrying with increasing delay
           setTimeout(() => {
             subscription = setupAuthListener();
           }, 1000 * retryCount); // Increasing backoff
         }
-        
+
         return null;
       }
     };
-    
+
     // Initial setup
     subscription = setupAuthListener();
-    
+
     return () => {
       if (subscription) {
         console.log('[Auth] Cleaning up auth state change listener');
@@ -249,7 +249,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
-    
+
     console.log('[Auth] User changed, fetching profile for:', user.email);
     let cancelled = false;
     setLoadingProfile(true);
@@ -258,16 +258,16 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       try {
         // Try our server API to get complete user data
         const serverData = await getCurrentUser();
-        
+
         if (cancelled) return;
-        
+
         if (serverData) {
           console.log('[Auth] Server returned user data');
-          
+
           // Detect which response format we got
           let profileData = null;
           let roleValue = null;
-          
+
           if (serverData.profile) {
             profileData = serverData.profile;
             roleValue = profileData.role || user?.user_metadata?.role || 'user';
@@ -276,11 +276,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             profileData = serverData.user;
             roleValue = profileData.role || user?.user_metadata?.role || 'user';
           }
-          
+
           if (profileData) {
             console.log('[Auth] Setting profile data from server');
             setUserData(profileData);
-            
+
             // Check if the profile is complete based on role
             if (roleValue) {
               console.log(`[Auth] Checking profile completion for role: ${roleValue}`);
@@ -292,7 +292,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           }
         } else {
           console.log('[Auth] Server did not return user data, falling back to Supabase');
-          
+
           // Fall back to direct Supabase query
           try {
             // First try by auth_id
@@ -301,13 +301,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               .select('*')
               .eq('auth_id', user.id)
               .maybeSingle();
-              
+
             if (cancelled) return;
-              
+
             if (profileData) {
               console.log('[Auth] Found user profile by auth_id');
               setUserData(profileData);
-              
+
               // Check if profile is complete
               if (profileData.role) {
                 const hasProfile = await checkUserProfile(user.id, profileData.role);
@@ -320,20 +320,30 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                 .select('*')
                 .eq('email', user.email)
                 .maybeSingle();
-                
+
               if (cancelled) return;
-                
+
               if (emailProfileData) {
                 console.log('[Auth] Found user profile by email');
                 setUserData(emailProfileData);
-                
+
                 // Check if profile is complete
                 if (emailProfileData.role) {
                   const hasProfile = await checkUserProfile(user.id, emailProfileData.role);
                   setHasCompletedProfile(hasProfile);
                 }
               } else {
-                console.log('[Auth] No user profile found');
+                console.log('[Auth] No user record found in database');
+                toast({
+                  title: 'Profile not found',
+                  description: 'Your account exists but no user profile was found. Please contact support.',
+                  variant: 'destructive',
+                });
+
+                // Clear user state to force re-login
+                setTimeout(() => {
+                  signOut();
+                }, 3000);
               }
             }
           } catch (error) {
@@ -357,7 +367,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     return () => { 
       cancelled = true; 
     };
-  }, [user]);
+  }, [user, signOut, toast]);
 
   // Function to refresh the user's profile data
   const refreshProfile = async () => {
@@ -365,21 +375,21 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       console.log('[Auth] Cannot refresh profile: no user');
       return;
     }
-    
+
     console.log('[Auth] Manually refreshing profile...');
     setLoadingProfile(true);
-    
+
     try {
       // Get the latest user data from server
       const serverData = await getCurrentUser();
-      
+
       if (serverData) {
         console.log('[Auth] Received refreshed user data from server');
-        
+
         // Detect which response format we got
         let profileData = null;
         let roleValue = null;
-        
+
         if (serverData.profile) {
           profileData = serverData.profile;
           roleValue = profileData.role || user?.user_metadata?.role || 'user';
@@ -388,11 +398,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           profileData = serverData.user;
           roleValue = profileData.role || user?.user_metadata?.role || 'user';
         }
-        
+
         if (profileData) {
           console.log('[Auth] Updating profile data from server refresh');
           setUserData(profileData);
-          
+
           // Check if the profile is complete based on role
           if (roleValue) {
             console.log(`[Auth] Checking profile completion for role: ${roleValue}`);
@@ -412,11 +422,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     console.log('[Auth] Attempting sign in for:', email);
-    
+
     try {
       // Use our updated login function that handles both direct and server auth
       const loginData = await loginUser({ email, password });
-      
+
       // Our custom method might return different structure based on success path
       if (loginData.error) {
         console.error('[Auth] Login error:', loginData.error);
@@ -427,16 +437,16 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         });
         return { error: loginData.error };
       }
-      
+
       console.log('[Auth] Login successful');
       toast({
         title: 'Login successful',
         description: 'You have been logged in successfully.',
       });
-      
+
       // Extract user data from different possible response formats
       let userData = null;
-      
+
       if (loginData.user) {
         userData = loginData.user;
       } else if (loginData.session?.user) {
@@ -444,7 +454,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       } else if (loginData.data?.user) {
         userData = loginData.data.user;
       }
-      
+
       return { error: null, user: userData as EnhancedUser };
     } catch (e: any) {
       console.error('[Auth] Login error:', e);
@@ -459,7 +469,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, userData: any) => {
     console.log('[Auth] Attempting sign up for:', email);
-    
+
     try {
       // Use our registerUser function that handles both auth and profile creation
       const registrationData = await registerUser({
@@ -468,13 +478,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         fullName: userData.fullName || email.split('@')[0], // Fallback to email username if no name provided
         role: userData.role || 'athlete' // Default to athlete if no role provided
       });
-      
+
       console.log('[Auth] Registration successful');
       toast({
         title: 'Registration successful',
         description: 'Your account has been created successfully.',
       });
-      
+
       return { error: null, user: registrationData.user };
     } catch (e: any) {
       console.error('[Auth] Registration error:', e);
@@ -489,17 +499,17 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     console.log('[Auth] Signing out...');
-    
+
     try {
       // Use our logoutUser function that notifies the server
       await logoutUser();
-      
+
       console.log('[Auth] Sign out successful');
       toast({
         title: 'Logged out',
         description: 'You have been logged out successfully.',
       });
-      
+
       // The auth state change event will handle redirecting
     } catch (error) {
       console.error('[Auth] Error signing out:', error);
@@ -508,12 +518,12 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         description: 'Failed to sign out. Please try again.',
         variant: 'destructive',
       });
-      
+
       // Still attempt to clean up local state
       setUser(null);
       setSession(null);
       setUserData(null);
-      
+
       // Manually clear localStorage as a fallback
       if (typeof window !== 'undefined') {
         console.log('[Auth] Manual localStorage cleanup during fallback logout');
@@ -523,7 +533,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('contestedUserData');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
-        
+
         // Clear any other potential Supabase tokens
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
@@ -531,7 +541,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           }
         });
       }
-      
+
       navigate('/');
     }
   };

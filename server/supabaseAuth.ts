@@ -114,7 +114,16 @@ export function setupSupabaseAuth(app: Express) {
         
       if (userError) {
         console.error('Error fetching user data after login:', userError);
-        // We can still proceed with just the auth data
+        
+        // If no user record exists (PGRST116 error), we'll return a specific error
+        if (userError.code === 'PGRST116') {
+          console.log('No user record found in database for:', email);
+          return res.status(401).json({ 
+            error: 'User profile not found', 
+            message: 'You have valid login credentials but no user profile in the system. Please contact support.'
+          });
+        }
+        // For other errors, we'll still proceed with just the auth data
       }
       
       console.log('Login successful for:', email);
