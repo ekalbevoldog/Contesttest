@@ -1,6 +1,6 @@
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes.js";
+import { registerRoutes } from "./simplified-routes.js";
 import { registerPublicRoutes } from "./routes-public.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 import { testSupabaseConnection } from "./supabase.js";
