@@ -31,6 +31,22 @@ app.get('/api/config/supabase', (_req, res) => {
 registerPublicRoutes(app)
 const httpServer = await registerRoutes(app)
 
+// API-specific middleware to ensure JSON responses for API routes
+app.use('/api/*', (req, res, next) => {
+  // Set proper Content-Type for all API responses
+  res.setHeader('Content-Type', 'application/json')
+  
+  // If this middleware is reached, it means no route handlers matched the API request
+  if (!res.headersSent) {
+    return res.status(404).json({ 
+      error: 'API endpoint not found',
+      path: req.originalUrl 
+    })
+  }
+  
+  next()
+})
+
 // 4️⃣ Serve static assets and fallback for React app
 import { fileURLToPath } from 'url'
 import { setupVite, serveStatic } from './vite.js'
@@ -55,8 +71,27 @@ if (isDev) {
 
 // 5️⃣ Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) {
+    return next(err) // If headers already sent, delegate to Express default error handler
+  }
+  
+  // Set proper Content-Type for API routes
+  if (req.originalUrl.startsWith('/api')) {
+    res.setHeader('Content-Type', 'application/json')
+  }
+  
   const status = err.status || 500
   console.error('Server error:', err)
+  
+  // For API routes, ensure we always return JSON
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(status).json({ 
+      error: err.message || 'Internal Server Error',
+      path: req.originalUrl 
+    })
+  }
+  
+  // For non-API routes, use standard error handling
   res.status(status).json({ message: err.message || 'Internal Server Error' })
 })
 
