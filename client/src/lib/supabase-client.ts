@@ -160,12 +160,39 @@ export const loginUser = async (credentials: {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Client] Login failed:', errorText);
-      throw new Error('Login failed: ' + (errorText || response.statusText));
+      // Safely handle error responses that might be HTML instead of text
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorJson = await response.json();
+          console.error('[Client] Login failed (JSON):', errorJson);
+          throw new Error(errorJson.error || errorJson.message || 'Login failed');
+        } else {
+          const errorText = await response.text();
+          console.error('[Client] Login failed (text):', errorText.substring(0, 150) + '...');
+          throw new Error('Login failed. Please try again later.');
+        }
+      } catch (parseError) {
+        console.error('[Client] Error parsing login error response:', parseError);
+        throw new Error(`Login failed: ${response.status} ${response.statusText}`);
+      }
     }
 
-    const loginData = await response.json();
+    // Safely parse the successful response
+    let loginData;
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        loginData = await response.json();
+      } else {
+        const textResponse = await response.text();
+        console.error('[Client] Received non-JSON login response:', textResponse.substring(0, 150) + '...');
+        throw new Error('Server returned an invalid response format. Please try again later.');
+      }
+    } catch (jsonError) {
+      console.error('[Client] Error parsing login response:', jsonError);
+      throw new Error('Failed to process login response. Please try again later.');
+    }
     console.log('[Client] Server login successful');
 
     // Store both user and profile data in localStorage for persistence
@@ -282,7 +309,18 @@ export const registerUser = async (userData: {
       credentials: 'include', // Important: include cookies in the request
     });
 
-    const responseData = await response.json();
+    // Safely handle the response - check content type before parsing as JSON
+    let responseData;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await response.json();
+    } else {
+      // Handle HTML or other non-JSON responses
+      const textResponse = await response.text();
+      console.error('[Client] Received non-JSON response:', textResponse.substring(0, 150) + '...');
+      throw new Error('Server returned an invalid response format. Please try again later.');
+    }
 
     // Special case: If status is 200 but not 201, it means user exists but credentials are valid
     // - This is a case where the server found an existing account with matching credentials 
@@ -462,12 +500,38 @@ export const getCurrentUser = async () => {
       }
 
       // For other errors, we'll try the direct Supabase approach
-      const errorText = await response.text();
-      console.error('[Client] Server user fetch failed:', errorText);
-      throw new Error('Failed to fetch user: ' + (errorText || response.statusText));
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorJson = await response.json();
+          console.error('[Client] Server user fetch failed (JSON):', errorJson);
+          throw new Error(errorJson.error || errorJson.message || 'Failed to fetch user data');
+        } else {
+          const errorText = await response.text();
+          console.error('[Client] Server user fetch failed (text):', errorText.substring(0, 150) + '...');
+          throw new Error('Failed to fetch user data. Please try again later.');
+        }
+      } catch (parseError) {
+        console.error('[Client] Error parsing user fetch error response:', parseError);
+        throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}`);
+      }
     }
 
-    const userData = await response.json();
+    // Safely parse the successful response
+    let userData;
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        userData = await response.json();
+      } else {
+        const textResponse = await response.text();
+        console.error('[Client] Received non-JSON user response:', textResponse.substring(0, 150) + '...');
+        throw new Error('Server returned an invalid response format. Please try again later.');
+      }
+    } catch (jsonError) {
+      console.error('[Client] Error parsing user response:', jsonError);
+      throw new Error('Failed to process user data response. Please try again later.');
+    }
     console.log('[Client] Successfully retrieved user data from server:', userData?.email);
 
     // Cache the data for next time

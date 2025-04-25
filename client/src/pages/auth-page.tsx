@@ -119,15 +119,10 @@ export default function AuthPage() {
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     try {
       // Use the signUp method from useSupabaseAuth hook
-      const { error } = await signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            full_name: `${values.firstName} ${values.lastName}`,
-            role: values.role
-          }
-        }
+      // Format the data according to the modified registerUser function in supabase-client.ts
+      const { error } = await signUp(values.email, values.password, {
+        fullName: `${values.firstName} ${values.lastName}`,
+        role: values.role
       });
       
       if (error) {
