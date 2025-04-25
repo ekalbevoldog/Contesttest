@@ -210,35 +210,73 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     // Properly handle potential errors with supabase.auth.getSession
     const getSessionAndUser = async () => {
       try {
-        // First check for auth-status cookie indicator
+        // Check both cookie and localStorage for auth status
         const hasAuthStatusCookie = document.cookie
           .split('; ')
           .some(cookie => cookie.startsWith('auth-status=authenticated'));
-
-        if (hasAuthStatusCookie) {
-          console.log('[Auth] Found auth-status cookie, user is logged in');
-          // The cookie is set which means our server-side auth is valid
+        
+        const hasLocalAuthStatus = localStorage.getItem('auth-status') === 'authenticated';
+        
+        console.log('[Auth] Auth status - Cookie:', hasAuthStatusCookie, 'LocalStorage:', hasLocalAuthStatus);
+        
+        // If either is true, consider the user logged in
+        if (hasAuthStatusCookie || hasLocalAuthStatus) {
+          console.log('[Auth] Found auth indicator, user is logged in');
+          
+          // The auth status is set which means our auth is valid
           // We'll check with the server to get the full user data
           try {
             console.log('[Auth] Attempting to get user data from server');
             const userData = await getCurrentUser();
-            if (userData) {
+            
+            if (userData && (userData.auth || userData.user)) {
               console.log('[Auth] Successfully retrieved user data from server');
+              
               if (userData.auth) {
                 setUser(userData.auth);
+              } else if (userData.user) {
+                setUser(userData.user);
               }
+              
               if (userData.session) {
                 setSession(userData.session);
+                
+                // Store session in localStorage as fallback
+                if (typeof window !== 'undefined' && userData.session.access_token) {
+                  localStorage.setItem('auth-status', 'authenticated');
+                  localStorage.setItem('supabase-auth', JSON.stringify({
+                    access_token: userData.session.access_token,
+                    refresh_token: userData.session.refresh_token,
+                    expires_at: userData.session.expires_at,
+                    user_id: userData.auth?.id || userData.user?.id,
+                    timestamp: Date.now()
+                  }));
+                  console.log('[Auth] Updated localStorage with session data');
+                }
+                
+                // Set the session in Supabase client
+                if (userData.session.access_token && userData.session.refresh_token) {
+                  try {
+                    await supabase.auth.setSession({
+                      access_token: userData.session.access_token,
+                      refresh_token: userData.session.refresh_token
+                    });
+                    console.log('[Auth] Set session in Supabase client');
+                  } catch (setSessionError) {
+                    console.error('[Auth] Error setting session in Supabase:', setSessionError);
+                  }
+                }
                 
                 // Immediately refresh the session to ensure cookies are up-to-date
                 setTimeout(() => {
                   refreshSession();
-                }, 1000);
+                }, 500);
               }
+              
               setIsLoading(false);
               return;
             } else {
-              console.log('[Auth] Server did not return user data');
+              console.log('[Auth] Server did not return valid user data');
             }
           } catch (serverError) {
             console.error('[Auth] Error getting user data from server:', serverError);
@@ -367,20 +405,63 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
             if (newSession) {
               console.log('[Auth] Auth state change - setting new session');
+              
+              // Update localStorage for redundancy
+              if (typeof window !== 'undefined' && newSession.access_token) {
+                localStorage.setItem('auth-status', 'authenticated');
+                localStorage.setItem('supabase-auth', JSON.stringify({
+                  access_token: newSession.access_token,
+                  refresh_token: newSession.refresh_token,
+                  expires_at: newSession.expires_at,
+                  user_id: newSession.user?.id,
+                  timestamp: Date.now()
+                }));
+                console.log('[Auth] Updated localStorage with session data from auth state change');
+              }
+              
               setSession(newSession);
               setUser(newSession?.user ?? null);
+              
+              // If this was a SIGNED_IN event, call session refresh to ensure cookies are set
+              if (event === 'SIGNED_IN' && newSession.access_token) {
+                try {
+                  console.log('[Auth] Refreshing session cookies after sign-in');
+                  await fetch('/api/auth/refresh-session', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${newSession.access_token}`
+                    },
+                    credentials: 'include'
+                  });
+                } catch (refreshError) {
+                  console.warn('[Auth] Error refreshing session after sign-in (non-critical):', refreshError);
+                }
+              }
+            } else if (event === 'SIGNED_OUT') {
+              console.log('[Auth] Auth state change - user signed out');
+              
+              // Clear localStorage
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('auth-status');
+                localStorage.removeItem('supabase-auth');
+                localStorage.removeItem('contestedUserData');
+                console.log('[Auth] Cleared auth data from localStorage');
+              }
+              
+              setSession(null);
+              setUser(null);
+              setUserData(null);
+              
+              // Add delay to make sure state is updated before redirection
+              setTimeout(() => {
+                navigate('/');
+              }, 100);
             } else {
               console.log('[Auth] Auth state change - clearing session');
               setSession(null);
               setUser(null);
               setUserData(null);
-
-              if (event === 'SIGNED_OUT') {
-                // Add delay to make sure state is updated before redirection
-                setTimeout(() => {
-                  navigate('/');
-                }, 100);
-              }
             }
           }
         );
