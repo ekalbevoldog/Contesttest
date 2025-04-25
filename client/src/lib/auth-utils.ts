@@ -9,16 +9,16 @@ import { supabase } from './supabase-client';
 export async function loginWithEmail(email: string, password: string) {
   try {
     console.log('[Auth Utils] Attempting login with email');
-    
+
     // First attempt to sign in directly with Supabase for better session handling
     const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
       email,
       password
     });
-    
+
     if (!supabaseError && supabaseData?.session) {
       console.log('[Auth Utils] Direct Supabase login successful');
-      
+
       // Now call our API endpoint to sync the user data properly
       try {
         const response = await fetch('/api/auth/login', {
@@ -30,11 +30,11 @@ export async function loginWithEmail(email: string, password: string) {
           body: JSON.stringify({ email, password }),
           credentials: 'include',
         });
-        
+
         if (response.ok) {
           console.log('[Auth Utils] API login sync successful');
           const apiData = await response.json();
-          
+
           // Return combined data from both sources
           return {
             user: supabaseData.user,
@@ -44,7 +44,7 @@ export async function loginWithEmail(email: string, password: string) {
             ...apiData
           };
         }
-        
+
         // Even if API call fails, we still have a successful Supabase login
         console.log('[Auth Utils] API login sync failed, but Supabase login succeeded');
         return {
@@ -60,12 +60,12 @@ export async function loginWithEmail(email: string, password: string) {
         };
       }
     }
-    
+
     // If Supabase login failed, try our API endpoint
     if (supabaseError) {
       console.log('[Auth Utils] Direct Supabase login failed, trying API endpoint');
     }
-    
+
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
@@ -82,14 +82,30 @@ export async function loginWithEmail(email: string, password: string) {
 
     const apiData = await response.json();
     console.log('[Auth Utils] API login successful');
-    
+
     // If API login succeeded but we don't have a Supabase session, set it
     if (apiData.session && !supabaseData?.session) {
       console.log('[Auth Utils] Setting Supabase session from API response');
-      await supabase.auth.setSession({
-        access_token: apiData.session.access_token,
-        refresh_token: apiData.session.refresh_token
-      });
+      try {
+        await supabase.auth.setSession({
+          access_token: apiData.session.access_token,
+          refresh_token: apiData.session.refresh_token
+        });
+
+        // Also store session data in localStorage as a backup
+        try {
+          localStorage.setItem('contested-auth', JSON.stringify({
+            session: apiData.session,
+            user: apiData.user || null,
+            timestamp: new Date().toISOString()
+          }));
+          console.log('[Auth Utils] Saved session backup to localStorage');
+        } catch (storageError) {
+          console.warn('[Auth Utils] Failed to save session backup to localStorage:', storageError);
+        }
+      } catch (sessionError) {
+        console.error('[Auth Utils] Failed to set Supabase session:', sessionError);
+      }
     }
 
     return apiData;
@@ -105,7 +121,7 @@ export async function loginWithEmail(email: string, password: string) {
 export async function registerWithEmail(email: string, password: string, fullName: string, role: string) {
   try {
     console.log('[Auth Utils] Attempting registration with email');
-    
+
     // First try to register directly with Supabase for better session handling
     const { data: supabaseData, error: supabaseError } = await supabase.auth.signUp({
       email,
@@ -118,10 +134,10 @@ export async function registerWithEmail(email: string, password: string, fullNam
         }
       }
     });
-    
+
     if (!supabaseError && supabaseData?.session) {
       console.log('[Auth Utils] Direct Supabase registration successful');
-      
+
       // Now call our API endpoint to create the corresponding database record
       try {
         console.log('[Auth Utils] Creating user record in database after Supabase registration');
@@ -140,11 +156,11 @@ export async function registerWithEmail(email: string, password: string, fullNam
           }),
           credentials: 'include', // Important: include cookies in the request
         });
-        
+
         if (serverResponse.ok) {
           console.log('[Auth Utils] Server registration sync successful');
           const serverData = await serverResponse.json();
-          
+
           // Return combined data from both sources
           return {
             user: supabaseData.user,
@@ -155,7 +171,7 @@ export async function registerWithEmail(email: string, password: string, fullNam
             serverData
           };
         }
-        
+
         // Even if API call fails, we still have a successful Supabase registration
         console.log('[Auth Utils] Server registration sync failed, but Supabase registration succeeded');
         return {
@@ -175,12 +191,12 @@ export async function registerWithEmail(email: string, password: string, fullNam
         };
       }
     }
-    
+
     // If Supabase registration failed or returned errors, try our server endpoint
     if (supabaseError) {
       console.log('[Auth Utils] Direct Supabase registration failed, trying server endpoint:', supabaseError.message);
     }
-    
+
     console.log('[Auth Utils] Using server endpoint for registration');
     const response = await fetch('/api/auth/register', {
       method: 'POST',
@@ -198,7 +214,7 @@ export async function registerWithEmail(email: string, password: string, fullNam
 
     const apiData = await response.json();
     console.log('[Auth Utils] Server registration successful');
-    
+
     // If server registration succeeded but we don't have a Supabase session, set it
     if (apiData.session && !supabaseData?.session) {
       console.log('[Auth Utils] Setting Supabase session from server response');
@@ -254,16 +270,16 @@ export async function getCurrentUser() {
   try {
     // First try to get user from Supabase directly
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
+
     if (sessionError) {
       console.error('Error getting session:', sessionError);
       return null;
     }
-    
+
     if (!sessionData?.session) {
       return null;
     }
-    
+
     // If we have a session, fetch the full user profile from our API
     const response = await fetch('/api/auth/user', {
       method: 'GET',
@@ -294,7 +310,7 @@ export async function logout() {
   try {
     // Get the current session to include token in logout request
     const { data: sessionData } = await supabase.auth.getSession();
-    
+
     // Call server-side logout endpoint
     if (sessionData?.session?.access_token) {
       await fetch('/api/auth/logout', {
@@ -304,10 +320,10 @@ export async function logout() {
         },
       });
     }
-    
+
     // Also perform client-side logout
     await supabase.auth.signOut();
-    
+
     // Clear any local storage items
     if (typeof window !== 'undefined') {
       localStorage.removeItem('contestedUserData');
@@ -317,15 +333,15 @@ export async function logout() {
       localStorage.removeItem('supabase.auth.token');
       localStorage.removeItem('sb-auth-token');
     }
-    
+
     return true;
   } catch (error) {
     console.error('Logout error:', error);
-    
+
     // Try direct Supabase logout as fallback
     try {
       await supabase.auth.signOut();
-      
+
       // Also clear localStorage in the fallback path
       if (typeof window !== 'undefined') {
         localStorage.removeItem('contestedUserData');
@@ -335,7 +351,7 @@ export async function logout() {
         localStorage.removeItem('supabase.auth.token');
         localStorage.removeItem('sb-auth-token');
       }
-      
+
       return true;
     } catch (directError) {
       console.error('Direct Supabase logout failed:', directError);
@@ -353,19 +369,19 @@ export async function checkUserProfile(userId: string, userRole: string) {
     const endpoint = userRole === 'athlete' 
       ? `/api/supabase/athlete-profile/${userId}`
       : `/api/supabase/business-profile/${userId}`;
-    
+
     const response = await fetch(endpoint);
-    
+
     if (response.ok) {
       // Profile exists
       return true;
     }
-    
+
     if (response.status === 404) {
       // Profile doesn't exist
       return false;
     }
-    
+
     // Some other error
     throw new Error('Failed to check user profile');
   } catch (error) {

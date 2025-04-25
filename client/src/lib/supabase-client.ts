@@ -28,6 +28,36 @@ export const supabase = new Proxy({} as SupabaseClient, {
 // We'll use a flag to track initialization state
 let isInitialized = false;
 
+// Custom storage implementation that handles serialization and adds debugging
+const customStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      const value = localStorage.getItem(key);
+      console.log(`[Storage] Retrieved key ${key}: ${value ? 'exists' : 'null'}`);
+      return value;
+    } catch (error) {
+      console.error(`[Storage] Error retrieving ${key}:`, error);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      console.log(`[Storage] Setting key ${key}`);
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error(`[Storage] Error setting ${key}:`, error);
+    }
+  },
+  removeItem: (key: string): void => {
+    try {
+      console.log(`[Storage] Removing key ${key}`);
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error(`[Storage] Error removing ${key}:`, error);
+    }
+  }
+};
+
 // Function to initialize the Supabase client with config from our server
 export async function initializeSupabase(): Promise<boolean> {
   // If already initialized, just return true
@@ -38,7 +68,7 @@ export async function initializeSupabase(): Promise<boolean> {
 
   try {
     console.log('[Client] Fetching Supabase configuration from server...');
-    
+
     // Make sure we have a proper fetch call with error handling
     const response = await fetch('/api/config/supabase', {
       method: 'GET',
@@ -47,26 +77,26 @@ export async function initializeSupabase(): Promise<boolean> {
         'Cache-Control': 'no-cache'
       },
     });
-    
+
     if (!response.ok) {
       const errorMessage = await response.text();
       throw new Error(`Failed to fetch Supabase config (${response.status}): ${errorMessage}`);
     }
-    
+
     const config = await response.json();
-    
+
     // Validate configuration
     if (!config || !config.url || !config.key) {
       throw new Error('Invalid Supabase configuration received from server');
     }
-    
+
     supabaseUrl = config.url;
     supabaseKey = config.key;
-    
+
     console.log(`[Client] Supabase URL available: ${!!supabaseUrl}`);
     console.log(`[Client] Supabase URL prefix: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
     console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
-    
+
     // Create only ONE instance of the Supabase client WITHOUT real-time configuration
     // This is the key fix for the "Multiple GoTrueClient instances" warning
     if (!_supabaseInstance) {
@@ -76,7 +106,7 @@ export async function initializeSupabase(): Promise<boolean> {
           autoRefreshToken: true,
           persistSession: true,
           // Explicitly tell Supabase to use the browser's localStorage
-          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+          storage: customStorage,
           storageKey: 'contested-auth'
         },
         // Explicitly disable realtime to prevent WebSocket connection attempts
@@ -92,16 +122,16 @@ export async function initializeSupabase(): Promise<boolean> {
         }
       });
     }
-    
+
     console.log('[Client] Supabase initialized with realtime DISABLED');
-    
+
     // Test the connection
     const { error } = await supabase.from('users').select('count').limit(1);
     if (error) {
       console.error('[Client] Could not connect to Supabase:', error);
       throw new Error(`Supabase connection failed: ${error.message}`);
     }
-    
+
     console.log('[Client] Supabase initialized successfully');
     isInitialized = true;
     return true;
@@ -128,16 +158,16 @@ export const loginUser = async (credentials: {
       body: JSON.stringify(credentials),
       credentials: 'include', // Important: include cookies in the request
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[Client] Login failed:', errorText);
       throw new Error('Login failed: ' + (errorText || response.statusText));
     }
-    
+
     const loginData = await response.json();
     console.log('[Client] Server login successful');
-    
+
     // Store both user and profile data in localStorage for persistence
     if (typeof window !== 'undefined') {
       // Store user profile data for quick access
@@ -149,7 +179,7 @@ export const loginUser = async (credentials: {
         console.log('[Client] Stored user data in localStorage');
       }
     }
-    
+
     // Ensure Supabase auth state is synchronized
     if (loginData.session && loginData.session.access_token) {
       console.log('[Client] Setting session in Supabase from server login response');
@@ -162,7 +192,7 @@ export const loginUser = async (credentials: {
         console.log('[Client] Supabase session successfully set');
       } catch (sessionError) {
         console.error('[Client] Error setting Supabase session:', sessionError);
-        
+
         // If setting session fails, try the direct sign-in approach as fallback
         try {
           console.log('[Client] Falling back to direct Supabase auth...');
@@ -170,7 +200,7 @@ export const loginUser = async (credentials: {
             email: credentials.email,
             password: credentials.password
           });
-          
+
           if (error) {
             console.warn('[Client] Direct Supabase auth fallback failed:', error);
           } else {
@@ -188,20 +218,20 @@ export const loginUser = async (credentials: {
       }
     } else {
       console.warn('[Client] No session token received from server, trying direct Supabase auth');
-      
+
       try {
         // Use direct Supabase auth as a fallback
         const { data, error } = await supabase.auth.signInWithPassword({
           email: credentials.email,
           password: credentials.password
         });
-        
+
         if (error) {
           console.warn('[Client] Direct Supabase auth failed:', error);
           // Not critical if we already have server user data
         } else {
           console.log('[Client] Direct Supabase auth successful');
-          
+
           // Merge with login data
           return {
             ...loginData,
@@ -213,7 +243,7 @@ export const loginUser = async (credentials: {
         // Not critical, still proceed with server data
       }
     }
-    
+
     return loginData;
   } catch (error) {
     console.error('[Client] Login error:', error);
@@ -238,9 +268,9 @@ export const registerUser = async (userData: {
       body: JSON.stringify(userData),
       credentials: 'include', // Important: include cookies in the request
     });
-    
+
     const responseData = await response.json();
-    
+
     // Special case: If status is 200 but not 201, it means user exists but credentials are valid
     // - This is a case where the server found an existing account with matching credentials 
     if (response.status === 200 && responseData.user) {
@@ -250,21 +280,21 @@ export const registerUser = async (userData: {
         user: responseData.user
       };
     }
-    
+
     // Handle error responses
     if (!response.ok) {
       console.error('[Client] Registration failed:', responseData);
-      
+
       // Enhanced error message if server provides one
       const errorMessage = responseData.message || 
                           (typeof responseData === 'string' ? responseData : 'Registration failed') ||
                           response.statusText;
-                          
+
       throw new Error(errorMessage);
     }
-    
+
     console.log('[Client] Registration successful with server endpoint');
-    
+
     // If server registration was successful but didn't return a session,
     // also register directly with Supabase to ensure a proper session
     if (!responseData.session) {
@@ -280,7 +310,7 @@ export const registerUser = async (userData: {
             }
           }
         });
-        
+
         if (error) {
           console.warn('[Client] Supabase direct registration failed, but server registration successful:', error);
           // Not fatal, continue with server registration data
@@ -297,11 +327,11 @@ export const registerUser = async (userData: {
         // Not fatal, continue with server registration data
       }
     }
-    
+
     return responseData;
   } catch (serverError) {
     console.error('[Client] Server registration failed, trying direct Supabase registration:', serverError);
-    
+
     // If server registration fails, try direct Supabase Auth
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -314,14 +344,14 @@ export const registerUser = async (userData: {
           }
         }
       });
-      
+
       if (error) {
         console.error('[Client] Supabase direct registration also failed:', error);
         throw error;
       }
-      
+
       console.log('[Client] Supabase direct registration successful');
-      
+
       // When using Supabase direct registration, also create a user record in our database
       try {
         console.log('[Client] Creating user record in database after Supabase registration');
@@ -339,11 +369,11 @@ export const registerUser = async (userData: {
             }),
             credentials: 'include',
           });
-          
+
           if (response.ok) {
             console.log('[Client] Successfully created user record in database');
             const serverData = await response.json();
-            
+
             return {
               ...data,
               serverData
@@ -355,7 +385,7 @@ export const registerUser = async (userData: {
       } catch (dbError) {
         console.warn('[Client] Error creating user record in database, but Supabase registration successful:', dbError);
       }
-      
+
       return {
         message: 'Registration successful with Supabase',
         user: data.user,
@@ -379,7 +409,7 @@ export const getCurrentUser = async () => {
           // Only use cached data if it's recent (less than 5 minutes old)
           const isCacheValid = parsedData.timestamp && 
                               (Date.now() - parsedData.timestamp < 5 * 60 * 1000);
-                              
+
           if (isCacheValid) {
             console.log('[Client] Using recent cached user data from localStorage');
             return parsedData;
@@ -395,12 +425,12 @@ export const getCurrentUser = async () => {
 
     // Check if we have a session in Supabase
     const { data: sessionData } = await supabase.auth.getSession();
-    
+
     if (!sessionData.session) {
       console.log('[Client] No active session found in Supabase');
       return null;
     }
-    
+
     console.log('[Client] Active session found, fetching user data from server');
     // Try server endpoint for complete profile data
     const response = await fetch('/api/auth/user', {
@@ -410,23 +440,23 @@ export const getCurrentUser = async () => {
       },
       credentials: 'include', // Important: include cookies in the request
     });
-    
+
     if (!response.ok) {
       // If server endpoint fails with auth error, return null (not authenticated)
       if (response.status === 401) {
         console.log('[Client] Server returned 401, user not authenticated');
         return null;
       }
-      
+
       // For other errors, we'll try the direct Supabase approach
       const errorText = await response.text();
       console.error('[Client] Server user fetch failed:', errorText);
       throw new Error('Failed to fetch user: ' + (errorText || response.statusText));
     }
-    
+
     const userData = await response.json();
     console.log('[Client] Successfully retrieved user data from server:', userData?.email);
-    
+
     // Cache the data for next time
     if (typeof window !== 'undefined' && userData) {
       try {
@@ -440,11 +470,11 @@ export const getCurrentUser = async () => {
         // Non-critical error, continue
       }
     }
-    
+
     return userData;
   } catch (serverError) {
     console.error('[Client] Server user fetch failed, falling back to direct Supabase auth:', serverError);
-    
+
     // Try getting user data from localStorage as fallback
     if (typeof window !== 'undefined') {
       try {
@@ -458,10 +488,10 @@ export const getCurrentUser = async () => {
         console.warn('[Client] Error accessing cached user data during fallback:', cacheError);
       }
     }
-    
+
     // Final fallback to direct Supabase Auth
     const { data, error } = await supabase.auth.getUser();
-    
+
     if (error) {
       if (error.status === 401) {
         console.log('[Client] Supabase returned 401, user not authenticated');
@@ -470,10 +500,10 @@ export const getCurrentUser = async () => {
       console.error('[Client] Supabase getUser error:', error);
       throw new Error(error.message);
     }
-    
+
     if (data.user) {
       console.log('[Client] Successfully retrieved user from Supabase:', data.user.email);
-      
+
       // Try to enhance the basic user data with additional profile data
       try {
         // Check if we can find a user profile for this auth user
@@ -482,7 +512,7 @@ export const getCurrentUser = async () => {
           .select('*')
           .eq('auth_id', data.user.id)
           .maybeSingle();
-        
+
         if (profileData) {
           console.log('[Client] Found matching profile record for Supabase user');
           // Cache the combined data for next time
@@ -498,7 +528,7 @@ export const getCurrentUser = async () => {
               console.warn('[Client] Failed to cache enhanced user data:', cacheError);
             }
           }
-          
+
           return {
             ...data.user,
             profile: profileData
@@ -509,7 +539,7 @@ export const getCurrentUser = async () => {
         // Not critical, return the basic user data
       }
     }
-    
+
     return data.user;
   }
 };
@@ -517,11 +547,11 @@ export const getCurrentUser = async () => {
 export const logoutUser = async () => {
   try {
     console.log('[Client] Logging out user');
-    
+
     // Get session first to include in logout request
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token || '';
-    
+
     // Call server logout endpoint first
     console.log('[Client] Logging out from server endpoint');
     const response = await fetch('/api/auth/logout', {
@@ -531,15 +561,15 @@ export const logoutUser = async () => {
       },
       credentials: 'include', // Important: include cookies in the request
     });
-    
+
     if (!response.ok) {
       console.warn('[Client] Server logout may have failed:', response.status);
     }
-    
+
     // Then perform client-side logout with Supabase
     console.log('[Client] Signing out from Supabase Auth');
     await supabase.auth.signOut({ scope: 'global' }); // Ensure all sessions are removed
-    
+
     // Clear any localStorage items that might contain auth data
     if (typeof window !== 'undefined') {
       localStorage.removeItem('supabase.auth.token');
@@ -548,7 +578,7 @@ export const logoutUser = async () => {
       localStorage.removeItem('contestedUserData');
       localStorage.removeItem('userId');
       localStorage.removeItem('userRole');
-      
+
       // Clear any other potential Supabase tokens
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
@@ -556,17 +586,17 @@ export const logoutUser = async () => {
         }
       });
     }
-    
+
     console.log('[Client] Logout complete');
     return true;
   } catch (error) {
     console.error('[Client] Logout error:', error);
-    
+
     // Try direct Supabase logout as fallback
     try {
       console.log('[Client] Attempting direct Supabase signOut as fallback');
       await supabase.auth.signOut({ scope: 'global' });
-      
+
       // Clear any localStorage items that might contain auth data
       if (typeof window !== 'undefined') {
         localStorage.removeItem('supabase.auth.token');
@@ -575,7 +605,7 @@ export const logoutUser = async () => {
         localStorage.removeItem('contestedUserData');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
-        
+
         // Clear any other potential Supabase tokens
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
@@ -583,7 +613,7 @@ export const logoutUser = async () => {
           }
         });
       }
-      
+
       return true;
     } catch (directError) {
       console.error('[Client] Direct Supabase logout failed:', directError);
@@ -687,24 +717,24 @@ export const updateBusinessProfile = async (userId: string, profileData: any) =>
 export const checkUserProfile = async (userId: string, role: string) => {
   try {
     console.log(`Checking profile for user ${userId} with role ${role}`);
-    
+
     if (role === 'athlete') {
       const profile = await getAthleteProfile(userId);
       console.log('Athlete profile check result:', !!profile);
       return !!profile;
     }
-    
+
     if (role === 'business') {
       const profile = await getBusinessProfile(userId);
       console.log('Business profile check result:', !!profile);
       return !!profile;
     }
-    
+
     // For admin and compliance roles, they don't have separate profiles
     if (role === 'admin' || role === 'compliance') {
       return true;
     }
-    
+
     return false;
   } catch (error) {
     console.error('Error checking user profile:', error);
@@ -717,12 +747,12 @@ export const testSupabaseConnection = async () => {
   try {
     console.log('[Client] Testing Supabase connection...');
     const { data, error } = await supabase.from('sessions').select('count').limit(1);
-    
+
     if (error) {
       console.error('[Client] Supabase connection test failed:', error.message);
       return false;
     }
-    
+
     console.log('[Client] Supabase connection test successful:', data);
     return true;
   } catch (error) {

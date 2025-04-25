@@ -87,9 +87,58 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     // Properly handle potential errors with supabase.auth.getSession
     const getSessionAndUser = async () => {
       try {
+        // First check localStorage for existing session data as fallback
+        let localSessionData = null;
+        
+        try {
+          // Check for multiple possible storage keys
+          const storageKeys = [
+            'sb-access-token',
+            'supabase.auth.token',
+            'sb-auth-token',
+            'contested-auth'
+          ];
+          
+          for (const key of storageKeys) {
+            const storedData = localStorage.getItem(key);
+            if (storedData) {
+              console.log(`[Auth] Found local storage data for key: ${key}`);
+              try {
+                localSessionData = JSON.parse(storedData);
+                break;
+              } catch (e) {
+                console.error(`[Auth] Error parsing stored session data from ${key}:`, e);
+              }
+            }
+          }
+        } catch (storageError) {
+          console.warn('[Auth] Error accessing localStorage:', storageError);
+        }
+        
+        // Try to get the session from Supabase
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
+          console.error('[Auth] Error from supabase.auth.getSession:', error);
+          
+          // If we have local data, try to use that as fallback
+          if (localSessionData && localSessionData.session?.access_token) {
+            console.log('[Auth] Attempting to restore session from localStorage');
+            const { data: refreshData, error: refreshError } = await supabase.auth.setSession({
+              access_token: localSessionData.session.access_token,
+              refresh_token: localSessionData.session.refresh_token || ''
+            });
+            
+            if (!refreshError && refreshData.session) {
+              console.log('[Auth] Successfully restored session from localStorage');
+              setSession(refreshData.session);
+              setUser(refreshData.session.user);
+              return;
+            } else {
+              console.error('[Auth] Failed to restore session from localStorage:', refreshError);
+            }
+          }
+          
           throw error;
         }
         
