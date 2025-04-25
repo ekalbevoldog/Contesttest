@@ -10,7 +10,7 @@ import { sessionService } from "./services/sessionService.js";
 // Import Supabase auth
 import { supabase } from "./supabase.js";
 import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
-import { pool } from "./db.js";
+import { pool, db as supabaseAdmin } from "./db.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
