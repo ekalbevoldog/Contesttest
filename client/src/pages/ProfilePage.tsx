@@ -89,36 +89,13 @@ export default function ProfilePage() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
       <div className="text-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground">
           {isLoading 
             ? "Loading your profile information..." 
             : redirecting 
               ? "Redirecting to your dashboard..." 
               : "Preparing your profile..."}
         </p>
-        
-        {/* Fallback options if automatic redirect fails */}
-        {!isLoading && !redirecting && (
-          <div className="space-y-4 mt-8">
-            <p className="text-sm text-muted-foreground">
-              Taking too long? Select your profile type:
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button onClick={() => handleManualRedirect('/athlete/dashboard')}>
-                Athlete Dashboard
-              </Button>
-              <Button onClick={() => handleManualRedirect('/business/dashboard')}>
-                Business Dashboard
-              </Button>
-              <Button onClick={() => handleManualRedirect('/admin/dashboard')}>
-                Admin Dashboard
-              </Button>
-              <Button variant="outline" onClick={() => handleManualRedirect('/')}>
-                Return Home
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
