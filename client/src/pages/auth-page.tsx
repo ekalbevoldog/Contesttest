@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Lock, Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 import { FadeIn } from '@/components/animations/FadeIn';
 
 // Form validation schema
@@ -48,7 +48,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const { user, isLoading, signIn, signUp } = useSupabaseAuth();
   // Use the pending state directly from the mutations for better UX
   
   // Redirect if already logged in based on role
@@ -95,34 +95,61 @@ export default function AuthPage() {
   // Handle login form submission
   const onLoginSubmit = async (values: LoginFormValues) => {
     try {
-      // Use the loginMutation from useAuth hook
-      await loginMutation.mutateAsync({
-        email: values.email,
-        password: values.password
-      });
+      // Use the signIn method from useSupabaseAuth hook
+      const { error } = await signIn(values.email, values.password);
       
-      // The toast and redirect are handled by the mutation
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message || "Unable to log in. Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
-      // Error is handled by the mutation, this is just a fallback
       console.error('Login error in component:', error);
+      toast({
+        title: "Login failed",
+        description: error.message || "An unexpected error occurred during login.",
+        variant: "destructive",
+      });
     }
   };
   
   // Handle register form submission
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     try {
-      // Use the registerMutation from useAuth hook
-      await registerMutation.mutateAsync({
+      // Use the signUp method from useSupabaseAuth hook
+      const { error } = await signUp({
         email: values.email,
         password: values.password,
-        fullName: `${values.firstName} ${values.lastName}`,
-        role: values.role
+        options: {
+          data: {
+            full_name: `${values.firstName} ${values.lastName}`,
+            role: values.role
+          }
+        }
       });
       
-      // The toast and redirect are handled by the mutation
+      if (error) {
+        toast({
+          title: "Registration failed",
+          description: error.message || "Unable to create account. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Registration successful",
+          description: "We've created your account. You can now log in.",
+        });
+        setActiveTab('login');
+      }
     } catch (error: any) {
-      // Error is handled by the mutation, this is just a fallback
       console.error('Registration error in component:', error);
+      toast({
+        title: "Registration failed",
+        description: error.message || "An unexpected error occurred during registration.",
+        variant: "destructive",
+      });
     }
   };
   

@@ -106,6 +106,7 @@ export function setupSupabaseAuth(app: Express) {
         .eq('email', email);
       
       // Also fetch the user profile data from our users table
+      let userRecord = null;
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -119,34 +120,46 @@ export function setupSupabaseAuth(app: Express) {
         if (userError.code === 'PGRST116') {
           console.log('No user record found in database for:', email);
           
-          // Get user metadata to extract role
-          const role = data.user?.user_metadata?.role || data.user?.app_metadata?.role || 'athlete';
-          
-          // Create a new user record in our database
-          try {
-            console.log('Creating user record in database for:', email);
-            const { data: newUserData, error: createError } = await supabase
-              .from('users')
-              .insert({
-                email: email,
-                auth_id: data.user.id,
-                role: role,
-                created_at: new Date(),
-                last_login: new Date()
-              })
-              .select()
-              .single();
-              
-            if (createError) {
-              console.error('Error creating user record:', createError);
-            } else {
-              console.log('Created user record:', newUserData);
-              // Use this new user data going forward
-              userData = newUserData;
+          // First, try fetching by auth_id instead of email
+          const { data: userByAuthId, error: authIdError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_id', data.user.id)
+            .single();
+            
+          if (!authIdError && userByAuthId) {
+            console.log('Found user record by auth_id instead of email');
+            userRecord = userByAuthId;
+          } else {
+            // Get user metadata to extract role
+            const role = data.user?.user_metadata?.role || data.user?.app_metadata?.role || 'athlete';
+            
+            // Create a new user record in our database
+            try {
+              console.log('Creating user record in database for:', email);
+              const { data: newUserData, error: createError } = await supabase
+                .from('users')
+                .insert({
+                  email: email,
+                  auth_id: data.user.id,
+                  role: role,
+                  created_at: new Date(),
+                  last_login: new Date()
+                })
+                .select()
+                .single();
+                
+              if (createError) {
+                console.error('Error creating user record:', createError);
+              } else {
+                console.log('Created user record:', newUserData);
+                // Use this new user data going forward
+                userRecord = newUserData;
+              }
+            } catch (createError) {
+              console.error('Exception creating user record:', createError);
+              // We'll still proceed with just the auth data
             }
-          } catch (createError) {
-            console.error('Exception creating user record:', createError);
-            // We'll still proceed with just the auth data
           }
         }
         // For other errors, we'll still proceed with just the auth data
@@ -181,10 +194,17 @@ export function setupSupabaseAuth(app: Express) {
         path: '/'
       });
       
-      // Return both auth data and profile data
+      // Return both auth data and profile data - prioritize userRecord if we have it
       return res.status(200).json({
-        user: data.user,
-        profile: userData || null,
+        user: {
+          ...data.user,
+          // Add role from our database if available, or from user metadata
+          role: (userRecord?.role || userData?.role || 
+                data.user?.user_metadata?.role || 
+                data.user?.app_metadata?.role || 
+                'athlete')
+        },
+        profile: userRecord || userData || null,
         session: {
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
@@ -399,8 +419,16 @@ export function setupSupabaseAuth(app: Express) {
         // We can still return just the auth user
       }
       
+      // Merge the auth user with user data from our application database
       return res.status(200).json({
-        auth: user,
+        user: {
+          ...user,
+          // Add role from our database if available, or from user metadata
+          role: (userData?.role || 
+                user?.user_metadata?.role || 
+                user?.app_metadata?.role || 
+                'athlete')
+        },
         profile: userData || null
       });
     } catch (error) {
