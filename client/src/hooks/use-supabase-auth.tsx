@@ -5,11 +5,14 @@ import {
   registerUser, 
   logoutUser, 
   getCurrentUser, 
-  checkUserProfile
+  checkUserProfile,
+  initializeSupabase,
+  getSupabase
 } from '@/lib/supabase-client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { Loader2 } from 'lucide-react';
 
 interface EnhancedUser extends SupabaseUser {
   role?: string;
@@ -31,77 +34,162 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Loading component for Supabase initialization
+const InitializationLoader = () => (
+  <div className="flex flex-col items-center justify-center h-screen">
+    <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+    <p className="text-muted-foreground text-sm">Connecting to authentication service...</p>
+  </div>
+);
+
 export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<EnhancedUser | null>(null);
   const [session, setSession] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
   const { toast } = useToast();
   const [location, navigate] = useLocation();
 
-  // 1) On mount, rehydrate session & user
+  // 0) Initialize Supabase client first
   useEffect(() => {
-    console.log('[Auth] Initializing auth state...');
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        console.log('[Auth] Found existing session on mount');
-        setSession(data.session);
-        setUser(data.session?.user ?? null);
-      } else {
-        console.log('[Auth] No session found on mount');
+    async function initializeAuth() {
+      try {
+        console.log('[Auth] Initializing Supabase client...');
+        await initializeSupabase();
+        console.log('[Auth] Supabase client initialized successfully');
+        setIsInitializing(false);
+      } catch (error) {
+        console.error('[Auth] Failed to initialize Supabase client:', error);
+        toast({
+          title: 'Connection Error',
+          description: 'Failed to connect to the authentication service. Please try refreshing the page.',
+          variant: 'destructive',
+        });
+        setIsInitializing(false);
         setIsLoading(false);
       }
-    }).catch(error => {
-      console.error('[Auth] Error getting session on mount:', error);
-      setIsLoading(false);
-    });
-  }, []);
+    }
+    
+    initializeAuth();
+  }, [toast]);
 
-  // 2) Subscribe to future auth changes
+  // 1) Once Supabase is initialized, rehydrate session & user
   useEffect(() => {
+    if (isInitializing) {
+      return; // Wait until Supabase is initialized
+    }
+    
+    console.log('[Auth] Initializing auth state...');
+    
+    // Properly handle potential errors with supabase.auth.getSession
+    const getSessionAndUser = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data.session) {
+          console.log('[Auth] Found existing session');
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+        } else {
+          console.log('[Auth] No session found');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('[Auth] Error getting session:', error);
+        setIsLoading(false);
+      }
+    };
+    
+    getSessionAndUser();
+  }, [isInitializing]);
+
+  // 2) Subscribe to future auth changes with improved error handling
+  useEffect(() => {
+    if (isInitializing) {
+      return; // Don't set up the listener until Supabase is initialized
+    }
+    
     console.log('[Auth] Setting up auth state change listener');
     
     let subscription: any = null;
+    let retryCount = 0;
+    const maxRetries = 3;
     
-    try {
-      const { data } = supabase.auth.onAuthStateChange(
-        async (event, newSession) => {
-          console.log('[Auth] Auth state change event:', event);
-          
-          if (newSession) {
-            console.log('[Auth] Auth state change - setting new session');
-            setSession(newSession);
-            setUser(newSession?.user ?? null);
-          } else {
-            console.log('[Auth] Auth state change - clearing session');
-            setSession(null);
-            setUser(null);
-            setUserData(null);
+    // Helper function to set up the auth state change listener
+    const setupAuthListener = () => {
+      try {
+        // First check if Supabase is initialized and get the instance
+        if (!supabase) {
+          console.error('[Auth] Supabase client not available yet');
+          return null;
+        }
+        
+        // Create the listener for auth state changes
+        const subscription = supabase.auth.onAuthStateChange(
+          async (event: string, newSession: any) => {
+            console.log('[Auth] Auth state change event:', event);
             
-            if (event === 'SIGNED_OUT') {
-              // Add delay to make sure state is updated before redirection
-              setTimeout(() => {
-                navigate('/');
-              }, 100);
+            if (newSession) {
+              console.log('[Auth] Auth state change - setting new session');
+              setSession(newSession);
+              setUser(newSession?.user ?? null);
+            } else {
+              console.log('[Auth] Auth state change - clearing session');
+              setSession(null);
+              setUser(null);
+              setUserData(null);
+              
+              if (event === 'SIGNED_OUT') {
+                // Add delay to make sure state is updated before redirection
+                setTimeout(() => {
+                  navigate('/');
+                }, 100);
+              }
             }
           }
+        );
+        
+        console.log('[Auth] Auth state change listener successfully set up');
+        return subscription.data.subscription;
+      } catch (error) {
+        console.error('[Auth] Error setting up auth state change listener:', error);
+        
+        // Retry logic with exponential backoff
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`[Auth] Retrying to set up auth listener (${retryCount}/${maxRetries})...`);
+          
+          // Wait a bit before retrying with increasing delay
+          setTimeout(() => {
+            subscription = setupAuthListener();
+          }, 1000 * retryCount); // Increasing backoff
         }
-      );
-      
-      subscription = data.subscription;
-    } catch (error) {
-      console.error('[Auth] Error setting up auth state change listener:', error);
-    }
+        
+        return null;
+      }
+    };
+    
+    // Initial setup
+    subscription = setupAuthListener();
     
     return () => {
       if (subscription) {
         console.log('[Auth] Cleaning up auth state change listener');
-        subscription.unsubscribe();
+        try {
+          subscription.unsubscribe();
+        } catch (error) {
+          console.warn('[Auth] Error unsubscribing from auth changes:', error);
+        }
       }
     };
-  }, [navigate]);
+  }, [navigate, isInitializing]);
 
   // 3) Whenever `user` changes, fetch profile once
   useEffect(() => {
@@ -398,6 +486,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       navigate('/');
     }
   };
+
+  // Show initialization loader while Supabase client is being set up
+  if (isInitializing) {
+    return <InitializationLoader />;
+  }
 
   return (
     <AuthContext.Provider

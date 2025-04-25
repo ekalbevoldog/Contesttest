@@ -1,4 +1,4 @@
-import { pool } from "./db";
+import { pool } from "./db.js";
 
 const CREATE_SESSIONS_TABLE = `
 CREATE TABLE IF NOT EXISTS sessions (

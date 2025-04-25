@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from './supabase';
+import { supabase, supabaseAdmin } from './supabase.js';
 
 // We avoid using Neon database completely as required
 

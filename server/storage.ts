@@ -2,12 +2,12 @@ import {
   InsertSession, InsertAthlete, InsertBusiness, 
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
-} from "@shared/schema";
+} from "@shared/schema.js";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
-import { pool } from "./db";
-import { supabase } from "./supabase";
+import { pool } from "./db.js";
+import { supabase } from "./supabase.js";
 
 // Helper for password hashing
 const scryptAsync = promisify(scrypt);
@@ -73,6 +73,7 @@ export interface IStorage {
   // Auth operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByAuthId(authId: string): Promise<User | undefined>; // New method to find user by Supabase Auth ID
   getAllUsers(): Promise<User[]>;
   createUser(insertUser: Partial<InsertUser>): Promise<User>;
   updateUser(userId: string, userData: Partial<User>): Promise<User | undefined>;
@@ -492,6 +493,34 @@ export class SupabaseStorage implements IStorage {
       return this.mapUserFromDb(data);
     } catch (error) {
       console.error('Exception getting user by email:', error);
+      return undefined;
+    }
+  }
+  
+  async getUserByAuthId(authId: string): Promise<User | undefined> {
+    try {
+      console.log(`Looking up user by auth_id: ${authId}`);
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', authId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error getting user by auth_id:', error);
+        return undefined;
+      }
+      
+      if (data) {
+        console.log(`Found user with auth_id ${authId}: ${data.email}`);
+        return this.mapUserFromDb(data);
+      } else {
+        console.log(`No user found with auth_id ${authId}`);
+        return undefined;
+      }
+    } catch (error) {
+      console.error('Exception getting user by auth_id:', error);
       return undefined;
     }
   }
@@ -1548,6 +1577,10 @@ export class MemStorage implements IStorage {
 
   async getUser(id: string): Promise<User | undefined> { return undefined; }
   async getUserByEmail(email: string): Promise<User | undefined> { return undefined; }
+  async getUserByAuthId(authId: string): Promise<User | undefined> { 
+    console.log(`MemStorage.getUserByAuthId called with authId: ${authId}`);
+    return undefined; 
+  }
   async getAllUsers(): Promise<User[]> { return []; }
   async createUser(insertUser: Partial<InsertUser>): Promise<User> { return { id: 1, email: insertUser.email || '', username: insertUser.username || '', password: '', role: 'athlete' } as User; }
   async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> { return { id: Number(userId) } as User; }
@@ -1567,6 +1600,12 @@ export class MemStorage implements IStorage {
   async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> { return { id: feedbackId } as Feedback; }
 }
 
+// Import the object storage
+import { objectStorage } from './objectStorage';
+
 // Export the storage implementation
 // export const storage = new DatabaseStorage();
 export const storage = new SupabaseStorage();
+
+// Export object storage for file operations
+export { objectStorage };

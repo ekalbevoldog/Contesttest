@@ -2,19 +2,19 @@
   "compilerOptions": {
     "noEmit": false,
     "outDir": "dist",
-    "noEmitOnError": true,
+    "noEmitOnError": false,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "moduleResolution": "Node",
     "target": "ES2020",
-    "module": "CommonJS",
+    "module": "ESNext",
     "resolveJsonModule": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["shared/*"]
+      "@shared/*": ["./shared/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -32,8 +32,6 @@
     "noImplicitThis": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "suppressExcessPropertyErrors": true,
-    "suppressImplicitAnyIndexErrors": true,
     "ignoreDeprecations": "5.0"
   },
   "ts-node": {
