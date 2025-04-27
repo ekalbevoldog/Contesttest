@@ -1,10 +1,10 @@
+
 /**
  * Unified Login Page
  * 
  * This page provides a consolidated authentication entry point:
- * - Uses Supabase Auth as the primary authentication mechanism
+ * - Uses unified auth as the primary authentication mechanism
  * - Provides login and registration functionality in a single interface
- * - Uses the unified auth context
  */
 
 import React, { useState } from 'react';

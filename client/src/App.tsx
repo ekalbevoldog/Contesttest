@@ -3,30 +3,25 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
-// SimpleOnboarding and EnhancedOnboarding removed - consolidated to main onboarding
 import Onboarding from "@/pages/Onboarding";
 import Login from "@/pages/Login";
-// Legacy auth pages (to be removed after full migration)
-import SignIn from "@/pages/SignIn";
-import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/ProfilePage";
 import AthleteInfo from "@/pages/AthleteInfo";
 import BusinessInfo from "@/pages/BusinessInfo";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
-// SupabaseTest import removed
+import ComplianceDashboard from "@/pages/ComplianceDashboard"; // Added based on changes
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { SimpleProtectedRoute } from "@/lib/simple-protected-route";
+import { ProtectedRoute } from "@/lib/protected-route"; // Changed import
 import * as authService from "@/lib/auth-service";
 import { Suspense, lazy, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 
-// Define a ProtectedRoute component
 const ProtectedRoute = ({ 
   component: Component, 
   path,
@@ -36,7 +31,6 @@ const ProtectedRoute = ({
   path: string;
   requiredRole?: string | string[];
 }) => {
-  // Use the unified auth hook
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
@@ -44,12 +38,10 @@ const ProtectedRoute = ({
     if (!isLoading && !user) {
       navigate('/login');
     } else if (!isLoading && user && requiredRole) {
-      // Check if user has the required role
       const userRole = user.role || 'visitor';
 
       if (Array.isArray(requiredRole)) {
         if (!requiredRole.includes(userRole)) {
-          // Redirect based on actual role
           if (userRole === 'athlete') {
             navigate('/athlete/dashboard');
           } else if (userRole === 'business') {
@@ -63,7 +55,6 @@ const ProtectedRoute = ({
           }
         }
       } else if (userRole !== requiredRole) {
-        // Redirect based on actual role
         if (userRole === 'athlete') {
           navigate('/athlete/dashboard');
         } else if (userRole === 'business') {
@@ -96,12 +87,11 @@ const ProtectedRoute = ({
     return (
       <Route
         path={path}
-        component={() => null} // The useEffect will handle the redirection
+        component={() => null} 
       />
     );
   }
 
-  // Role-based check
   if (requiredRole) {
     const userRole = user.role || 'visitor';
 
@@ -110,7 +100,7 @@ const ProtectedRoute = ({
         return (
           <Route
             path={path}
-            component={() => null} // The useEffect will handle the redirection
+            component={() => null} 
           />
         );
       }
@@ -118,18 +108,16 @@ const ProtectedRoute = ({
       return (
         <Route
           path={path}
-          component={() => null} // The useEffect will handle the redirection
+          component={() => null} 
         />
       );
     }
   }
 
-  // Use the RouteComponentProps wrapper to fix the type error
   const WrappedComponent = (props: RouteComponentProps) => <Component {...props} />; 
   return <Route path={path} component={WrappedComponent} />;
 };
 
-// Define a route that redirects based on user role
 const RoleRedirect = ({ path }: { path: string }) => {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
@@ -139,7 +127,6 @@ const RoleRedirect = ({ path }: { path: string }) => {
       if (!user) {
         navigate('/login');
       } else {
-        // Redirect based on role
         const role = user.role || 'visitor';
         if (role === 'athlete') {
           navigate('/athlete/dashboard');
@@ -168,7 +155,6 @@ const RoleRedirect = ({ path }: { path: string }) => {
   );
 };
 
-// Profile Completion Route - checks if user has completed their profile
 const ProfileRequiredRoute = ({ 
   component: Component, 
   path,
@@ -180,7 +166,6 @@ const ProfileRequiredRoute = ({
   redirectPath: string;
   requiredRole?: string | string[];
 }) => {
-  // Use the unified auth hook
   const { user, isLoading, hasCompletedProfile } = useAuth();
   const [, navigate] = useLocation();
 
@@ -191,12 +176,10 @@ const ProfileRequiredRoute = ({
       } else if (!hasCompletedProfile) {
         navigate(redirectPath);
       } else if (requiredRole) {
-        // Check if user has the required role
         const userRole = user.role || 'visitor';
 
         if (Array.isArray(requiredRole)) {
           if (!requiredRole.includes(userRole)) {
-            // Redirect based on actual role
             if (userRole === 'athlete') {
               navigate('/athlete/dashboard');
             } else if (userRole === 'business') {
@@ -229,12 +212,10 @@ const ProfileRequiredRoute = ({
     );
   }
 
-  // Use the RouteComponentProps wrapper to fix the type error
   const WrappedComponent = (props: RouteComponentProps) => <Component {...props} />; 
   return <Route path={path} component={WrappedComponent} />;
 };
 
-// Define a fallback loading component
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-screen">
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -244,11 +225,9 @@ const LoadingFallback = () => (
 const routes = {
   '/': Home,
   '/onboarding': Onboarding,
-  '/auth': SignIn,
   // Add other routes as needed
 };
 
-// Simple redirect component
 const RedirectToOnboarding = () => {
   const [, navigate] = useLocation();
 
@@ -270,21 +249,10 @@ function Router() {
       <main className="flex-grow">
         <Suspense fallback={<LoadingFallback />}>
           <Switch>
-            {/* Public routes accessible to everyone */}
             <Route path="/" component={Home} />
             <Route path="/onboarding" component={Onboarding} />
-            
-            {/* Authentication routes */}
             <Route path="/login" component={Login} />
-            
-            {/* Legacy auth routes - to be removed after full migration */}
-            <Route path="/auth" component={AuthPage} />
-            <Route path="/sign-in" component={SignIn} />
-
-            {/* Onboarding routes - accessible after authentication */}
             <ProtectedRoute path="/onboarding" component={Onboarding} />
-
-            {/* Role-specific onboarding routes */}
             <ProtectedRoute 
               path="/athlete-onboarding" 
               component={Onboarding} 
@@ -295,21 +263,11 @@ function Router() {
               component={Onboarding} 
               requiredRole="business"
             />
-
-            {/* Alternate paths for onboarding */}
             <ProtectedRoute path="/athlete/sign-up" component={Onboarding} requiredRole="athlete" />
             <ProtectedRoute path="/business/sign-up" component={Onboarding} requiredRole="business" />
-
-            {/* Public info pages */}
             <Route path="/athletes" component={AthleteInfo} />
             <Route path="/businesses" component={BusinessInfo} />
-
-            {/* Redirect exploration path to main onboarding */}
             <Route path="/explore-matches" component={RedirectToOnboarding} />
-
-            {/* Testing routes - disabled */}
-
-            {/* Role-specific protected dashboard routes with profile completion check */}
             <ProfileRequiredRoute 
               path="/athlete/dashboard" 
               component={AthleteDashboard} 
@@ -327,14 +285,8 @@ function Router() {
               component={AdminDashboard} 
               requiredRole="admin"
             />
-
-            {/* Profile routes - using simple auth */}
-            <SimpleProtectedRoute path="/profile" component={ProfilePage} />
-            
-            {/* Main dashboard redirect */}
+            <ProtectedRoute path="/profile" component={ProfilePage} />
             <RoleRedirect path="/dashboard" />
-
-            {/* All other routes redirect to home */}
             <Route component={Home} />
           </Switch>
         </Suspense>
@@ -344,7 +296,6 @@ function Router() {
   );
 }
 
-// Initialize auth on startup
 export async function initializeAuth(): Promise<boolean> {
   try {
     console.log('[App] Initializing auth service');
@@ -356,21 +307,22 @@ export async function initializeAuth(): Promise<boolean> {
 }
 
 function App() {
-  // Initialize unified auth when app starts
   useEffect(() => {
     console.log('[App] Initializing unified auth');
     initializeAuth().then((success: boolean) => {
       console.log('[App] Auth initialization result:', success);
     });
   }, []);
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ErrorBoundary>
+          <Toaster />
+          <Header />
           <Router />
+          <Footer />
         </ErrorBoundary>
-        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );

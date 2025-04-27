@@ -195,7 +195,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   // Use consolidated auth hook
   const { user, userData, signOut } = useAuth();
-  
+
   // Set user type from userData
   const userType = userData?.role as UserType || null;
 

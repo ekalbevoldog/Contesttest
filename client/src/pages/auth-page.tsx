@@ -46,8 +46,18 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
+  
+  // Redirect to the unified login page
+  useEffect(() => {
+    navigate('/login');
+  }, [navigate]);
+  
+  // Return nothing since we're redirecting
+  return null;
+  
+  // Keep these variables to prevent TypeScript errors in the rest of the component
+  const [activeTab, setActiveTab] = useState<string>('login');
   const { toast } = useToast();
   const { user, isLoading, signIn, signUp } = useSupabaseAuth();
   // Use the pending state directly from the mutations for better UX

@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
@@ -5,59 +6,71 @@ import { Redirect, Route } from "wouter";
 interface ProtectedRouteProps {
   path: string;
   component: React.ComponentType<any>;
-  requiredUserType?: "athlete" | "business" | "compliance" | "admin" | null;
+  requiredRole?: string | string[] | null;
 }
 
 export function ProtectedRoute({
   path,
   component: Component,
-  requiredUserType = null,
+  requiredRole = null,
 }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, userData, isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </Route>
     );
   }
 
-  // If user is not authenticated, redirect to auth page
+  // If user is not authenticated, redirect to login page
   if (!user) {
     return (
       <Route path={path}>
-        <Redirect to="/auth" />
+        <Redirect to="/login" />
       </Route>
     );
   }
 
-  // If requiredUserType is specified and user type doesn't match, 
-  // redirect to the appropriate dashboard (except for admin who can access all dashboards)
-  if (requiredUserType && user.userType !== requiredUserType && user.userType !== 'admin') {
-    let redirectPath = "";
+  // If requiredRole is specified and user role doesn't match
+  if (requiredRole) {
+    // Get user role from userData
+    const userRole = userData?.role || user?.user_metadata?.role || 'visitor';
     
-    // Redirect to the appropriate dashboard based on user type
-    if (user.userType === 'athlete') {
-      redirectPath = "/athlete/dashboard";
-    } else if (user.userType === 'business') {
-      redirectPath = "/business/dashboard";
-    } else if (user.userType === 'compliance') {
-      redirectPath = "/compliance/dashboard";
-    } else if (user.userType === 'admin') {
-      redirectPath = "/admin/dashboard";
+    // Handle array of roles
+    const hasRequiredRole = Array.isArray(requiredRole)
+      ? requiredRole.includes(userRole)
+      : userRole === requiredRole;
+      
+    // Admin can access all routes
+    const isAdmin = userRole === 'admin';
+    
+    if (!hasRequiredRole && !isAdmin) {
+      // Redirect to appropriate dashboard based on user role
+      let redirectPath = "/";
+      
+      if (userRole === 'athlete') {
+        redirectPath = "/athlete/dashboard";
+      } else if (userRole === 'business') {
+        redirectPath = "/business/dashboard";
+      } else if (userRole === 'compliance') {
+        redirectPath = "/compliance/dashboard";
+      } else if (userRole === 'admin') {
+        redirectPath = "/admin/dashboard";
+      }
+      
+      return (
+        <Route path={path}>
+          <Redirect to={redirectPath} />
+        </Route>
+      );
     }
-    
-    return (
-      <Route path={path}>
-        <Redirect to={redirectPath} />
-      </Route>
-    );
   }
 
-  // User is authenticated and type matches, render the component
+  // User is authenticated and has required role, render the component
   return (
     <Route path={path}>
       <Component />
