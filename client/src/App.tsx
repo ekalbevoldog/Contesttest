@@ -18,6 +18,8 @@ import AthleteDashboard from "@/pages/AthleteDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { SimpleProtectedRoute } from "@/lib/simple-protected-route";
+import { isAuthenticated, getStoredAuthData, initializeAuthFromStorage } from "@/lib/simple-auth";
 import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -318,9 +320,8 @@ function Router() {
               requiredRole="admin"
             />
 
-            {/* Profile routes - added both formats to ensure it works */}
-            <Route path="/profile" component={ProfilePage} />
-            <ProtectedRoute path="/profile" component={ProfilePage} />
+            {/* Profile routes - using simple auth */}
+            <SimpleProtectedRoute path="/profile" component={ProfilePage} />
             
             {/* Main dashboard redirect */}
             <RoleRedirect path="/dashboard" />
@@ -336,6 +337,14 @@ function Router() {
 }
 
 function App() {
+  // Initialize simple auth from storage when app starts
+  useEffect(() => {
+    console.log('[App] Initializing simple auth from storage');
+    initializeAuthFromStorage().then(success => {
+      console.log('[App] Simple auth initialization result:', success);
+    });
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>

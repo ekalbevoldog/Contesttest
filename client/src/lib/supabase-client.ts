@@ -673,6 +673,13 @@ export const getCurrentUser = async () => {
 export const logoutUser = async () => {
   try {
     console.log('[Client] Logging out user');
+    
+    // Import clearAuthData function to avoid circular dependencies
+    const { clearAuthData } = await import('./simple-auth');
+    
+    // Clear simple auth data first
+    console.log('[Client] Clearing simple auth data');
+    clearAuthData();
 
     // Get session first to include in logout request
     const { data: sessionData } = await supabase.auth.getSession();
@@ -704,6 +711,9 @@ export const logoutUser = async () => {
       localStorage.removeItem('contestedUserData');
       localStorage.removeItem('userId');
       localStorage.removeItem('userRole');
+      localStorage.removeItem('auth-status');
+      localStorage.removeItem('AUTH_TOKEN_KEY');
+      localStorage.removeItem('AUTH_USER_KEY');
 
       // Clear any other potential Supabase tokens
       Object.keys(localStorage).forEach(key => {
@@ -723,6 +733,14 @@ export const logoutUser = async () => {
       console.log('[Client] Attempting direct Supabase signOut as fallback');
       await supabase.auth.signOut({ scope: 'global' });
 
+      // Clear simple auth data in the fallback too
+      try {
+        const { clearAuthData } = await import('./simple-auth');
+        clearAuthData();
+      } catch (simpleAuthError) {
+        console.error('[Client] Error clearing simple auth data in fallback:', simpleAuthError);
+      }
+      
       // Clear any localStorage items that might contain auth data
       if (typeof window !== 'undefined') {
         localStorage.removeItem('supabase.auth.token');
@@ -731,6 +749,9 @@ export const logoutUser = async () => {
         localStorage.removeItem('contestedUserData');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
+        localStorage.removeItem('auth-status');
+        localStorage.removeItem('AUTH_TOKEN_KEY');
+        localStorage.removeItem('AUTH_USER_KEY');
 
         // Clear any other potential Supabase tokens
         Object.keys(localStorage).forEach(key => {
