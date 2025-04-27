@@ -16,28 +16,33 @@ type WebSocketHook = {
   connectionStatus: 'connecting' | 'open' | 'closed';
 };
 
-export function useWebSocket(sessionId: string | null = null): WebSocketHook {
+export function useWebSocket(sessionId: string | null): WebSocketHook {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'open' | 'closed'>('closed');
   const socketRef = useRef<WebSocket | null>(null);
+  const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const MAX_RECONNECT_ATTEMPTS = 3; // Reduced to prevent excessive retries
-  const RECONNECT_DELAY = 2000; // 2 seconds between retries
-  const CONNECTION_TIMEOUT = 5000; // 5 seconds timeout for initial connection
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const RECONNECT_DELAY = 3000; // 3 seconds
 
   // Function reference for attempting reconnect
   const attemptReconnectRef = useRef<() => void>();
   
-  // Track if the component is mounted to prevent state updates after unmount
-  const isMountedRef = useRef(true);
+  // Disable Supabase realtime channel - it's causing conflicts with our direct WebSocket
+  // useEffect(() => {
+  //   // Supabase realtime channel has been disabled to prevent websocket conflicts
+  // }, [sessionId]);
   
-  // Function to establish a WebSocket connection
+  // Function to establish a direct WebSocket connection
   const connectWebSocket = useCallback(() => {
-    if (!sessionId) {
-      console.log('No sessionId provided, skipping WebSocket connection');
-      return;
-    }
+    // TEMPORARILY DISABLED - WebSocket connection is causing app to fail
+    console.log('WebSocket connections are temporarily disabled');
+    setConnectionStatus('closed');
+    return;
+    
+    /*
+    if (!sessionId) return;
     
     // Get user authentication data
     let userId = localStorage.getItem('userId');
@@ -58,7 +63,6 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
     
     // Clear any existing socket
     if (socketRef.current) {
-      console.log('Closing existing WebSocket connection');
       socketRef.current.close();
     }
 
@@ -66,40 +70,22 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
       // Create WebSocket connection - use relative path with host for cross-compatibility
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       // Use the same origin as the current page to avoid CORS issues
+      // Don't specify port - let the browser handle it automatically based on current location
+      // Use a distinct path to avoid conflicts with Vite's WebSocket
       const wsUrl = `${protocol}//${window.location.host}/api/contested-ws`;
       console.log(`Attempting to connect to WebSocket at ${wsUrl}`);
       
-      // Set connecting state before creating the socket
-      if (isMountedRef.current) {
-        setConnectionStatus('connecting');
-      }
-      
-      // Add connection timeout to abandon connection attempts that take too long
-      const timeoutId = setTimeout(() => {
-        if (socketRef.current && socketRef.current.readyState !== WebSocket.OPEN && isMountedRef.current) {
-          console.log('Connection attempt timed out, aborting');
-          socketRef.current.close();
-          if (isMountedRef.current) {
-            setConnectionStatus('closed');
-          }
-        }
-      }, CONNECTION_TIMEOUT);
-      
-      // Create the socket with error handling
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
+    */
       
-      // Clear the timeout if we're successful
-      socket.addEventListener('open', () => {
-        clearTimeout(timeoutId);
-      });
+      /*
+      setConnectionStatus('connecting');
 
       socket.onopen = () => {
         console.log('WebSocket connection established successfully');
-        if (isMountedRef.current) {
-          setConnectionStatus('open');
-          reconnectAttemptsRef.current = 0; // Reset reconnect attempts
-        }
+        setConnectionStatus('open');
+        reconnectAttemptsRef.current = 0; // Reset reconnect attempts
         
         // Register with the server using the session ID
         // Get the userId that we fetched earlier
@@ -118,21 +104,14 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
         // Log the userId for debugging
         console.log('Registering WebSocket with userId:', registrationMessage.userData.userId);
         console.log('Sending registration message:', registrationMessage);
-        
-        // Only send if socket is still open
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify(registrationMessage));
-        }
+        socket.send(JSON.stringify(registrationMessage));
       };
 
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           console.log('WebSocket message received:', data);
-          
-          if (isMountedRef.current) {
-            setLastMessage(data);
-          }
+          setLastMessage(data);
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
         }
@@ -141,34 +120,32 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
       socket.onclose = (event) => {
         console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
         
-        if (isMountedRef.current) {
-          setConnectionStatus('closed');
-        }
+        // Always set status to closed since we don't use Supabase channel
+        setConnectionStatus('closed');
 
-        // Attempt to reconnect if not a normal closure and component is still mounted
-        if (event.code !== 1000 && attemptReconnectRef.current && isMountedRef.current) {
+        // Attempt to reconnect if not a normal closure
+        if (event.code !== 1000 && attemptReconnectRef.current) {
           attemptReconnectRef.current();
         }
       };
 
       socket.onerror = (error) => {
         console.error('WebSocket error:', error);
-        
-        if (isMountedRef.current) {
-          setConnectionStatus('closed');
-        }
+        // Always set status to closed
+        setConnectionStatus('closed');
       };
+      */
+    /*
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
+      // Always set status to closed
+      setConnectionStatus('closed');
       
-      if (isMountedRef.current) {
-        setConnectionStatus('closed');
-      }
-      
-      if (attemptReconnectRef.current && isMountedRef.current) {
+      if (attemptReconnectRef.current) {
         attemptReconnectRef.current();
       }
     }
+    */
   }, [sessionId]);
 
   // Define the reconnect function and store in ref to avoid dependency cycles
@@ -193,62 +170,27 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
 
   // Initialize WebSocket connection
   useEffect(() => {
-    // Set isMounted to true when the component mounts
-    isMountedRef.current = true;
-    
-    // Create a function to safely set connection status
-    const safeSetConnectionStatus = (status: 'connecting' | 'open' | 'closed') => {
-      if (isMountedRef.current) {
-        setConnectionStatus(status);
-      }
-    };
-    
     if (sessionId) {
-      try {
-        // Try to connect with error handling
-        connectWebSocket();
-      } catch (error) {
-        console.error('Error during WebSocket initialization:', error);
-        safeSetConnectionStatus('closed');
-      }
+      connectWebSocket();
     }
-    
+
     // Clean up WebSocket connection and timeouts on unmount
     return () => {
-      // Mark as unmounted to prevent state updates
-      isMountedRef.current = false;
-      
-      // Close WebSocket connection if it exists
       if (socketRef.current) {
-        try {
-          // Set to null after close to prevent further operations
-          const socket = socketRef.current;
-          socketRef.current = null;
-          
-          socket.onclose = null; // Remove close handler to prevent reconnect attempts
-          socket.onerror = null; // Remove error handler
-          socket.close();
-        } catch (error) {
-          console.error('Error closing WebSocket connection:', error);
-        }
+        socketRef.current.close();
       }
-      
-      // Clear any pending reconnection timeouts
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
       }
     };
   }, [sessionId, connectWebSocket]);
 
-  // Send a message through WebSocket
+  // Send a message through WebSocket - TEMPORARILY DISABLED
   const sendMessage = useCallback((message: any) => {
-    // If component is not mounted, don't attempt to send
-    if (!isMountedRef.current) {
-      console.log('Component is unmounted, skipping message send');
-      return false;
-    }
+    console.log('WebSocket messaging is temporarily disabled', message);
+    return false;
     
+    /*
     let messageSent = false;
     
     // Try direct WebSocket first
@@ -259,27 +201,18 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
         messageSent = true;
       } catch (error) {
         console.error('Error sending WebSocket message:', error);
-        
-        // Only attempt reconnect if component is still mounted
-        if (isMountedRef.current) {
-          connectWebSocket(); // Try to reconnect on send error
-        }
+        connectWebSocket(); // Try to reconnect on send error
       }
     } else {
       console.warn('WebSocket is not connected, attempting to reconnect');
       
       // If no connection, attempt to reconnect
-      if ((!socketRef.current || socketRef.current.readyState === WebSocket.CLOSED) && isMountedRef.current) {
+      if (!socketRef.current || socketRef.current.readyState === WebSocket.CLOSED) {
         console.log('Attempting to reconnect WebSocket before sending message');
         connectWebSocket();
         
         // Queue the message to be sent after connection is established
         setTimeout(() => {
-          // Check again that component is still mounted before attempting to send
-          if (!isMountedRef.current) {
-            return;
-          }
-          
           if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
             console.log('Sending delayed message after reconnection');
             socketRef.current.send(JSON.stringify(message));
@@ -292,7 +225,8 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
     }
     
     return messageSent;
-  }, [connectWebSocket]);
+    */
+  }, []);
 
   return { lastMessage, sendMessage, connectionStatus };
 }

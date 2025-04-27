@@ -2,38 +2,141 @@ import { Switch, Route, useLocation, RouteComponentProps } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import Home from "@/pages/Home";
+// SimpleOnboarding and EnhancedOnboarding removed - consolidated to main onboarding
+import Onboarding from "@/pages/Onboarding";
+import SignIn from "@/pages/SignIn";
+import AuthPage from "@/pages/auth-page";
+import ProfilePage from "@/pages/ProfilePage";
+import AthleteInfo from "@/pages/AthleteInfo";
+import BusinessInfo from "@/pages/BusinessInfo";
+import BusinessDashboard from "@/pages/BusinessDashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
+import AthleteDashboard from "@/pages/AthleteDashboard";
+// SupabaseTest import removed
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { ProtectedRoute } from "@/lib/protected-route";
-import * as authService from "@/lib/auth-service";
-import { Suspense, lazy, useEffect, useState } from "react";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { SimpleProtectedRoute } from "@/lib/simple-protected-route";
+import { isAuthenticated, getStoredAuthData, initializeAuthFromStorage } from "@/lib/simple-auth";
+import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { initializeSupabase } from "./lib/supabase-client";
 
-// Lazy load pages to improve initial load performance
-const Home = lazy(() => import("@/pages/Home"));
-const Login = lazy(() => import("@/pages/Login")); // This is our single consolidated login page
-const Onboarding = lazy(() => import("@/pages/Onboarding"));
-const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
-const AthleteInfo = lazy(() => import("@/pages/AthleteInfo"));
-const BusinessInfo = lazy(() => import("@/pages/BusinessInfo"));
-const AthleteDashboard = lazy(() => import("@/pages/AthleteDashboard"));
-const BusinessDashboard = lazy(() => import("@/pages/BusinessDashboard"));
-const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
-const ComplianceDashboard = lazy(() => import("@/pages/ComplianceDashboard"));
+// Define a ProtectedRoute component
+const ProtectedRoute = ({ 
+  component: Component, 
+  path,
+  requiredRole
+}: { 
+  component: React.ComponentType<any>; 
+  path: string;
+  requiredRole?: string | string[];
+}) => {
+  // Use the auth state from Supabase auth hook
+  const { user, isLoading } = useSupabaseAuth();
+  const [, navigate] = useLocation();
 
-// Component to redirect based on user role
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/auth');
+    } else if (!isLoading && user && requiredRole) {
+      // Check if user has the required role
+      const userRole = user.role || 'visitor';
+
+      if (Array.isArray(requiredRole)) {
+        if (!requiredRole.includes(userRole)) {
+          // Redirect based on actual role
+          if (userRole === 'athlete') {
+            navigate('/athlete/dashboard');
+          } else if (userRole === 'business') {
+            navigate('/business/dashboard');
+          } else if (userRole === 'compliance') {
+            navigate('/compliance/dashboard');
+          } else if (userRole === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/');
+          }
+        }
+      } else if (userRole !== requiredRole) {
+        // Redirect based on actual role
+        if (userRole === 'athlete') {
+          navigate('/athlete/dashboard');
+        } else if (userRole === 'business') {
+          navigate('/business/dashboard');
+        } else if (userRole === 'compliance') {
+          navigate('/compliance/dashboard');
+        } else if (userRole === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
+    }
+  }, [user, isLoading, navigate, requiredRole]);
+
+  if (isLoading) {
+    return (
+      <Route
+        path={path}
+        component={() => (
+          <div className="flex items-center justify-center h-screen">
+            <Loader2 className="h-8 w-8 animate-spin text-border" />
+          </div>
+        )}
+      />
+    );
+  }
+
+  if (!user) {
+    return (
+      <Route
+        path={path}
+        component={() => null} // The useEffect will handle the redirection
+      />
+    );
+  }
+
+  // Role-based check
+  if (requiredRole) {
+    const userRole = user.role || 'visitor';
+
+    if (Array.isArray(requiredRole)) {
+      if (!requiredRole.includes(userRole)) {
+        return (
+          <Route
+            path={path}
+            component={() => null} // The useEffect will handle the redirection
+          />
+        );
+      }
+    } else if (userRole !== requiredRole) {
+      return (
+        <Route
+          path={path}
+          component={() => null} // The useEffect will handle the redirection
+        />
+      );
+    }
+  }
+
+  // Use the RouteComponentProps wrapper to fix the type error
+  const WrappedComponent = (props: RouteComponentProps) => <Component {...props} />; 
+  return <Route path={path} component={WrappedComponent} />;
+};
+
+// Define a route that redirects based on user role
 const RoleRedirect = ({ path }: { path: string }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useSupabaseAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
-        navigate('/login');
+        navigate('/auth');
       } else {
+        // Redirect based on role
         const role = user.role || 'visitor';
         if (role === 'athlete') {
           navigate('/athlete/dashboard');
@@ -50,133 +153,206 @@ const RoleRedirect = ({ path }: { path: string }) => {
     }
   }, [user, isLoading, navigate]);
 
-  if (isLoading) {
+  return (
+    <Route
+      path={path}
+      component={() => (
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-border" />
+        </div>
+      )}
+    />
+  );
+};
+
+// Profile Completion Route - checks if user has completed their profile
+const ProfileRequiredRoute = ({ 
+  component: Component, 
+  path,
+  redirectPath,
+  requiredRole
+}: { 
+  component: React.ComponentType<any>; 
+  path: string;
+  redirectPath: string;
+  requiredRole?: string | string[];
+}) => {
+  // Use the auth state from Supabase auth hook
+  const { user, isLoading, hasCompletedProfile } = useSupabaseAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        navigate('/auth');
+      } else if (!hasCompletedProfile) {
+        navigate(redirectPath);
+      } else if (requiredRole) {
+        // Check if user has the required role
+        const userRole = user.role || 'visitor';
+
+        if (Array.isArray(requiredRole)) {
+          if (!requiredRole.includes(userRole)) {
+            // Redirect based on actual role
+            if (userRole === 'athlete') {
+              navigate('/athlete/dashboard');
+            } else if (userRole === 'business') {
+              navigate('/business/dashboard');
+            } else if (userRole === 'compliance') {
+              navigate('/compliance/dashboard');
+            } else if (userRole === 'admin') {
+              navigate('/admin/dashboard');
+            } else {
+              navigate('/');
+            }
+          }
+        } else if (userRole !== requiredRole) {
+          navigate('/');
+        }
+      }
+    }
+  }, [user, isLoading, navigate, hasCompletedProfile, redirectPath, requiredRole]);
+
+  if (isLoading || !user || !hasCompletedProfile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading...</span>
-      </div>
+      <Route
+        path={path}
+        component={() => (
+          <div className="flex items-center justify-center h-screen">
+            <Loader2 className="h-8 w-8 animate-spin text-border" />
+          </div>
+        )}
+      />
     );
   }
 
-  return null;
+  // Use the RouteComponentProps wrapper to fix the type error
+  const WrappedComponent = (props: RouteComponentProps) => <Component {...props} />; 
+  return <Route path={path} component={WrappedComponent} />;
 };
 
-// Error fallback
-const ErrorFallback = ({ error, resetErrorBoundary }: any) => (
-  <div className="flex flex-col items-center justify-center min-h-screen p-4">
-    <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
-    <p className="text-gray-700 mb-4">{error.message}</p>
-    <button
-      onClick={resetErrorBoundary}
-      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-    >
-      Try again
-    </button>
-  </div>
-);
-
-// Loading indicator
+// Define a fallback loading component
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <Loader2 className="h-8 w-8 animate-spin" />
-    <span className="ml-2">Loading page...</span>
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
   </div>
 );
 
-function App() {
-  // Check login state on app start
-  useEffect(() => {
-    const checkLoginState = async () => {
-      try {
-        await authService.getCurrentUser();
-      } catch (error) {
-        console.error("Error checking login state:", error);
-      }
-    };
+const routes = {
+  '/': Home,
+  '/onboarding': Onboarding,
+  '/auth': SignIn,
+  // Add other routes as needed
+};
 
-    checkLoginState();
-  }, []);
+// Simple redirect component
+const RedirectToOnboarding = () => {
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    navigate('/onboarding');
+  }, [navigate]);
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <AuthProvider>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1">
-            <Suspense fallback={<LoadingFallback />}>
-              <Route path="/" component={Home} />
-              <ProtectedRoute path="/profile" component={ProfilePage} />
-              <Route path="/login" component={Login} />
-              <ProtectedRoute path="/onboarding" component={Onboarding} />
-              <ProtectedRoute path="/athlete/info" component={AthleteInfo} requiredRole="athlete" />
-              <ProtectedRoute path="/business/info" component={BusinessInfo} requiredRole="business" />
-              <ProtectedRoute path="/athlete/dashboard" component={AthleteDashboard} requiredRole="athlete" />
-              <ProtectedRoute path="/business/dashboard" component={BusinessDashboard} requiredRole="business" />
-              <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} requiredRole="admin" />
-              <ProtectedRoute path="/compliance/dashboard" component={ComplianceDashboard} requiredRole="compliance" />
-              <RoleRedirect path="/dashboard" />
-            </Suspense>
-          </main>
-          <Footer />
-        </div>
-      </AuthProvider>
-    </ErrorBoundary>
+    <div className="flex items-center justify-center h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+};
+
+function Router() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow">
+        <Suspense fallback={<LoadingFallback />}>
+          <Switch>
+            {/* Public routes accessible to everyone */}
+            <Route path="/" component={Home} />
+            <Route path="/onboarding" component={Onboarding} />
+            <Route path="/auth" component={AuthPage} />
+            <Route path="/sign-in" component={SignIn} />
+
+            {/* Onboarding routes - accessible after authentication */}
+            <ProtectedRoute path="/onboarding" component={Onboarding} />
+
+            {/* Role-specific onboarding routes */}
+            <ProtectedRoute 
+              path="/athlete-onboarding" 
+              component={Onboarding} 
+              requiredRole="athlete"
+            />
+            <ProtectedRoute 
+              path="/business-onboarding" 
+              component={Onboarding} 
+              requiredRole="business"
+            />
+
+            {/* Alternate paths for onboarding */}
+            <ProtectedRoute path="/athlete/sign-up" component={Onboarding} requiredRole="athlete" />
+            <ProtectedRoute path="/business/sign-up" component={Onboarding} requiredRole="business" />
+
+            {/* Public info pages */}
+            <Route path="/athletes" component={AthleteInfo} />
+            <Route path="/businesses" component={BusinessInfo} />
+
+            {/* Redirect exploration path to main onboarding */}
+            <Route path="/explore-matches" component={RedirectToOnboarding} />
+
+            {/* Testing routes - disabled */}
+
+            {/* Role-specific protected dashboard routes with profile completion check */}
+            <ProfileRequiredRoute 
+              path="/athlete/dashboard" 
+              component={AthleteDashboard} 
+              requiredRole="athlete"
+              redirectPath="/athlete-onboarding"
+            />
+            <ProfileRequiredRoute 
+              path="/business/dashboard" 
+              component={BusinessDashboard} 
+              requiredRole="business"
+              redirectPath="/business-onboarding"
+            />
+            <ProtectedRoute 
+              path="/admin/dashboard" 
+              component={AdminDashboard} 
+              requiredRole="admin"
+            />
+
+            {/* Profile routes - using simple auth */}
+            <SimpleProtectedRoute path="/profile" component={ProfilePage} />
+            
+            {/* Main dashboard redirect */}
+            <RoleRedirect path="/dashboard" />
+
+            {/* All other routes redirect to home */}
+            <Route component={Home} />
+          </Switch>
+        </Suspense>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
-export async function initializeAuth(): Promise<boolean> {
-  try {
-    // First ensure Supabase is initialized
-    console.log('[App] Initializing Supabase client');
-    await initializeSupabase();
-    
-    // Then initialize our auth service
-    console.log('[App] Initializing auth service');
-    return await authService.initializeAuth();
-  } catch (error) {
-    console.error('[App] Auth initialization error:', error);
-    return false;
-  }
-}
-
-function AppWrapper() {
-  const [initialized, setInitialized] = useState(false);
-
+function App() {
+  // Initialize simple auth from storage when app starts
   useEffect(() => {
-    console.log('[App] Starting app initialization');
-
-    // Initialize everything before rendering the app
-    const initApp = async () => {
-      try {
-        const success = await initializeAuth();
-        console.log('[App] Auth initialization result:', success);
-        setInitialized(true);
-      } catch (error) {
-        console.error('[App] Failed to initialize app:', error);
-        // Still set initialized to render the app with error handling
-        setInitialized(true);
-      }
-    };
-
-    initApp();
+    console.log('[App] Initializing simple auth from storage');
+    initializeAuthFromStorage().then(success => {
+      console.log('[App] Simple auth initialization result:', success);
+    });
   }, []);
-
-  // Show loading indicator during initialization
-  if (!initialized) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Initializing application...</span>
-      </div>
-    );
-  }
-
+  
   return (
     <QueryClientProvider client={queryClient}>
-      <App />
+      <SupabaseAuthProvider>
+        <Router />
+        <Toaster />
+      </SupabaseAuthProvider>
     </QueryClientProvider>
   );
 }
 
-export default AppWrapper;
+export default App;

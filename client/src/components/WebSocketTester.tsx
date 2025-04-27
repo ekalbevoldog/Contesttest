@@ -6,10 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { v4 as uuidv4 } from "uuid";
-import { useToast } from "@/hooks/use-toast";
 
 export function WebSocketTester() {
-  const { toast } = useToast();
   // Generate a unique session ID for testing if none exists
   const [sessionId, setSessionId] = useState<string>(() => {
     const existingId = localStorage.getItem('sessionId');
@@ -26,36 +24,11 @@ export function WebSocketTester() {
   
   // Test sending a message through the WebSocket
   const handleTestWebSocket = () => {
-    // Don't try to send if not connected
-    if (connectionStatus !== 'open') {
-      toast({
-        title: "Cannot Send Message",
-        description: "WebSocket is not connected. Please wait for connection or try again later.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const messageSent = sendMessage({
+    sendMessage({
       type: 'test',
       sessionId,
       message: 'This is a test message'
     });
-    
-    // Show toast based on send success
-    if (messageSent) {
-      toast({
-        title: "Test Message Sent",
-        description: "Your message was sent to the WebSocket server.",
-        variant: "default"
-      });
-    } else {
-      toast({
-        title: "Message Not Sent",
-        description: "Failed to send message. Connection may have been lost.",
-        variant: "destructive"
-      });
-    }
   };
   
   // Test the notification endpoint
@@ -71,19 +44,8 @@ export function WebSocketTester() {
       
       const data = await response.json();
       console.log('Notification test response:', data);
-      
-      toast({
-        title: "Notification Sent",
-        description: "A test match notification was triggered.",
-        variant: "default"
-      });
     } catch (error) {
       console.error('Error testing notification:', error);
-      toast({
-        title: "Notification Failed",
-        description: "Failed to trigger match notification. See console for details.",
-        variant: "destructive"
-      });
     }
   };
   
@@ -139,12 +101,14 @@ export function WebSocketTester() {
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button 
             onClick={handleTestWebSocket}
+            disabled={connectionStatus !== 'open'}
             className="bg-zinc-800 hover:bg-zinc-700"
           >
             Send Test Message
           </Button>
           <Button 
             onClick={handleTestNotification}
+            disabled={connectionStatus !== 'open'}
             className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600"
           >
             Test Match Notification

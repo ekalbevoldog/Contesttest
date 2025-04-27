@@ -17,7 +17,6 @@ import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerCo
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { SessionTester } from "@/components/SessionTester";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { WebSocketTester } from "@/components/WebSocketTester";
 
@@ -187,9 +186,7 @@ export default function Home() {
         {showWebSocketTester && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
             <div className="max-w-md w-full">
-              <ErrorBoundary>
-                <WebSocketTester />
-              </ErrorBoundary>
+              <WebSocketTester />
               <div className="mt-4 text-center">
                 <Button 
                   size="sm" 

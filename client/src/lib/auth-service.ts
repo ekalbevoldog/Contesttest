@@ -1,352 +1,353 @@
 /**
- * Unified Authentication Service
+ * Consolidated Authentication Service
  * 
- * This service consolidates authentication approaches:
+ * This service provides a unified authentication approach:
  * - Uses Supabase Auth as the primary authentication mechanism
  * - Falls back to simple-auth only when necessary
- * - Manages user sessions consistently across the application
+ * - Provides clear, consistent session management
  */
 
-import { supabase } from './supabase-client';
-import * as simpleAuth from './simple-auth';
+import { supabase, getSupabase } from './supabase-client';
+import { storeAuthData, getStoredAuthData, clearAuthData, isAuthenticated as isSimpleAuthenticated } from './simple-auth';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
-// User type with role information
-export type UserRole = 'athlete' | 'business' | 'compliance' | 'admin';
-
-export interface EnhancedUser {
-  id: string;
-  email: string;
-  role?: UserRole;
-  fullName?: string;
-  profileCompleted?: boolean;
-  // Add other user properties as needed
+// Extended user type that includes role and other application-specific data
+export interface EnhancedUser extends SupabaseUser {
+  role?: string;
+  profile_completed?: boolean;
   [key: string]: any;
 }
 
-/**
- * Initialize authentication on app startup
- * Checks both Supabase and fallback auth
- */
-export async function initializeAuth(): Promise<boolean> {
-  console.log('[AuthService] Initializing auth');
-  
-  try {
-    // First try Supabase Auth
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (!error && data?.session) {
-      console.log('[AuthService] Supabase session found');
-      return true;
-    }
-    
-    // If no Supabase session, try fallback auth
-    const fallbackSuccess = await simpleAuth.initializeAuthFromStorage();
-    console.log('[AuthService] Fallback auth result:', fallbackSuccess);
-    
-    return fallbackSuccess;
-  } catch (error) {
-    console.error('[AuthService] Auth initialization error:', error);
-    return false;
-  }
-}
-
-/**
- * Check if user is authenticated
- */
-export async function isAuthenticated(): Promise<boolean> {
-  try {
-    // First check Supabase Auth
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (!error && data?.session) {
-      console.log('[AuthService] User is authenticated via Supabase');
-      return true;
-    }
-    
-    // Fall back to simple auth
-    const fallbackAuthenticated = simpleAuth.isAuthenticated();
-    
-    if (fallbackAuthenticated) {
-      console.log('[AuthService] User is authenticated via fallback auth');
-    } else {
-      console.log('[AuthService] User is not authenticated');
-    }
-    
-    return fallbackAuthenticated;
-  } catch (error) {
-    console.error('[AuthService] Error checking authentication:', error);
-    return false;
-  }
-}
-
-/**
- * Get the current user
- */
-export async function getCurrentUser(): Promise<EnhancedUser | null> {
-  try {
-    // First try Supabase Auth
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (!error && user) {
-      console.log('[AuthService] Retrieved user from Supabase');
-      
-      // Get user metadata including role
-      let role: UserRole | undefined;
-      let fullName = '';
-      
-      if (user.user_metadata) {
-        // Try to get role from user metadata
-        if (user.user_metadata.role) {
-          role = user.user_metadata.role as UserRole;
-        }
-        
-        // Try to get full name
-        if (user.user_metadata.full_name) {
-          fullName = user.user_metadata.full_name;
-        }
-      }
-      
-      return {
-        id: user.id,
-        email: user.email || '',
-        role: role as UserRole | undefined,
-        fullName: fullName
-        // Don't spread user object to avoid duplicate properties
-      };
-    }
-    
-    // Fall back to simple auth
-    const authData = simpleAuth.getStoredAuthData();
-    
-    if (authData && authData.user) {
-      console.log('[AuthService] Retrieved user from fallback auth');
-      
-      return {
-        id: authData.user.id,
-        email: authData.user.email || '',
-        role: authData.user.role as UserRole,
-        fullName: authData.user.full_name || '',
-        profileCompleted: authData.user.profile_completed || false,
-        ...authData.user
-      };
-    }
-    
-    console.log('[AuthService] No user found');
-    return null;
-  } catch (error) {
-    console.error('[AuthService] Error getting current user:', error);
-    return null;
-  }
-}
-
-/**
- * Login with email and password
- */
-export async function login(email: string, password: string): Promise<{
+// Authentication result type
+export interface AuthResult {
   success: boolean;
   user?: EnhancedUser;
   session?: any;
   error?: string;
-}> {
+  source?: 'supabase' | 'simple-auth'; // Track which auth system was used
+}
+
+// Helper to check if Supabase is initialized
+const ensureSupabaseInitialized = async () => {
   try {
-    console.log('[AuthService] Attempting login');
-    
-    // First try Supabase Auth
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (!error && data?.user) {
-      console.log('[AuthService] Login successful via Supabase');
+    await getSupabase();
+    return true;
+  } catch (error) {
+    console.error('[AuthService] Failed to initialize Supabase', error);
+    return false;
+  }
+};
+
+/**
+ * Primary login function
+ * - First attempts Supabase Auth
+ * - Falls back to simple-auth via API endpoint if Supabase fails
+ */
+export async function login(email: string, password: string): Promise<AuthResult> {
+  console.log('[AuthService] Login attempt for:', email);
+  
+  // Ensure Supabase is initialized
+  const supabaseInitialized = await ensureSupabaseInitialized();
+  
+  // Step 1: Try Supabase Auth first
+  if (supabaseInitialized) {
+    try {
+      console.log('[AuthService] Attempting Supabase Auth login');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // Get user metadata including role
-      let role: UserRole | undefined;
-      let fullName = '';
-      
-      if (data.user.user_metadata) {
-        // Try to get role from user metadata
-        if (data.user.user_metadata.role) {
-          role = data.user.user_metadata.role as UserRole;
+      if (error) {
+        console.warn('[AuthService] Supabase Auth login failed:', error.message);
+        // Continue to fallback
+      } else if (data?.user) {
+        console.log('[AuthService] Supabase Auth login successful');
+        
+        // Get user data from our database
+        const { data: userData, error: userDataError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single();
+        
+        let enhancedUser: EnhancedUser = data.user;
+        
+        if (!userDataError && userData) {
+          enhancedUser = {
+            ...data.user,
+            ...userData,
+            auth_id: data.user.id // Ensure auth_id is always set to Supabase ID
+          };
         }
         
-        // Try to get full name
-        if (data.user.user_metadata.full_name) {
-          fullName = data.user.user_metadata.full_name;
+        // Store in simple-auth for persistence and compatibility
+        if (data.session?.access_token) {
+          storeAuthData(data.session.access_token, enhancedUser);
         }
+        
+        return {
+          success: true,
+          user: enhancedUser,
+          session: data.session,
+          source: 'supabase'
+        };
       }
-      
+    } catch (supabaseError) {
+      console.error('[AuthService] Supabase Auth error:', supabaseError);
+      // Continue to fallback
+    }
+  }
+  
+  // Step 2: Fall back to API endpoint (server-side authentication)
+  console.log('[AuthService] Falling back to API authentication');
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
       return {
-        success: true,
-        user: {
-          id: data.user.id,
-          email: data.user.email || '',
-          role: role as UserRole | undefined,
-          fullName: fullName,
-          profileCompleted: data.user.user_metadata?.profile_completed || false
-        },
-        session: data.session
+        success: false,
+        error: errorData.error || errorData.message || 'Authentication failed',
+        source: 'simple-auth'
       };
     }
     
-    console.log('[AuthService] Supabase login failed, trying fallback auth');
+    const data = await response.json();
     
-    // Fall back to simple auth
-    const fallbackResult = await simpleAuth.login(email, password);
-    
-    if (fallbackResult.success && fallbackResult.user) {
-      console.log('[AuthService] Login successful via fallback auth');
-      
-      return {
-        success: true,
-        user: {
-          id: fallbackResult.user.id,
-          email: fallbackResult.user.email || '',
-          role: fallbackResult.user.role as UserRole,
-          fullName: fallbackResult.user.full_name || '',
-          profileCompleted: fallbackResult.user.profile_completed || false,
-          ...fallbackResult.user
-        },
-        session: { access_token: fallbackResult.token }
-      };
+    // Store auth data in simple-auth
+    if (data.token) {
+      storeAuthData(data.token, data.user);
     }
     
-    console.log('[AuthService] Login failed');
     return {
-      success: false,
-      error: error?.message || fallbackResult.error || 'Invalid email or password'
+      success: true,
+      user: data.user as EnhancedUser,
+      session: data.session,
+      source: 'simple-auth'
     };
-  } catch (error) {
-    console.error('[AuthService] Login error:', error);
+  } catch (apiError) {
+    console.error('[AuthService] API login error:', apiError);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error during login'
+      error: apiError instanceof Error ? apiError.message : 'Authentication failed',
+      source: 'simple-auth'
     };
   }
 }
 
 /**
- * Register a new user
+ * Registration function
+ * - Creates user in Supabase Auth
+ * - Creates user record in our database
  */
-export async function register(data: {
+export async function register(userData: {
   email: string;
   password: string;
-  fullName?: string;
-  role?: string;
-  [key: string]: any;
-}): Promise<{
-  success: boolean;
-  user?: EnhancedUser;
-  session?: any;
-  error?: string;
-}> {
-  try {
-    console.log('[AuthService] Attempting registration');
-    
-    const { email, password, fullName, role = 'athlete', ...otherData } = data;
-    
-    // First try Supabase Auth
-    const { data: authData, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName || '',
-          role: role,
-          ...otherData
-        }
-      }
-    });
-    
-    if (!error && authData?.user) {
-      console.log('[AuthService] Registration successful via Supabase');
-      
-      return {
-        success: true,
-        user: {
-          id: authData.user.id,
-          email: authData.user.email || '',
-          role: role as UserRole,
-          fullName: fullName || '',
-          profileCompleted: false
-        },
-        session: authData.session
-      };
-    }
-    
-    console.log('[AuthService] Supabase registration failed, trying fallback auth');
-    
-    // Fall back to simple auth
-    const fallbackResult = await simpleAuth.register(
-      email,
-      password,
-      fullName || '',
-      role
-    );
-    
-    if (fallbackResult.success && fallbackResult.user) {
-      console.log('[AuthService] Registration successful via fallback auth');
-      
-      return {
-        success: true,
-        user: {
-          id: fallbackResult.user.id,
-          email: fallbackResult.user.email || '',
-          role: fallbackResult.user.role as UserRole,
-          fullName: fallbackResult.user.full_name || '',
-          profileCompleted: false,
-          ...fallbackResult.user
-        },
-        session: { access_token: fallbackResult.token }
-      };
-    }
-    
-    console.log('[AuthService] Registration failed');
+  fullName: string;
+  role: string;
+}): Promise<AuthResult> {
+  console.log('[AuthService] Register attempt for:', userData.email);
+  
+  // Ensure Supabase is initialized
+  const supabaseInitialized = await ensureSupabaseInitialized();
+  
+  if (!supabaseInitialized) {
     return {
       success: false,
-      error: error?.message || fallbackResult.error || 'Error creating account'
+      error: 'Supabase client not initialized',
+      source: 'supabase'
+    };
+  }
+  
+  try {
+    // Use the consolidated API endpoint for registration
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      return {
+        success: false,
+        error: errorData.error || errorData.message || 'Registration failed',
+        source: 'supabase'
+      };
+    }
+    
+    const data = await response.json();
+    
+    // Store auth data for session persistence
+    if (data.token) {
+      storeAuthData(data.token, data.user);
+    }
+    
+    return {
+      success: true,
+      user: data.user as EnhancedUser,
+      session: data.session,
+      source: 'supabase'
     };
   } catch (error) {
     console.error('[AuthService] Registration error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Error during registration'
+      error: error instanceof Error ? error.message : 'Registration failed',
+      source: 'supabase'
     };
   }
 }
 
 /**
- * Logout the current user
+ * Unified logout function
+ * - Handles both Supabase Auth and simple-auth logout
  */
 export async function logout(): Promise<boolean> {
+  console.log('[AuthService] Logout attempt');
+  
+  // Always clear simple-auth data
+  clearAuthData();
+  
+  // Try Supabase Auth logout
   try {
-    console.log('[AuthService] Attempting logout');
-    
-    // First try Supabase Auth
-    const { error } = await supabase.auth.signOut();
-    
-    if (!error) {
-      console.log('[AuthService] Supabase logout successful');
-    } else {
-      console.log('[AuthService] Supabase logout error:', error);
-    }
-    
-    // Also perform fallback auth logout
-    const fallbackSuccess = await simpleAuth.logout();
-    
-    if (fallbackSuccess) {
-      console.log('[AuthService] Fallback auth logout successful');
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('[AuthService] Logout error:', error);
-    
-    // Try to do local cleanup anyway
-    simpleAuth.clearAuthData();
-    
-    return false;
+    await supabase.auth.signOut();
+  } catch (supabaseError) {
+    console.warn('[AuthService] Supabase Auth logout error:', supabaseError);
+    // Continue anyway
   }
+  
+  // Always call the API logout endpoint too
+  try {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch (apiError) {
+    console.warn('[AuthService] API logout error:', apiError);
+    // Continue anyway
+  }
+  
+  // Clear browser storage
+  if (typeof window !== 'undefined') {
+    // Clear any Supabase tokens
+    localStorage.removeItem('supabase.auth.token');
+    localStorage.removeItem('sb-auth-token');
+    localStorage.removeItem('contested-auth');
+    localStorage.removeItem('contestedUserData');
+    
+    // Clear any other auth-related items
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('auth-status');
+    
+    // Clear all potential Supabase tokens
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
+  
+  return true;
+}
+
+/**
+ * Check if user is authenticated using both auth systems
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  // First try Supabase Auth
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) {
+      return true;
+    }
+  } catch (supabaseError) {
+    console.warn('[AuthService] Supabase Auth check error:', supabaseError);
+  }
+  
+  // Fall back to simple-auth
+  return isSimpleAuthenticated();
+}
+
+/**
+ * Get current user data from either auth system
+ */
+export async function getCurrentUser(): Promise<EnhancedUser | null> {
+  // First try Supabase Auth
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    
+    if (!error && data?.user) {
+      // Get additional user data from our database
+      const { data: userData, error: userDataError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', data.user.id)
+        .single();
+      
+      if (!userDataError && userData) {
+        return {
+          ...data.user,
+          ...userData,
+        } as EnhancedUser;
+      }
+      
+      // Try finding user by email if auth_id wasn't found
+      const { data: userByEmail, error: emailError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', data.user.email)
+        .single();
+      
+      if (!emailError && userByEmail) {
+        return {
+          ...data.user,
+          ...userByEmail,
+        } as EnhancedUser;
+      }
+      
+      return data.user as EnhancedUser;
+    }
+  } catch (supabaseError) {
+    console.warn('[AuthService] Supabase Auth get user error:', supabaseError);
+  }
+  
+  // Fall back to simple-auth
+  const authData = getStoredAuthData();
+  return authData?.user as EnhancedUser || null;
+}
+
+/**
+ * Get auth token from either auth system
+ */
+export function getAuthToken(): string | null {
+  // First try Supabase Auth
+  try {
+    const session = supabase.auth.getSession();
+    // @ts-ignore - TypeScript doesn't recognize the synchronous method
+    if (session?.data?.session?.access_token) {
+      // @ts-ignore
+      return session.data.session.access_token;
+    }
+  } catch (supabaseError) {
+    console.warn('[AuthService] Supabase Auth get token error:', supabaseError);
+  }
+  
+  // Fall back to simple-auth
+  const authData = getStoredAuthData();
+  return authData?.token || null;
 }
 
 /**
@@ -354,31 +355,20 @@ export async function logout(): Promise<boolean> {
  */
 export async function refreshSession(): Promise<boolean> {
   try {
-    console.log('[AuthService] Refreshing session');
-    
-    // First try Supabase Auth
     const { data, error } = await supabase.auth.refreshSession();
     
-    if (!error && data?.session) {
-      console.log('[AuthService] Supabase session refreshed successfully');
-      return true;
+    if (error) {
+      console.error('[AuthService] Session refresh failed:', error);
+      return false;
     }
     
-    console.log('[AuthService] Supabase session refresh failed, trying fallback');
-    
-    // Call the fallback auth refresh endpoint
-    try {
-      const response = await fetch('/api/auth/refresh-session', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        console.log('[AuthService] Fallback session refreshed successfully');
-        return true;
+    if (data?.session) {
+      // Update the simple-auth storage with new token
+      const userData = await getCurrentUser();
+      if (userData && data.session.access_token) {
+        storeAuthData(data.session.access_token, userData);
       }
-    } catch (fallbackError) {
-      console.error('[AuthService] Fallback session refresh error:', fallbackError);
+      return true;
     }
     
     return false;
@@ -389,63 +379,56 @@ export async function refreshSession(): Promise<boolean> {
 }
 
 /**
- * Update user profile
+ * Initialize auth on app startup
+ * - Attempts to restore session from both auth systems
  */
-export async function updateUserProfile(userData: {
-  [key: string]: any;
-}): Promise<{
-  success: boolean;
-  user?: EnhancedUser;
-  error?: string;
-}> {
-  try {
-    console.log('[AuthService] Updating user profile');
-    
-    // First try Supabase Auth
-    const { data, error } = await supabase.auth.updateUser({
-      data: userData
-    });
-    
-    if (!error && data?.user) {
-      console.log('[AuthService] User profile updated via Supabase');
+export async function initializeAuth(): Promise<boolean> {
+  console.log('[AuthService] Initializing auth');
+  
+  // Ensure Supabase is initialized
+  const supabaseInitialized = await ensureSupabaseInitialized();
+  
+  if (supabaseInitialized) {
+    try {
+      // Check if we have a Supabase session
+      const { data, error } = await supabase.auth.getSession();
       
-      // Extract user data safely
-      let role: UserRole | undefined;
-      let fullName = '';
-      
-      if (data.user.user_metadata) {
-        if (data.user.user_metadata.role && 
-            ['athlete', 'business', 'compliance', 'admin'].includes(data.user.user_metadata.role)) {
-          role = data.user.user_metadata.role as UserRole;
-        }
-        
-        if (data.user.user_metadata.full_name) {
-          fullName = data.user.user_metadata.full_name;
-        }
+      if (!error && data?.session) {
+        console.log('[AuthService] Found valid Supabase session');
+        return true;
       }
-      
-      return {
-        success: true,
-        user: {
-          id: data.user.id,
-          email: data.user.email || '',
-          role: role,
-          fullName: fullName,
-          profileCompleted: data.user.user_metadata?.profile_completed || false
+    } catch (supabaseError) {
+      console.warn('[AuthService] Supabase session check error:', supabaseError);
+    }
+  }
+  
+  // Try initializing from simple-auth
+  const authData = getStoredAuthData();
+  if (authData?.token && authData?.user) {
+    console.log('[AuthService] Found valid simple-auth data');
+    
+    // Validate token with Supabase if possible
+    if (supabaseInitialized) {
+      try {
+        const { data, error } = await supabase.auth.getUser(authData.token);
+        
+        if (!error && data?.user) {
+          console.log('[AuthService] Simple-auth token valid with Supabase');
+          return true;
+        } else {
+          console.warn('[AuthService] Simple-auth token invalid with Supabase');
+          clearAuthData(); // Clean up invalid token
+          return false;
         }
-      };
+      } catch (validationError) {
+        console.warn('[AuthService] Token validation error:', validationError);
+      }
     }
     
-    console.log('[AuthService] Supabase profile update failed');
-    return {
-      success: false,
-      error: error?.message || 'Error updating profile'
-    };
-  } catch (error) {
-    console.error('[AuthService] Profile update error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Error updating profile'
-    };
+    // If Supabase validation failed or wasn't available, trust the simple-auth data
+    return true;
   }
+  
+  console.log('[AuthService] No valid auth data found');
+  return false;
 }

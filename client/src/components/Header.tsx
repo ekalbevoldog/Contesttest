@@ -34,8 +34,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import React, { ReactNode } from "react";
-// Use the consolidated auth hook
-import { useAuth } from "@/hooks/use-auth";
+// Remove the legacy auth hook and only use Supabase
+import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { cn } from "@/lib/utils"; // Import cn for conditional classes
 
 // Remove duplicate imports block
@@ -193,9 +193,9 @@ const NavDropdown: React.FC<{
 export default function Header() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
-  // Use consolidated auth hook
-  const { user, userData, signOut } = useAuth();
-
+  // Only use Supabase auth
+  const { user, userData, signOut } = useSupabaseAuth();
+  
   // Set user type from userData
   const userType = userData?.role as UserType || null;
 
@@ -254,7 +254,7 @@ export default function Header() {
     {
       label: "Sign In", icon: LogIn, isDropdown: true, condition: (user) => !user, desktopOnly: true, // Desktop only for this specific trigger style
       dropdownItems: [
-        { label: "Sign in or Register", href: "/login", icon: UserCircle },
+        { label: "Sign in or Register", href: "/sign-in", icon: UserCircle },
       ]
     },
 
@@ -267,7 +267,7 @@ export default function Header() {
     { label: "Settings", href: "/settings", icon: Settings, condition: (user) => !!user, mobileOnly: true },
     { label: "Sign Out", icon: LogOut, onClick: handleLogout, condition: (user) => !!user, mobileOnly: true },
     // Mobile Account Links (Logged Out)
-    { label: "Sign in or Register", href: "/login", icon: UserCircle, condition: (user) => !user, mobileOnly: true },
+    { label: "Sign in or Register", href: "/sign-in", icon: UserCircle, condition: (user) => !user, mobileOnly: true },
     { label: "Get Started", href: "/onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
 
     // --- Special Buttons ---

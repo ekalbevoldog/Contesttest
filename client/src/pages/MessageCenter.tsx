@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send } from "lucide-react";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
 
 type Message = {
   id: string;
@@ -22,21 +21,25 @@ export default function MessageCenter() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const { user } = useAuth();
-  const { toast } = useToast();
-  // WebSocket functionality is currently disabled, but we keep the hook for future use
   const { sendMessage, lastMessage } = useWebSocket();
 
-  // Add some sample messages for UI testing since WebSocket is disabled
   useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        content: 'Welcome to the message center! WebSocket functionality is temporarily disabled.',
-        sender: 'System',
-        timestamp: new Date()
+    if (lastMessage) {
+      try {
+        const data = JSON.parse(lastMessage);
+        if (data.type === 'message') {
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            content: data.content,
+            sender: data.sender,
+            timestamp: new Date()
+          }]);
+        }
+      } catch (e) {
+        console.error('Error parsing message:', e);
       }
-    ]);
-  }, []);
+    }
+  }, [lastMessage]);
 
   const handleSendMessage = () => {
     if (!message.trim() || selectedChat === null) return;

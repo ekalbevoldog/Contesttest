@@ -27,15 +27,15 @@ export const verifySupabaseToken = async (
 
     // Extract token
     const token = authHeader.split(' ')[1];
-
+    
     // Verify token with Supabase
     const { data, error } = await supabase.auth.getUser(token);
-
+    
     if (error || !data.user) {
       console.error('Token verification error:', error);
       return res.status(401).json({ error: 'Invalid token' });
     }
-
+    
     // Set user data for the request - ensure id is treated as a string
     req.user = {
       id: String(data.user.id), // Ensure this is a string
@@ -43,7 +43,7 @@ export const verifySupabaseToken = async (
       role: data.user.user_metadata?.role || 'user',
       ...(data.user.user_metadata || {})
     };
-
+    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -59,11 +59,11 @@ export const requireRole = (role: string) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-
+    
     if (req.user.role !== role) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
-
+    
     next();
   };
 };
@@ -76,35 +76,35 @@ export function setupSupabaseAuth(app: Express) {
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-
+      
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
       }
-
+      
       console.log('\n==== SUPABASE LOGIN ATTEMPT ====');
       console.log(`Login attempt for: ${email}`);
-
+      
       // Use Supabase Auth for login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-
+      
       if (error) {
         console.error('Login error:', error);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
-
+      
       if (!data.user || !data.session) {
         return res.status(401).json({ error: 'Authentication failed' });
       }
-
+      
       // Update last login in our users table
       await supabase
         .from('users')
         .update({ last_login: new Date() })
         .eq('email', email);
-
+      
       // Also fetch the user profile data from our users table
       let userRecord = null;
       const { data: userData, error: userError } = await supabase
@@ -112,28 +112,28 @@ export function setupSupabaseAuth(app: Express) {
         .select('*')
         .eq('email', email)
         .single();
-
+        
       if (userError) {
         console.error('Error fetching user data after login:', userError);
-
+        
         // If no user record exists (PGRST116 error), create one
         if (userError.code === 'PGRST116') {
           console.log('No user record found in database for:', email);
-
+          
           // First, try fetching by auth_id instead of email
           const { data: userByAuthId, error: authIdError } = await supabase
             .from('users')
             .select('*')
             .eq('auth_id', data.user.id)
             .single();
-
+            
           if (!authIdError && userByAuthId) {
             console.log('Found user record by auth_id instead of email');
             userRecord = userByAuthId;
           } else {
             // Get user metadata to extract role
             const role = data.user?.user_metadata?.role || data.user?.app_metadata?.role || 'athlete';
-
+            
             // Create a new user record in our database
             try {
               console.log('Creating user record in database for:', email);
@@ -148,7 +148,7 @@ export function setupSupabaseAuth(app: Express) {
                 })
                 .select()
                 .single();
-
+                
               if (createError) {
                 console.error('Error creating user record:', createError);
               } else {
@@ -164,9 +164,9 @@ export function setupSupabaseAuth(app: Express) {
         }
         // For other errors, we'll still proceed with just the auth data
       }
-
+      
       console.log('Login successful for:', email);
-
+      
       // Configure cookies for persistent sessions
       // Create a secure, http-only cookie with session data
       const sessionObj = {
@@ -175,7 +175,7 @@ export function setupSupabaseAuth(app: Express) {
         expires_at: data.session.expires_at,
         user_id: data.user.id
       };
-
+      
       // Set the cookie with appropriate settings
       res.cookie('supabase-auth', JSON.stringify(sessionObj), {
         httpOnly: true,
@@ -184,7 +184,7 @@ export function setupSupabaseAuth(app: Express) {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: '/'
       });
-
+      
       // Set a non-http-only cookie as a flag for client-side checks
       res.cookie('auth-status', 'authenticated', {
         httpOnly: false,
@@ -193,17 +193,7 @@ export function setupSupabaseAuth(app: Express) {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: '/'
       });
-
-      // Set session refresh timer cookie
-      const refreshTime = Date.now() + (15 * 60 * 1000); // 15 minutes from now
-      res.cookie('auth-refresh-time', refreshTime.toString(), {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: '/'
-      });
-
+      
       // Return both auth data and profile data - prioritize userRecord if we have it
       return res.status(200).json({
         user: {
@@ -226,7 +216,7 @@ export function setupSupabaseAuth(app: Express) {
       return res.status(500).json({ error: 'Login failed' });
     }
   });
-
+  
   // Logout endpoint
   app.post("/api/auth/logout", async (req: Request, res: Response) => {
     try {
@@ -235,25 +225,24 @@ export function setupSupabaseAuth(app: Express) {
       if (authHeader && authHeader.startsWith('Bearer ')) {
         // Extract token
         const token = authHeader.split(' ')[1];
-
+        
         // Sign out using Supabase Auth
         await supabase.auth.signOut();
         console.log('Supabase signOut called successfully');
       }
-
+      
       // Clear all auth-related cookies regardless of auth header
       res.clearCookie('supabase-auth', { path: '/' });
       res.clearCookie('auth-status', { path: '/' });
-      res.clearCookie('auth-refresh-time', { path: '/' }); // Clear the new refresh timer cookie
-
+      
       // Clear any other session cookies that might exist
       res.clearCookie('sb-access-token', { path: '/' });
       res.clearCookie('sb-refresh-token', { path: '/' });
       res.clearCookie('contest-session', { path: '/' });
       res.clearCookie('connect.sid', { path: '/' });
-
+      
       console.log('All auth cookies cleared');
-
+      
       return res.status(200).json({ message: 'Logged out successfully' });
     } catch (error) {
       console.error('Logout error:', error);
@@ -266,7 +255,7 @@ export function setupSupabaseAuth(app: Express) {
     try {
       console.log('Checking authentication status');
       let token = null;
-
+      
       // First try to get token from authorization header
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -274,7 +263,7 @@ export function setupSupabaseAuth(app: Express) {
         token = authHeader.split(' ')[1];
         console.log('Found auth token in header');
       } 
-
+      
       // If no token in header, check cookies
       if (!token && req.cookies && req.cookies['supabase-auth']) {
         try {
@@ -288,26 +277,26 @@ export function setupSupabaseAuth(app: Express) {
           console.error('Error parsing auth cookie:', cookieError);
         }
       }
-
+      
       // If still no token, try to get it from the session
       if (!token && req.cookies && req.cookies['sb-access-token']) {
         token = req.cookies['sb-access-token'];
         console.log('Found auth token in sb-access-token cookie');
       }
-
+      
       // If no token found, user is not authenticated
       if (!token) {
         console.log('No authentication token found');
         return res.status(401).json({ error: 'Not authenticated' });
       }
-
+      
       // Verify token with Supabase
       const { data: { user }, error } = await supabase.auth.getUser(token);
-
+      
       if (error || !user) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
-
+      
       // First, ensure the auth_id column exists
       try {
         // Check if auth_id column exists by attempting to query it
@@ -315,15 +304,15 @@ export function setupSupabaseAuth(app: Express) {
           .from('users')
           .select('auth_id')
           .limit(1);
-
+          
         if (testError && testError.message && testError.message.includes('column "auth_id" does not exist')) {
           console.error('auth_id column missing, attempting to add it');
-
+          
           // The auth_id column doesn't exist, try to add it
           const { error: alterError } = await supabase.rpc('exec_sql', {
             sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id TEXT UNIQUE"
           });
-
+          
           if (alterError) {
             console.error('Error adding auth_id column:', alterError);
           } else {
@@ -333,13 +322,13 @@ export function setupSupabaseAuth(app: Express) {
       } catch (schemaError) {
         console.error('Error checking/updating schema:', schemaError);
       }
-
+      
       // Get additional user data from our users table
       console.log(`Fetching user data for email: ${user.email}`);
-
+      
       let userData = null;
       let userError = null;
-
+      
       try {
         // First look for user by auth_id since that's most reliable
         const { data: authIdUserData, error: authIdError } = await supabase
@@ -347,7 +336,7 @@ export function setupSupabaseAuth(app: Express) {
           .select('*')
           .eq('auth_id', user.id)
           .maybeSingle();
-
+          
         if (authIdError) {
           console.error('Error fetching user by auth_id:', authIdError);
           userError = authIdError;
@@ -362,23 +351,23 @@ export function setupSupabaseAuth(app: Express) {
             .select('*')
             .eq('email', user.email)
             .maybeSingle();
-
+            
           if (emailError) {
             console.error('Error fetching user by email:', emailError);
             userError = emailError;
           } else if (emailUserData) {
             console.log('Found user data by email, but no auth_id link');
             userData = emailUserData;
-
+            
             // If user record exists by email but doesn't have auth_id, update it
             if (!emailUserData.auth_id) {
               console.log('User found by email has no auth_id, updating...');
-
+              
               const { error: updateError } = await supabase
                 .from('users')
                 .update({ auth_id: user.id })
                 .eq('id', emailUserData.id);
-
+                
               if (updateError) {
                 console.error('Error updating user auth_id:', updateError);
               } else {
@@ -390,10 +379,10 @@ export function setupSupabaseAuth(app: Express) {
           } else {
             // No user found by either method - create a new user record
             console.log('No user record found, creating one for:', user.email);
-
+            
             // Get role from user metadata or default to 'athlete'
             const role = user.user_metadata?.role || 'athlete';
-
+            
             try {
               // Create a new user record
               const { data: newUserData, error: createError } = await supabase
@@ -408,7 +397,7 @@ export function setupSupabaseAuth(app: Express) {
                 })
                 .select()
                 .single();
-
+                
               if (createError) {
                 console.error('Error creating user record:', createError);
               } else {
@@ -424,12 +413,12 @@ export function setupSupabaseAuth(app: Express) {
         console.error('Exception during user profile lookup:', error);
         userError = error;
       }
-
+      
       if (userError) {
         console.error('Error fetching user data:', userError);
         // We can still return just the auth user
       }
-
+      
       // Merge the auth user with user data from our application database
       return res.status(200).json({
         user: {
@@ -447,7 +436,7 @@ export function setupSupabaseAuth(app: Express) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
   });
-
+  
   // Register endpoint - stores additional user data in our database
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
@@ -456,10 +445,10 @@ export function setupSupabaseAuth(app: Express) {
       console.log("Request headers:", req.headers);
       console.log("Request body:", req.body);
       console.log("Request body type:", typeof req.body);
-
+      
       // Extract form data from request
       const { email, password, fullName, role } = req.body;
-
+      
       // Ensure we have all required fields
       if (!email || !password || !fullName) {
         return res.status(400).json({ 
@@ -471,7 +460,7 @@ export function setupSupabaseAuth(app: Express) {
           ].filter(Boolean)
         });
       }
-
+      
       // FIRST check if the user already exists in Supabase Auth
       // Try logging in first to see if account exists and credentials are valid
       try {
@@ -479,17 +468,17 @@ export function setupSupabaseAuth(app: Express) {
           email,
           password
         });
-
+        
         if (loginData?.user) {
           console.log('User exists in Supabase Auth and credentials match');
-
+          
           // Now check if they exist in our application database
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('*')
             .eq('email', email)
             .single();
-
+          
           if (userData) {
             // User exists in both Supabase Auth and our application database
             // Return success with existing user data
@@ -506,20 +495,20 @@ export function setupSupabaseAuth(app: Express) {
             // User exists in Supabase Auth but not in our application database
             // This is an unusual case - let's create the user record
             console.log('User exists in Auth but not in application database - creating user record');
-
+            
             // Store user data in our application database
             const userDataToInsert = {
               email: email,
               role: role,
               created_at: new Date()
             };
-
+            
             const { data: newUserData, error: insertError } = await supabase
               .from('users')
               .insert(userDataToInsert)
               .select()
               .single();
-
+              
             if (insertError) {
               console.error('Error storing user data for existing auth user:', insertError);
               return res.status(500).json({ 
@@ -527,7 +516,7 @@ export function setupSupabaseAuth(app: Express) {
                 message: 'Your account exists but we could not complete the profile setup. Please contact support.'
               });
             }
-
+            
             return res.status(200).json({ 
               message: 'Login successful. Account profile created.',
               user: {
@@ -541,14 +530,14 @@ export function setupSupabaseAuth(app: Express) {
       } catch (loginError) {
         console.log('Login attempt failed (expected for new users)');
       }
-
+      
       // Check if user exists with the given email in our application database
       const { data: userData } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
         .single();
-
+        
       if (userData) {
         console.log('User exists in our database but auth failed:', userData);
         return res.status(400).json({ 
@@ -556,10 +545,10 @@ export function setupSupabaseAuth(app: Express) {
           message: 'This email is already registered. Please use a different email or try signing in with the correct password.'
         });
       }
-
+      
       console.log('\n==== SUPABASE REGISTRATION DATA ====');
       console.log('Creating user account with Supabase Auth...');
-
+      
       // First create the user with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
@@ -571,10 +560,10 @@ export function setupSupabaseAuth(app: Express) {
           }
         }
       });
-
+      
       if (authError) {
         console.error('Error creating Supabase auth account:', authError);
-
+        
         // Check for specific error codes and provide more helpful error messages
         if (authError.code === 'weak_password') {
           return res.status(400).json({ 
@@ -590,7 +579,7 @@ export function setupSupabaseAuth(app: Express) {
               email,
               password
             });
-
+            
             if (signInData?.user) {
               // Credentials match an existing user, retrieve or create their app record
               const { data: existingUser, error: userError } = await supabase
@@ -598,7 +587,7 @@ export function setupSupabaseAuth(app: Express) {
                 .select('*')
                 .eq('email', email)
                 .single();
-
+                
               if (existingUser) {
                 // User exists in both Auth and app database
                 return res.status(200).json({ 
@@ -633,22 +622,22 @@ export function setupSupabaseAuth(app: Express) {
                     // Default to 'athlete' if unknown role
                     dbRole = 'athlete';
                 }
-
+                
                 console.log(`Mapping role '${role}' to database role '${dbRole}'`);
-
+                
                 const userDataToInsert = {
                   email: email,
                   role: dbRole, // Use the mapped role value that matches the database enum
                   created_at: new Date()
                 };
-
+                
                 try {
                   const { data: newUserData, error: insertError } = await supabase
                     .from('users')
                     .insert(userDataToInsert)
                     .select()
                     .single();
-
+                    
                   if (insertError) {
                     console.error('Error creating app record for existing auth user:', insertError);
                     return res.status(400).json({ 
@@ -656,7 +645,7 @@ export function setupSupabaseAuth(app: Express) {
                       message: 'Your account exists but we could not complete the profile setup. Please contact support.'
                     });
                   }
-
+                  
                   return res.status(200).json({ 
                     message: 'Login successful. Profile created.',
                     user: {
@@ -697,9 +686,9 @@ export function setupSupabaseAuth(app: Express) {
           });
         }
       }
-
+      
       console.log('Auth account created successfully, storing additional user data...');
-
+      
       // Map roles to the valid values we discovered in the database
       // Valid values from debug logs: 'athlete', 'admin', 'compliance_officer'
       let dbRole: string;
@@ -721,9 +710,9 @@ export function setupSupabaseAuth(app: Express) {
           // Default to 'athlete' if unknown role
           dbRole = 'athlete';
       }
-
+      
       console.log(`Mapping role '${role}' to database role '${dbRole}'`);
-
+      
       // Also store in the users table for our application - only include columns that actually exist
       const userDataToInsert = {
         email: email,
@@ -731,9 +720,9 @@ export function setupSupabaseAuth(app: Express) {
         created_at: new Date()
         // Note: The actual schema only has id, email, role, created_at, last_login
       };
-
+      
       console.log('Inserting user data into users table:', userDataToInsert);
-
+      
       // Store user data in our database
       // Using only the columns that exist in the users table
       const { data, error } = await supabase
@@ -741,18 +730,18 @@ export function setupSupabaseAuth(app: Express) {
         .insert(userDataToInsert)
         .select()
         .single();
-
+      
       if (error) {
         console.error('Error storing user data:', error);
         // Useful debug information
         console.log('Column error details:', error.details);
         console.log('Column error hint:', error.hint);
         console.log('Column error code:', error.code);
-
+        
         // Even though auth account was created, we should report the error
         return res.status(500).json({ error: 'Failed to store user data' });
       }
-
+      
       // Return success only after storing all user data
       return res.status(201).json({ 
         message: 'Registration successful. Account details stored.',
@@ -769,7 +758,7 @@ export function setupSupabaseAuth(app: Express) {
       return res.status(500).json({ error: 'Registration failed' });
     }
   });
-
+  
   // User profile endpoint - get the user's profile data
   app.get("/api/auth/profile", verifySupabaseToken, async (req: Request, res: Response) => {
     try {
@@ -777,45 +766,45 @@ export function setupSupabaseAuth(app: Express) {
       if (!req.user || !req.user.email) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-
+      
       // Query additional user data from our database
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', req.user.email)
         .single();
-
+        
       if (error) {
         console.error('Error fetching user profile:', error);
         return res.status(500).json({ error: 'Failed to fetch user profile' });
       }
-
+      
       return res.status(200).json(data);
     } catch (error) {
       console.error('Profile fetch error:', error);
       return res.status(500).json({ error: 'Failed to fetch profile' });
     }
   });
-
+  
   // Update user profile endpoint
   app.patch("/api/auth/profile", verifySupabaseToken, async (req: Request, res: Response) => {
     try {
       const { fullName, ...otherData } = req.body;
-
+      
       // Only update allowed fields
       const updateData: Record<string, any> = {};
-
+            
       // Add only fields that exist in the schema (id, email, role, created_at, last_login)
       // We're only allowing last_login to be updated
       if (otherData.last_login) {
         updateData.last_login = otherData.last_login;
       }
-
+      
       // Make sure we have req.user
       if (!req.user || !req.user.email) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-
+      
       // Only perform the update if there's data to update
       if (Object.keys(updateData).length === 0) {
         // Return the current user profile instead
@@ -824,18 +813,18 @@ export function setupSupabaseAuth(app: Express) {
           .select('*')
           .eq('email', req.user.email)
           .single();
-
+          
         if (fetchError) {
           console.error('Error fetching user profile:', fetchError);
           return res.status(500).json({ error: 'Failed to fetch user profile' });
         }
-
+        
         return res.status(200).json({ 
           message: 'No update needed',
           user: userData
         });
       }
-
+      
       // Update the user data
       const { data, error } = await supabase
         .from('users')
@@ -843,12 +832,12 @@ export function setupSupabaseAuth(app: Express) {
         .eq('email', req.user.email)
         .select()
         .single();
-
+        
       if (error) {
         console.error('Error updating user profile:', error);
         return res.status(500).json({ error: 'Failed to update profile' });
       }
-
+      
       return res.status(200).json({ 
         message: 'Profile updated successfully',
         user: data
@@ -863,34 +852,34 @@ export function setupSupabaseAuth(app: Express) {
   app.post('/api/auth/refresh-session', async (req: Request, res: Response) => {
     try {
       console.log('Processing session refresh request');
-
+      
       // Check for authorization header
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Not authenticated' });
       }
-
+      
       // Extract token
       const token = authHeader.split(' ')[1];
-
+      
       // Verify token with Supabase
       const { data: { user }, error } = await supabase.auth.getUser(token);
-
+      
       if (error || !user) {
         console.error('Invalid token in refresh-session:', error);
         return res.status(401).json({ error: 'Invalid token' });
       }
-
+      
       // Get the current session data
       const { data, error: sessionError } = await supabase.auth.getSession();
-
+      
       if (sessionError || !data.session) {
         console.error('No active session in refresh-session:', sessionError);
         return res.status(401).json({ error: 'No active session' });
       }
-
+      
       console.log('Session found, refreshing cookies');
-
+      
       // Update the cookies with fresh session data
       const sessionObj = {
         access_token: data.session.access_token,
@@ -898,7 +887,7 @@ export function setupSupabaseAuth(app: Express) {
         expires_at: data.session.expires_at,
         user_id: user.id
       };
-
+      
       // Set the cookie with appropriate settings
       res.cookie('supabase-auth', JSON.stringify(sessionObj), {
         httpOnly: true,
@@ -907,7 +896,7 @@ export function setupSupabaseAuth(app: Express) {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: '/'
       });
-
+      
       // Set a non-http-only cookie as a flag for client-side checks
       res.cookie('auth-status', 'authenticated', {
         httpOnly: false,
@@ -916,9 +905,9 @@ export function setupSupabaseAuth(app: Express) {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: '/'
       });
-
+      
       console.log('Session cookies refreshed successfully');
-
+      
       return res.status(200).json({ 
         success: true, 
         message: 'Session refreshed successfully' 
