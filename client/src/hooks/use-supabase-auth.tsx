@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react';
 
 interface EnhancedUser extends SupabaseUser {
   role?: string;
+  userType?: string;  // Added userType property to match the API response
 }
 
 interface AuthContextType {

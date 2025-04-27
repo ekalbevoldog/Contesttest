@@ -1,169 +1,146 @@
-import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { CheckCircle, Bell, Handshake, Star, Zap, Trophy, Bolt, ArrowUpRight } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronRight, Star } from "lucide-react";
 
-type CompactMatchResultsProps = {
-  match: {
-    id?: string;
-    score: number;
-    brand?: string;
-    athleteName?: string;
-    campaign: {
-      title: string;
-      description: string;
-      deliverables: string[];
-    };
-    reason: string;
-    business?: {
-      name: string;
-    };
-    athlete?: {
-      name: string;
-    };
-  };
-  userType?: string;
-  isNewMatch?: boolean;
+// Define match result type
+export interface MatchResult {
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  matchScore: number;
+  description?: string;
+  tags?: string[];
+}
+
+interface CompactMatchResultsProps {
+  results: MatchResult[];
+  onViewDetails?: (id: string) => void;
+  maxHeight?: string;
+  emptyMessage?: string;
+}
+
+const CompactMatchResults: React.FC<CompactMatchResultsProps> = ({
+  results = [],
+  onViewDetails,
+  maxHeight = "300px",
+  emptyMessage = "No matches found"
+}) => {
+  if (!results.length) {
+    return (
+      <Card className="w-full p-4 flex items-center justify-center">
+        <p className="text-muted-foreground text-center">{emptyMessage}</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">Matched Results</CardTitle>
+        <CardDescription>
+          {results.length} potential {results.length === 1 ? 'match' : 'matches'} found
+        </CardDescription>
+      </CardHeader>
+      <ScrollArea className={`w-full overflow-auto`} style={{ maxHeight }}>
+        <CardContent className="p-3 pt-0">
+          <div className="space-y-2">
+            {results.map((result) => (
+              <Card key={result.id} className="overflow-hidden border border-muted">
+                <div className="flex items-center p-3 gap-3">
+                  <Avatar className="h-10 w-10 border">
+                    {result.avatar ? (
+                      <AvatarImage src={result.avatar} alt={result.name} />
+                    ) : (
+                      <AvatarFallback>
+                        {result.name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-sm font-medium truncate">
+                        {result.name}
+                      </h4>
+                      <div className="flex items-center">
+                        <span className="text-xs font-medium text-amber-500 flex items-center">
+                          <Star className="h-3 w-3 mr-1 fill-amber-500" />
+                          {result.matchScore}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center text-xs text-muted-foreground gap-2">
+                      <Badge variant="outline" className="px-1 py-0 text-xs">
+                        {result.role}
+                      </Badge>
+                      {result.description && (
+                        <span className="truncate">{result.description}</span>
+                      )}
+                    </div>
+
+                    {result.tags && result.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {result.tags.slice(0, 3).map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="px-1 py-0 text-[10px] h-4"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                        {result.tags.length > 3 && (
+                          <Badge
+                            variant="outline"
+                            className="px-1 py-0 text-[10px] h-4"
+                          >
+                            +{result.tags.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {onViewDetails && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => onViewDetails(result.id)}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </ScrollArea>
+      <CardFooter className="flex justify-between border-t p-3">
+        <div className="text-xs text-muted-foreground">
+          <Check className="inline-block h-3 w-3 mr-1" />
+          Match algorithm results
+        </div>
+        <Button variant="ghost" size="sm" className="h-7 text-xs">
+          View all
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 };
 
-export default function CompactMatchResults({ match, userType, isNewMatch = false }: CompactMatchResultsProps) {
-  const [scorePercent, setScorePercent] = useState(0);
-  
-  useEffect(() => {
-    // Animate the score
-    const timer = setTimeout(() => {
-      setScorePercent(match.score);
-    }, 200);
-    
-    return () => clearTimeout(timer);
-  }, [match.score]);
-  
-  return (
-    <div className="match-card w-full max-w-md mx-auto overflow-hidden rounded-lg border border-[#333] bg-[#121212] shadow-sm" style={{ maxWidth: "100%" }}>
-      {/* Header with reduced height */}
-      <div className="bg-gradient-to-r from-[#1e1e1e] to-[#2a2a2a] text-white p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            {isNewMatch && (
-              <div className="relative mr-2">
-                <Bell className="h-4 w-4 text-[#f03c3c]" />
-                <span className="absolute -top-1 -right-1 h-2 w-2 bg-[#f03c3c] rounded-full"></span>
-              </div>
-            )}
-            <div>
-              <h3 className="text-base leading-5 font-bold flex items-center">
-                <Trophy className="inline-block mr-1 h-4 w-4 text-[#f03c3c]" />
-                Match Alert
-              </h3>
-              <p className="text-xs text-gray-400">Partnership Opportunity</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center">
-            <div 
-              className="h-10 w-10 rounded-full flex items-center justify-center bg-[#1e1e1e] border-2 border-[#f03c3c]"
-            >
-              <div className="relative z-10 flex items-center justify-center h-full w-full">
-                <span className="text-sm font-bold text-white">{match.score}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Match quality indicator */}
-      <div className="px-3 py-2 flex items-center justify-between bg-[#1a1a1a]">
-        <div className="flex items-center">
-          <span className="bg-[rgba(240,60,60,0.15)] text-white text-xs py-0.5 px-2 rounded-md flex items-center">
-            <Bolt className="h-3 w-3 mr-1 text-[#f03c3c]" />
-            {match.score >= 80 ? 'Perfect Match' : match.score >= 60 ? 'Strong Match' : 'Potential Match'}
-          </span>
-        </div>
-      </div>
-      
-      {/* Content with reduced padding */}
-      <div className="p-3">
-        <div className="grid grid-cols-1 gap-2">
-          {/* Brand/Athlete info */}
-          <div className="flex items-center">
-            <div className="w-1/3">
-              <span className="bg-[rgba(240,60,60,0.15)] text-white text-xs py-0.5 px-2 rounded-md flex items-center w-fit">
-                <Handshake className="mr-1 h-3 w-3 text-[#f03c3c]" />
-                {userType === 'athlete' ? 'Brand' : 'Athlete'}
-              </span>
-            </div>
-            <div className="w-2/3">
-              <span className="font-medium text-sm text-white">
-                {userType === 'athlete' 
-                  ? match.business?.name || match.brand 
-                  : match.athlete?.name || match.athleteName}
-              </span>
-            </div>
-          </div>
-          
-          {/* Campaign info */}
-          <div className="flex items-center">
-            <div className="w-1/3">
-              <span className="bg-[rgba(240,60,60,0.15)] text-white text-xs py-0.5 px-2 rounded-md flex items-center w-fit">
-                <Zap className="mr-1 h-3 w-3 text-[#f03c3c]" />
-                Campaign
-              </span>
-            </div>
-            <div className="w-2/3">
-              <span className="font-medium text-sm text-white">{match.campaign.title}</span>
-            </div>
-          </div>
-          
-          {/* Campaign description - more compact */}
-          <div className="border-t border-[#333] pt-2 mt-1">
-            <h4 className="font-medium text-xs text-gray-400 mb-1">Campaign Description</h4>
-            <p className="text-xs text-gray-300">{match.campaign.description.length > 80 
-              ? `${match.campaign.description.substring(0, 80)}...` 
-              : match.campaign.description}
-            </p>
-          </div>
-          
-          {/* Deliverables - more compact */}
-          <div>
-            <h4 className="font-medium text-xs text-gray-400 mb-1">Deliverables</h4>
-            <div className="grid grid-cols-1 gap-1">
-              {match.campaign.deliverables.slice(0, 2).map((deliverable, index) => (
-                <div key={index} className="flex items-center text-xs">
-                  <CheckCircle className="h-3 w-3 text-[#f03c3c] mr-1 flex-shrink-0" />
-                  <span className="text-gray-300">{deliverable}</span>
-                </div>
-              ))}
-              {match.campaign.deliverables.length > 2 && (
-                <div className="text-xs text-[#f03c3c]">+{match.campaign.deliverables.length - 2} more</div>
-              )}
-            </div>
-          </div>
-          
-          {/* Match reason - more compact */}
-          <div className="border-t border-[#333] pt-2 mt-1">
-            <h4 className="font-medium text-xs text-gray-400 mb-1">Why We Matched</h4>
-            <p className="text-xs text-gray-300">{match.reason.length > 100 
-              ? `${match.reason.substring(0, 100)}...` 
-              : match.reason}
-            </p>
-          </div>
-          
-          {/* Action buttons */}
-          <div className="mt-3 pt-2 border-t border-[#333]">
-            <div className="flex gap-2">
-              <Button size="sm" className="bg-gradient-to-r from-[#f03c3c] to-[#ff5c5c] hover:from-[#d42e2e] hover:to-[#e34c4c] flex items-center text-xs h-8 py-0 px-3">
-                Express Interest
-                <ArrowUpRight className="ml-1 h-3 w-3" />
-              </Button>
-              <Button size="sm" variant="outline" className="border-[#f03c3c] text-white hover:bg-[rgba(240,60,60,0.1)] text-xs h-8 py-0 px-3">
-                View Details
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+export default CompactMatchResults;

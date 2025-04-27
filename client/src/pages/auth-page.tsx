@@ -68,7 +68,9 @@ export default function AuthPage() {
     if (!user) return;
     
     // We have a logged-in user, redirect based on role
-    const userRole = user.role || 'visitor';
+    // Check for both role and userType properties since the API returns userType
+    const userRole = user.role || user.userType || 'visitor';
+    console.log('[AuthPage] Detected user role/type:', userRole);
     
     if (userRole === 'athlete') {
       navigate('/athlete/dashboard');
@@ -79,7 +81,8 @@ export default function AuthPage() {
     } else if (userRole === 'admin') {
       navigate('/admin/dashboard');
     } else {
-      navigate('/');
+      // If still no valid role, navigate to profile page which will handle further redirects
+      navigate('/profile');
     }
   }, [user, navigate]);
   

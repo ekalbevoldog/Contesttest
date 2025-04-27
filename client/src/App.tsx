@@ -41,8 +41,9 @@ const ProtectedRoute = ({
     if (!isLoading && !user) {
       navigate('/auth');
     } else if (!isLoading && user && requiredRole) {
-      // Check if user has the required role
-      const userRole = user.role || 'visitor';
+      // Check if user has the required role - look for both role and userType
+      const userRole = user.role || user.userType || 'visitor';
+      console.log('[ProtectedRoute] User role check - Found role/type:', userRole);
 
       if (Array.isArray(requiredRole)) {
         if (!requiredRole.includes(userRole)) {
@@ -56,7 +57,8 @@ const ProtectedRoute = ({
           } else if (userRole === 'admin') {
             navigate('/admin/dashboard');
           } else {
-            navigate('/');
+            // If role is unrecognized, try to determine from profile page
+            navigate('/profile');
           }
         }
       } else if (userRole !== requiredRole) {
@@ -70,7 +72,8 @@ const ProtectedRoute = ({
         } else if (userRole === 'admin') {
           navigate('/admin/dashboard');
         } else {
-          navigate('/');
+          // If role is unrecognized, try to determine from profile page
+          navigate('/profile');
         }
       }
     }
@@ -100,7 +103,8 @@ const ProtectedRoute = ({
 
   // Role-based check
   if (requiredRole) {
-    const userRole = user.role || 'visitor';
+    const userRole = user.role || user.userType || 'visitor';
+    console.log('[ProtectedRoute] Role check - Found role/type:', userRole);
 
     if (Array.isArray(requiredRole)) {
       if (!requiredRole.includes(userRole)) {
@@ -136,8 +140,10 @@ const RoleRedirect = ({ path }: { path: string }) => {
       if (!user) {
         navigate('/auth');
       } else {
-        // Redirect based on role
-        const role = user.role || 'visitor';
+        // Redirect based on role or userType
+        const role = user.role || user.userType || 'visitor';
+        console.log('[RoleRedirect] Redirecting based on role/userType:', role);
+        
         if (role === 'athlete') {
           navigate('/athlete/dashboard');
         } else if (role === 'business') {
@@ -147,7 +153,8 @@ const RoleRedirect = ({ path }: { path: string }) => {
         } else if (role === 'admin') {
           navigate('/admin/dashboard');
         } else {
-          navigate('/');
+          // If we still can't determine the role, go to profile page
+          navigate('/profile');
         }
       }
     }
@@ -188,8 +195,9 @@ const ProfileRequiredRoute = ({
       } else if (!hasCompletedProfile) {
         navigate(redirectPath);
       } else if (requiredRole) {
-        // Check if user has the required role
-        const userRole = user.role || 'visitor';
+        // Check if user has the required role - check both role and userType
+        const userRole = user.role || user.userType || 'visitor';
+        console.log('[ProfileRequiredRoute] Role check - Found role/type:', userRole);
 
         if (Array.isArray(requiredRole)) {
           if (!requiredRole.includes(userRole)) {
@@ -203,11 +211,13 @@ const ProfileRequiredRoute = ({
             } else if (userRole === 'admin') {
               navigate('/admin/dashboard');
             } else {
-              navigate('/');
+              // If role is unrecognized, try to determine from profile page
+              navigate('/profile');
             }
           }
         } else if (userRole !== requiredRole) {
-          navigate('/');
+          // If role doesn't match required role, go to profile page to determine role
+          navigate('/profile');
         }
       }
     }
