@@ -9,6 +9,7 @@ import {
   initializeSupabase,
   getSupabase
 } from '@/lib/supabase-client';
+import { storeAuthData, isAuthenticated, getStoredAuthData, clearAuthData } from '@/lib/simple-auth';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
@@ -59,6 +60,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     console.log('[Auth] Signing out...');
     
     try {
+      // Clear simple auth data first
+      console.log('[Auth] Clearing simple auth data');
+      clearAuthData();
+      
       // Use our logout helper that handles both server and direct logout
       await logoutUser();
       console.log('[Auth] Signed out successfully');
@@ -71,6 +76,9 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('contestedUserData');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
+        localStorage.removeItem('auth-status');
+        localStorage.removeItem('AUTH_TOKEN_KEY');
+        localStorage.removeItem('AUTH_USER_KEY');
 
         // Clear any other potential Supabase tokens
         Object.keys(localStorage).forEach(key => {
@@ -712,6 +720,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
       // Extract user data from different possible response formats
       let userData = null;
+      let sessionToken = null;
 
       if (loginData.user) {
         userData = loginData.user;
@@ -719,6 +728,19 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         userData = loginData.session.user;
       } else if (loginData.data?.user) {
         userData = loginData.data.user;
+      }
+      
+      // Get session token for simple auth
+      if (loginData.session?.access_token) {
+        sessionToken = loginData.session.access_token;
+      } else if (loginData.data?.session?.access_token) {
+        sessionToken = loginData.data.session.access_token;
+      }
+      
+      // Store auth data in simple-auth for persistence
+      if (userData && sessionToken) {
+        console.log('[Auth] Storing auth data in simple-auth');
+        storeAuthData(sessionToken, userData);
       }
 
       return { error: null, user: userData as EnhancedUser };
@@ -766,6 +788,24 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         title: 'Registration successful',
         description: 'Your account has been created successfully.',
       });
+      
+      // Store data in simple auth if we have valid registration data
+      if (registrationData.user) {
+        // Try to get a session token
+        let sessionToken = null;
+        if (registrationData.session?.access_token) {
+          sessionToken = registrationData.session.access_token;
+        } else if (registrationData.data?.session?.access_token) {
+          sessionToken = registrationData.data.session.access_token;
+        }
+        
+        if (sessionToken) {
+          console.log('[Auth] Storing registration data in simple-auth');
+          storeAuthData(sessionToken, registrationData.user);
+        } else {
+          console.log('[Auth] No session token available for simple-auth storage');
+        }
+      }
 
       return { error: null, user: registrationData.user };
     } catch (e: any) {
