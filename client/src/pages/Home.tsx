@@ -73,38 +73,7 @@ export default function Home() {
               
               <StaggerItem>
                 <FadeIn delay={0.6} direction="up">
-                  <div className="flex flex-wrap gap-4 pt-2">
-                    <Button 
-                      size="lg" 
-                      className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-                      asChild
-                    >
-                      <Link to="/onboarding">For Athletes</Link>
-                    </Button>
-                    <Button 
-                      size="lg" 
-                      className="bg-gradient-to-r from-amber-500 to-red-500 text-white font-bold hover:from-amber-600 hover:to-red-600 transition-all shadow-md"
-                      asChild
-                    >
-                      <Link to="/onboarding">For Businesses</Link>
-                    </Button>
-                    <Button 
-                      size="lg" 
-                      variant="outline" 
-                      className="border-red-500 text-white hover:bg-red-500/10"
-                      asChild
-                    >
-                      <Link to="/onboarding">Personalized Onboarding</Link>
-                    </Button>
-                    <Button 
-                      size="lg" 
-                      variant="outline" 
-                      className="border-amber-500 text-white hover:bg-amber-500/10"
-                      onClick={() => setShowChat(true)}
-                    >
-                      Chat with AI Assistant
-                    </Button>
-                  </div>
+                  {/* Buttons have been removed */}
                 </FadeIn>
               </StaggerItem>
               
@@ -247,10 +216,12 @@ export default function Home() {
                       <p className="text-xs text-zinc-500">average timeframe</p>
                     </div>
                     
-                    <div className="flex items-center justify-center">
-                      <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                        <Link to="/onboarding">Find Your Perfect Match</Link>
-                      </Button>
+                    <div className="bg-black p-5 rounded-lg shadow-md">
+                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Athletes</h4>
+                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                        <span>300+</span>
+                      </div>
+                      <p className="text-xs text-zinc-500">active on platform</p>
                     </div>
                   </div>
                 </div>
@@ -328,10 +299,12 @@ export default function Home() {
                     <p className="text-xs text-zinc-500">monthly impressions</p>
                   </div>
                   
-                  <div className="flex items-center justify-center">
-                    <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 w-full" asChild>
-                      <Link to="/onboarding">Find Your Perfect Match</Link>
-                    </Button>
+                  <div className="bg-black p-5 rounded-lg shadow-md">
+                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Businesses</h4>
+                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                      <span>150+</span>
+                    </div>
+                    <p className="text-xs text-zinc-500">active on platform</p>
                   </div>
                 </div>
               </div>
@@ -433,17 +406,7 @@ export default function Home() {
               />
             </BentoGrid>
             
-            <ScrollReveal delay={0.3} direction="up">
-              <div className="text-center">
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 px-8 py-6 text-lg"
-                  asChild
-                >
-                  <Link to="/onboarding">Start Your Journey</Link>
-                </Button>
-              </div>
-            </ScrollReveal>
+            {/* Button removed */}
           </div>
         </Parallax>
       </section>
@@ -508,11 +471,7 @@ export default function Home() {
               </p>
             </div>
             
-            <div className="flex justify-center mt-8">
-              <Button className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 px-8 py-6 text-lg" asChild>
-                <Link to="/explore-matches">Explore Athlete Matches</Link>
-              </Button>
-            </div>
+            {/* Button removed */}
           </div>
         </div>
       </section>
