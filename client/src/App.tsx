@@ -10,7 +10,6 @@ import * as authService from "@/lib/auth-service";
 import { Suspense, lazy, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
-import { useLocation } from "wouter";
 
 // Lazy load pages to improve initial load performance
 const Home = lazy(() => import("@/pages/Home"));
