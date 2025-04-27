@@ -16,16 +16,11 @@ import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
 import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
-import { SessionTester } from "@/components/SessionTester";
-
-import { WebSocketTester } from "@/components/WebSocketTester";
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
   const [budgetValue, setBudgetValue] = useState([30000]);
   const [singleCampaign, setSingleCampaign] = useState(true);
-  const [showWebSocketTester, setShowWebSocketTester] = useState(false);
-  const [showSessionTester, setShowSessionTester] = useState(false);
   const { user } = useSupabaseAuth();
   
   // Listen for the custom event to toggle the AI assistant
@@ -142,9 +137,6 @@ export default function Home() {
             </FadeIn>
           </div>
         </div>
-        
-        
-
         
         {/* Divider */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
