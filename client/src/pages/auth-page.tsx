@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Lock, Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { storeAuthData, isAuthenticated } from '@/lib/simple-auth';
 import { FadeIn } from '@/components/animations/FadeIn';
 
 // Form validation schema
@@ -53,6 +54,17 @@ export default function AuthPage() {
   
   // Redirect if already logged in based on role
   useEffect(() => {
+    // First check using simple auth
+    const isLoggedIn = isAuthenticated();
+    console.log('[AuthPage] Simple auth check:', isLoggedIn);
+    
+    if (isLoggedIn) {
+      console.log('[AuthPage] User is authenticated via simple auth, redirecting...');
+      navigate('/profile');
+      return;
+    }
+    
+    // Fallback to Supabase auth
     if (!user) return;
     
     // We have a logged-in user, redirect based on role

@@ -148,6 +148,9 @@ export const loginUser = async (credentials: {
   password: string;
 }) => {
   try {
+    // Import simple-auth here to avoid circular dependencies
+    const { storeAuthData } = await import('./simple-auth');
+    
     // Use server-first approach to ensure complete synchronization
     console.log('[Client] Attempting to login via server endpoint...');
     const response = await fetch('/api/auth/login', {
@@ -201,6 +204,12 @@ export const loginUser = async (credentials: {
       return { error: 'Failed to process login response. Please try again later.' };
     }
     console.log('[Client] Server login successful');
+    
+    // Simple auth: Store the token and user data for persistence
+    if (loginData.session?.access_token && loginData.user) {
+      storeAuthData(loginData.session.access_token, loginData.user);
+      console.log('[Client] Stored auth data using simple-auth');
+    }
 
     // Store both user and profile data in localStorage for persistence
     if (typeof window !== 'undefined') {
