@@ -7,14 +7,14 @@ import Footer from "@/components/Footer";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import * as authService from "@/lib/auth-service";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
+import { initializeSupabase } from "./lib/supabase-client";
 
 // Lazy load pages to improve initial load performance
 const Home = lazy(() => import("@/pages/Home"));
-const Login = lazy(() => import("@/pages/Login"));
-const SignIn = lazy(() => import("@/pages/SignIn"));
+const Login = lazy(() => import("@/pages/Login")); // This is our single consolidated login page
 const Onboarding = lazy(() => import("@/pages/Onboarding"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const AthleteInfo = lazy(() => import("@/pages/AthleteInfo"));
@@ -107,8 +107,7 @@ function App() {
             <Suspense fallback={<LoadingFallback />}>
               <ProtectedRoute path="/" component={Home} />
               <ProtectedRoute path="/profile" component={ProfilePage} />
-              <ProtectedRoute path="/login" component={Login} />
-              <ProtectedRoute path="/signin" component={SignIn} />
+              <Route path="/login" component={Login} />
               <ProtectedRoute path="/onboarding" component={Onboarding} />
               <ProtectedRoute path="/athlete/info" component={AthleteInfo} requiredRole="athlete" />
               <ProtectedRoute path="/business/info" component={BusinessInfo} requiredRole="business" />
@@ -128,6 +127,11 @@ function App() {
 
 export async function initializeAuth(): Promise<boolean> {
   try {
+    // First ensure Supabase is initialized
+    console.log('[App] Initializing Supabase client');
+    await initializeSupabase();
+    
+    // Then initialize our auth service
     console.log('[App] Initializing auth service');
     return await authService.initializeAuth();
   } catch (error) {
@@ -137,12 +141,36 @@ export async function initializeAuth(): Promise<boolean> {
 }
 
 function AppWrapper() {
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
-    console.log('[App] Initializing unified auth');
-    initializeAuth().then((success: boolean) => {
-      console.log('[App] Auth initialization result:', success);
-    });
+    console.log('[App] Starting app initialization');
+
+    // Initialize everything before rendering the app
+    const initApp = async () => {
+      try {
+        const success = await initializeAuth();
+        console.log('[App] Auth initialization result:', success);
+        setInitialized(true);
+      } catch (error) {
+        console.error('[App] Failed to initialize app:', error);
+        // Still set initialized to render the app with error handling
+        setInitialized(true);
+      }
+    };
+
+    initApp();
   }, []);
+
+  // Show loading indicator during initialization
+  if (!initialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Initializing application...</span>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

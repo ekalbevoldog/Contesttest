@@ -61,7 +61,7 @@ const customStorage = {
 // Function to initialize the Supabase client with config from our server
 export async function initializeSupabase(): Promise<boolean> {
   // If already initialized, just return true
-  if (isInitialized && supabase) {
+  if (isInitialized && _supabaseInstance) {
     console.log('[Client] Supabase already initialized.');
     return true;
   }
@@ -121,22 +121,55 @@ export async function initializeSupabase(): Promise<boolean> {
           }
         }
       });
+
+      console.log('[Client] Supabase instance created successfully');
+      isInitialized = true;
     }
 
-    console.log('[Client] Supabase initialized with realtime DISABLED');
-
-    // Test the connection
-    const { error } = await supabase.from('users').select('count').limit(1);
-    if (error) {
-      console.error('[Client] Could not connect to Supabase:', error);
-      throw new Error(`Supabase connection failed: ${error.message}`);
+    // Test the connection, but make this non-blocking
+    // This prevents the initialization from failing if the DB query fails
+    try {
+      console.log('[Client] Testing Supabase connection...');
+      const { error } = await _supabaseInstance.from('users').select('count').limit(1);
+      if (error) {
+        console.warn('[Client] Could not query Supabase (but client is initialized):', error);
+      } else {
+        console.log('[Client] Supabase connection test successful');
+      }
+    } catch (connectionError) {
+      console.warn('[Client] Supabase connection test failed:', connectionError);
+      // Don't fail initialization due to connection test
     }
 
-    console.log('[Client] Supabase initialized successfully');
-    isInitialized = true;
     return true;
   } catch (error) {
     console.error('[Client] Error initializing Supabase:', error);
+    
+    // Create a fallback instance if we couldn't get config from server
+    // This ensures we have a valid Supabase client even if the server call fails
+    if (!_supabaseInstance && supabaseUrl && supabaseKey) {
+      console.log('[Client] Creating fallback Supabase instance with existing credentials');
+      try {
+        _supabaseInstance = createClient(supabaseUrl, supabaseKey, {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            storage: customStorage,
+            storageKey: 'contested-auth'
+          },
+          realtime: {
+            params: {
+              eventsPerSecond: 0
+            }
+          }
+        });
+        isInitialized = true;
+        return true;
+      } catch (fallbackError) {
+        console.error('[Client] Fallback Supabase instance creation failed:', fallbackError);
+      }
+    }
+    
     // Re-throw the error to propagate it to the caller for proper error handling
     throw error;
   }
