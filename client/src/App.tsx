@@ -16,13 +16,39 @@ import ComplianceDashboard from "@/pages/ComplianceDashboard"; // Added based on
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { ProtectedRoute } from "@/lib/protected-route";
+import { ProtectedRoute } from "@/lib/protected-route"; 
 import * as authService from "@/lib/auth-service";
 import { Suspense, lazy, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 
-// Using the imported ProtectedRoute component instead of declaring it locally
+// The remaining part of this component was broken during the fix
+// Let's restore the proper structure with the RoleRedirect component
+
+const RoleRedirect = ({ path }: { path: string }) => {
+  const { user, isLoading } = useAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        navigate('/login');
+      } else {
+        const role = user.role || 'visitor';
+        if (role === 'athlete') {
+          navigate('/athlete/dashboard');
+        } else if (role === 'business') {
+          navigate('/business/dashboard');
+        } else if (role === 'compliance') {
+          navigate('/compliance/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
+      }
+    }
+  }, [user, isLoading, navigate]);
 
   if (isLoading) {
     return (
