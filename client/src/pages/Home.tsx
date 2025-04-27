@@ -526,9 +526,7 @@ export default function Home() {
                     <span>Email support</span>
                   </li>
                 </ul>
-                <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/onboarding">Find Your Match</Link>
-                </Button>
+                {/* Basic Plan Button Removed */}
               </div>
             </Card>
             
@@ -576,9 +574,7 @@ export default function Home() {
                     <span>Priority support</span>
                   </li>
                 </ul>
-                <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/onboarding">Find Your Match</Link>
-                </Button>
+                {/* Professional Plan Button Removed */}
               </div>
             </Card>
             
@@ -623,9 +619,7 @@ export default function Home() {
                     <span>Strategic campaign consulting</span>
                   </li>
                 </ul>
-                <Button className="w-full bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600" asChild>
-                  <Link to="/onboarding">Contact Sales</Link>
-                </Button>
+                {/* Enterprise Plan Button Removed */}
               </div>
             </Card>
           </div>
@@ -758,11 +752,7 @@ export default function Home() {
             </Card>
           </div>
           
-          <div className="mt-12 text-center">
-            <Button variant="outline" className="border-red-500 text-white hover:bg-red-500/10">
-              View More Success Stories
-            </Button>
-          </div>
+          {/* View More Success Stories button removed */}
         </Parallax>
       </section>
       
@@ -782,28 +772,7 @@ export default function Home() {
               <p className="text-xl text-zinc-400 mb-8">
                 Whether you're an athlete looking to monetize your influence or a business seeking authentic brand ambassadors, Contested makes it easy to find your perfect match.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <FadeIn delay={0.2} direction="up">
-                  <Button 
-                    size="lg" 
-                    className="bg-gradient-to-r from-red-500 to-amber-500 text-white font-bold hover:from-red-600 hover:to-amber-600 transition-all shadow-md"
-                    asChild
-                  >
-                    <Link to="/onboarding">Find Your Athlete Match Now</Link>
-                  </Button>
-                </FadeIn>
-                
-                <FadeIn delay={0.4} direction="up">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="border-red-500 text-white hover:bg-red-500/10"
-                    onClick={() => setShowChat(true)}
-                  >
-                    Chat with AI Assistant
-                  </Button>
-                </FadeIn>
-              </div>
+              {/* CTA buttons removed */}
             </ScrollReveal>
           </div>
         </Parallax>
