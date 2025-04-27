@@ -105,7 +105,7 @@ function App() {
           <Header />
           <main className="flex-1">
             <Suspense fallback={<LoadingFallback />}>
-              <ProtectedRoute path="/" component={Home} />
+              <Route path="/" component={Home} />
               <ProtectedRoute path="/profile" component={ProfilePage} />
               <Route path="/login" component={Login} />
               <ProtectedRoute path="/onboarding" component={Onboarding} />
