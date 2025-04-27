@@ -16,59 +16,13 @@ import ComplianceDashboard from "@/pages/ComplianceDashboard"; // Added based on
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { ProtectedRoute } from "@/lib/protected-route"; // Changed import
+import { ProtectedRoute } from "@/lib/protected-route";
 import * as authService from "@/lib/auth-service";
 import { Suspense, lazy, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 
-const ProtectedRoute = ({ 
-  component: Component, 
-  path,
-  requiredRole
-}: { 
-  component: React.ComponentType<any>; 
-  path: string;
-  requiredRole?: string | string[];
-}) => {
-  const { user, isLoading } = useAuth();
-  const [, navigate] = useLocation();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/login');
-    } else if (!isLoading && user && requiredRole) {
-      const userRole = user.role || 'visitor';
-
-      if (Array.isArray(requiredRole)) {
-        if (!requiredRole.includes(userRole)) {
-          if (userRole === 'athlete') {
-            navigate('/athlete/dashboard');
-          } else if (userRole === 'business') {
-            navigate('/business/dashboard');
-          } else if (userRole === 'compliance') {
-            navigate('/compliance/dashboard');
-          } else if (userRole === 'admin') {
-            navigate('/admin/dashboard');
-          } else {
-            navigate('/');
-          }
-        }
-      } else if (userRole !== requiredRole) {
-        if (userRole === 'athlete') {
-          navigate('/athlete/dashboard');
-        } else if (userRole === 'business') {
-          navigate('/business/dashboard');
-        } else if (userRole === 'compliance') {
-          navigate('/compliance/dashboard');
-        } else if (userRole === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/');
-        }
-      }
-    }
-  }, [user, isLoading, navigate, requiredRole]);
+// Using the imported ProtectedRoute component instead of declaring it locally
 
   if (isLoading) {
     return (
