@@ -143,63 +143,8 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Testing Tools */}
-        <div className="absolute bottom-10 right-10 flex gap-2">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="border-zinc-700 bg-black/50 text-white hover:bg-black/70"
-            onClick={() => setShowSessionTester(prev => !prev)}
-          >
-            {showSessionTester ? 'Hide' : 'Show'} Session Tester
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="border-zinc-700 bg-black/50 text-white hover:bg-black/70"
-            onClick={() => setShowWebSocketTester(prev => !prev)}
-          >
-            {showWebSocketTester ? 'Hide' : 'Show'} WebSocket Tester
-          </Button>
-        </div>
         
-        {/* SessionTester Overlay */}
-        {showSessionTester && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="max-w-3xl w-full">
-              <SessionTester />
-              <div className="mt-4 text-center">
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="text-zinc-400 hover:text-white"
-                  onClick={() => setShowSessionTester(false)}
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* WebSocket Tester Overlay */}
-        {showWebSocketTester && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="max-w-md w-full">
-              <WebSocketTester />
-              <div className="mt-4 text-center">
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="text-zinc-400 hover:text-white"
-                  onClick={() => setShowWebSocketTester(false)}
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+
         
         {/* Divider */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
