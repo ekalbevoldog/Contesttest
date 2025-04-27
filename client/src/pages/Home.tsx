@@ -17,6 +17,7 @@ import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerCo
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { SessionTester } from "@/components/SessionTester";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { WebSocketTester } from "@/components/WebSocketTester";
 

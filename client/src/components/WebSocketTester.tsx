@@ -26,14 +26,24 @@ export function WebSocketTester() {
   
   // Test sending a message through the WebSocket
   const handleTestWebSocket = () => {
-    sendMessage({
+    // Don't try to send if not connected
+    if (connectionStatus !== 'open') {
+      toast({
+        title: "Cannot Send Message",
+        description: "WebSocket is not connected. Please wait for connection or try again later.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const messageSent = sendMessage({
       type: 'test',
       sessionId,
       message: 'This is a test message'
     });
     
-    // Show toast based on connection status
-    if (connectionStatus === 'open') {
+    // Show toast based on send success
+    if (messageSent) {
       toast({
         title: "Test Message Sent",
         description: "Your message was sent to the WebSocket server.",
@@ -42,7 +52,7 @@ export function WebSocketTester() {
     } else {
       toast({
         title: "Message Not Sent",
-        description: "WebSocket is not connected or message failed to send.",
+        description: "Failed to send message. Connection may have been lost.",
         variant: "destructive"
       });
     }

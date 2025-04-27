@@ -70,11 +70,29 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
       console.log(`Attempting to connect to WebSocket at ${wsUrl}`);
       
       // Set connecting state before creating the socket
-      setConnectionStatus('connecting');
+      if (isMountedRef.current) {
+        setConnectionStatus('connecting');
+      }
+      
+      // Add connection timeout to abandon connection attempts that take too long
+      const timeoutId = setTimeout(() => {
+        if (socketRef.current && socketRef.current.readyState !== WebSocket.OPEN && isMountedRef.current) {
+          console.log('Connection attempt timed out, aborting');
+          socketRef.current.close();
+          if (isMountedRef.current) {
+            setConnectionStatus('closed');
+          }
+        }
+      }, CONNECTION_TIMEOUT);
       
       // Create the socket with error handling
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
+      
+      // Clear the timeout if we're successful
+      socket.addEventListener('open', () => {
+        clearTimeout(timeoutId);
+      });
 
       socket.onopen = () => {
         console.log('WebSocket connection established successfully');
@@ -185,20 +203,10 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
       }
     };
     
-    let connectionTimeoutId: ReturnType<typeof setTimeout>;
-    
     if (sessionId) {
       try {
         // Try to connect with error handling
         connectWebSocket();
-        
-        // Add connection timeout
-        connectionTimeoutId = setTimeout(() => {
-          if (isMountedRef.current && connectionStatus === 'connecting') {
-            console.log('WebSocket connection timeout - setting to closed state');
-            safeSetConnectionStatus('closed');
-          }
-        }, CONNECTION_TIMEOUT);
       } catch (error) {
         console.error('Error during WebSocket initialization:', error);
         safeSetConnectionStatus('closed');
@@ -209,11 +217,6 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
     return () => {
       // Mark as unmounted to prevent state updates
       isMountedRef.current = false;
-      
-      // Clear connection timeout
-      if (connectionTimeoutId) {
-        clearTimeout(connectionTimeoutId);
-      }
       
       // Close WebSocket connection if it exists
       if (socketRef.current) {
@@ -236,7 +239,7 @@ export function useWebSocket(sessionId: string | null = null): WebSocketHook {
         reconnectTimeoutRef.current = null;
       }
     };
-  }, [sessionId, connectWebSocket, connectionStatus, CONNECTION_TIMEOUT]);
+  }, [sessionId, connectWebSocket]);
 
   // Send a message through WebSocket
   const sendMessage = useCallback((message: any) => {
