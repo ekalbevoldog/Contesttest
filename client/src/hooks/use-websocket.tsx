@@ -16,11 +16,10 @@ type WebSocketHook = {
   connectionStatus: 'connecting' | 'open' | 'closed';
 };
 
-export function useWebSocket(sessionId: string | null): WebSocketHook {
+export function useWebSocket(sessionId: string | null = null): WebSocketHook {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'open' | 'closed'>('closed');
   const socketRef = useRef<WebSocket | null>(null);
-  const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
@@ -29,12 +28,8 @@ export function useWebSocket(sessionId: string | null): WebSocketHook {
   // Function reference for attempting reconnect
   const attemptReconnectRef = useRef<() => void>();
   
-  // Disable Supabase realtime channel - it's causing conflicts with our direct WebSocket
-  // useEffect(() => {
-  //   // Supabase realtime channel has been disabled to prevent websocket conflicts
-  // }, [sessionId]);
-  
   // Function to establish a direct WebSocket connection
+  // This function is currently disabled to prevent app issues
   const connectWebSocket = useCallback(() => {
     // TEMPORARILY DISABLED - WebSocket connection is causing app to fail
     console.log('WebSocket connections are temporarily disabled');

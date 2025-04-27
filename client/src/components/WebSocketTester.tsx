@@ -6,16 +6,27 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/hooks/use-toast";
 
 export function WebSocketTester() {
+  const { toast } = useToast();
   // Generate a unique session ID for testing if none exists
   const [sessionId, setSessionId] = useState<string>(() => {
     const existingId = localStorage.getItem('sessionId');
     return existingId || uuidv4();
   });
   
-  // Get the WebSocket hook
+  // Get the WebSocket hook - note that WebSocket is currently disabled
   const { connectionStatus, lastMessage, sendMessage } = useWebSocket(sessionId);
+  
+  // Add a notice about disabled WebSockets
+  useEffect(() => {
+    toast({
+      title: "WebSocket Disabled",
+      description: "WebSocket functionality is temporarily disabled for maintenance.",
+      variant: "destructive"
+    });
+  }, [toast]);
   
   // Save session ID to localStorage when it changes
   useEffect(() => {
@@ -24,6 +35,12 @@ export function WebSocketTester() {
   
   // Test sending a message through the WebSocket
   const handleTestWebSocket = () => {
+    toast({
+      title: "WebSocket Disabled",
+      description: "WebSocket messaging is currently unavailable.",
+      variant: "destructive"
+    });
+    
     sendMessage({
       type: 'test',
       sessionId,
@@ -33,6 +50,12 @@ export function WebSocketTester() {
   
   // Test the notification endpoint
   const handleTestNotification = async () => {
+    toast({
+      title: "WebSocket Disabled",
+      description: "WebSocket notifications are currently unavailable.",
+      variant: "destructive"
+    });
+    
     try {
       const response = await fetch('/api/test/simulate-match', {
         method: 'POST',
@@ -101,14 +124,12 @@ export function WebSocketTester() {
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button 
             onClick={handleTestWebSocket}
-            disabled={connectionStatus !== 'open'}
             className="bg-zinc-800 hover:bg-zinc-700"
           >
             Send Test Message
           </Button>
           <Button 
             onClick={handleTestNotification}
-            disabled={connectionStatus !== 'open'}
             className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600"
           >
             Test Match Notification

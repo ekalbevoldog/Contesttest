@@ -113,7 +113,8 @@ export async function initializeSupabase(): Promise<boolean> {
         realtime: {
           params: {
             eventsPerSecond: 0
-          }
+          },
+          autoConnect: false
         },
         global: {
           headers: {
