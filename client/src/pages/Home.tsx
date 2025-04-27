@@ -186,7 +186,9 @@ export default function Home() {
         {showWebSocketTester && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
             <div className="max-w-md w-full">
-              <WebSocketTester />
+              <ErrorBoundary>
+                <WebSocketTester />
+              </ErrorBoundary>
               <div className="mt-4 text-center">
                 <Button 
                   size="sm" 

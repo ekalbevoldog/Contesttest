@@ -16,17 +16,8 @@ export function WebSocketTester() {
     return existingId || uuidv4();
   });
   
-  // Get the WebSocket hook - note that WebSocket is currently disabled
+  // Get the WebSocket hook
   const { connectionStatus, lastMessage, sendMessage } = useWebSocket(sessionId);
-  
-  // Add a notice about disabled WebSockets
-  useEffect(() => {
-    toast({
-      title: "WebSocket Disabled",
-      description: "WebSocket functionality is temporarily disabled for maintenance.",
-      variant: "destructive"
-    });
-  }, [toast]);
   
   // Save session ID to localStorage when it changes
   useEffect(() => {
@@ -35,27 +26,30 @@ export function WebSocketTester() {
   
   // Test sending a message through the WebSocket
   const handleTestWebSocket = () => {
-    toast({
-      title: "WebSocket Disabled",
-      description: "WebSocket messaging is currently unavailable.",
-      variant: "destructive"
-    });
-    
     sendMessage({
       type: 'test',
       sessionId,
       message: 'This is a test message'
     });
+    
+    // Show toast based on connection status
+    if (connectionStatus === 'open') {
+      toast({
+        title: "Test Message Sent",
+        description: "Your message was sent to the WebSocket server.",
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Message Not Sent",
+        description: "WebSocket is not connected or message failed to send.",
+        variant: "destructive"
+      });
+    }
   };
   
   // Test the notification endpoint
   const handleTestNotification = async () => {
-    toast({
-      title: "WebSocket Disabled",
-      description: "WebSocket notifications are currently unavailable.",
-      variant: "destructive"
-    });
-    
     try {
       const response = await fetch('/api/test/simulate-match', {
         method: 'POST',
@@ -67,8 +61,19 @@ export function WebSocketTester() {
       
       const data = await response.json();
       console.log('Notification test response:', data);
+      
+      toast({
+        title: "Notification Sent",
+        description: "A test match notification was triggered.",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Error testing notification:', error);
+      toast({
+        title: "Notification Failed",
+        description: "Failed to trigger match notification. See console for details.",
+        variant: "destructive"
+      });
     }
   };
   

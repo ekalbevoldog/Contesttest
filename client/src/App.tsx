@@ -23,6 +23,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SimpleProtectedRoute } from "@/lib/simple-protected-route";
 import * as authService from "@/lib/auth-service";
 import { Suspense, lazy, useEffect } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 
 // Define a ProtectedRoute component
@@ -366,7 +367,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
+        <ErrorBoundary>
+          <Router />
+        </ErrorBoundary>
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>
