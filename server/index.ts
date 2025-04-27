@@ -6,6 +6,7 @@ import { registerRoutes } from './routes.js'
 import { registerPublicRoutes } from './routes-public.js'
 import { setupSupabaseAuth } from './supabaseAuth.js'
 import { setupProfileEndpoints } from './supabaseProfile.js'
+import authRoutes from './routes/auth-routes'
 
 // Load environment variables (including SUPABASE_URL, SUPABASE_ANON_KEY)
 dotenv.config()
@@ -15,9 +16,10 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser()) // Add cookie parser middleware
 
-// 1️⃣ Supabase Auth & Profile API endpoints
+// 1️⃣ Auth API endpoints - both Supabase and Simple Auth
 setupSupabaseAuth(app)
 setupProfileEndpoints(app) // Register profile management endpoints
+app.use('/api/auth', authRoutes) // Simple Auth fallback endpoints
 
 // 2️⃣ Config endpoint for client-side initialization
 type SupabaseConfig = { url: string; key: string }

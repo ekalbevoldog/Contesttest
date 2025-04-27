@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 // SimpleOnboarding and EnhancedOnboarding removed - consolidated to main onboarding
 import Onboarding from "@/pages/Onboarding";
+import Login from "@/pages/Login";
+// Legacy auth pages (to be removed after full migration)
 import SignIn from "@/pages/SignIn";
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/ProfilePage";
@@ -17,9 +19,9 @@ import AthleteDashboard from "@/pages/AthleteDashboard";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { SupabaseAuthProvider, useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SimpleProtectedRoute } from "@/lib/simple-protected-route";
-import { isAuthenticated, getStoredAuthData, initializeAuthFromStorage } from "@/lib/simple-auth";
+import * as authService from "@/lib/auth-service";
 import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -33,13 +35,13 @@ const ProtectedRoute = ({
   path: string;
   requiredRole?: string | string[];
 }) => {
-  // Use the auth state from Supabase auth hook
-  const { user, isLoading } = useSupabaseAuth();
+  // Use the unified auth hook
+  const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate('/auth');
+      navigate('/login');
     } else if (!isLoading && user && requiredRole) {
       // Check if user has the required role
       const userRole = user.role || 'visitor';
@@ -128,13 +130,13 @@ const ProtectedRoute = ({
 
 // Define a route that redirects based on user role
 const RoleRedirect = ({ path }: { path: string }) => {
-  const { user, isLoading } = useSupabaseAuth();
+  const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
-        navigate('/auth');
+        navigate('/login');
       } else {
         // Redirect based on role
         const role = user.role || 'visitor';
@@ -177,14 +179,14 @@ const ProfileRequiredRoute = ({
   redirectPath: string;
   requiredRole?: string | string[];
 }) => {
-  // Use the auth state from Supabase auth hook
-  const { user, isLoading, hasCompletedProfile } = useSupabaseAuth();
+  // Use the unified auth hook
+  const { user, isLoading, hasCompletedProfile } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
-        navigate('/auth');
+        navigate('/login');
       } else if (!hasCompletedProfile) {
         navigate(redirectPath);
       } else if (requiredRole) {
@@ -270,6 +272,11 @@ function Router() {
             {/* Public routes accessible to everyone */}
             <Route path="/" component={Home} />
             <Route path="/onboarding" component={Onboarding} />
+            
+            {/* Authentication routes */}
+            <Route path="/login" component={Login} />
+            
+            {/* Legacy auth routes - to be removed after full migration */}
             <Route path="/auth" component={AuthPage} />
             <Route path="/sign-in" component={SignIn} />
 
@@ -336,21 +343,32 @@ function Router() {
   );
 }
 
+// Initialize auth on startup
+export async function initializeAuth(): Promise<boolean> {
+  try {
+    console.log('[App] Initializing auth service');
+    return await authService.initializeAuth();
+  } catch (error) {
+    console.error('[App] Auth initialization error:', error);
+    return false;
+  }
+}
+
 function App() {
-  // Initialize simple auth from storage when app starts
+  // Initialize unified auth when app starts
   useEffect(() => {
-    console.log('[App] Initializing simple auth from storage');
-    initializeAuthFromStorage().then(success => {
-      console.log('[App] Simple auth initialization result:', success);
+    console.log('[App] Initializing unified auth');
+    initializeAuth().then((success: boolean) => {
+      console.log('[App] Auth initialization result:', success);
     });
   }, []);
   
   return (
     <QueryClientProvider client={queryClient}>
-      <SupabaseAuthProvider>
+      <AuthProvider>
         <Router />
         <Toaster />
-      </SupabaseAuthProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
