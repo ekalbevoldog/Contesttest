@@ -7,7 +7,7 @@ channel = "stable-24_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "NODE_ENV=production node server/index.js"]
+run = ["sh", "-c", "NODE_ENV=production node server.js"]
 build = ["sh", "-c", "NODE_ENV=production npm run build"]
 
 [[ports]]
