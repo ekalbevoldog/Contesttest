@@ -102,7 +102,32 @@ export async function getAthleteByUserId(userId: string) {
  */
 export async function getBusinessByUserId(userId: string) {
   try {
-    // Try getting by user_id first
+    console.log('Looking up business profile for user:', userId);
+    
+    // First try to find user record by auth_id (UUID from Supabase Auth)
+    const { data: userByAuthId, error: authIdError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('auth_id', userId)
+      .maybeSingle();
+    
+    if (userByAuthId) {
+      console.log('Found user record by auth_id:', userByAuthId);
+      
+      // Look up business profile using this user ID
+      const { data: profileByUserId, error: profileError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', userByAuthId.id)
+        .maybeSingle();
+        
+      if (profileByUserId) {
+        console.log('Found business profile through user record:', profileByUserId);
+        return profileByUserId;
+      }
+    }
+    
+    // Try direct lookup by user_id as UUID
     const { data, error } = await supabase
       .from('business_profiles')
       .select('*')
@@ -110,28 +135,33 @@ export async function getBusinessByUserId(userId: string) {
       .maybeSingle();
 
     if (!error && data) {
-      console.log('Found business profile by user_id:', userId);
+      console.log('Found business profile by direct user_id match:', userId);
       return data;
     }
     
-    // Try getting by auth_id as fallback
-    const { data: userData } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_id', userId)
-      .maybeSingle();
-      
-    if (userData?.id) {
-      console.log('Found user id for auth_id:', userData.id);
-      const { data: profileData, error: profileError } = await supabase
-        .from('business_profiles')
-        .select('*')
-        .eq('user_id', userData.id)
+    // Try by email as last resort
+    if (userByAuthId?.email) {
+      // Get user by email
+      const { data: userByEmail } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', userByAuthId.email)
         .maybeSingle();
         
-      if (!profileError && profileData) {
-        console.log('Found business profile by auth_id lookup');
-        return profileData;
+      if (userByEmail?.id) {
+        console.log('Found user by email lookup:', userByEmail.id);
+        
+        // Look up business profile using this user ID
+        const { data: profileData } = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('user_id', userByEmail.id)
+          .maybeSingle();
+          
+        if (profileData) {
+          console.log('Found business profile through email user match:', profileData);
+          return profileData;
+        }
       }
     }
     
@@ -208,10 +238,34 @@ export function setupProfileEndpoints(app: Express) {
       return res.status(400).json({ error: 'Missing userId, userType or sessionId' });
     }
 
+    // First, look up the internal user ID if we have an auth_id
+    let internalUserId = userId;
+    
+    try {
+      // Check if the userId is from Auth (UUID format)
+      if (userId.includes('-') && userId.length > 30) {
+        console.log('Looking up internal user ID for auth_id:', userId);
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_id', userId)
+          .maybeSingle();
+          
+        if (userData?.id) {
+          console.log('Found internal user ID:', userData.id);
+          internalUserId = userData.id;
+        } else if (error) {
+          console.error('Error finding user by auth_id:', error);
+        }
+      }
+    } catch (err) {
+      console.error('Error looking up internal user ID:', err);
+    }
+
     // Build a snake_case object for your staging table
     const base: Record<string, any> = {
       session_id:      sessionId,
-      user_id:         userId,
+      user_id:         internalUserId, // Now using the correct internal ID
       name,
       email,
       phone,
