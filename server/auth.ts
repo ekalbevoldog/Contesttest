@@ -111,7 +111,7 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Email already in use" });
       }
       
-      const existingUserByUsername = await storage.getUserByUsername(username);
+      const existingUserByUsername = await storage.getUserByEmail(username);
       if (existingUserByUsername) {
         return res.status(400).json({ error: "Username already in use" });
       }

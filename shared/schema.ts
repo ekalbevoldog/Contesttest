@@ -60,7 +60,10 @@ export const athleteSchema = z.object({
   compensationGoals: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional()
-});
+
+  contentTypes: z.array(z.string()).optional(),
+  personalValues: z.array(z.string()).optional(),
+  preferences: z.record(z.any()).optional(),});
 
 export const insertAthleteSchema = athleteSchema.omit({
   id: true,
