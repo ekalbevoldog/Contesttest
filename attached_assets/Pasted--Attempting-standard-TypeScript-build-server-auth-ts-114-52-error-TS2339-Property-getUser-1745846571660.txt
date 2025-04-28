@@ -1,0 +1,73 @@
+
+🔍 Attempting standard TypeScript build...
+
+server/auth.ts(114,52): error TS2339: Property 'getUserByUsername' does not exist on type 'SupabaseStorage'.
+
+server/routes.ts(1251,11): error TS2353: Object literal may only specify known properties, and 'preferences' does not exist in type '{ email?: string; values?: string; sessionId?: string; name?: string; productType?: string; audienceGoals?: string; campaignVibe?: string; targetSchoolsSports?: string; }'.
+
+server/routes.ts(1307,37): error TS2339: Property 'personalValues' does not exist on type '{ id?: number; email?: string; sessionId?: string; createdAt?: Date; updatedAt?: Date; userId?: string; name?: string; phone?: string; school?: string; division?: string; sport?: string; followerCount?: number; contentStyle?: string; compensationGoals?: string; }'.
+
+server/routes.ts(1307,73): error TS2339: Property 'personalValues' does not exist on type '{ id?: number; email?: string; sessionId?: string; createdAt?: Date; updatedAt?: Date; userId?: string; name?: string; phone?: string; school?: string; division?: string; sport?: string; followerCount?: number; contentStyle?: string; compensationGoals?: string; }'.
+server/routes.ts(1308,35): error TS2551: Property 'contentTypes' does not exist on type '{ id?: number; email?: string; sessionId?: string; createdAt?: Date; updatedAt?: Date; userId?: string; name?: string; phone?: string; school?: string; division?: string; sport?: string; followerCount?: number; contentStyle?: string; compensationGoals?: string; }'. Did you mean 'contentStyle'?
+
+⚠️ Falling back to esbuild for error-tolerant compilation...
+
+
+  dist/server/services/geminiService.js         41.9kb
+  dist/shared/schema.js                          5.1kb
+  dist/server/services/sessionService.js         4.3kb
+  dist/server/services/websocketService.js       2.8kb
+  dist/shared/industries.js                      1.4kb
+  dist/shared/custom.d.js                         37b 
+  dist/server/services/geminiService.js.map     63.3kb
+  dist/shared/schema.js.map                     11.4kb
+  dist/server/services/sessionService.js.map     7.7kb
+  dist/server/services/websocketService.js.map   5.2kb
+  dist/shared/industries.js.map                  2.6kb
+  dist/shared/custom.d.js.map                     93b 
+
+⚡ Done in 12ms
+
+✅ esbuild fallback completed successfully
+
+✅ SQL migration file copied
+⚠️ Build completed with fallback strategy. TypeScript errors should be fixed for future builds.
+
+2025-04-28T13:04:49Z info: Pushing pid1 binary layer...
+2025-04-28T13:04:51Z info: Created pid1 binary layer
+2025-04-28T13:04:51Z info: Pushing hosting layer...
+2025-04-28T13:04:51Z info: Pushing Repl layer...
+2025-04-28T13:04:51Z info: Retrieved cached nix layer
+2025-04-28T13:04:52Z info: Created hosting layer
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-7n3BcAlCbpkz" does not exist.
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-yGU2iPq1bhzR" does not exist.
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-fDSVUdMb1M1Q" does not exist.
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-eX6gjPFTgzA3" does not exist.
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-b8JcqRxxn9Gz" does not exist.
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-2hCPDrElWjLy" does not exist.
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-sV7iTP3YhTrA" does not exist.
+2025-04-28T13:04:53Z warning: Detected broken symlink! The path "/tmp/pulse-qig501PJ8tqu" does not exist.
+2025-04-28T13:06:16Z info: Created Repl layer
+2025-04-28T13:06:16Z info: Pushing Repl (cache) layer...
+2025-04-28T13:06:17Z info: Created Repl (cache) layer
+2025-04-28T13:06:17Z info: Pushed image manifest
+2025-04-28T13:06:18Z info: Pushed soci index manifest
+2025-04-28T13:06:22Z info: Creating Autoscale service
+forwarding local port 5000 to external port 80 (mapped as 1104)
+The server will still start, but database functionality may not work.
+Environment loading complete. NODE_ENV = production
+Starting server in production mode...
+Loaded environment from ./dist/.env
+The server will still start, but database functionality may not work.
+Verifying database connection...
+All server startup strategies failed.
+Please rebuild the application or check the server code.
+Failed to load compiled JavaScript: Cannot find module '/home/runner/workspace/dist/vite.config' imported from /home/runner/workspace/dist/server/vite.js
+Note: Using PORT=5000 from environment
+command finished with error [sh -c NODE_ENV=production node server.js]: exit status 1
+WARNING: Database connection failed: require is not defined
+Verifying database connection...
+The server will still start, but database functionality may not work.
+command finished with error [sh -c NODE_ENV=production node server.js]: exit status 1
+crash loop detected
+2025-04-28T13:09:28Z error: The deployment is crash looping. This can happen if the run command fails or exits immediately after starting. Check the logs for more information.
