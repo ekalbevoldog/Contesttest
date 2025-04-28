@@ -125,7 +125,14 @@ function Router() {
 }
 
 function App() {
-  // No need for separate initialization - SupabaseAuthProvider handles it now
+  // Initialize supabase once at app startup
+  useEffect(() => {
+    // Initialize Supabase at the app level to prevent multiple instances
+    initializeSupabase().catch(error => {
+      console.error("Failed to initialize Supabase at app startup:", error);
+    });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>

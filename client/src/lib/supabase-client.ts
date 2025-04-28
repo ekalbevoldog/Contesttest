@@ -687,14 +687,19 @@ export const logoutUser = async () => {
     console.log('[Client] Cleared session persistence data');
 
     // Get session first to include in logout request
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token || '';
+    let token = '';
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      token = sessionData?.session?.access_token || '';
+    } catch (e) {
+      console.warn('[Client] Error getting session for logout:', e);
+    }
 
     // Call server logout endpoint first with retry logic
     console.log('[Client] Logging out from server endpoint');
     let serverLogoutSuccess = false;
 
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const response = await fetch('/api/auth/logout', {
           method: 'POST',
@@ -717,7 +722,7 @@ export const logoutUser = async () => {
       }
 
       // Wait briefly before retry
-      if (attempt < 1) await new Promise(resolve => setTimeout(resolve, 300));
+      if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     if (!serverLogoutSuccess) {
@@ -726,32 +731,33 @@ export const logoutUser = async () => {
 
     // Perform client-side logout with Supabase - try both methods for maximum reliability
     console.log('[Client] Signing out from Supabase Auth');
+    
+    // First try standard signOut with catch for each step
     try {
-      // First try standard signOut
       await supabase.auth.signOut();
       console.log('[Client] Supabase Auth signOut successful');
-
-      // Also try with scope:global as fallback to ensure all sessions are cleared
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-        console.log('[Client] Supabase global signOut also successful');
-      } catch (globalError) {
-        console.warn('[Client] Global signOut failed (non-critical):', globalError);
-      }
     } catch (supabaseError) {
       console.warn('[Client] Supabase Auth signOut error:', supabaseError);
-      // Continue with cleanup even if this fails
+    }
+
+    // Also try with scope:global as fallback to ensure all sessions are cleared
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+      console.log('[Client] Supabase global signOut successful');
+    } catch (globalError) {
+      console.warn('[Client] Global signOut failed:', globalError);
     }
 
     // Clear ALL auth cookies with multiple domains and paths for thoroughness
     console.log('[Client] Clearing auth cookies extensively');
     const authCookieNames = [
       'auth-status', 'supabase-auth', 'sb-access-token', 'sb-refresh-token', 
-      'contested-auth', 'sb-refresh-token', 'sb-auth-token', 'sb:token'
+      'contested-auth', 'sb-refresh-token', 'sb-auth-token', 'sb:token',
+      'supabase.auth.token', 'supabase-auth-token'
     ];
 
     // Clear cookies with various path and domain combinations
-    const paths = ['/', '/api', '/auth', ''];
+    const paths = ['/', '/api', '/auth', '/client', ''];
 
     document.cookie.split(';').forEach(cookie => {
       const trimmedCookie = cookie.trim();
@@ -777,10 +783,11 @@ export const logoutUser = async () => {
     if (typeof window !== 'undefined') {
       console.log('[Client] Clearing ALL localStorage auth data');
 
-      // Known auth-related keys
+      // Known auth-related keys - expanded list
       const authKeys = [
         'supabase-auth', 'contested-auth', 'contestedUserData', 'auth-status',
-        'sb-access-token', 'sb-refresh-token', 'sb:token', 'authUser'
+        'sb-access-token', 'sb-refresh-token', 'sb:token', 'authUser',
+        'supabase.auth.token', 'sb-auth', 'sb-provider-token'
       ];
 
       // Remove specific keys
@@ -793,15 +800,28 @@ export const logoutUser = async () => {
         }
       });
 
-      // Also scan for any supabase or auth-related keys that might have been missed
+      // Scan for any supabase or auth-related keys that might have been missed
       try {
+        const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (key && (key.includes('supabase') || key.includes('auth') || key.includes('token') || key.includes('session') || key.includes('user'))) {
-            console.log(`[Client] Removing additional auth-related key: ${key}`);
-            localStorage.removeItem(key);
+          if (key && (
+            key.includes('supabase') || 
+            key.includes('auth') || 
+            key.includes('token') || 
+            key.includes('session') || 
+            key.includes('user') ||
+            key.includes('sb-')
+          )) {
+            keysToRemove.push(key);
           }
         }
+        
+        // Remove keys separately to avoid index shifting issues
+        keysToRemove.forEach(key => {
+          console.log(`[Client] Removing additional auth-related key: ${key}`);
+          localStorage.removeItem(key);
+        });
       } catch (scanError) {
         console.warn('[Client] Error scanning localStorage:', scanError);
       }
@@ -819,11 +839,11 @@ export const logoutUser = async () => {
 
     console.log('[Client] Logout complete with thorough cleanup');
 
-    // Force page reload to clear any in-memory state
+    // Force page reload to clear any in-memory state - use a deliberate delay
     setTimeout(() => {
       console.log('[Client] Redirecting to home page');
-      window.location.href = '/';
-    }, 100);
+      window.location.href = '/?logout=complete&t=' + Date.now();
+    }, 200);
 
     return true;
   } catch (error) {
@@ -851,7 +871,7 @@ export const logoutUser = async () => {
           } catch (e) {}
         });
 
-        // Force reload to root
+        // Force reload to root with cache-busting parameter
         window.location.href = '/?fresh=' + Date.now();
       }
     } catch (finalError) {

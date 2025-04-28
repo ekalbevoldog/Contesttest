@@ -56,43 +56,43 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
   const { toast } = useToast();
   const [location, navigate] = useLocation();
-  
+
   // Define signOut function with useCallback to avoid dependency issues
   const signOut = useCallback(async () => {
     console.log('[Auth] Signing out...');
-    
+
     try {
       // Reset state first to prevent any UI issues during logout
       setUser(null);
       setSession(null);
       setUserData(null);
       setHasCompletedProfile(false);
-      
+
       // Clear simple auth data first
       console.log('[Auth] Clearing simple auth data');
       clearAuthData();
-      
+
       // Clear session data with our improved utility
       clearSessionData();
       console.log('[Auth] Cleared session data with session-persistence utility');
-      
+
       // Use our enhanced logout helper that handles both server and direct logout
       await logoutUser();
       console.log('[Auth] Signed out successfully');
-      
+
       // Add a slight delay before navigation to ensure cleanup completes
       setTimeout(() => {
         // Force a hard navigation to reset React state completely
         window.location.href = '/';
       }, 150);
-      
+
       toast({
         title: 'Signed out',
         description: 'You have been signed out successfully.',
       });
     } catch (error) {
       console.error('[Auth] Error during sign out:', error);
-      
+
       // Even if there's an error, try to clear local data and state
       try {
         // Reset React state
@@ -100,25 +100,25 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         setUserData(null);
         setHasCompletedProfile(false);
-        
+
         // Try to clear session data
         clearAuthData();
         clearSessionData();
-        
+
         // Try direct Supabase signout
         supabase.auth.signOut({ scope: 'global' });
-        
+
         // Clear auth cookies manually
         document.cookie.split(';').forEach(cookie => {
           const name = cookie.trim().split('=')[0];
           document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
         });
-        
+
         // Clear localStorage items
         localStorage.removeItem('contestedUserData');
         localStorage.removeItem('auth-status');
         localStorage.removeItem('supabase-auth');
-        
+
         // Force hard reload to home page
         window.location.href = '/';
       } catch (fallbackError) {
@@ -158,21 +158,21 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       console.log('[Auth] No session to refresh');
       return;
     }
-    
+
     try {
       console.log('[Auth] Refreshing session');
-      
+
       // Get the current session from Supabase
       const { data, error } = await supabase.auth.getSession();
-      
+
       if (error || !data.session) {
         console.error('[Auth] Error getting current session for refresh:', error);
-        
+
         // Try to recover session from localStorage if Supabase session is missing
         const recoveryResult = await recoverSession();
         if (recoveryResult) {
           console.log('[Auth] Successfully recovered session from storage');
-          
+
           // Now try to get the session again after recovery
           const { data: recoveredData } = await supabase.auth.getSession();
           if (recoveredData?.session) {
@@ -185,13 +185,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               },
               credentials: 'include'
             });
-            
+
             console.log('[Auth] Refreshed with recovered session');
           }
         }
         return;
       }
-      
+
       try {
         console.log('[Auth] Calling server refresh endpoint');
         // Call our refresh endpoint
@@ -203,13 +203,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           },
           credentials: 'include'
         });
-        
+
         if (response.ok) {
           console.log('[Auth] Session successfully refreshed with server');
-          
+
           // Get latest user data
           const userData = await getCurrentUser();
-          
+
           // Persist the refreshed session using our utility
           if (data.session) {
             persistSession(data.session, userData);
@@ -218,7 +218,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         } else {
           const responseText = await response.text();
           console.error('[Auth] Failed to refresh session with server:', response.status, responseText);
-          
+
           // Use our persistence utility as a fallback
           if (data.session) {
             persistSession(data.session, user);
@@ -227,7 +227,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (fetchError) {
         console.error('[Auth] Error calling refresh endpoint:', fetchError);
-        
+
         // Use our persistence utility as a fallback for fetch errors
         if (data.session) {
           persistSession(data.session, user);
@@ -236,7 +236,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('[Auth] Error during session refresh:', error);
-      
+
       // Try to recover session from localStorage as a last resort
       try {
         const recoveryResult = await recoverSession();
@@ -271,35 +271,35 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             // Silent recovery failure is acceptable
           }
         };
-        
+
         attemptRecovery();
       }
-      
+
       // Set up regular refresh interval when we have a session
       let refreshTimer: number | null = null;
-      
+
       if (session && user) {
         // Calculate when to refresh - either at regular intervals or before expiry
         const calculateNextRefresh = () => {
           const REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
           const REFRESH_BEFORE_EXPIRY = 5 * 60 * 1000; // 5 minutes before expiry
-          
+
           let timeUntilNextRefresh = REFRESH_INTERVAL;
-          
+
           // If session has expiry info, ensure we refresh before it expires
           if (session.expires_at) {
             const expiryTime = session.expires_at * 1000; // Convert to milliseconds
             const timeUntilExpiry = expiryTime - Date.now();
-            
+
             // If expiring soon, refresh earlier
             if (timeUntilExpiry < REFRESH_INTERVAL) {
               timeUntilNextRefresh = Math.max(timeUntilExpiry - REFRESH_BEFORE_EXPIRY, 10000);
             }
           }
-          
+
           return timeUntilNextRefresh;
         };
-        
+
         const scheduleNextRefresh = () => {
           const nextRefreshTime = calculateNextRefresh();
           refreshTimer = window.setTimeout(async () => {
@@ -307,11 +307,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             scheduleNextRefresh(); // Schedule next refresh after current one completes
           }, nextRefreshTime);
         };
-        
+
         // Start the refresh cycle
         scheduleNextRefresh();
       }
-      
+
       return () => {
         if (refreshTimer !== null) {
           clearTimeout(refreshTimer);
@@ -335,33 +335,33 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         const hasAuthStatusCookie = document.cookie
           .split('; ')
           .some(cookie => cookie.startsWith('auth-status=authenticated'));
-        
+
         const hasLocalAuthStatus = localStorage.getItem('auth-status') === 'authenticated';
-        
+
         console.log('[Auth] Auth status - Cookie:', hasAuthStatusCookie, 'LocalStorage:', hasLocalAuthStatus);
-        
+
         // If either is true, consider the user logged in
         if (hasAuthStatusCookie || hasLocalAuthStatus) {
           console.log('[Auth] Found auth indicator, user is logged in');
-          
+
           // The auth status is set which means our auth is valid
           // We'll check with the server to get the full user data
           try {
             console.log('[Auth] Attempting to get user data from server');
             const userData = await getCurrentUser();
-            
+
             if (userData && (userData.auth || userData.user)) {
               console.log('[Auth] Successfully retrieved user data from server');
-              
+
               if (userData.auth) {
                 setUser(userData.auth);
               } else if (userData.user) {
                 setUser(userData.user);
               }
-              
+
               if (userData.session) {
                 setSession(userData.session);
-                
+
                 // Store session in localStorage as fallback
                 if (typeof window !== 'undefined' && userData.session.access_token) {
                   localStorage.setItem('auth-status', 'authenticated');
@@ -374,7 +374,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                   }));
                   console.log('[Auth] Updated localStorage with session data');
                 }
-                
+
                 // Set the session in Supabase client
                 if (userData.session.access_token && userData.session.refresh_token) {
                   try {
@@ -387,13 +387,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                     console.error('[Auth] Error setting session in Supabase:', setSessionError);
                   }
                 }
-                
+
                 // Immediately refresh the session to ensure cookies are up-to-date
                 setTimeout(() => {
                   refreshSession();
                 }, 500);
               }
-              
+
               setIsLoading(false);
               return;
             } else {
@@ -410,14 +410,14 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           const recovered = await recoverSession();
           if (recovered) {
             console.log('[Auth] Successfully recovered session with persistence utility');
-            
+
             // Get the recovered session from Supabase
             const { data: recoveredData } = await supabase.auth.getSession();
             if (recoveredData?.session) {
               console.log('[Auth] Obtained recovered session data from Supabase');
               setSession(recoveredData.session);
               setUser(recoveredData.session.user);
-              
+
               // Also refresh the server-side session
               try {
                 console.log('[Auth] Refreshing server-side session with recovered session');
@@ -429,7 +429,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                   },
                   credentials: 'include'
                 });
-                
+
                 // Get latest user data
                 const userData = await getCurrentUser();
                 if (userData) {
@@ -447,7 +447,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         } catch (recoveryError) {
           console.error('[Auth] Error during session recovery:', recoveryError);
         }
-        
+
         // Fallback to legacy method - check localStorage for existing session data
         let localSessionData = null;
 
@@ -474,15 +474,15 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           // If we have local data, try to use that as fallback
           if (localSessionData && (localSessionData.access_token || localSessionData.session?.access_token)) {
             console.log('[Auth] Attempting to restore session from localStorage');
-            
+
             // Extract tokens from the structure based on format
             const accessToken = localSessionData.access_token || localSessionData.session?.access_token;
             const refreshToken = localSessionData.refresh_token || localSessionData.session?.refresh_token || '';
-            
+
             // Log the token values for debugging (redacted form)
             console.log('[Auth] Token debug - Access:', accessToken?.substring(0, 10) + '...');
             console.log('[Auth] Token debug - Refresh:', refreshToken?.substring(0, 5) + '...');
-            
+
             const { data: refreshData, error: refreshError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken
@@ -492,7 +492,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               console.log('[Auth] Successfully restored session from localStorage');
               setSession(refreshData.session);
               setUser(refreshData.session.user);
-              
+
               // Now also update the auth cookies by calling our server endpoint
               try {
                 console.log('[Auth] Refreshing server-side session state');
@@ -507,7 +507,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               } catch (refreshServerError) {
                 console.warn('[Auth] Error refreshing server session (non-critical):', refreshServerError);
               }
-              
+
               return;
             } else {
               console.error('[Auth] Failed to restore session from localStorage:', refreshError);
@@ -562,7 +562,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
             if (newSession) {
               console.log('[Auth] Auth state change - setting new session');
-              
+
               // Update localStorage for redundancy
               if (typeof window !== 'undefined' && newSession.access_token) {
                 localStorage.setItem('auth-status', 'authenticated');
@@ -575,10 +575,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                 }));
                 console.log('[Auth] Updated localStorage with session data from auth state change');
               }
-              
+
               setSession(newSession);
               setUser(newSession?.user ?? null);
-              
+
               // If this was a SIGNED_IN event, call session refresh to ensure cookies are set
               if (event === 'SIGNED_IN' && newSession.access_token) {
                 try {
@@ -597,7 +597,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
               }
             } else if (event === 'SIGNED_OUT') {
               console.log('[Auth] Auth state change - user signed out');
-              
+
               // Clear localStorage
               if (typeof window !== 'undefined') {
                 localStorage.removeItem('auth-status');
@@ -605,11 +605,11 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
                 localStorage.removeItem('contestedUserData');
                 console.log('[Auth] Cleared auth data from localStorage');
               }
-              
+
               setSession(null);
               setUser(null);
               setUserData(null);
-              
+
               // Add delay to make sure state is updated before redirection
               setTimeout(() => {
                 navigate('/');
@@ -878,14 +878,14 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       } else if (loginData.data?.user) {
         userData = loginData.data.user;
       }
-      
+
       // Get session token for simple auth
       if (loginData.session?.access_token) {
         sessionToken = loginData.session.access_token;
       } else if (loginData.data?.session?.access_token) {
         sessionToken = loginData.data.session.access_token;
       }
-      
+
       // Store auth data in simple-auth for persistence
       if (userData && sessionToken) {
         console.log('[Auth] Storing auth data in simple-auth');
@@ -922,13 +922,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         const errorMsg = typeof registrationData.error === 'string' 
           ? registrationData.error 
           : registrationData.error.message || 'Registration failed';
-        
+
         toast({
           title: 'Registration failed',
           description: errorMsg,
           variant: 'destructive',
         });
-        
+
         return { error: registrationData.error, user: null };
       }
 
@@ -937,7 +937,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         title: 'Registration successful',
         description: 'Your account has been created successfully.',
       });
-      
+
       // Store data in simple auth if we have valid registration data
       if (registrationData.user) {
         // Try to get a session token
@@ -947,7 +947,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         } else if (registrationData.data?.session?.access_token) {
           sessionToken = registrationData.data.session.access_token;
         }
-        
+
         if (sessionToken) {
           console.log('[Auth] Storing registration data in simple-auth');
           storeAuthData(sessionToken, registrationData.user);
@@ -959,22 +959,22 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       return { error: null, user: registrationData.user };
     } catch (e: any) {
       console.error('[Auth] Registration error:', e);
-      
+
       // Format error message for better user experience
       let errorMessage = 'Registration failed';
-      
+
       if (e.message && e.message.includes('<!DOCTYPE')) {
         errorMessage = 'Error communicating with the server. Please try again later.';
       } else if (e.message) {
         errorMessage = e.message;
       }
-      
+
       toast({
         title: 'Registration failed',
         description: errorMessage,
         variant: 'destructive',
       });
-      
+
       return { error: e, user: null };
     }
   };
@@ -986,7 +986,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       description: 'You have been logged out successfully.',
     });
   };
-  
+
   // This is an empty placeholder to maintain code structure
   const handleLogoutError = (error: any) => {
     console.error('[Auth] Error signing out:', error);
