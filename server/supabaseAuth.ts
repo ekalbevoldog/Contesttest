@@ -2,12 +2,12 @@ import { Express, Request, Response, NextFunction } from "express";
 import { supabase } from "./supabase.js";
 import { storage } from "./storage.js";
 
-// Define the User interface for our request object - using just string type properties
+// Define the User interface for our request object
 export interface User {
-  id: string | number; // Allow both string and number types for id
-  email: string;
+  id: string; // Use string type for id to match Supabase auth user id
+  email?: string; // Make email optional to handle missing email case
   role: string;
-  [key: string]: any;
+  [key: string]: any; // Allow additional properties
 }
 
 /**
@@ -36,9 +36,9 @@ export const verifySupabaseToken = async (
       return res.status(401).json({ error: 'Invalid token' });
     }
     
-    // Set user data for the request - ensure id is treated as a string
+    // Set user data for the request
     req.user = {
-      id: String(data.user.id), // Ensure this is a string
+      id: data.user.id, // Supabase user IDs are always strings
       email: data.user.email || '',
       role: data.user.user_metadata?.role || 'user',
       ...(data.user.user_metadata || {})
@@ -168,16 +168,37 @@ export function setupSupabaseAuth(app: Express) {
       console.log('Login successful for:', email);
       
       // Configure cookies for persistent sessions
+      console.log('Setting up session cookies for user:', email);
+      
       // Create a secure, http-only cookie with session data
       const sessionObj = {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_at: data.session.expires_at,
-        user_id: data.user.id
+        user_id: data.user.id,
+        timestamp: Date.now()
       };
       
       // Set the cookie with appropriate settings
+      // Use sameSite 'lax' for better compatibility
       res.cookie('supabase-auth', JSON.stringify(sessionObj), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
+      // Also set separate cookies for the token parts to ensure they're accessible
+      res.cookie('sb-access-token', data.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
+      res.cookie('sb-refresh-token', data.session.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -390,7 +411,7 @@ export function setupSupabaseAuth(app: Express) {
                 .insert({
                   email: user.email,
                   auth_id: user.id,
-                  username: user.email.split('@')[0], // Use part of email as username
+                  username: user.email ? user.email.split('@')[0] : 'user', // Use part of email as username
                   password: 'managed-by-supabase-auth', // Placeholder since we use Supabase Auth
                   role: role,
                   created_at: new Date()
@@ -902,15 +923,35 @@ export function setupSupabaseAuth(app: Express) {
       console.log('Session found, refreshing cookies');
       
       // Update the cookies with fresh session data
+      console.log('Updating session cookies with fresh data');
+      
       const sessionObj = {
         access_token: data.session.access_token,
         refresh_token: data.session.refresh_token,
         expires_at: data.session.expires_at,
-        user_id: user.id
+        user_id: user.id,
+        timestamp: Date.now()
       };
       
       // Set the cookie with appropriate settings
       res.cookie('supabase-auth', JSON.stringify(sessionObj), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
+      // Also set separate cookies for the token parts to ensure they're accessible
+      res.cookie('sb-access-token', data.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      });
+      
+      res.cookie('sb-refresh-token', data.session.refresh_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
