@@ -43,12 +43,12 @@ const defaultSystemMetrics = {
 
 const AdminDashboard = () => {
   const [, navigate] = useLocation();
-  const { user, logoutUser } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const [systemMetrics, setSystemMetrics] = useState(defaultSystemMetrics);
   
   // Fetch users from API
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery<any[]>({
     queryKey: ['/api/admin/users'],
     enabled: !!user && user.userType === 'admin',
   });
@@ -60,7 +60,7 @@ const AdminDashboard = () => {
   });
   
   // Fetch partnership offers data
-  const { data: offers = [], isLoading: isLoadingOffers } = useQuery({
+  const { data: offers = [], isLoading: isLoadingOffers } = useQuery<any[]>({
     queryKey: ['/api/partnership-offers'],
     enabled: !!user && user.userType === 'admin',
   });
@@ -79,7 +79,7 @@ const AdminDashboard = () => {
     if (users.length && matches.length) {
       // Calculate metrics based on real data
       const activePartnerships = matches.filter(m => m.status === 'active').length;
-      const pendingPartnerships = offers.filter(o => o.status === 'pending').length;
+      const pendingPartnerships = Array.isArray(offers) ? offers.filter(o => o.status === 'pending').length : 0;
       const successfulMatches = matches.filter(m => m.status === 'completed' || m.status === 'active').length;
       const matchSuccess = users.length > 0 ? Math.floor((successfulMatches / matches.length) * 100) : 0;
       
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
             <Bell className="h-5 w-5 text-white/80 hover:text-white transition-colors" />
             <Badge variant="secondary">3</Badge>
           </div>
-          <Button variant="outline" className="text-white border-white/20 hover:bg-white/10" onClick={() => logoutUser()}>Logout</Button>
+          <Button variant="outline" className="text-white border-white/20 hover:bg-white/10" onClick={() => logout()}>Logout</Button>
         </div>
       </div>
 
@@ -303,7 +303,7 @@ const AdminDashboard = () => {
                     <div className="text-center p-4">
                       <p className="text-sm text-gray-500">Loading upcoming partnerships...</p>
                     </div>
-                  ) : offers.filter(o => o.status === "pending").slice(0, 3).map((offer) => (
+                  ) : (Array.isArray(offers) ? offers.filter(o => o.status === "pending").slice(0, 3) : []).map((offer) => (
                     <div key={offer.id} className="flex items-center justify-between border-b pb-3">
                       <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-gray-600" />
@@ -317,7 +317,7 @@ const AdminDashboard = () => {
                       </Badge>
                     </div>
                   ))}
-                  {offers && offers.filter(o => o.status === "pending").length === 0 && (
+                  {Array.isArray(offers) && offers.filter(o => o.status === "pending").length === 0 && (
                     <div className="text-center p-4">
                       <p className="text-sm text-gray-500">No pending partnerships found</p>
                     </div>
@@ -399,7 +399,7 @@ const AdminDashboard = () => {
                     <div className="p-8 text-center">
                       <p className="text-gray-500">Loading users...</p>
                     </div>
-                  ) : users.length === 0 ? (
+                  ) : !Array.isArray(users) || users.length === 0 ? (
                     <div className="p-8 text-center">
                       <p className="text-gray-500">No users found</p>
                     </div>
@@ -523,11 +523,11 @@ const AdminDashboard = () => {
                     <div className="p-8 text-center">
                       <p className="text-gray-500">Loading partnerships...</p>
                     </div>
-                  ) : offers.length === 0 ? (
+                  ) : !Array.isArray(offers) || offers.length === 0 ? (
                     <div className="p-8 text-center">
                       <p className="text-gray-500">No partnership offers found</p>
                     </div>
-                  ) : offers.map((offer) => (
+                  ) : (Array.isArray(offers) ? offers : []).map((offer) => (
                     <div key={offer.id} className="grid grid-cols-6 p-3 items-center">
                       <div className="text-sm font-medium">#{offer.id}</div>
                       <div className="text-sm">Athlete ID: {offer.athleteId}</div>
