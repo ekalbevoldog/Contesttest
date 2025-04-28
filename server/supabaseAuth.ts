@@ -851,18 +851,22 @@ export function setupSupabaseAuth(app: Express) {
   // Session refresh endpoint - updates cookies with current session data
   app.post('/api/auth/refresh-session', async (req: Request, res: Response) => {
     try {
-      console.log('Processing session refresh request');
+      console.log('\n==== SESSION REFRESH REQUEST ====');
+      console.log('Headers:', JSON.stringify(req.headers));
       
       // Check for authorization header
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.error('No authorization header provided for session refresh');
         return res.status(401).json({ error: 'Not authenticated' });
       }
       
       // Extract token
       const token = authHeader.split(' ')[1];
+      console.log('Token found in authorization header');
       
       // Verify token with Supabase
+      console.log('Verifying token with Supabase...');
       const { data: { user }, error } = await supabase.auth.getUser(token);
       
       if (error || !user) {
@@ -870,12 +874,29 @@ export function setupSupabaseAuth(app: Express) {
         return res.status(401).json({ error: 'Invalid token' });
       }
       
+      console.log('Token verified successfully for user:', user.email);
+      
       // Get the current session data
+      console.log('Getting current session from Supabase...');
       const { data, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !data.session) {
         console.error('No active session in refresh-session:', sessionError);
-        return res.status(401).json({ error: 'No active session' });
+        
+        // Try to set the session with the token we received
+        console.log('Attempting to set session using provided token...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
+          refresh_token: token
+        });
+        
+        if (refreshError || !refreshData.session) {
+          console.error('Failed to refresh session with token:', refreshError);
+          return res.status(401).json({ error: 'No active session and refresh failed' });
+        }
+        
+        console.log('Successfully refreshed session using token');
+        // Use this refreshed session data
+        data.session = refreshData.session;
       }
       
       console.log('Session found, refreshing cookies');
