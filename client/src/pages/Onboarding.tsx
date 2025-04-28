@@ -944,252 +944,147 @@ export default function Onboarding() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateCurrentStep()) {
       setIsSubmitting(true);
-      
+
       try {
-        // Log the complete form data for debugging
         console.log("==== ONBOARDING FORM DATA COLLECTED ====");
         console.log("Complete form data:", formData);
-        
-        // APPROACH CHANGE: Let's use direct API call instead of Supabase hook
-        // This avoids WebSocket errors and circular dependencies
+
+        // 1️⃣ Register user via API
         const userData = {
           email: formData.email,
           password: formData.password,
           fullName: formData.name,
           role: formData.userType
         };
-        
-        console.log("Using direct API for registration to avoid WebSocket issues");
-        
-        // Call our server API directly 
+        console.log("Registering via /api/auth/register");
         const response = await fetch('/api/auth/register', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(userData),
         });
-        
+
         if (!response.ok) {
-          // Try to parse the error response as JSON
-          let errorMessage = '';
+          let errorMessage = `Registration failed: ${response.status}`;
           try {
-            const errorResponse = await response.json();
-            console.error('Registration API failed:', errorResponse);
-            
-            // Use detailed error message if available
-            if (errorResponse.message) {
-              errorMessage = errorResponse.message;
-            } else if (errorResponse.error) {
-              errorMessage = errorResponse.error;
-            } else {
-              errorMessage = 'Registration failed with status ' + response.status;
-            }
-            
-            // If it's a password error, set it directly in the form errors
-            if (errorResponse.error === 'Password too weak') {
+            const err = await response.json();
+            errorMessage = err.message || err.error || errorMessage;
+            // Handle weak password specifically
+            if (err.error === 'Password too weak') {
               setErrors(prev => ({
                 ...prev,
-                password: errorResponse.message || 'Please use a stronger password'
+                password: err.message || 'Please use a stronger password'
               }));
-              
-              // Scroll to password field
-              const passwordField = document.getElementById('password');
-              if (passwordField) {
-                passwordField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                passwordField.focus();
-              }
-              
-              // Set current step back to password step
+              document.getElementById('password')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
               setCurrentStep('create-password');
               throw new Error(errorMessage);
             }
-            
-          } catch (parseError) {
-            // If we can't parse as JSON, use the text response
-            const errorText = await response.text();
-            console.error('Registration API failed with unparseable response:', errorText);
-            errorMessage = 'Registration failed: ' + (errorText || response.statusText);
-          }
-          
+          } catch {}
           throw new Error(errorMessage);
         }
-        
-        const registrationData = await response.json();
-        const newUser = registrationData.user;
-        
-        if (!newUser || !newUser.id) {
-          throw new Error("Registration succeeded but no user data returned");
-        }
-        
-        console.log("Registration successful:", newUser);
-        
-        // 2. Create profile based on user type
-        // Prepare profile data based on user type
-        let profileData;
-        
+
+        const { user: newUser } = await response.json();
+        if (!newUser?.id) throw new Error("No user data returned");
+
+        console.log("Registration successful:", newUser.id);
+
+        // 2️⃣ Build profile payload
+        let profileData: any = {
+          userId: newUser.id,
+          userType: formData.userType,
+          name: formData.name,
+          email: formData.email,
+        };
+
         if (formData.userType === "athlete") {
-          // Create athlete profile data
-          profileData = {
-            userId: newUser.id,
-            userType: formData.userType, // Make sure userType is included
-            name: formData.name,
-            email: formData.email,
+          Object.assign(profileData, {
             phone: formData.phone,
-            school: formData.school,
-            division: formData.division,
-            sport: formData.sport,
-            followerCount: formData.followerCount || 0,
-            contentStyle: formData.contentStyle || "Authentic and engaging content that resonates with my audience",
-            compensationGoals: formData.compensationGoals || "Fair compensation that reflects my value and engagement",
-            
-            // Additional athletic data
             birthdate: formData.birthdate,
             gender: formData.gender,
             bio: formData.bio,
             athleteCategory: formData.athleteCategory,
-            graduationYear: formData.graduationYear,
-            major: formData.major,
-            gpa: formData.gpa,
-            academicHonors: formData.academicHonors,
+            school: formData.school,
+            division: formData.division,
+            sport: formData.sport,
             position: formData.position,
-            sportAchievements: formData.sportAchievements,
-            
-            // Convert objects to strings for database storage
             socialHandles: JSON.stringify(formData.socialHandles || {}),
+            followerCount: formData.followerCount || 0,
             averageEngagementRate: formData.averageEngagementRate,
-            contentTypes: JSON.stringify(formData.contentTypes || []),
-            preferredProductCategories: JSON.stringify(formData.preferredProductCategories || []),
-            personalValues: JSON.stringify(formData.personalValues || []),
-            causes: JSON.stringify(formData.causes || []),
+            contentStyle: formData.contentStyle,
+            contentTypes: JSON.stringify(formData.contentTypes),
+            compensationGoals: formData.compensationGoals,
             minimumCompensation: formData.minimumCompensation,
-            availabilityTimeframe: formData.availabilityTimeframe,
-            
-            // Eligibility status 
-            eligibilityStatus: "pending" // Will be verified by admin/compliance officer
-          };
+            preferredProductCategories: JSON.stringify(formData.preferredProductCategories),
+            personalValues: JSON.stringify(formData.personalValues),
+            causes: JSON.stringify(formData.causes),
+            eligibilityStatus: "pending"
+          });
         } else {
-          // Create business profile data
-          profileData = {
-            userId: newUser.id,
-            userType: formData.userType, // Make sure userType is included
-            name: formData.name,
-            email: formData.email,
-            
-            // Format required business fields
-            productType: formData.businessType || "product",
-            audienceGoals: formData.goalIdentification.length > 0 
-              ? formData.goalIdentification.join(", ") 
-              : "Increasing brand awareness and driving sales",
-            campaignVibe: "Professional brand representation with authentic content",
-            values: "Quality, authenticity, trust, and customer satisfaction",
-            targetSchoolsSports: "All relevant sports programs that align with our brand",
-            
-            // Store detailed business preferences as needed by API
+          Object.assign(profileData, {
+            productType: formData.businessType,
+            audienceGoals: formData.goalIdentification.join(", "),
             budget: `$${formData.budgetMin} - $${formData.budgetMax}`,
             industry: formData.industry,
             preferences: JSON.stringify({
               accessRestriction: formData.accessRestriction,
               hasPastPartnership: formData.hasPastPartnership,
-              budget: {
-                min: formData.budgetMin,
-                max: formData.budgetMax
-              },
               zipCode: formData.zipCode,
               operatingLocation: formData.operatingLocation,
               companySize: formData.businessSize,
               contactInfo: {
-                name: formData.name,
+                name: formData.contactName,
                 title: formData.contactTitle,
-                email: formData.email,
+                email: formData.contactEmail,
                 phone: formData.contactPhone
               }
             })
-          };
+          });
         }
-        
-        // Use our new Supabase-specific profile endpoint
-        console.log("Using Supabase profile API for profile creation");
-        const profileResponse = await fetch('/api/supabase/profile', {
+
+        // 3️⃣ Create profile record
+        console.log("Creating profile via /api/supabase/profile");
+        const profileResp = await fetch('/api/supabase/profile', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(profileData),
         });
-        
-        if (!profileResponse.ok) {
-          const errorText = await profileResponse.text();
-          console.error('Profile creation failed:', errorText);
-          throw new Error(`Failed to create ${formData.userType} profile: ` + (errorText || profileResponse.statusText));
+        if (!profileResp.ok) {
+          const text = await profileResp.text();
+          throw new Error(`Profile creation failed: ${text || profileResp.statusText}`);
         }
-        
-        const profileResult = await profileResponse.json();
-        console.log("Profile created successfully:", profileResult);
-        
-        toast({
-          title: "Success!",
-          description: "Your account has been created successfully.",
-          variant: "default",
-        });
-        
-        // Automatically log in the user after successful registration
-        console.log("Registration and profile creation successful, now logging in...");
-        
+
+        console.log("Profile created successfully");
+        toast({ title: "Success!", description: "Your account has been created." });
+
+        // 4️⃣ Auto-login & redirect
         try {
-          // Use the login API with the same credentials
-          const loginResponse = await fetch('/api/auth/login', {
+          await fetch('/api/auth/login', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: formData.email,
-              password: formData.password
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: formData.email, password: formData.password })
           });
-          
-          if (!loginResponse.ok) {
-            console.warn("Auto-login failed, redirecting anyway...");
-          } else {
-            const loginData = await loginResponse.json();
-            console.log("Auto-login successful:", loginData);
-          }
-        } catch (loginError) {
-          // If auto-login fails, log but continue with redirect
-          console.warn("Auto-login error:", loginError);
+        } catch {
+          console.warn("Auto-login failed");
         }
-        
-        // Set a user type cookie to ensure proper redirect
+
         document.cookie = `user_type=${formData.userType};path=/;max-age=60`;
-        
-        // Show success message with redirect info
-        toast({
-          title: "Success! Redirecting...",
-          description: `Your ${formData.userType} account was created. Taking you to your dashboard...`,
-          variant: "default",
-        });
-        
-        // Short delay for the toast to be visible
+        toast({ title: "Redirecting…", description: "Taking you to your dashboard." });
+
         setTimeout(() => {
-          // Redirect to the appropriate dashboard based on user type
-          if (formData.userType === "athlete") {
-            window.location.href = "/athlete/dashboard";
-          } else if (formData.userType === "business") {
-            window.location.href = "/business/dashboard";
-          } else {
-            window.location.href = "/dashboard";
-          }
+          window.location.href =
+            formData.userType === "athlete" ? "/athlete/dashboard" :
+            formData.userType === "business" ? "/business/dashboard" :
+            "/dashboard";
         }, 1500);
-      } catch (error) {
-        console.error("Onboarding error:", error);
+
+      } catch (err) {
+        console.error("Onboarding error:", err);
         toast({
           title: "Error",
-          description: error instanceof Error ? error.message : "An unknown error occurred",
-          variant: "destructive",
+          description: err instanceof Error ? err.message : "Something went wrong",
+          variant: "destructive"
         });
       } finally {
         setIsSubmitting(false);
