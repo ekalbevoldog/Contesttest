@@ -15,7 +15,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Safe Dev"
+runButton = "Dev"
 
 [[workflows.workflow]]
 name = "Project"
@@ -70,20 +70,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Safe Dev"
-author = 40767941
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"node|tsx\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 2"
+args = "pkill -f \"tsx server/index.ts\" || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
