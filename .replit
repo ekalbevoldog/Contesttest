@@ -14,12 +14,8 @@ build = ["sh", "-c", "node scripts/fix-schema.js && NODE_ENV=production npm run 
 localPort = 5000
 externalPort = 80
 
-[[deployment.rewrites]]
-from = "/*"
-to = "/index.html"
-
 [workflows]
-runButton = "Dev"
+runButton = "Safe Dev"
 
 [[workflows.workflow]]
 name = "Project"
@@ -75,3 +71,24 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Safe Dev"
+author = 40767941
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"node|tsx\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 2"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[deployment.rewrites]]
+from = "/*"
+to = "/index.html"
