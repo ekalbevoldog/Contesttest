@@ -73,9 +73,25 @@ export function setupSupabaseAuth(app: Express) {
         .select("*")
         .eq("email", email)
         .single();
+      
       if (userError || !userRecord) {
-        console.error("User record missing on login:", userError);
-        return res.status(401).json({ error: "Account not found—please register" });
+        console.log("User authenticated but needs onboarding:", authData.user.id);
+        
+        // User exists in auth but not in users table - they need to complete onboarding
+        return res.status(200).json({
+          user: {
+            id: authData.user.id,
+            email: email,
+            role: authData.user.user_metadata?.role || "user"
+          },
+          needsProfile: true,
+          redirectTo: "/onboarding",
+          session: {
+            access_token: authData.session.access_token,
+            refresh_token: authData.session.refresh_token,
+            expires_at: authData.session.expires_at
+          }
+        });
       }
       // Set cookies
       const sessionObj = {
