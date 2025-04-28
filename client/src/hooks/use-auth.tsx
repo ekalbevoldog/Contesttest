@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  
+
   // Check for any existing data to provide immediate UI feedback
   useEffect(() => {
     try {
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[Auth Provider] Error reading cached user data:', error);
     }
   }, []);
-  
+
   const {
     data: userData,
     error,
@@ -104,11 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     console.log('[Auth Provider] User data changed:', userData ? 'Data available' : 'No data');
-    
+
     if (userData) {
       // Extract auth and profile data, handle different response formats
       let authUser, profileData;
-      
+
       // Handle different response structures from API
       if (userData.auth) {
         // New response format with separate auth and profile
@@ -126,13 +126,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (authUser) {
         console.log('[Auth Provider] Setting user data from auth user');
-        
+
         // Extract role from metadata or direct property
         const role = authUser.user_metadata?.role || 
                     authUser.role || 
                     authUser.user_type || 
                     'user';
-        
+
         setUser({
           id: authUser.id,
           email: authUser.email || '',
@@ -143,10 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (profileData) {
           console.log('[Auth Provider] Setting profile data');
           setProfile(profileData);
-          
+
           // Store user ID in localStorage for quick access
           localStorage.setItem('userId', authUser.id);
-          
+
           // Store basic profile info in localStorage
           localStorage.setItem('contestedUserData', JSON.stringify({
             id: profileData.id,
@@ -186,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let userData = null;
       let profileData = null;
       let roleValue = null;
-      
+
       // Handle different response structures from the API
       if (data.user) {
         userData = data.user;
@@ -214,9 +214,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                    profileData?.role || 
                    'user';
       }
-      
+
       console.log('[Auth Provider] Login mutation: User role identified as', roleValue);
-      
+
       if (userData) {
         // Set user data
         setUser({
@@ -225,15 +225,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: roleValue,
           ...userData.user_metadata
         });
-        
+
         // If we have profile data, set it
         if (profileData) {
           console.log('[Auth Provider] Login mutation: Setting profile data');
           setProfile(profileData);
-          
+
           // Store user ID in localStorage
           localStorage.setItem('userId', userData.id);
-          
+
           // Store profile data in localStorage
           localStorage.setItem('contestedUserData', JSON.stringify({
             id: profileData.id,
@@ -252,15 +252,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }));
         }
       }
-      
+
       // Refresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      
+
       toast({
         title: "Login successful",
         description: `Welcome back!`,
       });
-      
+
       // Redirect based on user role - handle custom redirect if present in response
       if (data.redirectTo) {
         console.log('[Auth Provider] Login mutation: Using custom redirect path:', data.redirectTo);
@@ -280,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLocation('/');
         }
       }
-      
+
       // Dispatch custom login event
       const loginEvent = new CustomEvent("contestedLogin", { 
         detail: { 
@@ -315,12 +315,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data) => {
       console.log('[Auth Provider] Register mutation: Processing successful registration');
-      
+
       // Extract relevant data, handling different response formats
       let userData = null;
       let profileData = null;
       let roleValue = null;
-      
+
       // Handle different response structures from the API
       if (data.user) {
         userData = data.user;
@@ -345,7 +345,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                    profileData?.role || 
                    'user';
       }
-      
+
       if (userData) {
         console.log('[Auth Provider] Register mutation: Setting user with role', roleValue);
         setUser({
@@ -354,10 +354,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: roleValue,
           ...userData.user_metadata
         });
-        
+
         // Store the user ID for profile creation
         localStorage.setItem('userId', userData.id);
-        
+
         // If a profile was created during registration
         if (profileData) {
           console.log('[Auth Provider] Register mutation: Setting profile data');
@@ -378,15 +378,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }));
         }
       }
-      
+
       // Refresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      
+
       toast({
         title: "Registration successful",
         description: "Welcome to Contested!",
       });
-      
+
       // Dispatch custom registration event
       const registrationEvent = new CustomEvent("contestedRegistration", { 
         detail: { 
@@ -396,7 +396,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } 
       });
       window.dispatchEvent(registrationEvent);
-      
+
       // Redirect to onboarding or dashboard based on response
       if (data.redirectTo) {
         console.log('[Auth Provider] Register mutation: Using custom redirect path:', data.redirectTo);
@@ -438,7 +438,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear user state
       setUser(null);
       setProfile(null);
-      
+
       // Clear localStorage completely
       if (typeof window !== 'undefined') {
         localStorage.removeItem('contestedUserData');
@@ -448,30 +448,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('supabase.auth.token');
         localStorage.removeItem('sb-auth-token');
       }
-      
+
       // Clear query cache
       queryClient.setQueryData(["/api/auth/user"], null);
       queryClient.invalidateQueries();
-      
+
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
-      
+
       // Dispatch custom logout event
       const logoutEvent = new CustomEvent("contestedLogout");
       window.dispatchEvent(logoutEvent);
-      
+
       // Redirect to home
       setLocation('/');
     },
     onError: (error: Error) => {
       console.error("Logout error:", error);
-      
+
       // Even if logout fails, clear state locally
       setUser(null);
       setProfile(null);
-      
+
       // Clear localStorage completely
       if (typeof window !== 'undefined') {
         localStorage.removeItem('contestedUserData');
@@ -482,12 +482,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('sb-auth-token');
       }
       queryClient.setQueryData(["/api/auth/user"], null);
-      
+
       toast({
         title: "Logged out",
         description: "Your session has been cleared locally.",
       });
-      
+
       setLocation('/');
     },
   });
@@ -514,14 +514,14 @@ export function useAuth() {
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  
+
   // Add a convenience method for logout
   const logout = () => {
     if (context.logoutMutation) {
       context.logoutMutation.mutate();
     }
   };
-  
+
   return {
     ...context,
     logout,

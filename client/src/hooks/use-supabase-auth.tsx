@@ -974,7 +974,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         variant: 'destructive'
       });
 
-      return{ error: e, user: null };
+      return { error: e, user: null };
     }
   };
 
