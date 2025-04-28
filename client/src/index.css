@@ -25,8 +25,8 @@
     --tech-blue: #00c8ff;
     --contrast-dark: #0f0f0f;
     --card-highlight: rgba(240, 60, 60, 0.15);
-    --bg-dark: #111111;
-    --bg-darker: #0a0a0a;
+    --bg-dark: #000000;
+    --bg-darker: #000000;
     --accent-green: #36f4a5;
     --accent-purple: #8c43ff;
   }
@@ -37,7 +37,7 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    background-color: var(--bg-dark);
+    background-color: #000000;
     background-image: 
       radial-gradient(circle at top right, rgba(240, 60, 60, 0.1), transparent 400px),
       radial-gradient(circle at bottom left, rgba(0, 200, 255, 0.1), transparent 400px);
