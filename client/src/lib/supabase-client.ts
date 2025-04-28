@@ -731,7 +731,7 @@ export const logoutUser = async () => {
 
     // Perform client-side logout with Supabase - try both methods for maximum reliability
     console.log('[Client] Signing out from Supabase Auth');
-    
+
     // First try standard signOut with catch for each step
     try {
       await supabase.auth.signOut();
@@ -816,7 +816,7 @@ export const logoutUser = async () => {
             keysToRemove.push(key);
           }
         }
-        
+
         // Remove keys separately to avoid index shifting issues
         keysToRemove.forEach(key => {
           console.log(`[Client] Removing additional auth-related key: ${key}`);
@@ -1018,6 +1018,98 @@ export const testSupabaseConnection = async () => {
     return true;
   } catch (error) {
     console.error('[Client] Unexpected error during Supabase connection test:', error);
+    return false;
+  }
+};
+
+export const logout = async (): Promise<boolean> => {
+  try {
+    console.log('[Client] Starting complete logout process...');
+
+    // First, get current session for authorization header
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+
+    // Clear Supabase auth state
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+
+    if (error) {
+      console.error('[Client] Supabase logout error:', error);
+      // Continue with other cleanup even if Supabase fails
+    } else {
+      console.log('[Client] Supabase auth signOut successful');
+    }
+
+    // Clear auth cookies by calling server endpoint with auth header if available
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers
+      });
+
+      if (!response.ok) {
+        console.warn('[Client] Server logout response:', response.status, await response.text());
+      } else {
+        console.log('[Client] Server logout successful');
+      }
+    } catch (serverError) {
+      console.error('[Client] Error calling server logout:', serverError);
+    }
+
+    // Aggressively clear ALL localStorage and sessionStorage auth items
+    if (typeof window !== 'undefined') {
+      console.log('[Client] Clearing all authentication data from storage');
+
+      // Clear all cookies related to auth
+      document.cookie.split(';').forEach(cookie => {
+        const name = cookie.split('=')[0].trim();
+        if (name.includes('auth') || name.includes('supabase') || name.includes('sb-')) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+          console.log(`[Client] Cleared cookie: ${name}`);
+        }
+      });
+
+      // Clear localStorage
+      const authKeys = [
+        'supabase.auth.token',
+        'supabase-auth',
+        'sb-access-token',
+        'sb-refresh-token',
+        'auth-status',
+        'contested-auth',
+        'contested-auth-code-verifier'
+      ];
+
+      authKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+          console.log(`[Client] Removed localStorage item: ${key}`);
+        } catch (e) {
+          console.warn(`[Client] Error removing ${key}:`, e);
+        }
+      });
+
+      // Clear sessionStorage
+      try {
+        sessionStorage.clear();
+        console.log('[Client] Cleared sessionStorage');
+      } catch (e) {
+        console.warn('[Client] Error clearing sessionStorage:', e);
+      }
+    }
+
+    console.log('[Client] Logout complete');
+    return true;
+  } catch (error) {
+    console.error('[Client] Logout error:', error);
     return false;
   }
 };
