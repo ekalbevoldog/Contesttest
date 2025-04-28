@@ -971,10 +971,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: 'Registration failed',
         description: errorMessage,
-        variant: 'destructive',
+        variant: 'destructive'
       });
 
-      return { error: e, user: null };
+      return{ error: e, user: null };
     }
   };
 
