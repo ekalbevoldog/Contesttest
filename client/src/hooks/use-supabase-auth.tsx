@@ -403,6 +403,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
             const accessToken = localSessionData.access_token || localSessionData.session?.access_token;
             const refreshToken = localSessionData.refresh_token || localSessionData.session?.refresh_token || '';
             
+            // Log the token values for debugging (redacted form)
+            console.log('[Auth] Token debug - Access:', accessToken?.substring(0, 10) + '...');
+            console.log('[Auth] Token debug - Refresh:', refreshToken?.substring(0, 5) + '...');
+            
             const { data: refreshData, error: refreshError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken
