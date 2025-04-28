@@ -107,7 +107,7 @@ export async function getBusinessByUserId(userId: string) {
     // First try to find user record by auth_id (UUID from Supabase Auth)
     const { data: userByAuthId, error: authIdError } = await supabase
       .from('users')
-      .select('id, email')
+      .select('id, email, auth_id')
       .eq('auth_id', userId)
       .maybeSingle();
     
@@ -124,7 +124,13 @@ export async function getBusinessByUserId(userId: string) {
       if (profileByUserId) {
         console.log('Found business profile through user record:', profileByUserId);
         return profileByUserId;
+      } else if (profileError) {
+        console.log('Error finding business profile with user ID:', profileError);
+      } else {
+        console.log('No business profile found for user ID:', userByAuthId.id);
       }
+    } else if (authIdError) {
+      console.log('Error finding user by auth_id:', authIdError);
     }
     
     // Try direct lookup by user_id as UUID
@@ -137,31 +143,41 @@ export async function getBusinessByUserId(userId: string) {
     if (!error && data) {
       console.log('Found business profile by direct user_id match:', userId);
       return data;
+    } else if (error) {
+      console.log('Error finding business profile with direct user_id:', error);
     }
     
-    // Try by email as last resort
-    if (userByAuthId?.email) {
-      // Get user by email
-      const { data: userByEmail } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', userByAuthId.email)
-        .maybeSingle();
-        
-      if (userByEmail?.id) {
-        console.log('Found user by email lookup:', userByEmail.id);
+    // Try by email as fallback
+    // First get all users to find our target user
+    const { data: allUsers, error: usersError } = await supabase
+      .from('users')
+      .select('id, email, auth_id');
+      
+    if (usersError) {
+      console.log('Error fetching users:', usersError);
+    } else if (allUsers && allUsers.length > 0) {
+      // Find user by userId match on either id or auth_id
+      const matchingUser = allUsers.find(u => 
+        u.id?.toString() === userId || 
+        u.auth_id === userId
+      );
+      
+      if (matchingUser) {
+        console.log('Found matching user by id/auth_id search:', matchingUser);
         
         // Look up business profile using this user ID
         const { data: profileData } = await supabase
           .from('business_profiles')
           .select('*')
-          .eq('user_id', userByEmail.id)
+          .eq('user_id', matchingUser.id)
           .maybeSingle();
           
         if (profileData) {
-          console.log('Found business profile through email user match:', profileData);
+          console.log('Found business profile through user match:', profileData);
           return profileData;
         }
+      } else {
+        console.log('No matching user found in user table search');
       }
     }
     
