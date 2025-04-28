@@ -52,7 +52,7 @@ function getSessionData(): any {
     storageCache.lastRead = now;
     return storageCache.sessionData;
   } catch (error) {
-    console.error('[SessionPersistence] Error reading session data:', error);
+    logger.error('Error reading session data:', error);
     return null;
   }
 }
@@ -75,7 +75,7 @@ function getAuthStatus(): string | null {
     storageCache.lastRead = now;
     return storageCache.authStatus;
   } catch (error) {
-    console.error('[SessionPersistence] Error reading auth status:', error);
+    logger.error('Error reading auth status:', error);
     return null;
   }
 }
@@ -126,7 +126,7 @@ export function persistSession(session: any, userData?: any) {
     
     return true;
   } catch (error) {
-    console.error('[SessionPersistence] Error persisting session:', error);
+    logger.error('Error persisting session:', error);
     return false;
   }
 }
@@ -146,7 +146,7 @@ export async function recoverSession(): Promise<boolean> {
     
     // 2. Validate the session data has the necessary tokens
     if (!parsedSession.access_token || !parsedSession.refresh_token) {
-      console.log('[SessionPersistence] Incomplete session data found');
+      logger.info('Incomplete session data found');
       return false;
     }
     
@@ -157,26 +157,26 @@ export async function recoverSession(): Promise<boolean> {
       
       // If expired, try to refresh using the refresh token
       if (expiresAt <= now) {
-        console.log('[SessionPersistence] Session expired, attempting refresh');
+        logger.info('Session expired, attempting refresh');
         const result = await refreshExpiredSession(parsedSession.refresh_token);
         return result;
       }
     }
     
     // 4. If session is still valid, set it in Supabase
-    console.log('[SessionPersistence] Restoring valid session from storage');
+    logger.info('Restoring valid session from storage');
     const { data, error } = await supabase.auth.setSession({
       access_token: parsedSession.access_token,
       refresh_token: parsedSession.refresh_token
     });
     
     if (error) {
-      console.error('[SessionPersistence] Error setting session:', error);
+      logger.error('Error setting session:', error);
       return false;
     }
     
     if (data?.session) {
-      console.log('[SessionPersistence] Session successfully restored');
+      logger.info('Session successfully restored');
       
       // Update the session storage with latest data
       persistSession(data.session, data.user);
@@ -186,7 +186,7 @@ export async function recoverSession(): Promise<boolean> {
     
     return false;
   } catch (error) {
-    console.error('[SessionPersistence] Error recovering session:', error);
+    logger.error('Error recovering session:', error);
     return false;
   }
 }
@@ -199,13 +199,13 @@ export async function recoverSession(): Promise<boolean> {
  */
 async function refreshExpiredSession(refreshToken: string): Promise<boolean> {
   if (!refreshToken) {
-    console.log('[SessionPersistence] No refresh token provided');
+    logger.info('No refresh token provided');
     return false;
   }
   
   try {
-    console.log('[SessionPersistence] Attempting to refresh expired session');
-    console.log('[SessionPersistence] Using refresh token:', refreshToken.substring(0, 10) + '...');
+    logger.info('Attempting to refresh expired session');
+    logger.debug('Using refresh token:', refreshToken.substring(0, 10) + '...');
     
     // Try to refresh the session with Supabase
     const { data, error } = await supabase.auth.refreshSession({
@@ -213,11 +213,11 @@ async function refreshExpiredSession(refreshToken: string): Promise<boolean> {
     });
     
     if (error) {
-      console.error('[SessionPersistence] Error refreshing session with Supabase:', error);
+      logger.error('Error refreshing session with Supabase:', error);
       
       // Try with direct API call as fallback
       try {
-        console.log('[SessionPersistence] Attempting direct API refresh as fallback');
+        logger.info('Attempting direct API refresh as fallback');
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
           method: 'POST',
           headers: {
@@ -229,13 +229,13 @@ async function refreshExpiredSession(refreshToken: string): Promise<boolean> {
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('[SessionPersistence] Direct API refresh failed:', errorText);
+          logger.error('Direct API refresh failed:', errorText);
           return false;
         }
         
         const refreshData = await response.json();
         if (refreshData?.access_token) {
-          console.log('[SessionPersistence] Direct API refresh succeeded');
+          logger.info('Direct API refresh succeeded');
           
           // Manually set session with the refreshed tokens
           const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
@@ -244,11 +244,11 @@ async function refreshExpiredSession(refreshToken: string): Promise<boolean> {
           });
           
           if (sessionError) {
-            console.error('[SessionPersistence] Error setting refreshed session:', sessionError);
+            logger.error('Error setting refreshed session:', sessionError);
             return false;
           }
           
-          console.log('[SessionPersistence] Session manually set after direct API refresh');
+          logger.info('Session manually set after direct API refresh');
           if (sessionData?.session) {
             persistSession(sessionData.session, sessionData.user);
             
@@ -258,15 +258,15 @@ async function refreshExpiredSession(refreshToken: string): Promise<boolean> {
           }
         }
       } catch (directApiError) {
-        console.error('[SessionPersistence] Error during direct API refresh attempt:', directApiError);
+        logger.error('Error during direct API refresh attempt:', directApiError);
       }
       
       return false;
     }
     
     if (data?.session) {
-      console.log('[SessionPersistence] Session successfully refreshed through Supabase');
-      console.log('[SessionPersistence] New access token:', data.session.access_token.substring(0, 10) + '...');
+      logger.info('Session successfully refreshed through Supabase');
+      logger.debug('New access token:', data.session.access_token.substring(0, 10) + '...');
       
       // Update local storage with the new session
       persistSession(data.session, data.user);
@@ -276,10 +276,10 @@ async function refreshExpiredSession(refreshToken: string): Promise<boolean> {
       return true;
     }
     
-    console.log('[SessionPersistence] Refresh completed but no session returned');
+    logger.info('Refresh completed but no session returned');
     return false;
   } catch (error) {
-    console.error('[SessionPersistence] Error in refresh process:', error);
+    logger.error('Error in refresh process:', error);
     return false;
   }
 }
@@ -291,8 +291,8 @@ async function serverSideRefresh(accessToken: string): Promise<boolean> {
   if (!accessToken) return false;
   
   try {
-    console.log('[SessionPersistence] Refreshing server-side session state');
-    console.log('[SessionPersistence] Using access token:', accessToken.substring(0, 10) + '...');
+    logger.info('Refreshing server-side session state');
+    logger.debug('Using access token:', accessToken.substring(0, 10) + '...');
     
     const response = await fetch('/api/auth/refresh-session', {
       method: 'POST',
@@ -305,14 +305,14 @@ async function serverSideRefresh(accessToken: string): Promise<boolean> {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn('[SessionPersistence] Server-side refresh failed:', response.status, errorText);
+      logger.warn('Server-side refresh failed:', response.status, errorText);
       return false;
     }
     
-    console.log('[SessionPersistence] Server-side session refreshed successfully');
+    logger.info('Server-side session refreshed successfully');
     return true;
   } catch (serverError) {
-    console.warn('[SessionPersistence] Server-side refresh error:', serverError);
+    logger.warn('Server-side refresh error:', serverError);
     return false;
   }
 }
@@ -335,7 +335,7 @@ export function clearSessionData() {
     
     return true;
   } catch (error) {
-    console.error('[SessionPersistence] Error clearing session data:', error);
+    logger.error('Error clearing session data:', error);
     return false;
   }
 }

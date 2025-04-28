@@ -1,5 +1,9 @@
 // Simple authentication helper with localStorage persistence
 import { supabase } from './supabase-client';
+import { createLogger } from './logger';
+
+// Create module-specific logger
+const logger = createLogger('SimpleAuth');
 
 const AUTH_TOKEN_KEY = 'contested-auth-token';
 const AUTH_USER_KEY = 'contested-user-data';
@@ -16,7 +20,7 @@ export interface AuthData {
 export function storeAuthData(token: string, user: any): void {
   if (typeof window === 'undefined') return;
   
-  console.log('[SimpleAuth] Storing auth data');
+  logger.info('Storing auth data');
   
   const authData: AuthData = {
     token,
@@ -28,27 +32,78 @@ export function storeAuthData(token: string, user: any): void {
     localStorage.setItem(AUTH_TOKEN_KEY, token);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(authData));
     localStorage.setItem('auth-status', 'authenticated');
-    console.log('[SimpleAuth] Auth data stored successfully');
   } catch (error) {
-    console.error('[SimpleAuth] Error storing auth data:', error);
+    logger.error('Error storing auth data:', error);
   }
 }
 
 /**
- * Retrieve stored authentication data from localStorage
+ * Clear authentication data from localStorage
+ */
+export function clearAuthData(): void {
+  if (typeof window === 'undefined') return;
+  
+  logger.info('Clearing auth data');
+  
+  try {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.setItem('auth-status', 'unauthenticated');
+    
+    // Also try to clear any session data
+    localStorage.removeItem('supabase-auth');
+    
+    // Clear cookies as well
+    document.cookie.split(';').forEach(cookie => {
+      const [name] = cookie.trim().split('=');
+      if (name.includes('auth') || name.includes('session') || name.includes('contested')) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      }
+    });
+  } catch (error) {
+    logger.error('Error clearing auth data:', error);
+  }
+}
+
+/**
+ * Get stored authentication data from localStorage
  */
 export function getStoredAuthData(): AuthData | null {
   if (typeof window === 'undefined') return null;
   
   try {
-    const authDataStr = localStorage.getItem(AUTH_USER_KEY);
-    if (!authDataStr) return null;
+    const authDataJson = localStorage.getItem(AUTH_USER_KEY);
+    if (!authDataJson) return null;
     
-    const authData = JSON.parse(authDataStr) as AuthData;
-    console.log('[SimpleAuth] Retrieved stored auth data');
+    const authData = JSON.parse(authDataJson) as AuthData;
+    
+    // Check if auth data is expired (24 hours)
+    const now = Date.now();
+    const expireTime = 24 * 60 * 60 * 1000; // 24 hours
+    
+    if (now - authData.timestamp > expireTime) {
+      logger.info('Auth data expired, clearing');
+      clearAuthData();
+      return null;
+    }
+    
     return authData;
   } catch (error) {
-    console.error('[SimpleAuth] Error retrieving auth data:', error);
+    logger.error('Error getting stored auth data:', error);
+    return null;
+  }
+}
+
+/**
+ * Get stored authentication token from localStorage
+ */
+export function getStoredAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch (error) {
+    logger.error('Error getting stored auth token:', error);
     return null;
   }
 }
@@ -57,90 +112,143 @@ export function getStoredAuthData(): AuthData | null {
  * Check if user is authenticated based on stored data
  */
 export function isAuthenticated(): boolean {
-  if (typeof window === 'undefined') return false;
+  return !!getStoredAuthToken();
+}
+
+/**
+ * Initialize authentication from localStorage if available
+ */
+export async function initializeAuthFromStorage(): Promise<boolean> {
+  logger.info('Initializing auth from storage');
   
+  // Try to get stored auth data
+  const authData = getStoredAuthData();
+  if (!authData || !authData.token) {
+    logger.info('No stored auth data found');
+    return false;
+  }
+  
+  // Try to verify the token with the server
   try {
-    const authStatus = localStorage.getItem('auth-status');
-    const authData = getStoredAuthData();
+    const response = await fetch('/api/auth/user', {
+      headers: {
+        'Authorization': `Bearer ${authData.token}`
+      }
+    });
     
-    const isValid = !!authStatus && !!authData && !!authData.token;
-    console.log('[SimpleAuth] Authentication check:', isValid);
-    return isValid;
+    if (response.ok) {
+      logger.info('Auth token verified successfully');
+      return true;
+    } else {
+      logger.warn('Stored auth token is invalid, clearing');
+      clearAuthData();
+      return false;
+    }
   } catch (error) {
-    console.error('[SimpleAuth] Error checking auth status:', error);
+    logger.error('Error validating stored auth token:', error);
     return false;
   }
 }
 
 /**
- * Clear authentication data on logout
+ * Login with email and password
  */
-export function clearAuthData(): void {
-  if (typeof window === 'undefined') return;
+export async function login(email: string, password: string): Promise<{ success: boolean; user?: any; error?: string }> {
+  logger.info('Attempting login for email:', email);
   
-  console.log('[SimpleAuth] Clearing auth data');
   try {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem(AUTH_USER_KEY);
-    localStorage.removeItem('auth-status');
-    localStorage.removeItem('supabase-auth');
-    localStorage.removeItem('contestedUserData');
-    
-    // Also try to sign out from Supabase
-    supabase.auth.signOut().catch(error => {
-      console.error('[SimpleAuth] Error signing out from Supabase:', error);
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
     });
     
-    console.log('[SimpleAuth] Auth data cleared successfully');
+    const data = await response.json();
+    
+    if (response.ok) {
+      logger.info('Login successful');
+      storeAuthData(data.token, data.user);
+      return { success: true, user: data.user };
+    } else {
+      logger.warn('Login failed:', data.error);
+      return { success: false, error: data.error || 'Login failed' };
+    }
   } catch (error) {
-    console.error('[SimpleAuth] Error clearing auth data:', error);
+    logger.error('Error during login:', error);
+    return { success: false, error: 'Network or server error' };
   }
 }
 
 /**
- * Get the authentication token
+ * Register a new user
  */
-export function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
+export async function register(userData: any): Promise<{ success: boolean; user?: any; error?: string }> {
+  logger.info('Attempting registration');
   
   try {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      logger.info('Registration successful');
+      storeAuthData(data.token, data.user);
+      return { success: true, user: data.user };
+    } else {
+      logger.warn('Registration failed:', data.error);
+      return { success: false, error: data.error || 'Registration failed' };
+    }
   } catch (error) {
-    console.error('[SimpleAuth] Error getting auth token:', error);
-    return null;
+    logger.error('Error during registration:', error);
+    return { success: false, error: 'Network or server error' };
   }
 }
 
 /**
- * Set up authentication persistence on page load
- * This should be called once when the app initializes
+ * Logout the current user
  */
-export async function initializeAuthFromStorage(): Promise<boolean> {
-  if (typeof window === 'undefined') return false;
-  
-  console.log('[SimpleAuth] Initializing auth from storage');
+export async function logout(): Promise<boolean> {
+  logger.info('Logging out user');
   
   try {
-    const authData = getStoredAuthData();
+    const token = getStoredAuthToken();
     
-    if (!authData || !authData.token) {
-      console.log('[SimpleAuth] No stored auth data found');
-      return false;
+    if (token) {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        logger.warn('Error calling logout endpoint:', error);
+        // Continue with local logout even if server request fails
+      }
     }
     
-    // Check if the token is valid by calling Supabase
-    const { data, error } = await supabase.auth.getUser(authData.token);
-    
-    if (error || !data.user) {
-      console.error('[SimpleAuth] Stored token is invalid:', error);
-      clearAuthData(); // Clean up invalid data
-      return false;
+    // Try to sign out with Supabase as well
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      logger.warn('Error signing out with Supabase:', error);
     }
     
-    console.log('[SimpleAuth] Successfully initialized auth from storage');
+    // Clear local storage and cookies
+    clearAuthData();
+    
+    logger.info('Logout complete');
     return true;
   } catch (error) {
-    console.error('[SimpleAuth] Error initializing auth from storage:', error);
+    logger.error('Error during logout:', error);
     return false;
   }
 }
