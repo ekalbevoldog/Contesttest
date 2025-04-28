@@ -348,19 +348,11 @@ function Router() {
 }
 
 function App() {
-  // Initialize simple auth from storage when app starts
-  useEffect(() => {
-    console.log('[App] Initializing simple auth from storage');
-    initializeAuthFromStorage().then(success => {
-      console.log('[App] Simple auth initialization result:', success);
-    });
-  }, []);
-  
+  // No need for separate initialization - SupabaseAuthProvider handles it now
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>
-        {/* Add SessionRefreshHandler to ensure continuous session validity */}
-        <SessionRefreshHandler />
+        {/* Session refresh is handled internally by SupabaseAuthProvider */}
         <Router />
         <Toaster />
       </SupabaseAuthProvider>

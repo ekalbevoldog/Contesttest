@@ -228,21 +228,76 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session, user]);
 
-  // Session refresh interval
+  // Enhanced session refresh mechanism that also handles session recovery
   useEffect(() => {
-    // Only set up the interval if we have a session and user
-    if (session && user) {
-      console.log('[Auth] Setting up session refresh interval');
+    if (!isInitializing) {
+      // Attempt to recover session initially if no active session
+      if (!session && !user) {
+        const attemptRecovery = async () => {
+          try {
+            const recovered = await recoverSession();
+            if (recovered) {
+              // Force refresh user data after recovery
+              const userData = await getCurrentUser();
+              if (userData?.user) {
+                setUser(userData.user);
+              }
+              if (userData?.session) {
+                setSession(userData.session);
+              }
+            }
+          } catch (error) {
+            // Silent recovery failure is acceptable
+          }
+        };
+        
+        attemptRecovery();
+      }
       
-      // Refresh every 15 minutes (900000 ms)
-      const refreshInterval = setInterval(refreshSession, 900000);
+      // Set up regular refresh interval when we have a session
+      let refreshTimer: number | null = null;
+      
+      if (session && user) {
+        // Calculate when to refresh - either at regular intervals or before expiry
+        const calculateNextRefresh = () => {
+          const REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes
+          const REFRESH_BEFORE_EXPIRY = 5 * 60 * 1000; // 5 minutes before expiry
+          
+          let timeUntilNextRefresh = REFRESH_INTERVAL;
+          
+          // If session has expiry info, ensure we refresh before it expires
+          if (session.expires_at) {
+            const expiryTime = session.expires_at * 1000; // Convert to milliseconds
+            const timeUntilExpiry = expiryTime - Date.now();
+            
+            // If expiring soon, refresh earlier
+            if (timeUntilExpiry < REFRESH_INTERVAL) {
+              timeUntilNextRefresh = Math.max(timeUntilExpiry - REFRESH_BEFORE_EXPIRY, 10000);
+            }
+          }
+          
+          return timeUntilNextRefresh;
+        };
+        
+        const scheduleNextRefresh = () => {
+          const nextRefreshTime = calculateNextRefresh();
+          refreshTimer = window.setTimeout(async () => {
+            await refreshSession();
+            scheduleNextRefresh(); // Schedule next refresh after current one completes
+          }, nextRefreshTime);
+        };
+        
+        // Start the refresh cycle
+        scheduleNextRefresh();
+      }
       
       return () => {
-        console.log('[Auth] Clearing session refresh interval');
-        clearInterval(refreshInterval);
+        if (refreshTimer !== null) {
+          clearTimeout(refreshTimer);
+        }
       };
     }
-  }, [session, user, refreshSession]);
+  }, [isInitializing, session, user, refreshSession]);
 
   // 1) Once Supabase is initialized, rehydrate session & user
   useEffect(() => {
