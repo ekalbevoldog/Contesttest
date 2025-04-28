@@ -359,6 +359,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>
+        {/* Add SessionRefreshHandler to ensure continuous session validity */}
+        <SessionRefreshHandler />
         <Router />
         <Toaster />
       </SupabaseAuthProvider>

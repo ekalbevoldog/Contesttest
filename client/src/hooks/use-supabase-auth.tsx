@@ -10,6 +10,7 @@ import {
   getSupabase
 } from '@/lib/supabase-client';
 import { storeAuthData, isAuthenticated, getStoredAuthData, clearAuthData } from '@/lib/simple-auth';
+import { persistSession, recoverSession, clearSessionData } from '@/lib/session-persistence';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
