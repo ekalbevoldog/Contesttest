@@ -18,8 +18,9 @@ import Footer from "@/components/Footer";
 import { SupabaseAuthProvider } from "@/hooks/use-supabase-auth";
 // Using unified protected route instead of separate components
 import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "@/lib/unified-protected-route";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // Define a fallback loading component
 const LoadingFallback = () => (
@@ -110,7 +111,7 @@ function Router() {
 
             {/* Profile routes */}
             <UnifiedProtectedRoute path="/profile" component={ProfilePage} />
-            
+
             {/* Main dashboard redirect - user will be redirected based on role */}
             <UnifiedProtectedRoute path="/dashboard" component={ProfilePage} />
 
@@ -125,13 +126,40 @@ function Router() {
 }
 
 function App() {
-  // Initialize supabase once at app startup
+  const { toast } = useToast();
+  const [serverHealth, setServerHealth] = useState<'unknown' | 'ok' | 'error'>('unknown');
+
+  // Check server health on startup
   useEffect(() => {
-    // Initialize Supabase at the app level to prevent multiple instances
-    initializeSupabase().catch(error => {
-      console.error("Failed to initialize Supabase at app startup:", error);
-    });
-  }, []);
+    const checkHealth = async () => {
+      try {
+        const response = await fetch('/api/health-check');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Health check results:', data);
+
+          if (data.supabase?.status === 'error') {
+            toast({
+              title: "Database Connection Issue",
+              description: "There's a problem connecting to the database. Some features may not work properly.",
+              variant: "destructive"
+            });
+            setServerHealth('error');
+          } else {
+            setServerHealth('ok');
+          }
+        } else {
+          console.error('Health check failed:', await response.text());
+          setServerHealth('error');
+        }
+      } catch (err) {
+        console.error('Error checking server health:', err);
+        setServerHealth('error');
+      }
+    };
+
+    checkHealth();
+  }, [toast]);
 
   return (
     <QueryClientProvider client={queryClient}>

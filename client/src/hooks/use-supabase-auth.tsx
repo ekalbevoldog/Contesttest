@@ -966,8 +966,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       if (e.message && e.message.includes('<!DOCTYPE')) {
         errorMessage = 'Error communicating with the server. Please try again later.';
       } else if (e.message) {
-        errorMessage = e.message;
-      }
+        errorMessage = e.message;      }
 
       toast({
         title: 'Registration failed',
@@ -1056,3 +1055,71 @@ export function useSupabaseAuth() {
   }
   return context;
 }
+
+// Attempt to recover the session using multiple approaches
+const recoverSession = async () => {
+  try {
+    console.log("[Auth] Attempting to recover session with persistence utility...");
+
+    // Approach 1: Check for session via getSession
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error("[Auth] Session recovery error from getSession:", error);
+    } else if (data?.session) {
+      console.log("[Auth] Session recovered successfully via getSession");
+      setSession(data.session);
+      setUser(data.session.user);
+      return data.session;
+    }
+
+    // Approach 2: Try to get current user
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (!userError && userData?.user) {
+      console.log("[Auth] User found but no session, fetching new session");
+      // We have a user but no session, try refreshing session
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (!refreshError && refreshData?.session) {
+        console.log("[Auth] Session refreshed successfully");
+        setSession(refreshData.session);
+        setUser(refreshData.session.user);
+        return refreshData.session;
+      }
+    }
+
+    // Approach 3: Check localStorage directly for token
+    const storedAuth = localStorage.getItem('contested-auth');
+    if (storedAuth) {
+      try {
+        const parsedAuth = JSON.parse(storedAuth);
+        if (parsedAuth?.access_token) {
+          console.log("[Auth] Found token in localStorage, attempting to use it");
+          // Set auth data manually with existing token
+          const { data: setData, error: setError } = await supabase.auth.setSession({
+            access_token: parsedAuth.access_token,
+            refresh_token: parsedAuth.refresh_token || '',
+          });
+
+          if (!setError && setData?.session) {
+            console.log("[Auth] Successfully restored session from localStorage token");
+            setSession(setData.session);
+            setUser(setData.session.user);
+            return setData.session;
+          }
+        }
+      } catch (e) {
+        console.error("[Auth] Error parsing stored auth data:", e);
+      }
+    }
+
+    console.log("[Auth] Session recovery attempt unsuccessful");
+    clearSessionData(); // Use the correct function to clear session data
+    return null;
+  } catch (error) {
+    console.error("[Auth] Error in session recovery:", error);
+    clearSessionData(); // Use the correct function to clear session data
+    return null;
+  }
+};

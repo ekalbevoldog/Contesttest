@@ -107,6 +107,64 @@ function broadcastToSession(sessionId: string, message: any): boolean {
             delivered = true;
           } catch (error) {
             console.error('Error sending message to client:', error);
+
+  // Health check endpoint to verify Supabase connectivity
+  app.get("/api/health-check", async (req: Request, res: Response) => {
+    try {
+      // Check basic server health
+      const serverHealth = { status: "ok", timestamp: new Date().toISOString() };
+      
+      // Check Supabase connection
+      let supabaseHealth = { status: "unknown", error: null };
+      try {
+        const { data, error } = await supabase.from('users').select('count(*)').limit(1);
+        supabaseHealth = {
+          status: error ? "error" : "ok",
+          error: error ? error.message : null
+        };
+      } catch (err) {
+        supabaseHealth = {
+          status: "error",
+          error: err instanceof Error ? err.message : String(err)
+        };
+      }
+
+      // Check auth service
+      let authHealth = { status: "unknown", error: null };
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        authHealth = {
+          status: error ? "error" : "ok",
+          error: error ? error.message : null,
+          hasSession: !!data.session
+        };
+      } catch (err) {
+        authHealth = {
+          status: "error",
+          error: err instanceof Error ? err.message : String(err)
+        };
+      }
+
+      return res.status(200).json({
+        server: serverHealth,
+        supabase: supabaseHealth,
+        auth: authHealth,
+        environment: {
+          nodeEnv: process.env.NODE_ENV || 'development',
+          hasSupabaseUrl: !!process.env.SUPABASE_URL,
+          hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY
+        }
+      });
+    } catch (error) {
+      console.error("Health check error:", error);
+      return res.status(500).json({
+        status: "error",
+        message: "Health check failed",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
           }
         }
       });
