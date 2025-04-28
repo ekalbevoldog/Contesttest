@@ -147,6 +147,53 @@ function broadcastToSession(sessionId: string, message: any): boolean {
     return delivered;
   } catch (error) {
     console.error('Error broadcasting message:', error);
+
+// Improved logout handler to ensure proper session clearing
+app.post('/api/auth/logout', async (req: Request, res: Response) => {
+  try {
+    console.log("[Server] Processing logout request");
+    
+    // Clear all auth cookies
+    const cookies = [
+      'supabase-auth', 
+      'sb-access-token', 
+      'sb-refresh-token', 
+      'auth-status', 
+      'contested-auth'
+    ];
+    
+    cookies.forEach(cookieName => {
+      res.clearCookie(cookieName, { 
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+    });
+    
+    // Also try to sign out the Supabase session if we have a token
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      try {
+        await supabase.auth.signOut({ 
+          scope: 'global'
+        });
+        console.log("[Server] Supabase session invalidated");
+      } catch (err) {
+        console.error("[Server] Error invalidating Supabase session:", err);
+        // Continue with response anyway
+      }
+    }
+    
+    console.log("[Server] Logout successful");
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("[Server] Logout error:", err);
+    return res.status(500).json({ error: "Logout failed", details: err });
+  }
+});
+
     return false;
   }
 }

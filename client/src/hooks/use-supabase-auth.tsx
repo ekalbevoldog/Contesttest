@@ -62,6 +62,12 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     console.log('[Auth] Signing out...');
     
     try {
+      // Reset state first to prevent any UI issues during logout
+      setUser(null);
+      setSession(null);
+      setUserData(null);
+      setHasCompletedProfile(false);
+      
       // Clear simple auth data first
       console.log('[Auth] Clearing simple auth data');
       clearAuthData();
@@ -70,43 +76,58 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       clearSessionData();
       console.log('[Auth] Cleared session data with session-persistence utility');
       
-      // Use our logout helper that handles both server and direct logout
+      // Use our enhanced logout helper that handles both server and direct logout
       await logoutUser();
       console.log('[Auth] Signed out successfully');
       
-      // Invalidate Supabase session
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-        console.log('[Auth] Invalidated Supabase session globally');
-      } catch (supabaseError) {
-        console.warn('[Auth] Error during Supabase sign out:', supabaseError);
-      }
-
-      // Reset state
-      // Reset all auth state
-      setUser(null);
-      setSession(null);
-      setUserData(null);
-      setHasCompletedProfile(false);
-      
       // Add a slight delay before navigation to ensure cleanup completes
       setTimeout(() => {
-        navigate('/');
-      }, 100);
+        // Force a hard navigation to reset React state completely
+        window.location.href = '/';
+      }, 150);
+      
+      toast({
+        title: 'Signed out',
+        description: 'You have been signed out successfully.',
+      });
     } catch (error) {
-      console.error('[Auth] Error signing out:', error);
+      console.error('[Auth] Error during sign out:', error);
       
-      // Even if there's an error, try to clear local data
+      // Even if there's an error, try to clear local data and state
       try {
+        // Reset React state
+        setUser(null);
+        setSession(null);
+        setUserData(null);
+        setHasCompletedProfile(false);
+        
+        // Try to clear session data
+        clearAuthData();
         clearSessionData();
-      } catch (clearError) {
-        console.warn('[Auth] Error clearing session data:', clearError);
+        
+        // Try direct Supabase signout
+        supabase.auth.signOut({ scope: 'global' });
+        
+        // Clear auth cookies manually
+        document.cookie.split(';').forEach(cookie => {
+          const name = cookie.trim().split('=')[0];
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+        });
+        
+        // Clear localStorage items
+        localStorage.removeItem('contestedUserData');
+        localStorage.removeItem('auth-status');
+        localStorage.removeItem('supabase-auth');
+        
+        // Force hard reload to home page
+        window.location.href = '/';
+      } catch (fallbackError) {
+        console.error('[Auth] Error in signout fallback:', fallbackError);
+        // Last resort - hard redirect
+        window.location.href = '/';
       }
-      
-      // Force navigation to login page
-      navigate('/');
     }
-  }, [navigate, setUserData]);
+  }, [navigate, setUserData, toast]);
 
   // 0) Initialize Supabase client first
   useEffect(() => {
