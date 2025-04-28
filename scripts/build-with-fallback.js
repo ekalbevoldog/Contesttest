@@ -3,6 +3,37 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
+// Fix common schema issues before building
+try {
+  console.log('🔧 Checking for schema structure issues...');
+  const schemaFilePath = path.join(process.cwd(), 'shared/schema.ts');
+  
+  if (fs.existsSync(schemaFilePath)) {
+    let schemaContent = fs.readFileSync(schemaFilePath, 'utf8');
+    
+    // Fix missing comma before contentTypes
+    let fixed = false;
+    if (schemaContent.includes('updatedAt: z.date().optional()\n\n  contentTypes')) {
+      console.log('🔧 Fixing missing comma in athleteSchema...');
+      schemaContent = schemaContent.replace(
+        /updatedAt: z\.date\(\)\.optional\(\)\s*\n\s*contentTypes/,
+        'updatedAt: z.date().optional(),\n  contentTypes'
+      );
+      fixed = true;
+    }
+    
+    if (fixed) {
+      fs.writeFileSync(schemaFilePath, schemaContent);
+      console.log('✅ Fixed schema.ts structure');
+    } else {
+      console.log('✅ No schema structure issues found');
+    }
+  }
+} catch (error) {
+  console.error('⚠️ Error checking schema files:', error);
+  // Continue with build even if schema fix fails
+}
+
 try {
   // First try regular TypeScript compilation
   console.log('🔍 Attempting standard TypeScript build...');
