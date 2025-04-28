@@ -66,36 +66,47 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       console.log('[Auth] Clearing simple auth data');
       clearAuthData();
       
+      // Clear session data with our improved utility
+      clearSessionData();
+      console.log('[Auth] Cleared session data with session-persistence utility');
+      
       // Use our logout helper that handles both server and direct logout
       await logoutUser();
       console.log('[Auth] Signed out successfully');
       
-      // Clear our local storage data
-      if (typeof window !== 'undefined') {
-        console.log('[Auth] Clearing localStorage data');
-        // Clear our custom storage
-        localStorage.removeItem('contested-auth');
-        localStorage.removeItem('contestedUserData');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('auth-status');
-        localStorage.removeItem('AUTH_TOKEN_KEY');
-        localStorage.removeItem('AUTH_USER_KEY');
-
-        // Clear any other potential Supabase tokens
-        Object.keys(localStorage).forEach(key => {
-          if (key.startsWith('sb-') || key.includes('supabase') || key.includes('contested')) {
-            localStorage.removeItem(key);
-          }
-        });
+      // Invalidate Supabase session
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+        console.log('[Auth] Invalidated Supabase session globally');
+      } catch (supabaseError) {
+        console.warn('[Auth] Error during Supabase sign out:', supabaseError);
       }
 
-      navigate('/');
+      // Reset state
+      // Reset all auth state
+      setUser(null);
+      setSession(null);
+      setUserData(null);
+      setHasCompletedProfile(false);
+      
+      // Add a slight delay before navigation to ensure cleanup completes
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
     } catch (error) {
       console.error('[Auth] Error signing out:', error);
+      
+      // Even if there's an error, try to clear local data
+      try {
+        clearSessionData();
+      } catch (clearError) {
+        console.warn('[Auth] Error clearing session data:', clearError);
+      }
+      
+      // Force navigation to login page
       navigate('/');
     }
-  }, [navigate]);
+  }, [navigate, setUserData]);
 
   // 0) Initialize Supabase client first
   useEffect(() => {
@@ -135,6 +146,28 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       
       if (error || !data.session) {
         console.error('[Auth] Error getting current session for refresh:', error);
+        
+        // Try to recover session from localStorage if Supabase session is missing
+        const recoveryResult = await recoverSession();
+        if (recoveryResult) {
+          console.log('[Auth] Successfully recovered session from storage');
+          
+          // Now try to get the session again after recovery
+          const { data: recoveredData } = await supabase.auth.getSession();
+          if (recoveredData?.session) {
+            // Refresh with recovered session
+            await fetch('/api/auth/refresh-session', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${recoveredData.session.access_token}`,
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include'
+            });
+            
+            console.log('[Auth] Refreshed with recovered session');
+          }
+        }
         return;
       }
       
@@ -154,42 +187,44 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           console.log('[Auth] Session successfully refreshed with server');
           
           // Get latest user data
-          await getCurrentUser();
+          const userData = await getCurrentUser();
+          
+          // Persist the refreshed session using our utility
+          if (data.session) {
+            persistSession(data.session, userData);
+            console.log('[Auth] Persisted refreshed session data');
+          }
         } else {
           const responseText = await response.text();
           console.error('[Auth] Failed to refresh session with server:', response.status, responseText);
           
-          // Fall back to manually update localStorage as a last resort
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('auth-status', 'authenticated');
-            localStorage.setItem('supabase-auth', JSON.stringify({
-              access_token: data.session.access_token,
-              refresh_token: data.session.refresh_token,
-              expires_at: data.session.expires_at,
-              user_id: user.id,
-              timestamp: Date.now()
-            }));
-            console.log('[Auth] Updated local storage as fallback');
+          // Use our persistence utility as a fallback
+          if (data.session) {
+            persistSession(data.session, user);
+            console.log('[Auth] Used persistent storage utility for fallback');
           }
         }
       } catch (fetchError) {
         console.error('[Auth] Error calling refresh endpoint:', fetchError);
         
-        // Fall back to manually update localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth-status', 'authenticated');
-          localStorage.setItem('supabase-auth', JSON.stringify({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-            expires_at: data.session.expires_at,
-            user_id: user.id,
-            timestamp: Date.now()
-          }));
-          console.log('[Auth] Updated local storage as fallback after fetch error');
+        // Use our persistence utility as a fallback for fetch errors
+        if (data.session) {
+          persistSession(data.session, user);
+          console.log('[Auth] Used persistent storage utility after fetch error');
         }
       }
     } catch (error) {
       console.error('[Auth] Error during session refresh:', error);
+      
+      // Try to recover session from localStorage as a last resort
+      try {
+        const recoveryResult = await recoverSession();
+        if (recoveryResult) {
+          console.log('[Auth] Successfully recovered session after error');
+        }
+      } catch (recoveryError) {
+        console.error('[Auth] Recovery attempt failed:', recoveryError);
+      }
     }
   }, [session, user]);
 
@@ -293,29 +328,61 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Next check localStorage for existing session data as fallback
+        // Try to recover the session using our improved persistence utility
+        try {
+          console.log('[Auth] Attempting to recover session with persistence utility...');
+          const recovered = await recoverSession();
+          if (recovered) {
+            console.log('[Auth] Successfully recovered session with persistence utility');
+            
+            // Get the recovered session from Supabase
+            const { data: recoveredData } = await supabase.auth.getSession();
+            if (recoveredData?.session) {
+              console.log('[Auth] Obtained recovered session data from Supabase');
+              setSession(recoveredData.session);
+              setUser(recoveredData.session.user);
+              
+              // Also refresh the server-side session
+              try {
+                console.log('[Auth] Refreshing server-side session with recovered session');
+                await fetch('/api/auth/refresh-session', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${recoveredData.session.access_token}`
+                  },
+                  credentials: 'include'
+                });
+                
+                // Get latest user data
+                const userData = await getCurrentUser();
+                if (userData) {
+                  console.log('[Auth] Retrieved user data for recovered session');
+                  setIsLoading(false);
+                  return;
+                }
+              } catch (refreshError) {
+                console.warn('[Auth] Failed to refresh server-side session with recovered data:', refreshError);
+              }
+            }
+          } else {
+            console.log('[Auth] Session recovery attempt unsuccessful');
+          }
+        } catch (recoveryError) {
+          console.error('[Auth] Error during session recovery:', recoveryError);
+        }
+        
+        // Fallback to legacy method - check localStorage for existing session data
         let localSessionData = null;
 
         try {
-          // Check for multiple possible storage keys
-          const storageKeys = [
-            'supabase-auth',
-            'sb-access-token',
-            'supabase.auth.token',
-            'sb-auth-token',
-            'contested-auth'
-          ];
-
-          for (const key of storageKeys) {
-            const storedData = localStorage.getItem(key);
-            if (storedData) {
-              console.log(`[Auth] Found local storage data for key: ${key}`);
-              try {
-                localSessionData = JSON.parse(storedData);
-                break;
-              } catch (e) {
-                console.error(`[Auth] Error parsing stored session data from ${key}:`, e);
-              }
+          const storedData = localStorage.getItem('supabase-auth');
+          if (storedData) {
+            try {
+              localSessionData = JSON.parse(storedData);
+              console.log('[Auth] Found legacy session data in localStorage');
+            } catch (e) {
+              console.error('[Auth] Error parsing stored session data:', e);
             }
           }
         } catch (storageError) {
