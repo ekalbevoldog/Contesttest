@@ -711,45 +711,34 @@ export const logoutUser = async () => {
       // Continue with client-side logout even if server request fails
     }
 
-    // Perform client-side logout with Supabase - forcefully clear all sessions
+    // Perform client-side logout with Supabase
     console.log('[Client] Signing out from Supabase Auth');
     try {
-      await supabase.auth.signOut({ scope: 'global' }); // Ensure all sessions are removed
+      await supabase.auth.signOut(); // No need for global scope which can be too aggressive
       console.log('[Client] Supabase Auth signOut successful');
     } catch (supabaseError) {
       console.warn('[Client] Supabase Auth signOut error:', supabaseError);
       // Continue with cleanup even if this fails
     }
 
-    // Aggressively clear all cookies that might contain auth data
+    // Clear specific auth cookies rather than wildcard matching
     console.log('[Client] Clearing auth cookies');
+    const specificAuthCookies = ['auth-status', 'supabase-auth', 'sb-access-token', 'sb-refresh-token', 'contested-auth'];
     document.cookie.split(';').forEach(cookie => {
       const [name] = cookie.trim().split('=');
-      const authCookies = ['auth-status', 'supabase-auth', 'sb-access-token', 'sb-refresh-token'];
-      
-      if (authCookies.includes(name) || name.includes('sb-') || name.includes('supabase') || name.includes('auth')) {
+      if (specificAuthCookies.includes(name)) {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
       }
     });
 
-    // Clear any localStorage items that might contain auth data
+    // Clear specific localStorage items with known keys
     if (typeof window !== 'undefined') {
-      console.log('[Client] Clearing localStorage auth data');
-      // Direct removal of known auth keys
+      console.log('[Client] Clearing specific localStorage auth data');
       const authKeys = [
-        'supabase.auth.token',
-        'sb-access-token',
-        'sb-refresh-token',
-        'sb-auth-token',
+        'supabase-auth',
         'contested-auth',
-        'contested-auth-code-verifier',
         'contestedUserData',
-        'userId',
-        'userRole',
-        'auth-status',
-        'AUTH_TOKEN_KEY',
-        'AUTH_USER_KEY',
-        'supabase-auth'
+        'auth-status'
       ];
       
       authKeys.forEach(key => {
@@ -759,40 +748,11 @@ export const logoutUser = async () => {
           console.warn(`[Client] Error removing ${key}:`, e);
         }
       });
-
-      // Clear any other potential Supabase or auth-related tokens
-      try {
-        Object.keys(localStorage).forEach(key => {
-          if (
-            key.startsWith('sb-') || 
-            key.includes('supabase') || 
-            key.includes('contested') || 
-            key.includes('auth') ||
-            key.includes('session') ||
-            key.includes('token') ||
-            key.includes('user')
-          ) {
-            localStorage.removeItem(key);
-          }
-        });
-      } catch (e) {
-        console.warn('[Client] Error clearing related localStorage items:', e);
-      }
     }
 
-    // Clear sessionStorage as well
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      try {
-        sessionStorage.clear();
-        console.log('[Client] Cleared sessionStorage');
-      } catch (e) {
-        console.warn('[Client] Error clearing sessionStorage:', e);
-      }
-    }
-
-    console.log('[Client] Logout complete - all auth data cleared');
+    console.log('[Client] Logout complete');
     
-    // Force page reload to ensure clean state if needed
+    // Navigate to home page
     setTimeout(() => {
       window.location.href = '/';
     }, 100);
@@ -801,34 +761,39 @@ export const logoutUser = async () => {
   } catch (error) {
     console.error('[Client] Logout error:', error);
 
-    // Emergency fallback - just clear everything we can and redirect
-    console.log('[Client] Executing emergency logout fallback');
+    // More targeted fallback - focus on essential auth items
+    console.log('[Client] Executing focused logout fallback');
     
     try {
-      // Just nuke all browser storage as a last resort
       if (typeof window !== 'undefined') {
         // Try to sign out of Supabase one more time
         try {
-          supabase.auth.signOut({ scope: 'global' });
+          supabase.auth.signOut();
         } catch (e) {
-          console.warn('[Client] Final Supabase signOut attempt failed:', e);
+          console.warn('[Client] Supabase signOut fallback failed:', e);
         }
         
-        // Clear cookies again
+        // Clear essential auth cookies
+        const essentialCookies = ['auth-status', 'supabase-auth'];
         document.cookie.split(';').forEach(cookie => {
-          const name = cookie.trim().split('=')[0];
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+          const [name] = cookie.trim().split('=')[0];
+          if (essentialCookies.includes(name)) {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+          }
         });
         
-        // Clear all storage
-        try { localStorage.clear(); } catch (e) { console.warn('[Client] LocalStorage clear failed:', e); }
-        try { sessionStorage.clear(); } catch (e) { console.warn('[Client] SessionStorage clear failed:', e); }
+        // Clear essential localStorage items
+        try { localStorage.removeItem('supabase-auth'); } catch (e) {}
+        try { localStorage.removeItem('auth-status'); } catch (e) {}
+        try { localStorage.removeItem('contestedUserData'); } catch (e) {}
         
-        // Force redirect to home page
+        // Navigate to home page
         window.location.href = '/';
       }
     } catch (finalError) {
-      console.error('[Client] Final logout fallback failed:', finalError);
+      console.error('[Client] Focused logout fallback failed:', finalError);
+      // Last resort - redirect anyway
+      window.location.href = '/';
     }
     
     return false;

@@ -148,21 +148,19 @@ function broadcastToSession(sessionId: string, message: any): boolean {
   } catch (error) {
     console.error('Error broadcasting message:', error);
 
-// Improved logout handler to ensure proper session clearing
+// Precise logout handler that focuses on essential session clearing
 app.post('/api/auth/logout', async (req: Request, res: Response) => {
   try {
     console.log("[Server] Processing logout request");
     
-    // Clear all auth cookies
-    const cookies = [
+    // Clear essential auth cookies with proper options
+    const authCookies = [
       'supabase-auth', 
-      'sb-access-token', 
-      'sb-refresh-token', 
       'auth-status', 
       'contested-auth'
     ];
     
-    cookies.forEach(cookieName => {
+    authCookies.forEach(cookieName => {
       res.clearCookie(cookieName, { 
         path: '/',
         httpOnly: true,
@@ -171,14 +169,13 @@ app.post('/api/auth/logout', async (req: Request, res: Response) => {
       });
     });
     
-    // Also try to sign out the Supabase session if we have a token
+    // Sign out the Supabase session if we have a token
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.split(" ")[1];
       try {
-        await supabase.auth.signOut({ 
-          scope: 'global'
-        });
+        // Use standard signOut instead of global scope
+        await supabase.auth.signOut();
         console.log("[Server] Supabase session invalidated");
       } catch (err) {
         console.error("[Server] Error invalidating Supabase session:", err);
@@ -187,7 +184,10 @@ app.post('/api/auth/logout', async (req: Request, res: Response) => {
     }
     
     console.log("[Server] Logout successful");
-    return res.status(200).json({ message: "Logged out successfully" });
+    return res.status(200).json({ 
+      message: "Logged out successfully",
+      success: true 
+    });
   } catch (err) {
     console.error("[Server] Logout error:", err);
     return res.status(500).json({ error: "Logout failed", details: err });
