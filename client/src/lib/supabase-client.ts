@@ -150,7 +150,7 @@ export const loginUser = async (credentials: {
   try {
     // Import simple-auth here to avoid circular dependencies
     const { storeAuthData } = await import('./simple-auth');
-    
+
     // Use server-first approach to ensure complete synchronization
     console.log('[Client] Attempting to login via server endpoint...');
     const response = await fetch('/api/auth/login', {
@@ -190,7 +190,7 @@ export const loginUser = async (credentials: {
     try {
       const contentType = response.headers.get('content-type');
       console.log('[Client] Response content-type:', contentType);
-      
+
       if (contentType && contentType.includes('application/json')) {
         loginData = await response.json();
         console.log('[Client] Parsed JSON login response successfully');
@@ -204,7 +204,7 @@ export const loginUser = async (credentials: {
       return { error: 'Failed to process login response. Please try again later.' };
     }
     console.log('[Client] Server login successful');
-    
+
     // Simple auth: Store the token and user data for persistence
     if (loginData.session?.access_token && loginData.user) {
       storeAuthData(loginData.session.access_token, loginData.user);
@@ -221,12 +221,12 @@ export const loginUser = async (credentials: {
         }));
         console.log('[Client] Stored user data in localStorage');
       }
-      
+
       // Store session data for persistence
       if (loginData.session) {
         // Store auth status separately to help check logged-in status quickly
         localStorage.setItem('auth-status', 'authenticated');
-        
+
         // Store full session data
         localStorage.setItem('supabase-auth', JSON.stringify({
           ...loginData.session,
@@ -328,10 +328,10 @@ export const registerUser = async (userData: {
     // Safely handle the response - check content type before parsing as JSON
     let responseData;
     const contentType = response.headers.get('content-type');
-    
+
     console.log('[Client] Registration response status:', response.status, response.statusText);
     console.log('[Client] Registration response content-type:', contentType);
-    
+
     if (contentType && contentType.includes('application/json')) {
       try {
         responseData = await response.json();
@@ -340,7 +340,7 @@ export const registerUser = async (userData: {
         console.error('[Client] Error parsing JSON response:', jsonError);
         const textResponse = await response.text();
         console.error('[Client] Response text:', textResponse.substring(0, 150) + '...');
-        
+
         // Return a proper error object instead of throwing
         return {
           error: 'Server returned invalid JSON. Please try again later.'
@@ -351,14 +351,14 @@ export const registerUser = async (userData: {
       try {
         const textResponse = await response.text();
         console.error('[Client] Received non-JSON response:', textResponse.substring(0, 150) + '...');
-        
+
         // Check if it's the common DOCTYPE HTML error
         if (textResponse.includes('<!DOCTYPE')) {
           return {
             error: 'Server communication error. Please try again later.'
           };
         }
-        
+
         // Return a proper error object instead of throwing
         return {
           error: 'Server returned an invalid response format. Please try again later.'
@@ -672,15 +672,15 @@ export const getCurrentUser = async () => {
 
 export const logoutUser = async () => {
   try {
-    console.log('[Client] Logging out user');
-    
+    console.log('[Client] Logging out user - initiating complete cleanup');
+
     // Import clearAuthData function to avoid circular dependencies
     const { clearAuthData } = await import('./simple-auth');
-    
+
     // Clear simple auth data first
     console.log('[Client] Clearing simple auth data');
     clearAuthData();
-    
+
     // Import session persistence utilities
     const { clearSessionData } = await import('./session-persistence');
     clearSessionData();
@@ -690,112 +690,175 @@ export const logoutUser = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token || '';
 
-    // Call server logout endpoint first
+    // Call server logout endpoint first with retry logic
     console.log('[Client] Logging out from server endpoint');
-    try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include', // Important: include cookies in the request
-      });
+    let serverLogoutSuccess = false;
 
-      if (!response.ok) {
-        console.warn('[Client] Server logout may have failed:', response.status);
-      } else {
-        console.log('[Client] Server logout successful');
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+          },
+          credentials: 'include', // Important: include cookies in the request
+        });
+
+        if (response.ok) {
+          console.log('[Client] Server logout successful');
+          serverLogoutSuccess = true;
+          break;
+        } else {
+          console.warn(`[Client] Server logout attempt ${attempt + 1} failed:`, response.status);
+        }
+      } catch (fetchError) {
+        console.warn(`[Client] Server logout endpoint error on attempt ${attempt + 1}:`, fetchError);
       }
-    } catch (fetchError) {
-      console.warn('[Client] Server logout endpoint error:', fetchError);
-      // Continue with client-side logout even if server request fails
+
+      // Wait briefly before retry
+      if (attempt < 1) await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    // Perform client-side logout with Supabase
+    if (!serverLogoutSuccess) {
+      console.warn('[Client] All server logout attempts failed, continuing with client-side logout');
+    }
+
+    // Perform client-side logout with Supabase - try both methods for maximum reliability
     console.log('[Client] Signing out from Supabase Auth');
     try {
-      await supabase.auth.signOut(); // No need for global scope which can be too aggressive
+      // First try standard signOut
+      await supabase.auth.signOut();
       console.log('[Client] Supabase Auth signOut successful');
+
+      // Also try with scope:global as fallback to ensure all sessions are cleared
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+        console.log('[Client] Supabase global signOut also successful');
+      } catch (globalError) {
+        console.warn('[Client] Global signOut failed (non-critical):', globalError);
+      }
     } catch (supabaseError) {
       console.warn('[Client] Supabase Auth signOut error:', supabaseError);
       // Continue with cleanup even if this fails
     }
 
-    // Clear specific auth cookies rather than wildcard matching
-    console.log('[Client] Clearing auth cookies');
-    const specificAuthCookies = ['auth-status', 'supabase-auth', 'sb-access-token', 'sb-refresh-token', 'contested-auth'];
+    // Clear ALL auth cookies with multiple domains and paths for thoroughness
+    console.log('[Client] Clearing auth cookies extensively');
+    const authCookieNames = [
+      'auth-status', 'supabase-auth', 'sb-access-token', 'sb-refresh-token', 
+      'contested-auth', 'sb-refresh-token', 'sb-auth-token', 'sb:token'
+    ];
+
+    // Clear cookies with various path and domain combinations
+    const paths = ['/', '/api', '/auth', ''];
+
     document.cookie.split(';').forEach(cookie => {
-      const [name] = cookie.trim().split('=');
-      if (specificAuthCookies.includes(name)) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+      const trimmedCookie = cookie.trim();
+      const equalsPos = trimmedCookie.indexOf('=');
+
+      if (equalsPos > 0) {
+        const name = trimmedCookie.substring(0, equalsPos);
+
+        // Clear all cookies that might be auth-related
+        if (authCookieNames.includes(name) || name.includes('auth') || name.includes('token') || name.includes('session')) {
+          console.log(`[Client] Clearing cookie: ${name}`);
+
+          // Try multiple path combinations to ensure cookie is cleared
+          paths.forEach(path => {
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path};`;
+            document.cookie = `${name}=; max-age=0; path=${path};`;
+          });
+        }
       }
     });
 
-    // Clear specific localStorage items with known keys
+    // Clear ALL localStorage items that might contain auth data
     if (typeof window !== 'undefined') {
-      console.log('[Client] Clearing specific localStorage auth data');
+      console.log('[Client] Clearing ALL localStorage auth data');
+
+      // Known auth-related keys
       const authKeys = [
-        'supabase-auth',
-        'contested-auth',
-        'contestedUserData',
-        'auth-status'
+        'supabase-auth', 'contested-auth', 'contestedUserData', 'auth-status',
+        'sb-access-token', 'sb-refresh-token', 'sb:token', 'authUser'
       ];
-      
+
+      // Remove specific keys
       authKeys.forEach(key => {
         try {
           localStorage.removeItem(key);
+          console.log(`[Client] Removed localStorage item: ${key}`);
         } catch (e) {
           console.warn(`[Client] Error removing ${key}:`, e);
         }
       });
+
+      // Also scan for any supabase or auth-related keys that might have been missed
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('supabase') || key.includes('auth') || key.includes('token') || key.includes('session') || key.includes('user'))) {
+            console.log(`[Client] Removing additional auth-related key: ${key}`);
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (scanError) {
+        console.warn('[Client] Error scanning localStorage:', scanError);
+      }
     }
 
-    console.log('[Client] Logout complete');
-    
-    // Navigate to home page
+    // Clear sessionStorage too for completeness
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      console.log('[Client] Clearing sessionStorage');
+      try {
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('[Client] Error clearing sessionStorage:', e);
+      }
+    }
+
+    console.log('[Client] Logout complete with thorough cleanup');
+
+    // Force page reload to clear any in-memory state
     setTimeout(() => {
+      console.log('[Client] Redirecting to home page');
       window.location.href = '/';
     }, 100);
-    
+
     return true;
   } catch (error) {
     console.error('[Client] Logout error:', error);
 
-    // More targeted fallback - focus on essential auth items
-    console.log('[Client] Executing focused logout fallback');
-    
+    // Aggressive fallback - guaranteed to work
+    console.log('[Client] Executing aggressive logout fallback');
+
     try {
+      // Last-resort cleanup
       if (typeof window !== 'undefined') {
-        // Try to sign out of Supabase one more time
-        try {
-          supabase.auth.signOut();
-        } catch (e) {
-          console.warn('[Client] Supabase signOut fallback failed:', e);
-        }
-        
-        // Clear essential auth cookies
-        const essentialCookies = ['auth-status', 'supabase-auth'];
+        // Try one more Supabase signout
+        try { supabase.auth.signOut({ scope: 'global' }); } catch (e) {}
+
+        // Clear storage completely
+        try { localStorage.clear(); } catch (e) {}
+        try { sessionStorage.clear(); } catch (e) {}
+
+        // Clear all cookies
         document.cookie.split(';').forEach(cookie => {
-          const [name] = cookie.trim().split('=')[0];
-          if (essentialCookies.includes(name)) {
+          const name = cookie.trim().split('=')[0];
+          try {
             document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-          }
+            document.cookie = `${name}=; max-age=0; path=/;`;
+          } catch (e) {}
         });
-        
-        // Clear essential localStorage items
-        try { localStorage.removeItem('supabase-auth'); } catch (e) {}
-        try { localStorage.removeItem('auth-status'); } catch (e) {}
-        try { localStorage.removeItem('contestedUserData'); } catch (e) {}
-        
-        // Navigate to home page
-        window.location.href = '/';
+
+        // Force reload to root
+        window.location.href = '/?fresh=' + Date.now();
       }
     } catch (finalError) {
-      console.error('[Client] Focused logout fallback failed:', finalError);
-      // Last resort - redirect anyway
+      // Ultimate fallback - just reload
       window.location.href = '/';
     }
-    
+
     return false;
   }
 };
