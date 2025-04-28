@@ -75,23 +75,36 @@ export function setupSupabaseAuth(app: Express) {
         .single();
       
       if (userError || !userRecord) {
-        console.log("User authenticated but needs onboarding:", authData.user.id);
+        // Try again with auth_id which is the correct identifier
+        const { data: authIdRecord, error: authIdError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("auth_id", authData.user.id)
+          .single();
+          
+        if (authIdError || !authIdRecord) {
+          console.log("User authenticated but needs onboarding:", authData.user.id);
+          
+          // User exists in auth but not in users table - they need to complete onboarding
+          return res.status(200).json({
+            user: {
+              id: authData.user.id,
+              email: email,
+              role: authData.user.user_metadata?.role || "user"
+            },
+            needsProfile: true,
+            redirectTo: "/onboarding",
+            session: {
+              access_token: authData.session.access_token,
+              refresh_token: authData.session.refresh_token,
+              expires_at: authData.session.expires_at
+            }
+          });
+        }
         
-        // User exists in auth but not in users table - they need to complete onboarding
-        return res.status(200).json({
-          user: {
-            id: authData.user.id,
-            email: email,
-            role: authData.user.user_metadata?.role || "user"
-          },
-          needsProfile: true,
-          redirectTo: "/onboarding",
-          session: {
-            access_token: authData.session.access_token,
-            refresh_token: authData.session.refresh_token,
-            expires_at: authData.session.expires_at
-          }
-        });
+        // Found user by auth_id, use this record
+        userRecord = authIdRecord;
+        console.log("Found user by auth_id:", userRecord.role);
       }
       // Set cookies
       const sessionObj = {

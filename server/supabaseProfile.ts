@@ -56,17 +56,41 @@ async function safelyUpdateUserProfile(userId: string, profileId: string | numbe
  */
 export async function getAthleteByUserId(userId: string) {
   try {
+    // Try getting by user_id first
     const { data, error } = await supabase
       .from('athlete_profiles')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching athlete profile:', error);
-      return null;
+    if (!error && data) {
+      console.log('Found athlete profile by user_id:', userId);
+      return data;
     }
-    return data;
+    
+    // Try getting by auth_id as fallback
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_id', userId)
+      .maybeSingle();
+      
+    if (userData?.id) {
+      console.log('Found user id for auth_id:', userData.id);
+      const { data: profileData, error: profileError } = await supabase
+        .from('athlete_profiles')
+        .select('*')
+        .eq('user_id', userData.id)
+        .maybeSingle();
+        
+      if (!profileError && profileData) {
+        console.log('Found athlete profile by auth_id lookup');
+        return profileData;
+      }
+    }
+    
+    console.error('Could not find athlete profile for user:', userId);
+    return null;
   } catch (err) {
     console.error('Exception fetching athlete profile:', err);
     return null;
@@ -78,17 +102,41 @@ export async function getAthleteByUserId(userId: string) {
  */
 export async function getBusinessByUserId(userId: string) {
   try {
+    // Try getting by user_id first
     const { data, error } = await supabase
       .from('business_profiles')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching business profile:', error);
-      return null;
+    if (!error && data) {
+      console.log('Found business profile by user_id:', userId);
+      return data;
     }
-    return data;
+    
+    // Try getting by auth_id as fallback
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_id', userId)
+      .maybeSingle();
+      
+    if (userData?.id) {
+      console.log('Found user id for auth_id:', userData.id);
+      const { data: profileData, error: profileError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', userData.id)
+        .maybeSingle();
+        
+      if (!profileError && profileData) {
+        console.log('Found business profile by auth_id lookup');
+        return profileData;
+      }
+    }
+    
+    console.error('Could not find business profile for user:', userId);
+    return null;
   } catch (err) {
     console.error('Exception fetching business profile:', err);
     return null;
