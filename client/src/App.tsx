@@ -22,6 +22,7 @@ import { SimpleProtectedRoute } from "@/lib/simple-protected-route";
 import { isAuthenticated, getStoredAuthData, initializeAuthFromStorage } from "@/lib/simple-auth";
 import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { SessionRefreshHandler } from "@/components/SessionRefreshHandler";
 
 // Define a ProtectedRoute component
 const ProtectedRoute = ({ 
