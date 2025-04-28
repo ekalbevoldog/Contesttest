@@ -5,10 +5,14 @@
  * and ensuring users maintain their authentication status across
  * page reloads, browser sessions, and token expirations.
  * 
- * OPTIMIZED VERSION - Reduces redundant storage operations
+ * OPTIMIZED VERSION - Reduces redundant storage operations and logging
  */
 
 import { supabase } from './supabase-client';
+import { createLogger } from './logger';
+
+// Create module-specific logger
+const logger = createLogger('SessionPersistence');
 
 // Constants for local storage keys
 const SESSION_STORAGE_KEY = 'supabase-auth';
