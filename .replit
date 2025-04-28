@@ -8,11 +8,15 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "autoscale"
 run = ["sh", "-c", "NODE_ENV=production node server.js"]
-build = ["sh", "-c", "node scripts/fix-schema.js && NODE_ENV=production npm run build"]
+build = ["sh", "-c", "node scripts/fix-schema.js && NODE_ENV=production npm run build && node scripts/verify-build.js"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[deployment.rewrites]]
+from = "/*"
+to = "/index.html"
 
 [workflows]
 runButton = "Dev"

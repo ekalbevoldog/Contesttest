@@ -118,8 +118,8 @@ async function startServer() {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       
-      // Serve static files from client/dist
-      const clientDist = path.join(__dirname, 'client/dist');
+      // Serve static files from dist/public (Vite's output directory)
+      const clientDist = path.join(__dirname, 'dist/public');
       app.use(express.static(clientDist));
       
       // API endpoint for health checks
