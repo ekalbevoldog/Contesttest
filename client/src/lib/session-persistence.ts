@@ -4,6 +4,8 @@
  * This module contains utilities for enhancing session persistence
  * and ensuring users maintain their authentication status across
  * page reloads, browser sessions, and token expirations.
+ * 
+ * OPTIMIZED VERSION - Reduces redundant storage operations
  */
 
 import { supabase } from './supabase-client';
@@ -12,6 +14,67 @@ import { supabase } from './supabase-client';
 const SESSION_STORAGE_KEY = 'supabase-auth';
 const AUTH_STATUS_KEY = 'auth-status';
 const USER_DATA_KEY = 'contestedUserData';
+
+// Cache storage operations to prevent redundant reads/writes
+const storageCache = {
+  sessionData: null as any,
+  userData: null as any,
+  authStatus: null as string | null,
+  lastRead: 0,
+  // Cache validity period in milliseconds (10 seconds)
+  cacheValidityPeriod: 10000
+};
+
+/**
+ * Helper to get session data from storage with caching
+ */
+function getSessionData(): any {
+  const now = Date.now();
+  
+  // If cache is valid, return cached data
+  if (storageCache.sessionData && 
+      (now - storageCache.lastRead < storageCache.cacheValidityPeriod)) {
+    return storageCache.sessionData;
+  }
+  
+  // Cache is invalid or empty, read from storage
+  try {
+    const data = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (data) {
+      storageCache.sessionData = JSON.parse(data);
+    } else {
+      storageCache.sessionData = null;
+    }
+    storageCache.lastRead = now;
+    return storageCache.sessionData;
+  } catch (error) {
+    console.error('[SessionPersistence] Error reading session data:', error);
+    return null;
+  }
+}
+
+/**
+ * Helper to get auth status from storage with caching
+ */
+function getAuthStatus(): string | null {
+  const now = Date.now();
+  
+  // If cache is valid, return cached data
+  if (storageCache.authStatus !== null && 
+      (now - storageCache.lastRead < storageCache.cacheValidityPeriod)) {
+    return storageCache.authStatus;
+  }
+  
+  // Cache is invalid or empty, read from storage
+  try {
+    storageCache.authStatus = localStorage.getItem(AUTH_STATUS_KEY);
+    storageCache.lastRead = now;
+    return storageCache.authStatus;
+  } catch (error) {
+    console.error('[SessionPersistence] Error reading auth status:', error);
+    return null;
+  }
+}
 
 /**
  * Persists the session data to local storage
@@ -23,19 +86,33 @@ export function persistSession(session: any, userData?: any) {
   if (!session || !session.access_token) return false;
   
   try {
-    // 1. Store the session data
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
+    // Prepare session data object
+    const sessionDataObj = {
       access_token: session.access_token,
       refresh_token: session.refresh_token,
       expires_at: session.expires_at,
       user_id: session.user?.id,
       timestamp: Date.now()
-    }));
+    };
     
-    // 2. Set the authentication status flag
+    // 1. Update cache first
+    storageCache.sessionData = sessionDataObj;
+    storageCache.authStatus = 'authenticated';
+    if (userData) {
+      storageCache.userData = {
+        ...userData,
+        timestamp: Date.now()
+      };
+    }
+    storageCache.lastRead = Date.now();
+    
+    // 2. Store the session data
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionDataObj));
+    
+    // 3. Set the authentication status flag
     localStorage.setItem(AUTH_STATUS_KEY, 'authenticated');
     
-    // 3. Store any additional user data if provided
+    // 4. Store any additional user data if provided
     if (userData) {
       localStorage.setItem(USER_DATA_KEY, JSON.stringify({
         ...userData,
@@ -57,11 +134,11 @@ export function persistSession(session: any, userData?: any) {
  */
 export async function recoverSession(): Promise<boolean> {
   try {
-    // 1. Check if we have session data in local storage
-    const sessionData = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (!sessionData) return false;
-    
-    const parsedSession = JSON.parse(sessionData);
+    // 1. Get session data from cache or storage
+    const parsedSession = getSessionData();
+    if (!parsedSession) {
+      return false;
+    }
     
     // 2. Validate the session data has the necessary tokens
     if (!parsedSession.access_token || !parsedSession.refresh_token) {

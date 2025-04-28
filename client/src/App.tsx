@@ -281,11 +281,18 @@ function Router() {
             {/* Public routes accessible to everyone */}
             <Route path="/" component={Home} />
             <Route path="/onboarding" component={Onboarding} />
+            {/* Combined auth route */}
             <Route path="/auth" component={AuthPage} />
-            <Route path="/sign-in" component={SignIn} />
+            {/* Redirect /sign-in to /auth for consistency */}
+            <Route path="/sign-in">
+              {() => {
+                window.location.href = "/auth";
+                return null;
+              }}
+            </Route>
 
             {/* Onboarding routes - accessible after authentication */}
-            <ProtectedRoute path="/onboarding" component={Onboarding} />
+            <SimpleProtectedRoute path="/onboarding" component={Onboarding} />
 
             {/* Role-specific onboarding routes */}
             <ProtectedRoute 

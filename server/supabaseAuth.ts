@@ -38,7 +38,7 @@ export const verifySupabaseToken = async (
     
     // Set user data for the request
     req.user = {
-      id: data.user.id, // Supabase user IDs are always strings
+      id: data.user.id as any, // Handle type compatibility with both string and number IDs
       email: data.user.email || '',
       role: data.user.user_metadata?.role || 'user',
       ...(data.user.user_metadata || {})
