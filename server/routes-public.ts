@@ -1,3 +1,4 @@
+
 /**
  * This file contains public API routes for exposing 
  * necessary environment variables to the client.
@@ -112,6 +113,48 @@ export function registerPublicRoutes(app: express.Express) {
     res.json({
       session: activeSessions[id],
       success: true
+    });
+  });
+  
+  // Debug endpoint to test profile creation
+  app.post('/api/debug/profile', (req: Request, res: Response) => {
+    const { userId, userType, sessionId, name, email } = req.body;
+    
+    // Log the received data
+    console.log("Debug profile creation request:", {
+      userId,
+      userType,
+      sessionId,
+      name,
+      email
+    });
+    
+    // Check if all required fields are present
+    const missingFields = [];
+    if (!userId) missingFields.push("userId");
+    if (!userType) missingFields.push("userType");
+    if (!sessionId) missingFields.push("sessionId");
+    if (!name) missingFields.push("name");
+    if (!email) missingFields.push("email");
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        error: `Missing required fields: ${missingFields.join(", ")}`,
+        received: req.body
+      });
+    }
+    
+    // Return success if all fields are present
+    return res.status(200).json({
+      success: true,
+      message: "All required fields present for profile creation",
+      receivedData: {
+        userId,
+        userType,
+        sessionId,
+        name,
+        email
+      }
     });
   });
 }

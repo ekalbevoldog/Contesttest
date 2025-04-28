@@ -227,10 +227,12 @@ const sessionResetSchema = z.object({
 // Schema for profile submission
 const profileSchema = z.object({
   sessionId: z.string().min(1, "Session ID is required"),
+  userId: z.string().min(1, "User ID is required"),
   userType: z.enum(["athlete", "business"], { 
     required_error: "User type must be either 'athlete' or 'business'" 
   }),
   name: z.string().min(2, "Name is required"),
+  email: z.string().email("Valid email is required"),
 }).and(
   z.union([
     // Athlete specific fields
@@ -2938,3 +2940,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   return httpServer;
 }
+
+  // Special endpoint for Supabase profile creation
+  app.post("/api/supabase/profile", async (req: Request, res: Response) => {
+    try {
+      const { userId, userType, sessionId, name, email, ...profileDetails } = req.body;
+      
+      console.log("Supabase profile creation request:", {
+        userId,
+        userType,
+        sessionId,
+        name
+      });
+      
+      // Check for required fields
+      if (!userId || !userType || !sessionId) {
+        return res.status(400).json({
+          error: "Missing userId, userType or sessionId",
+          receivedData: {
+            userId,
+            userType,
+            sessionId
+          }
+        });
+      }
+      
+      // Create profile in Supabase based on user type
+      if (userType === "athlete") {
+        // Athlete profile
+        const { data, error } = await supabase
+          .from('athlete_profiles')
+          .insert({
+            user_id: userId,
+            name,
+            email,
+            sport: profileDetails.sport || "Not specified",
+            school: profileDetails.school || "Not specified",
+            division: profileDetails.division || "Not specified",
+            follower_count: parseInt(profileDetails.followerCount) || 0,
+            content_style: profileDetails.contentStyle || "",
+            compensation_goals: profileDetails.compensationGoals || "",
+            social_handles: profileDetails.socialHandles || null,
+            session_id: sessionId
+          })
+          .select();
+          
+        if (error) {
+          console.error("Error creating athlete profile:", error);
+          return res.status(500).json({
+            error: error.message,
+            details: error
+          });
+        }
+        
+        return res.status(201).json({
+          message: "Athlete profile created successfully",
+          profile: data && data.length > 0 ? data[0] : null
+        });
+      } else if (userType === "business") {
+        // Business profile
+        const { data, error } = await supabase
+          .from('business_profiles')
+          .insert({
+            user_id: userId,
+            name,
+            email,
+            business_type: profileDetails.businessType || "product",
+            industry: profileDetails.industry || "",
+            budget_min: profileDetails.budgetMin || 0,
+            budget_max: profileDetails.budgetMax || 0,
+            session_id: sessionId
+          })
+          .select();
+          
+        if (error) {
+          console.error("Error creating business profile:", error);
+          return res.status(500).json({
+            error: error.message,
+            details: error
+          });
+        }
+        
+        return res.status(201).json({
+          message: "Business profile created successfully",
+          profile: data && data.length > 0 ? data[0] : null
+        });
+      } else {
+        return res.status(400).json({
+          error: "Invalid user type. Must be 'athlete' or 'business'."
+        });
+      }
+    } catch (error) {
+      console.error("Error in Supabase profile creation:", error);
+      return res.status(500).json({
+        error: error instanceof Error ? error.message : "Unknown error creating profile"
+      });
+    }
+  });

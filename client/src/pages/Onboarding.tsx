@@ -381,8 +381,8 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  // Force session ID to be set immediately to bypass loading screen
-  const [sessionId, setSessionId] = useState<string | null>(`local-${Date.now()}`);
+  // Session management with better fallback mechanism
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   
   // Using REST API approach - no WebSockets needed
@@ -442,6 +442,9 @@ export default function Onboarding() {
         if (data.sessionId) {
           console.log("Created API session ID:", data.sessionId);
           setSessionId(data.sessionId);
+          
+          // Also store session ID in localStorage for persistence
+          localStorage.setItem('contested-session-id', data.sessionId);
         } else {
           throw new Error("No session ID returned");
         }
@@ -451,10 +454,20 @@ export default function Onboarding() {
         const fallbackId = `local-${Date.now()}`;
         console.log("Created local fallback session ID:", fallbackId);
         setSessionId(fallbackId);
+        
+        // Store fallback ID in localStorage
+        localStorage.setItem('contested-session-id', fallbackId);
       }
     };
     
-    createSession();
+    // Check if we have a session ID in localStorage first
+    const storedSessionId = localStorage.getItem('contested-session-id');
+    if (storedSessionId) {
+      console.log("Using stored session ID:", storedSessionId);
+      setSessionId(storedSessionId);
+    } else {
+      createSession();
+    }
   }, []);
   
   // Handle form data changes
@@ -951,13 +964,19 @@ export default function Onboarding() {
       try {
         console.log("==== ONBOARDING FORM DATA COLLECTED ====");
         console.log("Complete form data:", formData);
+        console.log("Using session ID:", sessionId);
+        
+        if (!sessionId) {
+          throw new Error("No session ID available. Please refresh the page and try again.");
+        }
 
         // 1️⃣ Register user via API
         const userData = {
           email: formData.email,
           password: formData.password,
           fullName: formData.name,
-          role: formData.userType
+          role: formData.userType,
+          sessionId: sessionId // Include sessionId with registration
         };
         console.log("Registering via /api/auth/register");
         const response = await fetch('/api/auth/register', {
@@ -996,6 +1015,7 @@ export default function Onboarding() {
           userType: formData.userType,
           name: formData.name,
           email: formData.email,
+          sessionId: sessionId, // Include sessionId with profile creation
         };
 
         if (formData.userType === "athlete") {
@@ -1044,15 +1064,25 @@ export default function Onboarding() {
         }
 
         // 3️⃣ Create profile record
-        console.log("Creating profile via /api/supabase/profile");
+        console.log("Creating profile via /api/supabase/profile with data:", profileData);
         const profileResp = await fetch('/api/supabase/profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(profileData),
         });
+        
         if (!profileResp.ok) {
-          const text = await profileResp.text();
-          throw new Error(`Profile creation failed: ${text || profileResp.statusText}`);
+          let errorMessage = "Profile creation failed";
+          try {
+            const errorData = await profileResp.json();
+            console.error("Profile creation error response:", errorData);
+            errorMessage = errorData.message || errorData.error || `${errorMessage}: ${profileResp.status} ${profileResp.statusText}`;
+          } catch (parseError) {
+            const text = await profileResp.text();
+            console.error("Profile creation error (text):", text);
+            errorMessage = `${errorMessage}: ${text || profileResp.statusText}`;
+          }
+          throw new Error(errorMessage);
         }
 
         console.log("Profile created successfully");
