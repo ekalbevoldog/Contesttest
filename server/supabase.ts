@@ -1,97 +1,34 @@
+// services/supabase.ts
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
-import ws from 'ws'; // Import WebSocket for server-side
 
 // Load environment variables
 dotenv.config();
 
-// Extract Supabase credentials
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Pull from your Replit Secrets or .env:
+//   SUPABASE_URL=https://<project-ref>.supabase.co
+//   SUPABASE_ANON_KEY=<your-anon-key>
+//   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+const SUPABASE_URL          = process.env.SUPABASE_URL!;
+const SUPABASE_ANON_KEY     = process.env.SUPABASE_ANON_KEY!;
+const SUPABASE_SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Validate Supabase credentials
-if (!supabaseUrl) {
-  console.error('SUPABASE_URL is missing or empty');
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_KEY) {
+  console.error('⛔ Missing SUPABASE env vars:', {
+    URL:    !!SUPABASE_URL,
+    ANON:   !!SUPABASE_ANON_KEY,
+    SRV:    !!SUPABASE_SERVICE_KEY,
+  });
 }
 
-if (!supabaseKey) {
-  console.error('SUPABASE_KEY is missing or empty');
-}
-
-if (!supabaseServiceKey) {
-  console.error('SUPABASE_SERVICE_ROLE_KEY is missing or empty');
-}
-
-// Log essential environment variable status (safe partial info for debugging)
-console.log(`Supabase URL available: ${!!supabaseUrl}`);
-if (supabaseUrl) {
-  console.log(`URL starts with: ${supabaseUrl.substring(0, 10)}...`);
-}
-
-console.log(`Supabase Key available: ${!!supabaseKey}`);
-console.log(`Supabase Service Key available: ${!!supabaseServiceKey}`);
-
-// Create options with fetch compatibility for Replit environment
-const supabaseOptions = {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true
-  },
-  global: {
-    fetch: fetch as any,
-    headers: {
-      'X-Client-Info': 'nil-connect-server'
-    }
-  },
-  // Completely disable realtime to avoid interference with our custom WebSocket
-  realtime: {
-    params: {
-      eventsPerSecond: 0 // Set to 0 to disable
-    }
-  }
-};
-
-// Configure WebSocket for Supabase only - NO NEON CONFIGURATION
-
-// Create the standard Supabase client with anon key (for normal operations)
+// Client for public reads
 export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseKey || '',
-  supabaseOptions
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );
 
-// Create an admin client with service role key (for admin operations)
+// Client for all server‐side writes & RLS‐bypassing operations
 export const supabaseAdmin = createClient(
-  supabaseUrl || '',
-  supabaseServiceKey || '',
-  supabaseOptions
+  SUPABASE_URL,
+  SUPABASE_SERVICE_KEY
 );
-
-console.log('Supabase clients initialized with provided credentials');
-
-// Test connection
-export const testSupabaseConnection = async () => {
-  try {
-    console.log('Testing Supabase connection...');
-    // Simple query to test connection
-    const { data, error } = await supabase.from('sessions').select('count').limit(1);
-    
-    if (error) {
-      if (error.code === '42P01') {
-        // Table not found is okay during initial setup
-        console.log('Table not found, but connection succeeded');
-        return true;
-      }
-      console.error('Error connecting to Supabase:', error.message);
-      return false;
-    }
-    
-    console.log('Successfully connected to Supabase');
-    return true;
-  } catch (err) {
-    console.error('Error connecting to Supabase:', err);
-    return false;
-  }
-};

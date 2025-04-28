@@ -102,3 +102,32 @@ CREATE TABLE IF NOT EXISTS business_profiles (
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_user_id ON athlete_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_business_profiles_user_id ON business_profiles(user_id);
+
+-- link athlete_profiles → users
+ALTER TABLE public.athlete_profiles
+  ADD CONSTRAINT athlete_profiles_user_id_fkey
+    FOREIGN KEY (user_id)
+    REFERENCES public.users (id)
+    ON DELETE CASCADE;
+
+-- link business_profiles → users
+ALTER TABLE public.business_profiles
+  ADD CONSTRAINT business_profiles_user_id_fkey
+    FOREIGN KEY (user_id)
+    REFERENCES public.users (id)
+    ON DELETE CASCADE;
+
+-- fix partnership_offers → athlete_profiles typo
+ALTER TABLE public.partnership_offers
+  DROP CONSTRAINT IF EXISTS partnership_offers_athlete_fkey,
+  ADD CONSTRAINT partnership_offers_athlete_fkey
+    FOREIGN KEY (athlete_id)
+    REFERENCES public.athlete_profiles (id)
+    ON DELETE CASCADE;
+
+-- enforce unique session_id for safe upsert
+ALTER TABLE public.athlete_profiles
+  ADD CONSTRAINT athlete_profiles_session_id_key UNIQUE (session_id);
+
+ALTER TABLE public.business_profiles
+  ADD CONSTRAINT business_profiles_session_id_key UNIQUE (session_id);
