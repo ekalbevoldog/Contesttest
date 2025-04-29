@@ -1,4 +1,35 @@
 import { supabase } from "../supabase.js";
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+// Add this main execution block to run the script directly
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMainModule) {
+  // Get user ID from command line or use default
+  const userId = process.argv[2] || 'f9a17d43-cdd4-4981-9361-661928796e1d'; // Blake's user ID
+  
+  console.log(`Running business profile fix for user ${userId}`);
+  
+  createBusinessProfileIfNeeded(userId)
+    .then(result => {
+      if (result) {
+        console.log('Successfully created business profile');
+      } else {
+        console.log('Failed to create business profile or it already exists');
+      }
+      
+      // Also run the fix for all business users
+      return fixAllBusinessProfiles();
+    })
+    .then(() => {
+      console.log('Completed business profile fixes');
+      process.exit(0);
+    })
+    .catch(err => {
+      console.error('Error:', err);
+      process.exit(1);
+    });
+}
 
 /**
  * Creates a placeholder business profile for a user if one doesn't exist
@@ -45,10 +76,11 @@ export async function createBusinessProfileIfNeeded(userId: string): Promise<boo
     console.log(`[Business Profile] Creating placeholder business profile for user ${userId}`);
     
     // Determine required fields from error messages in previous attempts
+    // Try different values for company_type since 'Other' wasn't accepted
     const businessData = {
       user_id: userId,
       company_name: `Business ${userData.email.split('@')[0]}`, // Generate a placeholder name
-      company_type: 'Other' // Default type
+      company_type: 'Products' // Try specific value from enum
     };
     
     const { data: newProfile, error: createError } = await supabase
