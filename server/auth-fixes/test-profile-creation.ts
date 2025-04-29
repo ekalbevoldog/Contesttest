@@ -3,7 +3,7 @@ import { ensureBusinessProfile } from "./auto-create-business-profile";
 
 /**
  * This is a simple test script to verify that the business profile 
- * creation is working properly.
+ * creation is working properly. Uses API-only approach.
  */
 async function testBusinessProfileCreation() {
   try {
@@ -27,19 +27,19 @@ async function testBusinessProfileCreation() {
     // Check for existing profile with API
     const { data: existingProfile, error: profileError } = await supabase
       .from('business_profiles')
-      .select('id')
+      .select('*')
       .eq('user_id', testUser.id)
       .maybeSingle();
     
     // If profile exists, delete it for testing
     if (existingProfile) {
-      console.log(`User already has business profile: ${existingProfile.id}`);
+      console.log(`User already has business profile:`, existingProfile);
       
       // For testing, let's delete the existing profile
       console.log('Deleting existing profile for testing purposes...');
       
       try {
-        // Try with API first
+        // Use API to delete the profile
         const { error: deleteError } = await supabase
           .from('business_profiles')
           .delete()
@@ -47,15 +47,8 @@ async function testBusinessProfileCreation() {
         
         if (deleteError) {
           console.error('Error deleting profile with API:', deleteError.message);
-          // Try with direct SQL
-          const { error: sqlDeleteError } = await supabase.rpc('exec_sql', {
-            sql: `DELETE FROM business_profiles WHERE user_id = '${testUser.id}' RETURNING id`
-          });
-          
-          if (sqlDeleteError) {
-            console.error('Error deleting profile with SQL:', sqlDeleteError.message);
-            return;
-          }
+          console.log('Skipping test as we could not prepare the test environment');
+          return;
         }
         
         console.log('Existing profile deleted successfully');
@@ -82,23 +75,7 @@ async function testBusinessProfileCreation() {
     
     if (checkError) {
       console.error('Error checking for new profile with API:', checkError.message);
-      
-      // Fall back to SQL
-      try {
-        const { data: sqlProfiles } = await supabase.rpc('exec_sql', {
-          sql: `SELECT * FROM business_profiles WHERE user_id = '${testUser.id}' LIMIT 1`
-        });
-        
-        if (sqlProfiles && sqlProfiles.length > 0) {
-          console.log('Success! New business profile created (via SQL):');
-          console.log(JSON.stringify(sqlProfiles[0], null, 2));
-        } else {
-          console.error('Failed to create business profile - no profile found after creation attempt');
-        }
-      } catch (sqlError) {
-        console.error('Error checking with SQL:', sqlError);
-      }
-      
+      console.error('Failed to create business profile - could not verify creation');
       return;
     }
     
