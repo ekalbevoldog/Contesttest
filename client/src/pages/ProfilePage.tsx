@@ -45,16 +45,8 @@ export default function ProfilePage() {
         userMetadataRole: user?.user_metadata?.role
       });
       
-      // Hardcode role for users with specific emails during this transition period
-      const email = user?.email?.toLowerCase();
-      let role = 'visitor';
-      
-      if (email === 'blake@contested.com') {
-        console.log('[ProfilePage] Detected blake@contested.com - setting role to business');
-        role = 'business';
-      } else {
-        role = userData?.userType || userData?.role || user?.role || user?.user_metadata?.role || 'visitor';
-      }
+      // Use consistent role determination logic across the application
+      const role = userData?.userType || userData?.role || user?.role || user?.user_metadata?.role || 'visitor';
       
       console.log('[ProfilePage] Final detected role/userType:', role);
       

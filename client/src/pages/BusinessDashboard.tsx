@@ -82,20 +82,24 @@ export default function BusinessDashboard() {
     // If we're still loading the auth state, wait
     if (isLoadingAuth) return;
     
-    console.log('BusinessDashboard: fetching profile data');
+    console.log('BusinessDashboard: fetching profile data, auth state:', { 
+      user, 
+      authProfile,
+      role: user?.role || user?.userType 
+    });
     
     // First priority: use profile from auth context if available
-    if (authProfile && user?.role === 'business') {
-      console.log('Using profile data from auth context');
+    if (authProfile) {
+      console.log('Using profile data from auth context:', authProfile);
       
       const profileToUse: ProfileData = {
         id: typeof authProfile.id === 'number' ? authProfile.id : 
             authProfile.id ? parseInt(authProfile.id as string, 10) : undefined,
-        name: authProfile.name || '',
+        name: authProfile.name || authProfile.business_name || '',
         productType: authProfile.productType || authProfile.product_type || '',
         audienceGoals: authProfile.audienceGoals || authProfile.audience_goals || '',
         values: authProfile.values || '',
-        email: authProfile.email || user.email || '',
+        email: authProfile.email || user?.email || '',
         industry: authProfile.industry || '',
         businessType: authProfile.businessType || authProfile.business_type || '',
         companySize: authProfile.companySize || authProfile.company_size || '',

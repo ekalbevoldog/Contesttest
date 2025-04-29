@@ -13,15 +13,12 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
   try {
     console.log(`[AutoProfile] Checking if business profile exists for user ${userId}`);
     
-    // Check if business profile already exists
-    // Use direct SQL query to avoid schema cache issues
-    const { data: existingProfileData, error: profileError } = await supabase.rpc('run_sql', {
-      sql: `SELECT id FROM business_profiles WHERE user_id = '${userId}'`
-    });
-    
-    const existingProfile = Array.isArray(existingProfileData) && existingProfileData.length > 0 
-      ? existingProfileData[0] 
-      : null;
+    // Check if business profile already exists using standard Supabase query
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('business_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
       
     if (profileError && profileError.code !== 'PGRST116') {
       // Unexpected error - log but continue to create profile
@@ -48,19 +45,18 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
       return false;
     }
     
-    // Create business profile with defaults
-    // Use direct SQL query for inserting to avoid schema cache issues
-    const { data: insertResult, error: insertError } = await supabase.rpc('run_sql', {
-      sql: `
-        INSERT INTO business_profiles (user_id, business_name, email, business_type, created_at)
-        VALUES ('${userId}', 'My Business', '${businessUser.email}', 'service', CURRENT_TIMESTAMP)
-        RETURNING id
-      `
-    });
-    
-    const newProfile = Array.isArray(insertResult) && insertResult.length > 0 
-      ? insertResult[0] 
-      : null;
+    // Create business profile with defaults using standard Supabase query
+    const { data: newProfile, error: insertError } = await supabase
+      .from('business_profiles')
+      .insert({
+        user_id: userId,
+        name: 'My Business',
+        email: businessUser.email,
+        business_type: 'service',
+        created_at: new Date().toISOString()
+      })
+      .select('id')
+      .single();
       
     if (insertError) {
       console.error(`[AutoProfile] Failed to create business profile: ${insertError.message}`);
