@@ -1,5 +1,6 @@
 import { Express, Request, Response, NextFunction } from "express";
 import { supabase, supabaseAdmin } from "./supabase.js";
+import { ensureBusinessProfile } from "./auth-fixes/auto-create-business-profile.js";
 
 // Extend Express Request to include user
 declare module 'express-serve-static-core' {
@@ -128,6 +129,13 @@ export function setupSupabaseAuth(app: Express) {
 
         // Found user by auth_id, use this record
         console.log("[Auth] Found user by auth_id:", authIdRecord.role);
+        
+        // If user is a business, ensure they have a business profile
+        if (authIdRecord.role === 'business') {
+          console.log(`[Auth] Business user logged in, ensuring business profile exists`);
+          await ensureBusinessProfile(authIdRecord.id.toString(), authIdRecord.role);
+        }
+        
         return res.status(200).json({
           user: {
             id: authData.user.id,
@@ -185,6 +193,12 @@ export function setupSupabaseAuth(app: Express) {
       });
       
       console.log("[Auth] Login successful, returning user data");
+      
+      // If user is a business, ensure they have a business profile
+      if (userRecord.role === 'business') {
+        console.log(`[Auth] Business user logged in by email, ensuring business profile exists`);
+        await ensureBusinessProfile(userRecord.id.toString(), userRecord.role);
+      }
       
       // Return user + session
       return res.status(200).json({
@@ -268,6 +282,13 @@ export function setupSupabaseAuth(app: Express) {
         }
         
         console.log(`[Auth] User profile found: ${data.id}`);
+        
+        // If user is a business, ensure they have a business profile
+        if (data.role === 'business') {
+          console.log(`[Auth] Business user profile check, ensuring business profile exists`);
+          await ensureBusinessProfile(data.id.toString(), data.role);
+        }
+        
         return res.status(200).json({ user: data });
       } catch (err) {
         console.error("[Auth] Whoami error:", err);
@@ -394,6 +415,13 @@ export function setupSupabaseAuth(app: Express) {
         }
         
         console.log(`[Auth] Successfully updated user with auth_id: ${updatedUser.id}`);
+        
+        // If user is a business, ensure they have a business profile
+        if (dbRole === 'business') {
+          console.log(`[Auth] Business user detected, ensuring business profile exists`);
+          await ensureBusinessProfile(updatedUser.id.toString(), dbRole);
+        }
+        
         return res.status(200).json({ 
           message: "User account linked successfully", 
           user: updatedUser,
@@ -486,6 +514,12 @@ export function setupSupabaseAuth(app: Express) {
           role: data.role,
           auth_id: data.auth_id
         });
+        
+        // If user is a business, ensure they have a business profile
+        if (dbRole === 'business') {
+          console.log(`[Auth] New business user detected, creating business profile`);
+          await ensureBusinessProfile(data.id.toString(), dbRole);
+        }
         
         return res.status(201).json({ 
           message: "Registered successfully", 

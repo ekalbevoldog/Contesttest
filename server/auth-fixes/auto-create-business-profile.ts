@@ -18,8 +18,8 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
     
     console.log(`[Profile] Ensuring business profile exists for business user ${userId}`);
     return await createBusinessProfileIfNeeded(userId);
-  } catch (error) {
-    console.error(`[Profile] Error ensuring business profile: ${error.message}`);
+  } catch (error: any) {
+    console.error(`[Profile] Error ensuring business profile: ${error?.message || error}`);
     return false;
   }
 }
