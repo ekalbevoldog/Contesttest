@@ -116,14 +116,24 @@ export async function runCompleteMigration() {
       const statement = statements[i];
       if (!statement || statement.trim().length === 0) continue;
       
-      console.log(`Executing statement ${i + 1}/${statements.length}`);
-      const success = await executeSql(statement);
+      // Log a preview of the statement for better debugging
+      const statementPreview = statement.length > 100 
+        ? statement.substring(0, 100) + '...' 
+        : statement;
+      console.log(`Executing statement ${i + 1}/${statements.length}: ${statementPreview}`);
       
-      if (!success) {
-        console.error(`Failed to execute statement ${i + 1}/${statements.length}`);
+      try {
+        const success = await executeSql(statement);
+        
+        if (!success) {
+          console.error(`Failed to execute statement ${i + 1}/${statements.length}`);
+          // Continue with next statement even if one fails
+        } else {
+          console.log(`Successfully executed statement ${i + 1}/${statements.length}`);
+        }
+      } catch (error) {
+        console.error(`Exception executing statement ${i + 1}/${statements.length}:`, error);
         // Continue with next statement even if one fails
-      } else {
-        console.log(`Successfully executed statement ${i + 1}/${statements.length}`);
       }
     }
     
