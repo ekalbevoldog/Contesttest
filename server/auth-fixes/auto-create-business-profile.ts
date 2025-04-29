@@ -14,7 +14,7 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
   try {
     console.log(`[AutoProfile] Checking if business profile exists for user ${userId}`);
     
-    // First try to check with the Supabase API
+    // Check if profile exists with the Supabase API
     const { data: existingProfile, error: profileError } = await supabase
       .from('business_profiles')
       .select('*')
@@ -36,23 +36,17 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
       .from('users')
       .select('email')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
       
     let userEmail = 'placeholder@example.com';
     if (userError) {
       console.error(`[AutoProfile] Error fetching user data: ${userError.message}`);
-    } else if (userData) {
+    } else if (userData?.email) {
       userEmail = userData.email;
     }
     
-    // Try creating profile with Supabase API
-    if (await createBusinessProfileWithAPI(userId, userEmail)) {
-      return true;
-    }
-    
-    // If API fails, try direct SQL
-    console.log('[AutoProfile] API method failed, attempting with direct SQL');
-    return await createBusinessProfileWithDirectSQL(userId, userEmail);
+    // Create profile using the API
+    return await createBusinessProfile(userId, userEmail);
     
   } catch (error) {
     console.error('[AutoProfile] Unexpected error:', error);
@@ -61,11 +55,12 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
 }
 
 /**
- * Create a business profile using the Supabase API
+ * Create a business profile using the Supabase API with multiple attempts
+ * to handle potential schema mismatches between what the API expects and the database
  */
-async function createBusinessProfileWithAPI(userId: string, email: string): Promise<boolean> {
+async function createBusinessProfile(userId: string, email: string): Promise<boolean> {
   try {
-    console.log(`[AutoProfile] Attempting profile creation with API for user ${userId}`);
+    console.log(`[AutoProfile] Attempting profile creation for user ${userId}`);
     
     // Verify the userId is a valid UUID
     if (!isValidUUID(userId)) {
@@ -73,73 +68,81 @@ async function createBusinessProfileWithAPI(userId: string, email: string): Prom
       return false;
     }
     
-    // Generate a session ID - this appears to be required
+    // Generate a session ID
     const sessionId = uuidv4();
     
-    // Create profile with required fields based on error messages
-    const { data, error } = await supabase
-      .from('business_profiles')
-      .insert({
-        user_id: userId,
-        email: email,
-        session_id: sessionId,
-        name: 'My Business' // Required field
-      })
-      .select();
+    // Try different combinations of field names based on what the API might expect
     
-    if (error) {
-      console.error(`[AutoProfile] API profile creation error: ${error.message}`);
-      return false;
+    // Attempt #1: Try with a complete set of fields
+    try {
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .insert({
+          user_id: userId,
+          name: 'My Business',
+          session_id: sessionId,
+          email: email,
+          audience_goals: 'Default goals',
+          campaign_vibe: 'Professional',
+          target_schools_sports: 'All'
+        })
+        .select();
+        
+      if (!error && data && data.length > 0) {
+        console.log(`[AutoProfile] Successfully created profile with full fields:`, data[0]);
+        return true;
+      }
+      
+      console.log(`[AutoProfile] First attempt failed, trying alternate fields`);
+    } catch (err) {
+      console.log(`[AutoProfile] First profile creation attempt error:`, err);
     }
     
-    if (data && data.length > 0) {
-      console.log(`[AutoProfile] Successfully created profile:`, data[0]);
-      return true;
-    } else {
-      console.error(`[AutoProfile] Insert returned no results`);
+    // Attempt #2: Try with just the minimum fields
+    try {
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .insert({
+          user_id: userId,
+          email: email
+        })
+        .select();
+        
+      if (!error && data && data.length > 0) {
+        console.log(`[AutoProfile] Successfully created profile with minimal fields:`, data[0]);
+        return true;
+      }
+      
+      console.log(`[AutoProfile] Second attempt failed, trying with business_name`);
+    } catch (err) {
+      console.log(`[AutoProfile] Second profile creation attempt error:`, err);
+    }
+    
+    // Attempt #3: Try with business_name instead of name 
+    try {
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .insert({
+          user_id: userId,
+          business_name: 'My Business',
+          email: email
+        })
+        .select();
+        
+      if (!error && data && data.length > 0) {
+        console.log(`[AutoProfile] Successfully created profile with business_name field:`, data[0]);
+        return true;
+      }
+      
+      // If we got here, all attempts failed
+      console.error(`[AutoProfile] All profile creation attempts failed`);
+      return false;
+    } catch (err) {
+      console.log(`[AutoProfile] Final profile creation attempt error:`, err);
       return false;
     }
   } catch (error) {
-    console.error(`[AutoProfile] Error in createBusinessProfileWithAPI: ${error}`);
-    return false;
-  }
-}
-
-/**
- * Create a business profile using direct SQL as a fallback
- */
-async function createBusinessProfileWithDirectSQL(userId: string, email: string): Promise<boolean> {
-  try {
-    console.log(`[AutoProfile] Attempting direct SQL insert for user ${userId}`);
-    
-    // Generate a session ID - also required in the direct SQL
-    const sessionId = uuidv4();
-    
-    // Try direct SQL as a last resort, with all required fields
-    const { data, error } = await supabase
-      .from('business_profiles')
-      .insert({
-        user_id: userId, 
-        email: email,
-        session_id: sessionId,
-        name: 'My Business' // Required field
-      })
-      .select('*');
-    
-    if (error) {
-      console.error(`[AutoProfile] Direct SQL insert error: ${error.message}`);
-      return false;
-    }
-    
-    if (data && data.length > 0) {
-      console.log(`[AutoProfile] Successfully created profile with SQL:`, data[0]);
-      return true;
-    } else {
-      console.error(`[AutoProfile] SQL insert returned no results`);
-      return false;
-    }
-  } catch (error) {
-    console.error(`[AutoProfile] Error in createBusinessProfileWithDirectSQL: ${error}`);
+    console.error(`[AutoProfile] Error in createBusinessProfile: ${error}`);
     return false;
   }
 }
