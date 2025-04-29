@@ -33,7 +33,7 @@ async function testBusinessProfileCreation() {
       
       // Check if they already have a business profile
       const { data: existingProfile, error: profileError } = await supabase
-        .from("businesses")
+        .from("business_profiles")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();

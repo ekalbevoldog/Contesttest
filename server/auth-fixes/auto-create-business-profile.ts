@@ -45,14 +45,24 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
       return false;
     }
     
+    // Generate a unique session ID
+    const sessionId = `business_${userId}_${Date.now()}`;
+    
     // Create business profile with defaults using standard Supabase query
+    // Making sure to include ALL required fields
     const { data: newProfile, error: insertError } = await supabase
       .from('business_profiles')
       .insert({
         user_id: userId,
+        session_id: sessionId,
         name: 'My Business',
         email: businessUser.email,
         business_type: 'service',
+        product_type: 'product',
+        audience_goals: 'Increase brand awareness',
+        campaign_vibe: 'Professional',
+        values: 'Quality, Reliability',
+        target_schools_sports: 'All',
         created_at: new Date().toISOString()
       })
       .select('id')
