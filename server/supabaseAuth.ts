@@ -244,6 +244,7 @@ export function setupSupabaseAuth(app: Express) {
     "/api/auth/user",
     verifySupabaseToken,
     async (req: Request, res: Response) => {
+      console.log("[Auth Debug] User request received, handling with UPDATED code that includes userType");
       try {
         console.log("[Auth] User info request received");
         if (!req.user?.email && !req.user?.id) {
