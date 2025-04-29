@@ -71,9 +71,15 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
     // Generate a session ID
     const sessionId = uuidv4();
     
-    // Try different combinations of field names based on what the API might expect
+    // Based on our successful testing, we now know the exact required fields:
+    // 1. session_id - required, not null
+    // 2. name - required, not null
+    // 3. audience_goals - required, not null
+    // 4. values - required, not null (from error)
+    // 5. campaign_vibe - required, not null (from error)
+    // 6. product_type - required for API
     
-    // Attempt #1: Try with a complete set of fields
+    console.log(`[AutoProfile] Creating with all required fields`);
     try {
       const { data, error } = await supabase
         .from('business_profiles')
@@ -84,61 +90,28 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
           email: email,
           audience_goals: 'Default goals',
           campaign_vibe: 'Professional',
-          target_schools_sports: 'All'
+          values: 'Default values',
+          product_type: 'Default product'
         })
         .select();
         
-      if (!error && data && data.length > 0) {
-        console.log(`[AutoProfile] Successfully created profile with full fields:`, data[0]);
+      if (error) {
+        console.error(`[AutoProfile] Profile creation error: ${error.message}`);
+        if (error.details) {
+          console.error(`[AutoProfile] Error details: ${error.details}`);
+        }
+        return false;
+      }
+      
+      if (data && data.length > 0) {
+        console.log(`[AutoProfile] Successfully created business profile with ID: ${data[0].id}`);
         return true;
       }
       
-      console.log(`[AutoProfile] First attempt failed, trying alternate fields`);
-    } catch (err) {
-      console.log(`[AutoProfile] First profile creation attempt error:`, err);
-    }
-    
-    // Attempt #2: Try with just the minimum fields
-    try {
-      const { data, error } = await supabase
-        .from('business_profiles')
-        .insert({
-          user_id: userId,
-          email: email
-        })
-        .select();
-        
-      if (!error && data && data.length > 0) {
-        console.log(`[AutoProfile] Successfully created profile with minimal fields:`, data[0]);
-        return true;
-      }
-      
-      console.log(`[AutoProfile] Second attempt failed, trying with business_name`);
-    } catch (err) {
-      console.log(`[AutoProfile] Second profile creation attempt error:`, err);
-    }
-    
-    // Attempt #3: Try with business_name instead of name 
-    try {
-      const { data, error } = await supabase
-        .from('business_profiles')
-        .insert({
-          user_id: userId,
-          business_name: 'My Business',
-          email: email
-        })
-        .select();
-        
-      if (!error && data && data.length > 0) {
-        console.log(`[AutoProfile] Successfully created profile with business_name field:`, data[0]);
-        return true;
-      }
-      
-      // If we got here, all attempts failed
-      console.error(`[AutoProfile] All profile creation attempts failed`);
+      console.error(`[AutoProfile] No data returned from profile creation, but no error either`);
       return false;
     } catch (err) {
-      console.log(`[AutoProfile] Final profile creation attempt error:`, err);
+      console.error(`[AutoProfile] Exception during profile creation:`, err);
       return false;
     }
   } catch (error) {
