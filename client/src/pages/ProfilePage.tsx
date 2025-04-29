@@ -36,9 +36,10 @@ export default function ProfilePage() {
       setRedirecting(true);
       
       // Determine the role - try multiple sources to be sure
-      // Use the most reliable role source
-      const role = userData?.role || user.role || user.user_metadata?.role || 'visitor';
-      console.log('[ProfilePage] Detected role:', role);
+      // First check userType which is now consistently provided by our backend
+      // Then fall back to other sources
+      const role = userData?.userType || userData?.role || user.role || user.user_metadata?.role || 'visitor';
+      console.log('[ProfilePage] Detected role/userType:', role);
       
       // Redirect based on user role
       try {

@@ -267,12 +267,15 @@ export function setupSupabaseAuth(app: Express) {
           
           // If no user record found but we have authenticated user, return minimal info
           if (error.code === 'PGRST116') {
-            console.log("[Auth] No user record found, returning minimal info");
+            // Extract role from user metadata or default to 'visitor'
+            const role = req.user.user_metadata?.role || req.user.role || 'visitor';
+            console.log(`[Auth] No user record found, returning minimal info with role: ${role}`);
             return res.status(200).json({ 
               user: {
                 id: req.user.id,
                 email: req.user.email,
-                role: req.user.role,
+                role: role,
+                userType: role, // Set userType explicitly to match role
                 needsProfile: true
               } 
             });

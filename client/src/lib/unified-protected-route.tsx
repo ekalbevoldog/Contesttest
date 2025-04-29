@@ -40,7 +40,8 @@ export function UnifiedProtectedRoute({
     // Check if authenticated with Supabase
     if (supabaseUser) {
       // User is authenticated in Supabase
-      const userRole = supabaseUser.role || supabaseUser.userType || 'visitor';
+      // Prioritize userType which should be consistently set by our endpoint
+      const userRole = supabaseUser.userType || supabaseUser.role || supabaseUser.user_metadata?.role || 'visitor';
       
       // Check role requirement if specified
       if (requiredRole) {
@@ -132,7 +133,8 @@ export function UnifiedProtectedRoute({
     if (!profile) return false;
     
     // Different profile completion criteria based on role
-    const role = user.role || user.userType || 'visitor';
+    // Prioritize userType over role for consistency
+    const role = user.userType || user.role || user.user_metadata?.role || 'visitor';
     
     if (role === 'athlete') {
       return !!profile.sport && !!profile.name;
