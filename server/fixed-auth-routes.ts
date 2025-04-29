@@ -127,8 +127,20 @@ export function setupSupabaseAuth(app: Express) {
         }
 
         // Found user by auth_id, use this record
-        userRecord = authIdRecord;
-        console.log("[Auth] Found user by auth_id:", userRecord.role);
+        console.log("[Auth] Found user by auth_id:", authIdRecord.role);
+        return res.status(200).json({
+          user: {
+            id: authData.user.id,
+            email,
+            role: authIdRecord.role || "user"
+          },
+          profile: authIdRecord,
+          session: {
+            access_token: authData.session.access_token,
+            refresh_token: authData.session.refresh_token,
+            expires_at: authData.session.expires_at
+          }
+        });
       }
       
       // Set cookies
