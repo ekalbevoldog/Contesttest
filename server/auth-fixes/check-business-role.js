@@ -64,15 +64,9 @@ async function checkBusinessRoles() {
           .from('business_profiles')
           .insert({
             user_id: user.id,
-            session_id: `auto-created-${user.id}`, // Required unique field
-            name: 'My Business', // Required field
+            business_name: 'My Business',
             email: user.email,
             business_type: 'service',
-            product_type: 'Product/Service', // Required field
-            audience_goals: 'Reach new customers', // Required field
-            campaign_vibe: 'Professional', // Required field
-            values: 'Quality, Service, Innovation', // Required field
-            target_schools_sports: 'All', // Required field
             created_at: new Date()
           })
           .select()
