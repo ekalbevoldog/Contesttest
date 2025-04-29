@@ -289,7 +289,13 @@ export function setupSupabaseAuth(app: Express) {
         // If user is a business, ensure they have a business profile
         if (data.role === 'business') {
           console.log(`[Auth] Business user profile check, ensuring business profile exists`);
-          await ensureBusinessProfile(data.id.toString(), data.role);
+          try {
+            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile');
+            await ensureBusinessProfile(data.id.toString(), data.role);
+          } catch (err) {
+            console.error('[Auth] Error ensuring business profile:', err);
+            // Continue despite error to avoid blocking auth flow
+          }
         }
         
         // Add userType property to match what the client expects
@@ -429,7 +435,13 @@ export function setupSupabaseAuth(app: Express) {
         // If user is a business, ensure they have a business profile
         if (dbRole === 'business') {
           console.log(`[Auth] Business user detected, ensuring business profile exists`);
-          await ensureBusinessProfile(updatedUser.id.toString(), dbRole);
+          try {
+            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile');
+            await ensureBusinessProfile(updatedUser.id.toString(), dbRole);
+          } catch (err) {
+            console.error('[Auth] Error ensuring business profile:', err);
+            // Continue despite error to avoid blocking registration flow
+          }
         }
         
         return res.status(200).json({ 
@@ -528,7 +540,13 @@ export function setupSupabaseAuth(app: Express) {
         // If user is a business, ensure they have a business profile
         if (dbRole === 'business') {
           console.log(`[Auth] New business user detected, creating business profile`);
-          await ensureBusinessProfile(data.id.toString(), dbRole);
+          try {
+            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile');
+            await ensureBusinessProfile(data.id.toString(), dbRole);
+          } catch (err) {
+            console.error('[Auth] Error creating business profile:', err);
+            // Continue despite error to avoid blocking registration flow
+          }
         }
         
         return res.status(201).json({ 

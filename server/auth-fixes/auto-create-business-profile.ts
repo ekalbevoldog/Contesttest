@@ -1,25 +1,72 @@
-import { createBusinessProfileIfNeeded } from "./create-business-profile.js";
+import { supabase } from "../supabase";
 
 /**
- * Called after a user is created or updated to ensure they have a business profile
- * if their role is 'business'
- * 
- * @param userId - The user's ID in the users table (not auth_id)
- * @param role - The user's role
- * @returns Promise resolving to boolean indicating success
+ * Helper function to ensure a business user has a corresponding business profile
+ * This is called during login, registration, and on profile page access
  */
 export async function ensureBusinessProfile(userId: string, role: string): Promise<boolean> {
+  if (role !== 'business') {
+    console.log(`[AutoProfile] Not a business user (role: ${role}), skipping profile creation`);
+    return false;
+  }
+  
   try {
-    // Only proceed if the user is a business
-    if (role !== 'business') {
-      console.log(`[Profile] User ${userId} has role ${role}, not creating business profile`);
+    console.log(`[AutoProfile] Checking if business profile exists for user ${userId}`);
+    
+    // Check if business profile already exists
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+      
+    if (profileError && profileError.code !== 'PGRST116') {
+      // Unexpected error - log but continue to create profile
+      console.error(`[AutoProfile] Error checking business profile: ${profileError.message}`);
+    }
+    
+    // If profile exists, no need to create one
+    if (existingProfile) {
+      console.log(`[AutoProfile] Business profile already exists: ${existingProfile.id}`);
       return true;
     }
     
-    console.log(`[Profile] Ensuring business profile exists for business user ${userId}`);
-    return await createBusinessProfileIfNeeded(userId);
-  } catch (error: any) {
-    console.error(`[Profile] Error ensuring business profile: ${error?.message || error}`);
+    // Create default business profile
+    console.log(`[AutoProfile] Creating default business profile for user ${userId}`);
+    
+    const { data: businessUser, error: userError } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', userId)
+      .single();
+      
+    if (userError) {
+      console.error(`[AutoProfile] Error fetching user data: ${userError.message}`);
+      return false;
+    }
+    
+    // Create business profile with defaults
+    const { data: newProfile, error: insertError } = await supabase
+      .from('businesses')
+      .insert({
+        user_id: userId,
+        company_name: 'My Business', // Default name that user should update
+        company_type: 'service',     // Required field with valid value
+        email: businessUser.email,   // Use user's email as default
+        created_at: new Date()
+      })
+      .select()
+      .single();
+      
+    if (insertError) {
+      console.error(`[AutoProfile] Failed to create business profile: ${insertError.message}`);
+      return false;
+    }
+    
+    console.log(`[AutoProfile] Successfully created business profile: ${newProfile.id}`);
+    return true;
+  } catch (error) {
+    console.error('[AutoProfile] Unexpected error:', error);
     return false;
   }
 }
