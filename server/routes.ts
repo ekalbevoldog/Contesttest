@@ -1959,15 +1959,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           } else if (userType === 'business') {
             try {
-              const { data: businessProfile } = await supabase
+              // First try with auth_id directly
+              const { data: directProfile } = await supabase
                 .from('business_profiles')
                 .select('*')
                 .eq('user_id', user.id)
                 .maybeSingle();
 
-              if (businessProfile) {
-                console.log(`Found business profile for user ${user.id}`);
-                profileData = businessProfile;
+              if (directProfile) {
+                console.log(`Found business profile for user with auth_id=${user.id}`);
+                profileData = directProfile;
+              } else {
+                // Then try with database user ID
+                console.log(`No business profile found with auth_id=${user.id}, trying database user_id=${dbUser.id}`);
+                const { data: dbUserProfile } = await supabase
+                  .from('business_profiles')
+                  .select('*')
+                  .eq('user_id', dbUser.id)
+                  .maybeSingle();
+                
+                if (dbUserProfile) {
+                  console.log(`Found business profile for database user_id=${dbUser.id}`);
+                  profileData = dbUserProfile;
+                } else {
+                  // Try with string conversion (in case of UUID/string type mismatches)
+                  console.log(`Trying string comparison fallback for user_id=${dbUser.id}`);
+                  const { data: allProfiles } = await supabase
+                    .from('business_profiles')
+                    .select('*');
+                    
+                  if (allProfiles && allProfiles.length > 0) {
+                    console.log(`Scanning ${allProfiles.length} business profiles for matching user_id`);
+                    const matchingProfile = allProfiles.find(p => 
+                      p.user_id === dbUser.id.toString() || 
+                      p.user_id.toString() === dbUser.id ||
+                      p.user_id === user.id.toString() ||
+                      p.user_id.toString() === user.id
+                    );
+                    
+                    if (matchingProfile) {
+                      console.log(`Found matching business profile using string comparison`);
+                      profileData = matchingProfile;
+                    }
+                  }
+                }
               }
             } catch (profileErr) {
               console.warn(`Error fetching business profile: ${profileErr}`);
@@ -2016,14 +2051,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             } else if (userType === 'business') {
               try {
-                const { data: businessProfile } = await supabase
+                // First try with auth_id directly
+                const { data: directProfile } = await supabase
                   .from('business_profiles')
                   .select('*')
                   .eq('user_id', user.id)
                   .maybeSingle();
 
-                if (businessProfile) {
-                  profileData = businessProfile;
+                if (directProfile) {
+                  console.log(`Found business profile for user with auth_id=${user.id}`);
+                  profileData = directProfile;
+                } else {
+                  // Then try with database user ID
+                  console.log(`No business profile found with auth_id=${user.id}, trying database user_id=${emailUser.id}`);
+                  const { data: dbUserProfile } = await supabase
+                    .from('business_profiles')
+                    .select('*')
+                    .eq('user_id', emailUser.id)
+                    .maybeSingle();
+                  
+                  if (dbUserProfile) {
+                    console.log(`Found business profile for database user_id=${emailUser.id}`);
+                    profileData = dbUserProfile;
+                  } else {
+                    // Try with string conversion (in case of UUID/string type mismatches)
+                    console.log(`Trying string comparison fallback for user_id=${emailUser.id}`);
+                    const { data: allProfiles } = await supabase
+                      .from('business_profiles')
+                      .select('*');
+                      
+                    if (allProfiles && allProfiles.length > 0) {
+                      console.log(`Scanning ${allProfiles.length} business profiles for matching user_id`);
+                      const matchingProfile = allProfiles.find(p => 
+                        p.user_id === emailUser.id.toString() || 
+                        p.user_id.toString() === emailUser.id ||
+                        p.user_id === user.id.toString() ||
+                        p.user_id.toString() === user.id
+                      );
+                      
+                      if (matchingProfile) {
+                        console.log(`Found matching business profile using string comparison`);
+                        profileData = matchingProfile;
+                      }
+                    }
+                  }
                 }
               } catch (profileErr) {
                 console.warn(`Error fetching business profile: ${profileErr}`);

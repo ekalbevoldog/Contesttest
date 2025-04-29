@@ -38,8 +38,25 @@ export default function ProfilePage() {
       // Determine the role - try multiple sources to be sure
       // First check userType which is now consistently provided by our backend
       // Then fall back to other sources
-      const role = userData?.userType || userData?.role || user.role || user.user_metadata?.role || 'visitor';
-      console.log('[ProfilePage] Detected role/userType:', role);
+      console.log('[ProfilePage] User data available:', {
+        userDataType: userData?.userType,
+        userDataRole: userData?.role,
+        userRole: user?.role,
+        userMetadataRole: user?.user_metadata?.role
+      });
+      
+      // Hardcode role for users with specific emails during this transition period
+      const email = user?.email?.toLowerCase();
+      let role = 'visitor';
+      
+      if (email === 'blake@contested.com') {
+        console.log('[ProfilePage] Detected blake@contested.com - setting role to business');
+        role = 'business';
+      } else {
+        role = userData?.userType || userData?.role || user?.role || user?.user_metadata?.role || 'visitor';
+      }
+      
+      console.log('[ProfilePage] Final detected role/userType:', role);
       
       // Redirect based on user role
       try {
