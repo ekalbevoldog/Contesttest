@@ -1,5 +1,6 @@
-import { supabase } from "../supabase.js";
-import { ensureBusinessProfile } from "./auto-create-business-profile.js";
+// Fix path issue with proper relative imports
+import { supabase } from "../supabase";
+import { ensureBusinessProfile } from "./auto-create-business-profile";
 
 /**
  * This test script verifies that business profiles are created correctly
@@ -10,7 +11,7 @@ async function testBusinessProfileCreation() {
     // Get a test business user
     const { data: businessUsers, error: userError } = await supabase
       .from("users")
-      .select("id, email, username, role")
+      .select("id, email, role")
       .eq("role", "business")
       .limit(5);
       
@@ -28,7 +29,7 @@ async function testBusinessProfileCreation() {
     
     // Test each business user
     for (const user of businessUsers) {
-      console.log(`\nTesting user: ${user.username} (${user.id})`);
+      console.log(`\nTesting user: ${user.email} (${user.id})`);
       
       // Check if they already have a business profile
       const { data: existingProfile, error: profileError } = await supabase
@@ -43,16 +44,16 @@ async function testBusinessProfileCreation() {
       }
       
       if (existingProfile) {
-        console.log(`User ${user.username} already has a business profile with id ${existingProfile.id}`);
+        console.log(`User ${user.email} already has a business profile with id ${existingProfile.id}`);
         console.log(`Profile details: ${JSON.stringify(existingProfile)}`);
       } else {
-        console.log(`User ${user.username} doesn't have a business profile. Creating one...`);
+        console.log(`User ${user.email} doesn't have a business profile. Creating one...`);
         
         // Create a business profile
         const result = await ensureBusinessProfile(user.id.toString(), user.role);
         
         if (result) {
-          console.log(`Successfully created business profile for ${user.username}`);
+          console.log(`Successfully created business profile for ${user.email}`);
           
           // Verify it was created
           const { data: newProfile } = await supabase
@@ -63,7 +64,7 @@ async function testBusinessProfileCreation() {
             
           console.log(`New profile details: ${JSON.stringify(newProfile)}`);
         } else {
-          console.error(`Failed to create business profile for ${user.username}`);
+          console.error(`Failed to create business profile for ${user.email}`);
         }
       }
     }
