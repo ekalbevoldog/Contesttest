@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 // SimpleOnboarding and EnhancedOnboarding removed - consolidated to main onboarding
 import Onboarding from "@/pages/Onboarding";
-import TestOnboarding from "@/pages/TestOnboarding"; // Added import
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/ProfilePage";
 import AthleteInfo from "@/pages/AthleteInfo";
@@ -67,7 +66,6 @@ function Router() {
 
             {/* Onboarding routes - accessible after authentication */}
             <UnifiedProtectedRoute path="/onboarding" component={Onboarding} />
-            <Route path="/test-onboarding" component={TestOnboarding} /> {/* Added route */}
 
             {/* Role-specific onboarding routes */}
             <RoleProtectedRoute 
