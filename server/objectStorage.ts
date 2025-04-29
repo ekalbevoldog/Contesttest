@@ -65,13 +65,89 @@ const createMockClient = (): StorageClientInterface => ({
   }
 });
 
+// Create a real client implementation
+const createRealClient = (): StorageClientInterface => {
+  try {
+    const bucketName = 'replit-objstore-baee183f-e7a0-49ac-88ce-a1512085d204';
+    const client = new Client({
+      bucketName: bucketName
+    });
+
+    return {
+      async uploadFromText(key: string, content: string): Promise<UploadResult> {
+        try {
+          await client.uploadText(key, content);
+          return { ok: true };
+        } catch (error) {
+          console.error(`Error uploading text to ${key}:`, error);
+          return { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      },
+      
+      async uploadFromBuffer(key: string, buffer: Buffer): Promise<UploadResult> {
+        try {
+          await client.uploadBuffer(key, buffer);
+          return { ok: true };
+        } catch (error) {
+          console.error(`Error uploading buffer to ${key}:`, error);
+          return { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      },
+      
+      async downloadAsText(key: string): Promise<DownloadTextResult> {
+        try {
+          const text = await client.downloadText(key);
+          return { ok: true, value: text };
+        } catch (error) {
+          console.error(`Error downloading text from ${key}:`, error);
+          return { ok: false, value: '', error: error instanceof Error ? error.message : String(error) };
+        }
+      },
+      
+      async downloadAsBuffer(key: string): Promise<DownloadBufferResult> {
+        try {
+          const buffer = await client.downloadBuffer(key);
+          return { ok: true, value: buffer };
+        } catch (error) {
+          console.error(`Error downloading buffer from ${key}:`, error);
+          return { ok: false, value: Buffer.from(''), error: error instanceof Error ? error.message : String(error) };
+        }
+      },
+      
+      async list(): Promise<ListResult> {
+        try {
+          const objects = await client.list();
+          const formattedObjects = objects.map(obj => ({ name: obj.key }));
+          return { ok: true, value: formattedObjects };
+        } catch (error) {
+          console.error('Error listing objects:', error);
+          return { ok: false, value: [], error: error instanceof Error ? error.message : String(error) };
+        }
+      },
+      
+      async delete(key: string): Promise<DeleteResult> {
+        try {
+          await client.delete(key);
+          return { ok: true };
+        } catch (error) {
+          console.error(`Error deleting ${key}:`, error);
+          return { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      }
+    };
+  } catch (error) {
+    console.error('Failed to initialize Replit Object Storage client:', error);
+    // Fall back to mock client if initialization fails
+    return createMockClient();
+  }
+};
+
 // Create a client instance with proper error handling
 let storageClient: StorageClientInterface;
 
-// Skip actual initialization to prevent deployment errors
-// This is a workaround to prevent the missing bucket name error
-console.log('Using mock Object Storage to prevent bucket errors');
-storageClient = createMockClient();
+// Initialize with the real client using the specified bucket
+console.log('Initializing Replit Object Storage with bucket: replit-objstore-baee183f-e7a0-49ac-88ce-a1512085d204');
+storageClient = createRealClient();
 
 /**
  * Simple wrapper around Replit Object Storage
