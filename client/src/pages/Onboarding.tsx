@@ -404,10 +404,7 @@ export default function Onboarding() {
       console.log('Form data sync response:', response.ok ? 'success' : 'failed');
       
       setIsSyncing(false);
-      toast({
-        title: "Data Synchronized",
-        description: "Your progress has been saved",
-      });
+      // Toast notification removed
     } catch (error) {
       console.error('Error syncing form data via API:', error);
       setIsSyncing(false);
