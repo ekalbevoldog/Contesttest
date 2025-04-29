@@ -352,18 +352,23 @@ export async function initializeSupabaseTables() {
   }
 }
 
-// Import the profile migration function
-import { runProfileMigration } from './runProfileMigration.js';
+// Import the complete migration function
+import { runCompleteMigration } from './runCompleteMigration.js';
 
 // Export a function to initialize everything at once
 export async function setupSupabase() {
   try {
     console.log('Starting Supabase setup process...');
-    await initializeSupabaseTables();
     
-    // Run our profile tables migration
-    console.log('Running profile tables migration...');
-    await runProfileMigration();
+    // Check if tables already exist
+    const tablesExist = await checkTablesExist();
+    
+    if (tablesExist) {
+      console.log('Core tables already exist, skipping complete migration...');
+    } else {
+      console.log('Some or all tables are missing, running complete schema migration...');
+      await runCompleteMigration();
+    }
     
     console.log('Supabase setup completed successfully');
     
@@ -375,8 +380,75 @@ export async function setupSupabase() {
       console.error('Final connection test failed:', error.message);
     } else {
       console.log('Final connection test succeeded');
+      
+      // Verify user auth_id mapping
+      console.log('Verifying user auth_id mapping...');
+      const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers({ 
+        page: 1, 
+        perPage: 10 
+      });
+      
+      if (authError) {
+        console.error('Unable to verify Auth users:', authError.message);
+      } else if (authUsers) {
+        console.log(`Found ${authUsers.users.length} users in Auth database`);
+        
+        // Check that each auth user has a corresponding record in public.users
+        const authIds = authUsers.users.map(user => user.id);
+        const { data: publicUsers, error: publicUsersError } = await supabaseAdmin
+          .from('users')
+          .select('id, auth_id, email')
+          .in('auth_id', authIds);
+        
+        if (publicUsersError) {
+          console.error('Error fetching public users:', publicUsersError.message);
+        } else {
+          console.log(`Found ${publicUsers.length} matching users in public.users table`);
+          
+          // Report on missing users
+          const mappedAuthIds = publicUsers.map(user => user.auth_id);
+          const missingUsers = authUsers.users.filter(user => !mappedAuthIds.includes(user.id));
+          
+          if (missingUsers.length > 0) {
+            console.warn(`Warning: ${missingUsers.length} Auth users are not mapped in public.users table`);
+            missingUsers.forEach(user => console.warn(`  - ${user.email} (${user.id})`));
+          } else {
+            console.log('All Auth users are properly mapped in public.users table ✅');
+          }
+        }
+      }
     }
   } catch (error) {
     console.error('Error in Supabase setup:', error instanceof Error ? error.message : String(error));
+  }
+}
+
+// Helper function to check if all required tables exist
+async function checkTablesExist() {
+  const requiredTables = [
+    'users', 'sessions', 'athlete_profiles', 'business_profiles', 
+    'campaigns', 'match_scores', 'partnership_offers'
+  ];
+  
+  try {
+    const results = await Promise.all(
+      requiredTables.map(async (table) => {
+        try {
+          const { data, error } = await supabaseAdmin
+            .from(table)
+            .select('count')
+            .limit(1);
+          
+          return !error;
+        } catch (e) {
+          return false;
+        }
+      })
+    );
+    
+    return results.every(exists => exists);
+  } catch (error) {
+    console.error('Error checking tables:', error);
+    return false;
   }
 }
