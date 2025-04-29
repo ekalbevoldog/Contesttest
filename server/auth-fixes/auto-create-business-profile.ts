@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Helper function to ensure a business user has a corresponding business profile
@@ -13,15 +14,17 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
   try {
     console.log(`[AutoProfile] Checking if business profile exists for user ${userId}`);
     
-    // Use direct SQL to check for existing profile - most reliable method
-    const { data: existingProfiles, error: profileError } = await supabase.rpc('exec_sql', {
-      sql: `SELECT id FROM business_profiles WHERE user_id = '${userId}' LIMIT 1`
-    });
+    // First try to check with the Supabase API
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
     
-    if (profileError) {
-      console.error(`[AutoProfile] Error checking business profile with SQL: ${profileError.message}`);
-    } else if (existingProfiles && existingProfiles.length > 0) {
-      console.log(`[AutoProfile] Business profile already exists: ${existingProfiles[0].id}`);
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error(`[AutoProfile] Error checking business profile with API: ${profileError.message}`);
+    } else if (existingProfile) {
+      console.log(`[AutoProfile] Business profile already exists:`, existingProfile);
       return true;
     }
     
@@ -42,7 +45,13 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
       userEmail = userData.email;
     }
     
-    // Create profile via direct SQL which we've confirmed works
+    // Try creating profile with Supabase API
+    if (await createBusinessProfileWithAPI(userId, userEmail)) {
+      return true;
+    }
+    
+    // If API fails, try direct SQL
+    console.log('[AutoProfile] API method failed, attempting with direct SQL');
     return await createBusinessProfileWithDirectSQL(userId, userEmail);
     
   } catch (error) {
@@ -52,28 +61,70 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
 }
 
 /**
- * Create a business profile using direct SQL to bypass any schema cache issues
+ * Create a business profile using the Supabase API
+ */
+async function createBusinessProfileWithAPI(userId: string, email: string): Promise<boolean> {
+  try {
+    console.log(`[AutoProfile] Attempting profile creation with API for user ${userId}`);
+    
+    // Verify the userId is a valid UUID
+    if (!isValidUUID(userId)) {
+      console.error(`[AutoProfile] Invalid UUID format for user_id: ${userId}`);
+      return false;
+    }
+    
+    // Generate a session ID - this appears to be required
+    const sessionId = uuidv4();
+    
+    // Create profile with required fields based on error messages
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .insert({
+        user_id: userId,
+        email: email,
+        session_id: sessionId,
+        name: 'My Business' // Required field
+      })
+      .select();
+    
+    if (error) {
+      console.error(`[AutoProfile] API profile creation error: ${error.message}`);
+      return false;
+    }
+    
+    if (data && data.length > 0) {
+      console.log(`[AutoProfile] Successfully created profile:`, data[0]);
+      return true;
+    } else {
+      console.error(`[AutoProfile] Insert returned no results`);
+      return false;
+    }
+  } catch (error) {
+    console.error(`[AutoProfile] Error in createBusinessProfileWithAPI: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Create a business profile using direct SQL as a fallback
  */
 async function createBusinessProfileWithDirectSQL(userId: string, email: string): Promise<boolean> {
   try {
     console.log(`[AutoProfile] Attempting direct SQL insert for user ${userId}`);
     
-    // Use exactly the schema we verified works
-    const sqlQuery = `
-      INSERT INTO business_profiles (
-        user_id, 
-        business_name, 
-        email
-      ) 
-      VALUES (
-        '${userId}', 
-        'My Business', 
-        '${email}'
-      ) 
-      RETURNING *;
-    `;
+    // Generate a session ID - also required in the direct SQL
+    const sessionId = uuidv4();
     
-    const { data, error } = await supabase.rpc('exec_sql', { sql: sqlQuery });
+    // Try direct SQL as a last resort, with all required fields
+    const { data, error } = await supabase
+      .from('business_profiles')
+      .insert({
+        user_id: userId, 
+        email: email,
+        session_id: sessionId,
+        name: 'My Business' // Required field
+      })
+      .select('*');
     
     if (error) {
       console.error(`[AutoProfile] Direct SQL insert error: ${error.message}`);
@@ -91,4 +142,12 @@ async function createBusinessProfileWithDirectSQL(userId: string, email: string)
     console.error(`[AutoProfile] Error in createBusinessProfileWithDirectSQL: ${error}`);
     return false;
   }
+}
+
+/**
+ * Validate UUID format - basic validation for v4 UUID
+ */
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
 }
