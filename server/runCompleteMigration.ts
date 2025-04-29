@@ -1,4 +1,127 @@
 
+// Complete migration script for user schema
+
+import { supabase } from "./supabase.js";
+
+async function runCompleteMigration() {
+  console.log("Running complete migration...");
+
+  try {
+    // 1. Make sure auth_id column exists in users table
+    const { error: alterError } = await supabase.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS auth_id UUID UNIQUE REFERENCES auth.users(id);
+    `);
+
+    if (alterError) {
+      console.error("Failed to add auth_id column:", alterError);
+      return false;
+    }
+
+    // 2. Create index on auth_id for better performance
+    const { error: indexError } = await supabase.query(`
+      CREATE INDEX IF NOT EXISTS users_auth_id_idx ON users (auth_id);
+    `);
+
+    if (indexError) {
+      console.error("Failed to create index:", indexError);
+    }
+
+    // 3. Map existing users to auth users by email
+    console.log("Mapping existing users to auth users...");
+    const { data: unmappedUsers, error: unmappedError } = await supabase
+      .from("users")
+      .select("id, email")
+      .is("auth_id", null);
+
+    if (unmappedError) {
+      console.error("Error fetching unmapped users:", unmappedError);
+    } else if (unmappedUsers && unmappedUsers.length > 0) {
+      console.log(`Found ${unmappedUsers.length} unmapped users`);
+      
+      // Get all auth users
+      const { data: authUsers, error: authUsersError } = await supabase.auth.admin.listUsers();
+      
+      if (authUsersError) {
+        console.error("Error fetching auth users:", authUsersError);
+      } else if (authUsers) {
+        // Create a map of email -> auth_id for faster lookup
+        const emailToAuthId = new Map();
+        authUsers.users.forEach(user => {
+          if (user.email) {
+            emailToAuthId.set(user.email.toLowerCase(), user.id);
+          }
+        });
+        
+        // Update each unmapped user
+        let mappedCount = 0;
+        for (const user of unmappedUsers) {
+          if (user.email && emailToAuthId.has(user.email.toLowerCase())) {
+            const auth_id = emailToAuthId.get(user.email.toLowerCase());
+            const { error: updateError } = await supabase
+              .from("users")
+              .update({ auth_id })
+              .eq("id", user.id);
+              
+            if (!updateError) {
+              mappedCount++;
+            }
+          }
+        }
+        
+        console.log(`Mapped ${mappedCount} users to their auth_id`);
+      }
+    } else {
+      console.log("No unmapped users found");
+    }
+
+    // 4. Create or update triggers for automatic user creation on auth events
+    const { error: triggerError } = await supabase.query(`
+      -- Function to handle new user signups
+      CREATE OR REPLACE FUNCTION public.handle_new_user()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        INSERT INTO public.users (auth_id, email, role, created_at)
+        VALUES (new.id, new.email, 
+                COALESCE(new.raw_user_meta_data->>'role', 'user'),
+                CURRENT_TIMESTAMP)
+        ON CONFLICT (auth_id) DO NOTHING;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+      -- Trigger for new signups
+      DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+      CREATE TRIGGER on_auth_user_created
+        AFTER INSERT ON auth.users
+        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+    `);
+
+    if (triggerError) {
+      console.error("Failed to create triggers:", triggerError);
+      return false;
+    }
+
+    console.log("✅ Migration completed successfully");
+    return true;
+  } catch (error) {
+    console.error("Migration failed:", error);
+    return false;
+  }
+}
+
+// Run the migration
+runCompleteMigration().then(success => {
+  if (success) {
+    console.log("✅ Database migration completed successfully");
+    process.exit(0);
+  } else {
+    console.error("❌ Database migration failed");
+    process.exit(1);
+  }
+});
+
+
 import { supabaseAdmin } from './supabase.js';
 import fs from 'fs';
 import path from 'path';
