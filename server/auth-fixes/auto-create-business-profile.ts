@@ -13,17 +13,15 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
   try {
     console.log(`[AutoProfile] Checking if business profile exists for user ${userId}`);
     
-    // First check with the Supabase API
-    const { data: existingProfile, error: profileError } = await supabase
-      .from('business_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Use direct SQL to check for existing profile - most reliable method
+    const { data: existingProfiles, error: profileError } = await supabase.rpc('exec_sql', {
+      sql: `SELECT id FROM business_profiles WHERE user_id = '${userId}' LIMIT 1`
+    });
     
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error(`[AutoProfile] Error checking business profile with API: ${profileError.message}`);
-    } else if (existingProfile) {
-      console.log(`[AutoProfile] Business profile already exists:`, existingProfile);
+    if (profileError) {
+      console.error(`[AutoProfile] Error checking business profile with SQL: ${profileError.message}`);
+    } else if (existingProfiles && existingProfiles.length > 0) {
+      console.log(`[AutoProfile] Business profile already exists: ${existingProfiles[0].id}`);
       return true;
     }
     
@@ -37,14 +35,15 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
       .eq('id', userId)
       .single();
       
+    let userEmail = 'placeholder@example.com';
     if (userError) {
       console.error(`[AutoProfile] Error fetching user data: ${userError.message}`);
-      // If we can't get the email, use direct SQL to create a profile
-      return await createBusinessProfileWithDirectSQL(userId);
+    } else if (userData) {
+      userEmail = userData.email;
     }
     
-    // Create profile with email
-    return await createBusinessProfileWithDirectSQL(userId, userData.email);
+    // Create profile via direct SQL which we've confirmed works
+    return await createBusinessProfileWithDirectSQL(userId, userEmail);
     
   } catch (error) {
     console.error('[AutoProfile] Unexpected error:', error);
@@ -55,31 +54,21 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
 /**
  * Create a business profile using direct SQL to bypass any schema cache issues
  */
-async function createBusinessProfileWithDirectSQL(userId: string, email?: string): Promise<boolean> {
+async function createBusinessProfileWithDirectSQL(userId: string, email: string): Promise<boolean> {
   try {
     console.log(`[AutoProfile] Attempting direct SQL insert for user ${userId}`);
     
-    // Generate a random session ID if we don't have one
-    const sessionId = `session-${Math.random().toString(36).substring(2, 15)}`;
-    const timestamp = new Date().toISOString();
-    
-    // Create with all the required fields
+    // Use exactly the schema we verified works
     const sqlQuery = `
       INSERT INTO business_profiles (
         user_id, 
-        session_id, 
-        email, 
         business_name, 
-        business_type, 
-        created_at
+        email
       ) 
       VALUES (
         '${userId}', 
-        '${sessionId}', 
-        '${email || 'placeholder@example.com'}', 
         'My Business', 
-        'service', 
-        '${timestamp}'
+        '${email}'
       ) 
       RETURNING *;
     `;
