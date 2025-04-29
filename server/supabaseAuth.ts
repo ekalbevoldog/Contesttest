@@ -289,7 +289,14 @@ export function setupSupabaseAuth(app: Express) {
           await ensureBusinessProfile(data.id.toString(), data.role);
         }
         
-        return res.status(200).json({ user: data });
+        // Add userType property to match what the client expects
+        const userWithType = {
+          ...data,
+          userType: data.role // Set userType to match the role for consistency
+        };
+        
+        console.log(`[Auth] Sending user data with role: ${data.role}, userType: ${userWithType.userType}`);
+        return res.status(200).json({ user: userWithType });
       } catch (err) {
         console.error("[Auth] Whoami error:", err);
         return res.status(500).json({ error: "Failed to fetch user" });
