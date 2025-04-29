@@ -16,29 +16,15 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
     // First check with the Supabase API
     const { data: existingProfile, error: profileError } = await supabase
       .from('business_profiles')
-      .select('id')
+      .select('*')
       .eq('user_id', userId)
       .maybeSingle();
     
     if (profileError && profileError.code !== 'PGRST116') {
       console.error(`[AutoProfile] Error checking business profile with API: ${profileError.message}`);
     } else if (existingProfile) {
-      console.log(`[AutoProfile] Business profile already exists: ${existingProfile.id}`);
+      console.log(`[AutoProfile] Business profile already exists:`, existingProfile);
       return true;
-    }
-    
-    // If API doesn't find a profile, try with direct SQL
-    try {
-      const { data: existingProfiles } = await supabase.rpc('exec_sql', {
-        sql: `SELECT id FROM business_profiles WHERE user_id = '${userId}' LIMIT 1`
-      });
-      
-      if (existingProfiles && existingProfiles.length > 0) {
-        console.log(`[AutoProfile] Business profile already exists (via SQL): ${existingProfiles[0].id}`);
-        return true;
-      }
-    } catch (sqlError) {
-      console.error(`[AutoProfile] SQL query error: ${sqlError}`);
     }
     
     // If no profile found, create one
@@ -53,12 +39,12 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
       
     if (userError) {
       console.error(`[AutoProfile] Error fetching user data: ${userError.message}`);
-      // If we can't get the email, use a placeholder
-      return await createBusinessProfile(userId, 'placeholder@example.com');
+      // If we can't get the email, use direct SQL to create a profile
+      return await createBusinessProfileWithDirectSQL(userId);
     }
     
-    // Create profile
-    return await createBusinessProfile(userId, userData.email);
+    // Create profile with email
+    return await createBusinessProfileWithDirectSQL(userId, userData.email);
     
   } catch (error) {
     console.error('[AutoProfile] Unexpected error:', error);
@@ -67,55 +53,53 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
 }
 
 /**
- * Helper to create a business profile using the Supabase API
+ * Create a business profile using direct SQL to bypass any schema cache issues
  */
-async function createBusinessProfile(userId: string, email: string): Promise<boolean> {
+async function createBusinessProfileWithDirectSQL(userId: string, email?: string): Promise<boolean> {
   try {
-    // First try to create profile using the Supabase API
-    const { data: newProfile, error: apiInsertError } = await supabase
-      .from('business_profiles')
-      .insert({
-        user_id: userId,
-        business_name: 'My Business',
-        email: email,
-        business_type: 'service',
-        created_at: new Date().toISOString()
-      })
-      .select('id')
-      .single();
-      
-    if (apiInsertError) {
-      console.error(`[AutoProfile] Failed to create business profile with API: ${apiInsertError.message}`);
-      
-      // If API fails, try direct SQL insert
-      try {
-        const { data: insertResult } = await supabase.rpc('exec_sql', {
-          sql: `
-            INSERT INTO business_profiles
-            (user_id, business_name, email, business_type, created_at)
-            VALUES
-            ('${userId}', 'My Business', '${email}', 'service', '${new Date().toISOString()}')
-            RETURNING id
-          `
-        });
-        
-        if (insertResult && insertResult.length > 0) {
-          console.log(`[AutoProfile] Successfully created business profile with SQL: ${insertResult[0].id}`);
-          return true;
-        } else {
-          console.error('[AutoProfile] SQL insert returned no results');
-          return false;
-        }
-      } catch (sqlError) {
-        console.error(`[AutoProfile] SQL insert error: ${sqlError}`);
-        return false;
-      }
+    console.log(`[AutoProfile] Attempting direct SQL insert for user ${userId}`);
+    
+    // Generate a random session ID if we don't have one
+    const sessionId = `session-${Math.random().toString(36).substring(2, 15)}`;
+    const timestamp = new Date().toISOString();
+    
+    // Create with all the required fields
+    const sqlQuery = `
+      INSERT INTO business_profiles (
+        user_id, 
+        session_id, 
+        email, 
+        business_name, 
+        business_type, 
+        created_at
+      ) 
+      VALUES (
+        '${userId}', 
+        '${sessionId}', 
+        '${email || 'placeholder@example.com'}', 
+        'My Business', 
+        'service', 
+        '${timestamp}'
+      ) 
+      RETURNING *;
+    `;
+    
+    const { data, error } = await supabase.rpc('exec_sql', { sql: sqlQuery });
+    
+    if (error) {
+      console.error(`[AutoProfile] Direct SQL insert error: ${error.message}`);
+      return false;
     }
     
-    console.log(`[AutoProfile] Successfully created business profile with API: ${newProfile.id}`);
-    return true;
+    if (data && data.length > 0) {
+      console.log(`[AutoProfile] Successfully created profile with SQL:`, data[0]);
+      return true;
+    } else {
+      console.error(`[AutoProfile] SQL insert returned no results`);
+      return false;
+    }
   } catch (error) {
-    console.error('[AutoProfile] Error in createBusinessProfile:', error);
+    console.error(`[AutoProfile] Error in createBusinessProfileWithDirectSQL: ${error}`);
     return false;
   }
 }

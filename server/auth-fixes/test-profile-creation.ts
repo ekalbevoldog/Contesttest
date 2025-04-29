@@ -24,28 +24,47 @@ async function testBusinessProfileCreation() {
     const testUser = businessUsers[0];
     console.log(`Testing with business user: ${testUser.id} (${testUser.email})`);
     
-    // Check for existing profile
-    const { data: existingProfiles, error: profileError } = await supabase.rpc('exec_sql', {
-      sql_query: `SELECT id FROM business_profiles WHERE user_id = '${testUser.id}' LIMIT 1`
-    });
+    // Check for existing profile with API
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('business_profiles')
+      .select('id')
+      .eq('user_id', testUser.id)
+      .maybeSingle();
     
-    if (profileError) {
-      console.error('Error checking for existing profile:', profileError.message);
-    } else if (existingProfiles && existingProfiles.length > 0) {
-      console.log(`User already has business profile: ${existingProfiles[0].id}`);
+    // If profile exists, delete it for testing
+    if (existingProfile) {
+      console.log(`User already has business profile: ${existingProfile.id}`);
       
       // For testing, let's delete the existing profile
       console.log('Deleting existing profile for testing purposes...');
-      const { error: deleteError } = await supabase.rpc('exec_sql', {
-        sql_query: `DELETE FROM business_profiles WHERE user_id = '${testUser.id}' RETURNING id`
-      });
       
-      if (deleteError) {
-        console.error('Error deleting existing profile:', deleteError.message);
+      try {
+        // Try with API first
+        const { error: deleteError } = await supabase
+          .from('business_profiles')
+          .delete()
+          .eq('user_id', testUser.id);
+        
+        if (deleteError) {
+          console.error('Error deleting profile with API:', deleteError.message);
+          // Try with direct SQL
+          const { error: sqlDeleteError } = await supabase.rpc('exec_sql', {
+            sql: `DELETE FROM business_profiles WHERE user_id = '${testUser.id}' RETURNING id`
+          });
+          
+          if (sqlDeleteError) {
+            console.error('Error deleting profile with SQL:', sqlDeleteError.message);
+            return;
+          }
+        }
+        
+        console.log('Existing profile deleted successfully');
+      } catch (deleteError) {
+        console.error('Error during profile deletion:', deleteError);
         return;
       }
-      
-      console.log('Existing profile deleted successfully');
+    } else {
+      console.log('No existing business profile found, will create new one');
     }
     
     // Now try to create a new profile
@@ -54,19 +73,38 @@ async function testBusinessProfileCreation() {
     
     console.log('Profile creation result:', result);
     
-    // Verify the profile was created
-    const { data: newProfiles, error: newProfileError } = await supabase.rpc('exec_sql', {
-      sql_query: `SELECT * FROM business_profiles WHERE user_id = '${testUser.id}' LIMIT 1`
-    });
+    // Verify the profile was created with API
+    const { data: newProfile, error: checkError } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('user_id', testUser.id)
+      .maybeSingle();
     
-    if (newProfileError) {
-      console.error('Error checking for new profile:', newProfileError.message);
+    if (checkError) {
+      console.error('Error checking for new profile with API:', checkError.message);
+      
+      // Fall back to SQL
+      try {
+        const { data: sqlProfiles } = await supabase.rpc('exec_sql', {
+          sql: `SELECT * FROM business_profiles WHERE user_id = '${testUser.id}' LIMIT 1`
+        });
+        
+        if (sqlProfiles && sqlProfiles.length > 0) {
+          console.log('Success! New business profile created (via SQL):');
+          console.log(JSON.stringify(sqlProfiles[0], null, 2));
+        } else {
+          console.error('Failed to create business profile - no profile found after creation attempt');
+        }
+      } catch (sqlError) {
+        console.error('Error checking with SQL:', sqlError);
+      }
+      
       return;
     }
     
-    if (newProfiles && newProfiles.length > 0) {
+    if (newProfile) {
       console.log('Success! New business profile created:');
-      console.log(JSON.stringify(newProfiles[0], null, 2));
+      console.log(JSON.stringify(newProfile, null, 2));
     } else {
       console.error('Failed to create business profile - no profile found after creation attempt');
     }

@@ -22,20 +22,20 @@ async function fixMissingBusinessProfiles() {
     
     console.log(`Found ${businessUsers.length} business users`);
     
-    // Get all existing business profiles
-    const { data: existingProfiles, error: profileError } = await supabase.rpc('exec_sql', {
-      sql_query: `SELECT user_id FROM business_profiles`
-    });
+    // Get all existing business profiles using the API
+    const { data: existingProfiles, error: profileError } = await supabase
+      .from('business_profiles')
+      .select('user_id');
     
     if (profileError) {
-      console.error('Error checking existing profiles:', profileError.message);
+      console.error('Error checking existing profiles with API:', profileError.message);
       return;
     }
     
     // Create a set of user IDs that already have profiles
     const userIdsWithProfiles = new Set<string>();
     if (existingProfiles && existingProfiles.length > 0) {
-      existingProfiles.forEach(profile => {
+      existingProfiles.forEach((profile: { user_id: string }) => {
         userIdsWithProfiles.add(profile.user_id);
       });
     }
