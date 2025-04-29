@@ -50,9 +50,9 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
       .from('business_profiles')
       .insert({
         user_id: userId,
-        company_name: 'My Business', // Default name that user should update
-        company_type: 'service',     // Required field with valid value
-        email: businessUser.email,   // Use user's email as default
+        business_name: 'My Business',
+        email: businessUser.email,
+        business_type: 'service',
         created_at: new Date()
       })
       .select()
