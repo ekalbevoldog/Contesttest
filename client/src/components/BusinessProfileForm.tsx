@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
 
 // Schema for business profile form
 const businessProfileSchema = z.object({
@@ -53,9 +54,21 @@ export default function BusinessProfileForm({ onSubmit, isLoading = false }: Bus
     },
   });
 
-  function handleSubmit(values: z.infer<typeof businessProfileSchema>) {
+  const loadSession = () => {
+    // Replace this with your actual session loading logic
+    // This is a placeholder, you'll need to implement this based on your authentication system
+    const session = localStorage.getItem('session');
+    try {
+        return JSON.parse(session || '{}');
+    } catch (error) {
+        return null;
+    }
+  };
+
+  const handleSubmit = async (values: z.infer<typeof businessProfileSchema>) => {
     onSubmit(values);
-  }
+  };
+
 
   return (
     <div className="bg-white rounded-md border border-gray-200 p-4">

@@ -57,9 +57,10 @@ export default function AthleteProfileForm({ onSubmit, isLoading = false }: Athl
     },
   });
 
-  function handleSubmit(values: z.infer<typeof athleteProfileSchema>) {
+  const handleSubmit = async (values: z.infer<typeof athleteProfileSchema>) => {
     onSubmit(values);
-  }
+  };
+
 
   return (
     <div className="bg-white rounded-md border border-gray-200 p-4">
