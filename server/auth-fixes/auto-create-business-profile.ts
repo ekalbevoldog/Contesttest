@@ -15,7 +15,7 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
     
     // Check if business profile already exists
     const { data: existingProfile, error: profileError } = await supabase
-      .from('businesses')
+      .from('business_profiles')
       .select('id')
       .eq('user_id', userId)
       .single();
@@ -47,7 +47,7 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
     
     // Create business profile with defaults
     const { data: newProfile, error: insertError } = await supabase
-      .from('businesses')
+      .from('business_profiles')
       .insert({
         user_id: userId,
         company_name: 'My Business', // Default name that user should update
