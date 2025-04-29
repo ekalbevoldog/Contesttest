@@ -73,7 +73,7 @@ export function setupSupabaseAuth(app: Express) {
         .select("*")
         .eq("email", email)
         .single();
-      
+
       if (userError || !userRecord) {
         // Try again with auth_id which is the correct identifier
         const { data: authIdRecord, error: authIdError } = await supabase
@@ -81,10 +81,10 @@ export function setupSupabaseAuth(app: Express) {
           .select("*")
           .eq("auth_id", authData.user.id)
           .single();
-          
+
         if (authIdError || !authIdRecord) {
           console.log("User authenticated but needs onboarding:", authData.user.id);
-          
+
           // User exists in auth but not in users table - they need to complete onboarding
           return res.status(200).json({
             user: {
@@ -101,7 +101,7 @@ export function setupSupabaseAuth(app: Express) {
             }
           });
         }
-        
+
         // Found user by auth_id, use this record
         userRecord = authIdRecord;
         console.log("Found user by auth_id:", userRecord.role);
@@ -210,6 +210,24 @@ export function setupSupabaseAuth(app: Express) {
       if (!email || !password || !fullName || !role) {
         return res.status(400).json({ error: "Missing fields" });
       }
+
+      // Check if user already exists
+      const { data: existingUser, error: existingUserError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (existingUser) {
+        console.log('User already exists with this email');
+        return res.status(400).json({ error: 'User with this email already exists' });
+      }
+      if (existingUserError) {
+        console.error("Error checking for existing user:", existingUserError);
+        return res.status(500).json({ error: "Failed to check for existing user" });
+      }
+
+
       const { data: signUpData, error: signUpErr } =
         await supabase.auth.signUp({
           email,
