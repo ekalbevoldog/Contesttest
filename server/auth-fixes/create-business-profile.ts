@@ -61,14 +61,13 @@ export async function createBusinessProfileIfNeeded(userId: string): Promise<boo
     }
     
     // Check if a business profile already exists
-    const { data: existingProfile, error: profileError } = await supabase
+    const { data: existingProfiles, error: profileError } = await supabase
       .from('businesses')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .select('*')
+      .eq('user_id', userId);
     
-    if (existingProfile) {
-      console.log(`[Business Profile] User ${userId} already has business profile ${existingProfile.id}`);
+    if (existingProfiles && existingProfiles.length > 0) {
+      console.log(`[Business Profile] User ${userId} already has business profile`);
       return true; // Profile already exists
     }
     
@@ -76,11 +75,11 @@ export async function createBusinessProfileIfNeeded(userId: string): Promise<boo
     console.log(`[Business Profile] Creating placeholder business profile for user ${userId}`);
     
     // Determine required fields from error messages in previous attempts
-    // Try different values for company_type since 'Other' wasn't accepted
+    // We verified that 'service' is a valid value for the company_type enum
     const businessData = {
       user_id: userId,
       company_name: `Business ${userData.email.split('@')[0]}`, // Generate a placeholder name
-      company_type: 'Products' // Try specific value from enum
+      company_type: 'service' // Verified valid enum value
     };
     
     const { data: newProfile, error: createError } = await supabase
@@ -126,14 +125,13 @@ export async function fixAllBusinessProfiles(): Promise<void> {
     const results = await Promise.all(
       businessUsers.map(async (user) => {
         // Check if profile exists
-        const { data: profile, error } = await supabase
+        const { data: profiles, error } = await supabase
           .from('businesses')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+          .select('*')
+          .eq('user_id', user.id);
         
-        if (profile) {
-          console.log(`[Business Profile] User ${user.id} (${user.email}) already has profile ${profile.id}`);
+        if (profiles && profiles.length > 0) {
+          console.log(`[Business Profile] User ${user.id} (${user.email}) already has business profile`);
           return { user, existing: true };
         }
         
