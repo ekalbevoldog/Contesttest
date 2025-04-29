@@ -35,7 +35,7 @@ async function testBusinessProfileCreation() {
       const { data: existingProfile, error: profileError } = await supabase
         .from("business_profiles")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", user.id.toString())
         .maybeSingle();
         
       if (profileError) {
@@ -57,9 +57,9 @@ async function testBusinessProfileCreation() {
           
           // Verify it was created
           const { data: newProfile } = await supabase
-            .from("businesses")
+            .from("business_profiles")
             .select("*")
-            .eq("user_id", user.id)
+            .eq("user_id", user.id.toString())
             .single();
             
           console.log(`New profile details: ${JSON.stringify(newProfile)}`);
