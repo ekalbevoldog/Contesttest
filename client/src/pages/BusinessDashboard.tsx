@@ -79,20 +79,30 @@ export default function BusinessDashboard() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
   useEffect(() => {
-    // If we're still loading the auth state, wait
-    if (isLoadingAuth) return;
+    console.log("========== Business Dashboard useEffect executing ==========");
     
-    console.log('BusinessDashboard: auth state:', { 
-      user, 
-      authProfile,
+    // If we're still loading the auth state, wait
+    if (isLoadingAuth) {
+      console.log("Auth still loading, waiting for completion...");
+      return;
+    }
+    
+    console.log('BusinessDashboard DETAILED AUTH STATE:', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      userEmail: user?.email,
       userType,
       hasProfile,
-      role: user?.role || user?.userType 
+      role: user?.role || user?.userType,
+      effectiveRole: userType || user?.role || user?.userType,
+      hasAuthProfile: !!authProfile,
+      authProfileId: authProfile?.id,
+      profileDataIsLoading: isLoadingProfile
     });
     
     // Check if user is authenticated
     if (!user) {
-      console.log('No authenticated user found, redirecting to login');
+      console.error('CRITICAL: No authenticated user found, redirecting to login');
       setIsLoadingProfile(false);
       setLoading(false);
       
@@ -106,10 +116,17 @@ export default function BusinessDashboard() {
       return;
     }
     
+    console.log("User details:", {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      metadata: user.user_metadata
+    });
+    
     // Verify this is a business user
     const effectiveRole = userType || user.role || user.userType;
     if (effectiveRole !== 'business') {
-      console.log(`User has role ${effectiveRole}, not business. Redirecting to appropriate dashboard`);
+      console.error(`ROLE MISMATCH: User has role ${effectiveRole}, not business. Redirecting to appropriate dashboard`);
       setIsLoadingProfile(false);
       setLoading(false);
       
@@ -125,6 +142,9 @@ export default function BusinessDashboard() {
       }
       return;
     }
+    
+    console.log("Confirmed business role. Checking for profile...");
+    console.log("Profile state:", { hasProfile, authProfile });
     
     // First priority: use profile from auth context if available
     if (authProfile) {

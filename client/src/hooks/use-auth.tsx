@@ -510,23 +510,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
+  console.log('[useAuth] useAuth hook called');
   const context = useContext(AuthContext);
+  
   if (!context) {
+    console.error('[useAuth] No AuthContext available - this is a critical error');
     throw new Error("useAuth must be used within an AuthProvider");
+  }
+  
+  console.log('[useAuth] Context data:', { 
+    hasUser: !!context.user, 
+    hasProfile: !!context.profile,
+    isLoading: context.isLoading 
+  });
+  
+  if (context.user) {
+    console.log('[useAuth] User details:', { 
+      id: context.user.id,
+      email: context.user.email,
+      role: context.user.role
+    });
   }
 
   // Extract user type from user data with a reliable priority order
   const userType = useMemo(() => {
-    if (!context.user) return null;
+    if (!context.user) {
+      console.log('[useAuth] No user data available for userType determination');
+      return null;
+    }
     
     // Priority order for determining user type:
     // 1. Explicit userType property
     // 2. role property 
     // 3. user_metadata.role
-    return context.user.userType || 
+    const determinedType = context.user.userType || 
            context.user.role || 
            (context.user.user_metadata && context.user.user_metadata.role) || 
            null;
+           
+    console.log('[useAuth] Determined userType:', determinedType);
+    return determinedType;
   }, [context.user]);
 
   // Add a convenience method for logout
