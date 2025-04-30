@@ -325,10 +325,13 @@ export function setupProfileEndpoints(app: Express) {
       ? 'athlete_profiles'
       : 'business_profiles';
 
-    // Upsert into staging by session_id
+    // Upsert using proper conflict key based on table
+    const conflictKey = generatedUserType === 'athlete' ? 'user_id' : 'id';
+    console.log(`Using ${conflictKey} as conflict key for ${table} upsert`);
+    
     const { data: profile, error } = await supabaseAdmin
       .from(table)
-      .upsert(base, { onConflict: ['session_id'] })
+      .upsert(base, { onConflict: conflictKey })
       .select()
       .single();
 
