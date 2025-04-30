@@ -11,20 +11,50 @@ import {
 // API functions for dashboard data
 export async function fetchDashboardConfig(): Promise<DashboardConfig> {
   try {
-    console.log('Fetching dashboard configuration...');
-    const response = await apiRequest('GET', '/api/dashboard/config');
+    console.log('[Dashboard] Fetching dashboard configuration...');
+    // First check if we have a user ID in localStorage
+    const userId = localStorage.getItem('userId');
+    const userRole = localStorage.getItem('userRole') || 'athlete';
     
-    if (!response.ok) {
-      console.error('Failed to fetch dashboard config:', response.status, response.statusText);
-      throw new Error(`Failed to fetch dashboard configuration: ${response.statusText}`);
+    if (!userId) {
+      console.warn('[Dashboard] No user ID found in localStorage, cannot fetch dashboard config');
+      // Create default config for unauthenticated users to avoid breaking UI
+      return {
+        userId: 'guest-user',
+        lastUpdated: new Date().toISOString(),
+        widgets: []
+      };
     }
     
-    const data = await response.json();
-    console.log('Dashboard config received:', data);
-    return data;
+    console.log(`[Dashboard] Fetching config for user ${userId} with role ${userRole}`);
+    
+    try {
+      const response = await apiRequest('GET', '/api/dashboard/config');
+      
+      console.log('[Dashboard] API response status:', response.status);
+      
+      const data = await response.json();
+      console.log('[Dashboard] Dashboard config received:', data);
+      return data;
+    } catch (apiError) {
+      console.error('[Dashboard] API error:', apiError);
+      
+      // If we can't fetch from API, return a minimal configuration
+      console.log('[Dashboard] Creating fallback dashboard config');
+      return {
+        userId: userId,
+        lastUpdated: new Date().toISOString(),
+        widgets: []
+      };
+    }
   } catch (error) {
-    console.error('Error in fetchDashboardConfig:', error);
-    throw error;
+    console.error('[Dashboard] Error in fetchDashboardConfig:', error);
+    // Return empty dashboard rather than breaking completely
+    return {
+      userId: 'error-state',
+      lastUpdated: new Date().toISOString(),
+      widgets: []
+    };
   }
 }
 
