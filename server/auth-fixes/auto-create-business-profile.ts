@@ -141,10 +141,61 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
       // Despite the error, we'll try anyway with retries - sometimes non-standard IDs work
     }
     
+    // First, check if the user exists in the users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, email, role')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (userError) {
+      console.error(`[AutoProfile] Error checking user in users table: ${userError.message}`);
+    }
+    
+    // Get the user_id (numeric) from the users table
+    let user_id = userData?.id;
+    if (!user_id) {
+      console.error(`[AutoProfile] Could not find user with email ${email} in users table`);
+      
+      // Attempt to fetch by auth_id
+      const { data: userByAuthId, error: authIdError } = await supabase
+        .from('users')
+        .select('id, email, role')
+        .eq('auth_id', userId)
+        .maybeSingle();
+        
+      if (authIdError) {
+        console.error(`[AutoProfile] Error checking user by auth_id: ${authIdError.message}`);
+      } else if (userByAuthId?.id) {
+        user_id = userByAuthId.id;
+        console.log(`[AutoProfile] Found user_id ${user_id} using auth_id lookup`);
+      } else {
+        console.error(`[AutoProfile] Critical: User not found in users table by email or auth_id`);
+        // Create a fallback user record (this should rarely happen)
+        const { data: newUser, error: newUserError } = await supabase
+          .from('users')
+          .insert({
+            email: email,
+            role: 'business',
+            auth_id: userId,
+            created_at: new Date()
+          })
+          .select()
+          .single();
+          
+        if (newUserError) {
+          console.error(`[AutoProfile] Failed to create fallback user: ${newUserError.message}`);
+          return false;
+        }
+        user_id = newUser.id;
+        console.log(`[AutoProfile] Created fallback user with ID ${user_id}`);
+      }
+    }
+    
     // Generate a session ID
     const sessionId = uuidv4();
     
-    console.log(`[AutoProfile] Creating business profile record directly with retries...`);
+    console.log(`[AutoProfile] Creating business profile record for user_id ${user_id}...`);
     
     // Setup retry mechanism for profile creation
     let retryCount = 0;
@@ -153,7 +204,9 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
     
     // Profile data to insert/update - matching our new schema
     const profileData = {
-      id: userId,  // This uses the user ID directly
+      user_id: user_id,  // Use the numeric user ID from the users table
+      name: email.split('@')[0], // Use part of email as default name
+      session_id: sessionId,
       business_type: 'product', // Default to product business
       industry: null,
       access_restriction: 'unrestricted',
@@ -184,7 +237,7 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
         const { data: resultData, error: profileError } = await supabase
           .from('business_profiles')
           .upsert(profileData, {
-            onConflict: 'id',
+            onConflict: 'user_id',
             ignoreDuplicates: false // Update if exists
           })
           .select();
