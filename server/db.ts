@@ -146,34 +146,6 @@ export async function createEssentialTables() {
     
     if (existingTables.users) {
       console.log("Table users exists (verified by selecting data)");
-      
-      // Check if auth_id column exists in the users table
-      console.log("Checking if auth_id column exists in users table...");
-      const { data: authIdCheckData, error: authIdCheckError } = await supabase
-        .from('users')
-        .select('auth_id')
-        .limit(1);
-        
-      if (authIdCheckError) {
-        console.log("auth_id column doesn't exist in users table, adding it now");
-        
-        try {
-          // Add the auth_id column using raw SQL
-          const { error: alterError } = await supabaseAdmin.rpc('exec_sql', {
-            sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id TEXT UNIQUE"
-          });
-          
-          if (alterError) {
-            console.error("Error adding auth_id column:", alterError);
-          } else {
-            console.log("Successfully added auth_id column to users table");
-          }
-        } catch (error) {
-          console.error("Exception adding auth_id column:", error);
-        }
-      } else {
-        console.log("auth_id column exists in users table");
-      }
     } else {
       console.log("Table users does not exist or is not accessible");
     }
