@@ -107,18 +107,23 @@ export class SupabaseStorage implements IStorage {
 
   constructor() {
     try {
-      // Set up PostgreSQL session store
-      const PgStore = connectPgSimple(session);
-      this.sessionStore = new PgStore({
-        pool,
-        tableName: 'sessions', // Use the table we created in SQL
-        createTableIfMissing: true // Automatically create table if missing
+      // Use memory store for sessions to avoid database issues
+      console.log("Using in-memory session store for simplicity");
+      import('memorystore').then(memorystore => {
+        const MemoryStore = memorystore.default(session);
+        this.sessionStore = new MemoryStore({
+          checkPeriod: 86400000 // prune expired entries every 24h
+        });
+      }).catch(err => {
+        console.error("Failed to initialize memory store:", err);
+        // Fallback to basic memory store
+        this.sessionStore = new session.MemoryStore();
       });
-      console.log("PostgreSQL session store initialized successfully");
+      
+      // Initialize with basic memory store until the import completes
+      this.sessionStore = new session.MemoryStore();
     } catch (err) {
-      console.error("Failed to initialize PostgreSQL session store:", err);
-      // Fallback to in-memory session if PostgreSQL store fails
-      console.log("Falling back to in-memory session store");
+      console.error("Failed to initialize session store:", err);
       this.sessionStore = new session.MemoryStore();
     }
   }
