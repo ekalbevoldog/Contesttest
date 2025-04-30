@@ -80,9 +80,13 @@ export async function createBusinessProfileEndpoint(req: Request, res: Response)
       updated_at: new Date()
     };
     
+    // Use upsert instead of insert to handle cases where profile might already exist
     const { data: newProfile, error: insertError } = await supabase
       .from('business_profiles')
-      .insert(businessProfile)
+      .upsert(businessProfile, { 
+        onConflict: 'id',
+        ignoreDuplicates: false // Update the record if it exists
+      })
       .select()
       .single();
     

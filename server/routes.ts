@@ -434,10 +434,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         if (userData && userData.role === 'business') {
-          // Create a basic business profile - Note using 'id' field, not 'user_id'
+          // Create a basic business profile with upsert to handle cases where profile might already exist
           const { data: newProfile, error: createError } = await supabase
             .from('business_profiles')
-            .insert({
+            .upsert({
               id: userId,
               name: 'My Business',
               email: userData.email,
@@ -445,6 +445,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               audience_goals: 'Default goals',
               campaign_vibe: 'Professional',
               values: 'Default values'
+            }, {
+              onConflict: 'id', 
+              ignoreDuplicates: false // Update if exists
             })
             .select()
             .single();
