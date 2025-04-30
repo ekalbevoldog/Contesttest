@@ -314,6 +314,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', createBusinessProfileEndpoint);
+  
+  // Endpoint to get business profile from Supabase directly
+  app.get('/api/supabase/business-profile/:userId', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'userId is required' });
+      }
+      
+      console.log(`[API] Fetching business profile for user ID: ${userId}`);
+      
+      // Get business profile from Supabase
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error fetching business profile:', error);
+        return res.status(500).json({ error: 'Failed to fetch business profile' });
+      }
+      
+      if (!data) {
+        console.log(`No business profile found for user ID: ${userId}`);
+        
+        // Attempt to create one
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id, email, role')
+          .eq('id', userId)
+          .maybeSingle();
+          
+        if (userError) {
+          console.error('Error fetching user:', userError);
+          return res.status(404).json({ error: 'Business profile not found' });
+        }
+        
+        if (userData && userData.role === 'business') {
+          // Create a basic business profile
+          const { data: newProfile, error: createError } = await supabase
+            .from('business_profiles')
+            .insert({
+              user_id: userId,
+              name: 'My Business',
+              email: userData.email,
+              product_type: 'Default product',
+              audience_goals: 'Default goals',
+              campaign_vibe: 'Professional',
+              values: 'Default values'
+            })
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error('Error creating business profile:', createError);
+            return res.status(500).json({ error: 'Failed to create business profile' });
+          }
+          
+          console.log('Created new business profile:', newProfile);
+          return res.status(201).json({ profile: newProfile });
+        }
+        
+        return res.status(404).json({ error: 'Business profile not found' });
+      }
+      
+      console.log('Found business profile:', data);
+      return res.status(200).json({ profile: data });
+    } catch (error) {
+      console.error('Error in business profile endpoint:', error);
+      return res.status(500).json({ error: 'Server error processing request' });
+    }
+  });
 
   // Database schema diagnostic endpoint
   app.get("/api/db/schema/check", async (req: Request, res: Response) => {
