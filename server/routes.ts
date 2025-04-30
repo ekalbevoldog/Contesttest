@@ -13,7 +13,6 @@ import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
 import { pool, db as supabaseAdmin } from "./db.js";
 // Import auth fixes
 import { createBusinessProfileEndpoint } from "./auth-fixes/create-business-profile-endpoint.js";
-import { fixBusinessProfilesTableEndpoint } from "./fix-business-profiles-table.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -315,9 +314,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', createBusinessProfileEndpoint);
-  
-  // Register the fix for business profiles table structure
-  app.post('/api/fix-business-profiles-table', fixBusinessProfilesTableEndpoint);
   
   // API diagnostic health check
   app.get('/api/diagnostic/check', async (req: Request, res: Response) => {
