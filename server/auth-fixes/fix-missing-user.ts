@@ -97,11 +97,11 @@ export async function createUserForAuthUser(
     // Get role from user metadata
     const role = authUser.user.user_metadata?.role || 'athlete';
     
-    // Prepare data for user creation
+    // Prepare data for user creation - username field removed as it doesn't exist in Supabase
     const userData = {
       auth_id: authUserId,
       email: email,
-      username: authUser.user.user_metadata?.preferred_username || email.split('@')[0],
+      // username removed - not in Supabase schema
       role: role,
       created_at: new Date(authUser.user.created_at || Date.now())
     };
@@ -125,12 +125,8 @@ export async function createUserForAuthUser(
       
       // Check for specific error conditions
       if (insertError.code === '23505') {
-        // Unique constraint violation - likely duplicate email or username
-        if (insertError.message?.includes('username')) {
-          console.error(`[Fix] Username already exists, try with a different username`);
-        } else {
-          console.error(`[Fix] Email already exists, try with a different email`);
-        }
+        // Unique constraint violation - likely duplicate email
+        console.error(`[Fix] Email already exists, try with a different email`);
       }
       
       return false;
