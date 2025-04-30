@@ -79,8 +79,8 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
         .insert({
           id: userId,  // Same ID as the user
           company_name: 'My Business',
-          company_type: 'Other',  // Default value
-          industry_id: 1,  // Default value, will update later
+          company_type: 'service',  // Using lowercase 'service' as seen in the example record
+          industry_id: null,  // Allowing null as seen in the example
           description: 'Business account created during registration',
           website_url: null,
           zip_code: null
