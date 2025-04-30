@@ -71,44 +71,16 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
     // Generate a session ID
     const sessionId = uuidv4();
     
-    // First, add a record to the 'businesses' table since it's required
-    console.log(`[AutoProfile] Creating business record first...`);
+    // Skip trying to create a business record - the foreign key constraint appears 
+    // to be bi-directional or going in a different direction. Instead, we'll focus
+    // on directly creating the business_profile record.
+    
+    console.log(`[AutoProfile] Creating business profile record directly...`);
     try {
-      const { data: businessData, error: businessError } = await supabase
-        .from('businesses')
-        .insert({
-          id: userId,  // Same ID as the user
-          company_name: 'My Business',
-          company_type: 'service',  // Using lowercase 'service' as seen in the example record
-          industry_id: null,  // Allowing null as seen in the example
-          description: 'Business account created during registration',
-          website_url: null,
-          zip_code: null
-        })
-        .select();
-        
-      if (businessError) {
-        console.error(`[AutoProfile] Failed to create business record: ${businessError.message}`);
-        if (businessError.details) {
-          console.error(`[AutoProfile] Business error details: ${businessError.details}`);
-        }
-        
-        // Check if it failed due to the record already existing
-        if (businessError.code === '23505') { // Unique violation
-          console.log(`[AutoProfile] Business record might already exist, continuing to profile creation`);
-        } else {
-          return false;
-        }
-      } else {
-        console.log(`[AutoProfile] Business record created successfully`);
-      }
-      
-      // Now create the business_profile record
-      console.log(`[AutoProfile] Creating business profile record...`);
       const { data: profileData, error: profileError } = await supabase
         .from('business_profiles')
         .insert({
-          id: userId,  // This links to the businesses table
+          id: userId,  // This uses the user ID directly
           name: 'My Business',
           session_id: sessionId,
           email: email,
@@ -130,6 +102,28 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
         if (profileError.details) {
           console.error(`[AutoProfile] Profile error details: ${profileError.details}`);
         }
+        
+        // Add additional diagnostics if we get a foreign key constraint error
+        if (profileError.details && profileError.details.includes('foreign key constraint')) {
+          console.log(`[AutoProfile] Detected foreign key constraint issue. Trying alternative approach...`);
+          
+          // Search existing profiles to see if one might exist for this user
+          const { data: existingUserProfileSearch, error: searchError } = await supabase
+            .from('business_profiles')
+            .select('*')
+            .limit(10);
+            
+          if (searchError) {
+            console.error(`[AutoProfile] Error searching profiles:`, searchError.message);
+          } else if (existingUserProfileSearch && existingUserProfileSearch.length > 0) {
+            console.log(`[AutoProfile] Found ${existingUserProfileSearch.length} existing profiles`);
+            // Just log the first profile's structure without personal data
+            if (existingUserProfileSearch[0]) {
+              console.log(`[AutoProfile] Sample profile structure:`, Object.keys(existingUserProfileSearch[0]));
+            }
+          }
+        }
+        
         return false;
       }
       
