@@ -136,20 +136,26 @@ export class SupabaseStorage implements IStorage {
   // Dashboard operations
   async getDashboardConfig(userId: string): Promise<DashboardConfig | null> {
     try {
+      console.log(`Fetching dashboard config for user ID: ${userId}`);
+      
       // Fetch the user's dashboard configuration
       const { data, error } = await supabase
         .from('user_dashboard_configs')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
         
       if (error) {
-        if (error.code === 'PGRST116') { // Record not found
-          return null;
-        }
         console.error('Error fetching dashboard config:', error);
         throw new Error(`Failed to fetch dashboard config: ${error.message}`);
       }
+      
+      if (!data) {
+        console.log(`No dashboard config found for user ${userId}, returning null`);
+        return null;
+      }
+      
+      console.log(`Found dashboard config for user ${userId}:`, data);
       
       // Convert stored format to DashboardConfig
       return {
@@ -165,16 +171,23 @@ export class SupabaseStorage implements IStorage {
   
   async saveDashboardConfig(userId: string, config: DashboardConfig): Promise<void> {
     try {
+      console.log(`Saving dashboard config for user ID: ${userId}`);
+      
       // Check if config already exists
-      const { data: existingConfig } = await supabase
+      const { data: existingConfig, error: checkError } = await supabase
         .from('user_dashboard_configs')
         .select('id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error('Error checking for existing dashboard config:', checkError);
+      }
       
       const now = new Date().toISOString();
       
       if (existingConfig) {
+        console.log(`Updating existing dashboard config for user ${userId}`);
         // Update existing config
         const { error } = await supabase
           .from('user_dashboard_configs')
@@ -189,6 +202,7 @@ export class SupabaseStorage implements IStorage {
           throw new Error(`Failed to update dashboard config: ${error.message}`);
         }
       } else {
+        console.log(`Creating new dashboard config for user ${userId}`);
         // Create new config
         const { error } = await supabase
           .from('user_dashboard_configs')
@@ -203,6 +217,8 @@ export class SupabaseStorage implements IStorage {
           throw new Error(`Failed to create dashboard config: ${error.message}`);
         }
       }
+      
+      console.log(`Successfully saved dashboard config for user ${userId}`);
     } catch (error) {
       console.error('Exception saving dashboard config:', error);
       throw new Error('Failed to save dashboard configuration');
