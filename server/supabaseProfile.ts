@@ -213,16 +213,17 @@ async function syncToDomain(userType: string, profile: any) {
         bio:              profile.bio,
       }, { onConflict: ['user_id'] });
   } else if (userType === 'business') {
+    // Use the primary key 'id' for businesses instead of 'user_id'
     await supabaseAdmin
       .from('businesses')
       .upsert({
-        user_id:       profile.user_id,
+        id:            profile.id, // Use 'id' instead of 'user_id'
         company_name:  profile.name,
         email:         profile.email,
         industry:      profile.industry,
         business_type: profile.business_type,
         zip_code:      profile.zipcode ?? profile.zip_code,
-      }, { onConflict: ['user_id'] });
+      }, { onConflict: ['id'] }); // Conflict on 'id' not 'user_id'
   }
 }
 
@@ -291,9 +292,9 @@ export function setupProfileEndpoints(app: Express) {
     }
 
     // Build a snake_case object for your staging table
+    // Note: for business_profiles, the primary identifier is 'id' not 'user_id'
     const base: Record<string, any> = {
       session_id:      generatedSessionId, // Use generated session ID if needed
-      user_id:         internalUserId, // Now using the correct internal ID
       name: name || 'Anonymous User', // Provide fallback for required fields
       email,
       phone,
@@ -309,6 +310,15 @@ export function setupProfileEndpoints(app: Express) {
       sport,
       position,
     };
+    
+    // Add correct ID field based on the table
+    if (generatedUserType === 'business') {
+      // For business_profiles, it's 'id' not 'user_id'
+      base.id = internalUserId;
+    } else {
+      // For athlete_profiles, it's still 'user_id'
+      base.user_id = internalUserId;
+    }
 
     // Choose the correct staging table
     const table = generatedUserType === 'athlete'
