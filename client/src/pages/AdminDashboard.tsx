@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import AdminFixTools from "@/components/AdminFixTools";
 import { 
   BarChart3, 
   Users, 
