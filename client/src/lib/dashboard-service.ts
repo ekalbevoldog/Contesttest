@@ -230,7 +230,22 @@ export class DashboardWebSocketManager {
     try {
       // Determine the WebSocket URL based on the current environment
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      // Use the specific port 5432 for PostgreSQL/WebSocket
+      // Determine the appropriate host
+      let wsHost;
+      if (window.location.hostname === 'localhost') {
+        // For local development
+        wsHost = 'localhost:5432';
+      } else {
+        // For Replit or production deployment
+        // Extract the hostname without the port
+        const hostname = window.location.hostname;
+        wsHost = `${hostname}:5432`;
+      }
+      
+      const wsUrl = `${protocol}//${wsHost}/ws`;
+      console.log('[Dashboard WebSocket] Attempting to connect to:', wsUrl);
       
       this.socket = new WebSocket(wsUrl);
       
