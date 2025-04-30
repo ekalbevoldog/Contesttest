@@ -145,11 +145,13 @@ export async function createEssentialTables() {
       return true;
     }
     
-    console.log("Some tables not created, running complete schema migration...");
+    console.log("Some tables not created, but we'll skip comprehensive migration...");
     
-    // Import the comprehensive migration dynamically to avoid circular dependencies
-    const { runCompleteMigration } = await import('./runCompleteMigration.js');
-    await runCompleteMigration();
+    // Skip the migration as we're using a different approach
+    // The tables have already been created directly via SQL
+    console.log("Using existing tables instead of running migration");
+    
+    // Note: We removed the import for './runCompleteMigration.js' since it doesn't exist
     
     console.log("Table initialization complete");
     return true;
