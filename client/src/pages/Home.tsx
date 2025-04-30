@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 import ChatInterface from "@/components/ChatInterface";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,60 +48,98 @@ export default function Home() {
           blur={100}
           duration={15}
         />
+
+        {/* Floating glass elements in background */}
+        <div className="absolute w-40 h-40 top-1/4 right-1/4 glass-panel floating opacity-30 rounded-full"></div>
+        <div className="absolute w-64 h-64 bottom-1/4 left-1/3 glass-panel floating-slow opacity-20 rounded-full"></div>
+        <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel floating opacity-30 rounded-full glow-pulse"></div>
+        
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
         <div className="container mx-auto px-4 py-20 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <StaggerContainer className="space-y-6">
-              <StaggerItem>
-                <FadeIn delay={0.2} direction="up">
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
-                      Connecting Athletes & Brands
-                    </span>
-                    <br /> 
-                    <span className="glow-text">For Authentic Partnerships</span>
-                  </h1>
-                </FadeIn>
-              </StaggerItem>
+            <Parallax className="space-y-6" speed={0.2} direction="up" offset={[-20, 20]}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
+                    Connecting Athletes & Brands
+                  </span>
+                  <br /> 
+                  <span className="glow-text">For Authentic Partnerships</span>
+                </h1>
+              </motion.div>
               
-              <StaggerItem>
-                <FadeIn delay={0.4} direction="up">
-                  <div className="glass-card p-6">
-                    <p className="text-xl text-white max-w-xl">
-                      Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
-                    </p>
-                  </div>
-                </FadeIn>
-              </StaggerItem>
+              <motion.div
+                className="glass-card p-6"
+                initial={{ opacity: 0, filter: "blur(4px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                whileHover={{ 
+                  boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 191, 13, 0.4)",
+                  y: -5
+                }}
+              >
+                <p className="text-xl text-white max-w-xl">
+                  Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
+                </p>
+              </motion.div>
               
-              <StaggerItem>
-                <FadeIn delay={0.6} direction="up">
-                  <div className="flex gap-4">
-                    <Link href="/athletes">
-                      <a className="glass-button">For Athletes</a>
-                    </Link>
-                    <Link href="/businesses">
-                      <a className="glass-button">For Businesses</a>
-                    </Link>
-                  </div>
-                </FadeIn>
-              </StaggerItem>
+              <motion.div 
+                className="flex gap-4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+              >
+                <Link href="/athletes">
+                  <motion.a 
+                    className="glass-button glow-pulse"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    For Athletes
+                  </motion.a>
+                </Link>
+                <Link href="/businesses">
+                  <motion.a 
+                    className="glass-button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    For Businesses
+                  </motion.a>
+                </Link>
+              </motion.div>
               
-              <StaggerItem>
-                <FadeIn delay={0.8} direction="up">
-                  <div className="flex items-center gap-4 pt-4">
-                    <div className="glass-badge">
-                      <span className="text-xl font-bold text-[#FFBF0D] mr-2">500+</span>
-                      <span>successful partnerships</span>
-                    </div>
-                  </div>
-                </FadeIn>
-              </StaggerItem>
-            </StaggerContainer>
+              <motion.div 
+                className="flex items-center gap-4 pt-4"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <div className="glass-badge floating-slow">
+                  <span className="text-xl font-bold text-[#FFBF0D] mr-2">500+</span>
+                  <span>successful partnerships</span>
+                </div>
+              </motion.div>
+            </Parallax>
             
-            <FadeIn delay={0.5} direction="left" className="relative h-72 md:h-96 hidden lg:block">
-              <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-[#FFBF0D]/10 to-amber-500/5 rounded-xl transform rotate-3 border border-[#FFBF0D]/10"></div>
-              <div className="glass-card absolute top-0 right-0 w-full h-full overflow-hidden rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <Parallax direction="right" speed={0.1} offset={[-15, 15]} className="relative h-72 md:h-96 hidden lg:block">
+              <motion.div 
+                className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-[#FFBF0D]/10 to-amber-500/5 rounded-xl border border-[#FFBF0D]/10"
+                initial={{ opacity: 0, rotate: 0 }}
+                animate={{ opacity: 0.8, rotate: 3 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              />
+              <motion.div 
+                className="glass-card absolute top-0 right-0 w-full h-full overflow-hidden rounded-xl flex items-center justify-center backdrop-blur-sm"
+                initial={{ opacity: 0, filter: "blur(10px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                transition={{ duration: 1, delay: 0.5 }}
+                whileHover={{ boxShadow: "0 0 30px rgba(255, 191, 13, 0.3)" }}
+              >
                 <video 
                   className="w-full h-full object-cover rounded-xl opacity-80"
                   autoPlay
@@ -112,11 +151,44 @@ export default function Home() {
                   Your browser does not support the video tag.
                 </video>
                 <div className="absolute inset-0 bg-gradient-to-tr from-black/40 to-transparent"></div>
-                <div className="absolute bottom-4 right-4 glass-badge">
+                
+                {/* Floating elements */}
+                <motion.div 
+                  className="absolute top-6 right-6 h-10 w-10 glass-panel rounded-full opacity-60"
+                  animate={{ 
+                    y: [0, -10, 0],
+                    opacity: [0.6, 0.8, 0.6]
+                  }}
+                  transition={{ 
+                    duration: 4,
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }}
+                />
+                <motion.div 
+                  className="absolute bottom-12 left-8 h-16 w-16 glass-panel rounded-full opacity-40"
+                  animate={{ 
+                    y: [0, 15, 0],
+                    opacity: [0.4, 0.6, 0.4]
+                  }}
+                  transition={{ 
+                    duration: 6,
+                    repeat: Infinity,
+                    repeatType: "reverse"
+                  }}
+                />
+                
+                <motion.div 
+                  className="absolute bottom-4 right-4 glass-badge"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                >
                   <span className="text-sm">Authentic Partnerships</span>
-                </div>
-              </div>
-            </FadeIn>
+                </motion.div>
+              </motion.div>
+            </Parallax>
           </div>
         </div>
         
@@ -132,21 +204,67 @@ export default function Home() {
           blur={120}
           duration={20}
         />
+        
+        {/* Floating glass elements in background */}
+        <motion.div 
+          className="absolute w-32 h-32 top-1/4 right-1/5 glass-panel opacity-20 rounded-full"
+          animate={{ 
+            y: [0, -20, 0],
+            x: [0, 15, 0]
+          }}
+          transition={{ 
+            duration: 10,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+        />
+        <motion.div 
+          className="absolute w-48 h-48 bottom-1/3 left-1/4 glass-panel opacity-15 rounded-full"
+          animate={{ 
+            y: [0, 30, 0],
+            x: [0, -20, 0]
+          }}
+          transition={{ 
+            duration: 15,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+        />
+        
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-3"></div>
         <div className="container mx-auto px-4 relative z-10">
-          <ScrollReveal className="text-center mb-16" threshold={0.2}>
-            <div className="glass-panel p-8 inline-block">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <Parallax direction="up" speed={0.1} offset={[-10, 10]} className="text-center mb-16">
+            <motion.div 
+              className="glass-panel p-8 inline-block"
+              initial={{ opacity: 0, scale: 0.9, filter: "blur(5px)" }}
+              whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              transition={{ duration: 0.7 }}
+              viewport={{ once: true }}
+              whileHover={{ boxShadow: "0 0 30px rgba(255, 191, 13, 0.2)" }}
+            >
+              <motion.h2 
+                className="text-3xl md:text-4xl font-bold mb-4"
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+              >
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">
                   The Contested Advantage
                 </span>
-              </h2>
-              <p className="text-white max-w-2xl mx-auto">
+              </motion.h2>
+              <motion.p 
+                className="text-white max-w-2xl mx-auto"
+                initial={{ y: 20, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                viewport={{ once: true }}
+              >
                 Our AI-powered platform creates perfect matches between athletes and businesses, 
                 delivering authentic partnerships that drive real results.
-              </p>
-            </div>
-          </ScrollReveal>
+              </motion.p>
+            </motion.div>
+          </Parallax>
           
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
             <div className="glass-card overflow-hidden p-1 mb-8">
@@ -158,53 +276,181 @@ export default function Home() {
             
             <TabsContent value="athletes" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <ScrollReveal delay={0.1} direction="up" distance={20}>
-                  <div className="glass-card h-full">
-                    <CardContent className="p-6">
-                      <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
+                <Parallax direction="up" speed={0.15} offset={[-15, 15]}>
+                  <motion.div 
+                    className="glass-card h-full"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    viewport={{ once: true }}
+                    whileHover={{ 
+                      y: -5,
+                      boxShadow: "0 15px 30px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 191, 13, 0.3)" 
+                    }}
+                  >
+                    <CardContent className="p-6 relative overflow-hidden">
+                      <motion.div 
+                        className="absolute top-0 right-0 w-40 h-40 bg-gradient-radial from-[#FFBF0D]/10 to-transparent rounded-full -mr-20 -mt-20 z-0"
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.1, 0.15, 0.1]
+                        }}
+                        transition={{
+                          duration: 8,
+                          repeat: Infinity,
+                          repeatType: "reverse"
+                        }}
+                      />
+                      
+                      <motion.div 
+                        className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4 relative z-10"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                      >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
-                      </div>
-                      <h3 className="text-xl font-bold mb-2 text-white glow-text">Monetize Your Influence</h3>
-                      <p className="text-white">
+                      </motion.div>
+                      
+                      <motion.h3 
+                        className="text-xl font-bold mb-2 text-white glow-text relative z-10"
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        viewport={{ once: true }}
+                      >
+                        Monetize Your Influence
+                      </motion.h3>
+                      
+                      <motion.p 
+                        className="text-white relative z-10"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.3 }}
+                        viewport={{ once: true }}
+                      >
                         Turn your social media presence and athletic achievements into income with partnerships that respect your personal brand.
-                      </p>
+                      </motion.p>
                     </CardContent>
-                  </div>
-                </ScrollReveal>
+                  </motion.div>
+                </Parallax>
                 
-                <ScrollReveal delay={0.2} direction="up" distance={20}>
-                  <div className="glass-card h-full">
-                    <CardContent className="p-6">
-                      <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
+                <Parallax direction="up" speed={0.2} offset={[-15, 15]}>
+                  <motion.div 
+                    className="glass-card h-full"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    viewport={{ once: true }}
+                    whileHover={{ 
+                      y: -5,
+                      boxShadow: "0 15px 30px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 191, 13, 0.3)" 
+                    }}
+                  >
+                    <CardContent className="p-6 relative overflow-hidden">
+                      <motion.div 
+                        className="absolute top-0 right-0 w-40 h-40 bg-gradient-radial from-[#FFBF0D]/10 to-transparent rounded-full -mr-20 -mt-20 z-0"
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.1, 0.15, 0.1]
+                        }}
+                        transition={{
+                          duration: 8,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          delay: 2
+                        }}
+                      />
+                      
+                      <motion.div 
+                        className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4 relative z-10"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                      >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                         </svg>
-                      </div>
-                      <h3 className="text-xl font-bold mb-2 text-white glow-text">Vetted Opportunities</h3>
-                      <p className="text-white">
+                      </motion.div>
+                      
+                      <motion.h3 
+                        className="text-xl font-bold mb-2 text-white glow-text relative z-10"
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.3 }}
+                        viewport={{ once: true }}
+                      >
+                        Vetted Opportunities
+                      </motion.h3>
+                      
+                      <motion.p 
+                        className="text-white relative z-10"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.4 }}
+                        viewport={{ once: true }}
+                      >
                         Access quality partnership opportunities specifically matched to your sport, values, content style, and audience.
-                      </p>
+                      </motion.p>
                     </CardContent>
-                  </div>
-                </ScrollReveal>
+                  </motion.div>
+                </Parallax>
                 
-                <ScrollReveal delay={0.3} direction="up" distance={20}>
-                  <div className="glass-card h-full">
-                    <CardContent className="p-6">
-                      <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
+                <Parallax direction="up" speed={0.25} offset={[-15, 15]}>
+                  <motion.div 
+                    className="glass-card h-full"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    viewport={{ once: true }}
+                    whileHover={{ 
+                      y: -5,
+                      boxShadow: "0 15px 30px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 191, 13, 0.3)" 
+                    }}
+                  >
+                    <CardContent className="p-6 relative overflow-hidden">
+                      <motion.div 
+                        className="absolute top-0 right-0 w-40 h-40 bg-gradient-radial from-[#FFBF0D]/10 to-transparent rounded-full -mr-20 -mt-20 z-0"
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.1, 0.15, 0.1]
+                        }}
+                        transition={{
+                          duration: 8,
+                          repeat: Infinity,
+                          repeatType: "reverse",
+                          delay: 4
+                        }}
+                      />
+                      
+                      <motion.div 
+                        className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4 relative z-10"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                      >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
-                      </div>
-                      <h3 className="text-xl font-bold mb-2 text-white glow-text">Career Growth</h3>
-                      <p className="text-white">
+                      </motion.div>
+                      
+                      <motion.h3 
+                        className="text-xl font-bold mb-2 text-white glow-text relative z-10"
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.4 }}
+                        viewport={{ once: true }}
+                      >
+                        Career Growth
+                      </motion.h3>
+                      
+                      <motion.p 
+                        className="text-white relative z-10"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.5 }}
+                        viewport={{ once: true }}
+                      >
                         Build a portfolio of professional collaborations that can lead to bigger opportunities throughout your career.
-                      </p>
+                      </motion.p>
                     </CardContent>
-                  </div>
-                </ScrollReveal>
+                  </motion.div>
+                </Parallax>
               </div>
               
               <ScrollReveal delay={0.4} direction="up" distance={20} className="w-full">

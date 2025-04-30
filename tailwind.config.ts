@@ -10,6 +10,12 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'glassmorphism': 'linear-gradient(180deg, rgba(12, 12, 12, 0.2) 0%, rgba(12, 12, 12, 0.1) 100%)',
+        'glass-shine': 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+        'glass-glow': 'linear-gradient(45deg, rgba(255, 191, 13, 0.15), transparent)',
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -181,6 +187,14 @@ export default {
             transform: 'translateY(-10px)',
           },
         },
+        "pulse-glow": {
+          "0%, 100%": { 
+            boxShadow: "0 0 5px rgba(255, 191, 13, 0.2)" 
+          },
+          "50%": { 
+            boxShadow: "0 0 15px rgba(255, 191, 13, 0.5), 0 0 30px rgba(255, 191, 13, 0.2)" 
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -195,6 +209,7 @@ export default {
         "fade-in-up": "fade-in-up 0.5s ease-out forwards",
         "fade-in-down": "fade-in-down 0.5s ease-out forwards",
         "float": "float 3s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
       },
     },
   },
