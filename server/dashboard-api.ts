@@ -95,7 +95,7 @@ dashboardApiRouter.get('/config', isAuthenticated, async (req: Request, res: Res
     logger.info(`[Dashboard API] Fetching dashboard config for user ${userId}`);
     
     // Get dashboard configuration from database
-    const { data, error } = await supabase.query(`
+    const { rows, error } = await supabase.query(`
       SELECT * FROM user_dashboard_configs 
       WHERE user_id = $1 
       LIMIT 1
@@ -107,7 +107,7 @@ dashboardApiRouter.get('/config', isAuthenticated, async (req: Request, res: Res
     }
     
     // If no configuration exists, create a default one
-    if (!data || data.length === 0) {
+    if (!rows || rows.length === 0) {
       logger.info(`[Dashboard API] No dashboard config found for user ${userId}, creating default`);
       
       const defaultConfig = createDefaultDashboard(req.user.role || 'athlete');
@@ -136,7 +136,7 @@ dashboardApiRouter.get('/config', isAuthenticated, async (req: Request, res: Res
     
     // Parse configuration
     try {
-      const config = data[0];
+      const config = rows[0];
       const widgets = config.layout || [];
       
       return res.status(200).json({
@@ -221,7 +221,7 @@ dashboardApiRouter.get('/widget/:id', isAuthenticated, async (req: Request, res:
     logger.info(`[Dashboard API] Fetching widget ${widgetId} for user ${userId}`);
     
     // Get dashboard configuration from database
-    const { data, error } = await supabase.query(`
+    const { rows, error } = await supabase.query(`
       SELECT layout FROM user_dashboard_configs 
       WHERE user_id = $1 
       LIMIT 1
@@ -232,12 +232,12 @@ dashboardApiRouter.get('/widget/:id', isAuthenticated, async (req: Request, res:
       return res.status(500).json({ error: 'Failed to fetch widget' });
     }
     
-    if (!data || data.length === 0 || !data[0].layout) {
+    if (!rows || rows.length === 0 || !rows[0].layout) {
       return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
     // Find the widget in the layout
-    const widgets = data[0].layout;
+    const widgets = rows[0].layout;
     const widget = widgets.find((w: any) => w.id === widgetId);
     
     if (!widget) {
