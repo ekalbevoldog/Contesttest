@@ -80,32 +80,37 @@ export function setupSupabaseAuth(app: Express) {
       
       console.log(`[Auth] User authenticated successfully: ${authData.user.id}`);
       
-      // Update last_login
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ last_login: new Date() })
-        .eq("email", email);
-        
-      if (updateError) {
-        console.warn("[Auth] Failed to update last_login:", updateError);
+      // Update last_login using direct query
+      const updateResult = await supabase.query(
+        "UPDATE users SET last_login = NOW() WHERE email = $1 RETURNING id",
+        [email]
+      );
+      
+      if (updateResult.error || updateResult.rows.length === 0) {
+        console.warn("[Auth] Failed to update last_login:", updateResult.error);
       }
       
-      // Fetch user profile
+      // Fetch user profile using direct query
       console.log("[Auth] Fetching user profile by email");
-      const { data: userRecord, error: userError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", email)
-        .single();
+      const userResult = await supabase.query(
+        "SELECT * FROM users WHERE email = $1",
+        [email]
+      );
+      
+      // Extract results in a format compatible with the rest of the code
+      const userRecord = userResult.rows[0] || null;
+      const userError = userResult.error;
 
       if (userError || !userRecord) {
         console.log("[Auth] User not found by email, trying auth_id");
         // Try again with auth_id which is the correct identifier
-        const { data: authIdRecord, error: authIdError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("auth_id", authData.user.id)
-          .single();
+        const authIdResult = await supabase.query(
+          "SELECT * FROM users WHERE auth_id = $1",
+          [authData.user.id]
+        );
+        
+        const authIdRecord = authIdResult.rows[0] || null;
+        const authIdError = authIdResult.error;
 
         if (authIdError || !authIdRecord) {
           console.log("[Auth] User authenticated but needs onboarding:", authData.user.id);
@@ -251,17 +256,25 @@ export function setupSupabaseAuth(app: Express) {
           return res.status(401).json({ error: "Not authenticated" });
         }
         
-        let userQuery = supabase.from("users").select("*");
+        let userResult;
         
         if (req.user.email) {
           console.log(`[Auth] Fetching user by email: ${req.user.email}`);
-          userQuery = userQuery.eq("email", req.user.email);
+          userResult = await supabase.query(
+            "SELECT * FROM users WHERE email = $1",
+            [req.user.email]
+          );
         } else {
           console.log(`[Auth] Fetching user by auth_id: ${req.user.id}`);
-          userQuery = userQuery.eq("auth_id", req.user.id);
+          userResult = await supabase.query(
+            "SELECT * FROM users WHERE auth_id = $1",
+            [req.user.id]
+          );
         }
         
-        const { data, error } = await userQuery.single();
+        // Extract results in a format compatible with the rest of the code
+        const data = userResult.rows[0] || null;
+        const error = userResult.error;
         
         if (error || !data) {
           console.error("[Auth] Profile fetch error:", error);
