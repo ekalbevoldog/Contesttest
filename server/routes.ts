@@ -326,29 +326,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[API] Fetching business profile for user ${userId}`);
       
-      // Try first with user_id field (correct field according to foreign key relationships)
+      // Try with ID field first (this is the correct field in Supabase schema)
       let { data: profile, error: profileError } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .maybeSingle();
       
       if (profileError) {
-        console.error('[API] Error fetching business profile with user_id:', profileError);
-        
-        // Fall back to legacy id field search if the first query had an error
-        const fallbackResult = await supabase
-          .from('business_profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-          
-        profile = fallbackResult.data;
-        
-        if (fallbackResult.error) {
-          console.error('[API] Error fetching business profile with id fallback:', fallbackResult.error);
-          return res.status(500).json({ error: 'Error fetching business profile' });
-        }
+        console.error('[API] Error fetching business profile with id field:', profileError);
+        return res.status(500).json({ error: 'Error fetching business profile' });
       }
       
       if (!profile) {
@@ -458,32 +445,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`User ${userId} exists:`, !!userData);
       }
       
-      // Try first with the correct user_id field
-      console.log('Querying Supabase for business profile with user_id field...');
+      // Use the ID field directly (the correct field in Supabase schema)
+      console.log('Querying Supabase for business profile with id field...');
       let { data, error } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .maybeSingle();
         
       if (error) {
-        console.error('Error fetching business profile with user_id:', error);
-        
-        // Fall back to legacy id field search
-        console.log('Falling back to id field for backward compatibility...');
-        const fallbackResult = await supabase
-          .from('business_profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-          
-        data = fallbackResult.data;
-        error = fallbackResult.error;
-        
-        if (error) {
-          console.error('Error fetching business profile with id fallback:', error);
-          return res.status(500).json({ error: 'Failed to fetch business profile' });
-        }
+        console.error('Error fetching business profile with id field:', error);
+        return res.status(500).json({ error: 'Failed to fetch business profile' });
       }
       
       if (!data) {

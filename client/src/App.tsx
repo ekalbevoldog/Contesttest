@@ -16,6 +16,7 @@ import AthleteDashboard from "@/pages/AthleteDashboard";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SupabaseAuthProvider } from "@/hooks/use-supabase-auth";
+import { AuthProvider } from "@/hooks/use-auth";
 // Using unified protected route instead of separate components
 import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "@/lib/unified-protected-route";
 import { Suspense, lazy, useEffect, useState } from "react";
@@ -164,9 +165,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>
-        {/* Session refresh is handled internally by SupabaseAuthProvider */}
-        <Router />
-        <Toaster />
+        <AuthProvider>
+          {/* Session refresh is handled internally by SupabaseAuthProvider */}
+          <Router />
+          <Toaster />
+        </AuthProvider>
       </SupabaseAuthProvider>
     </QueryClientProvider>
   );
