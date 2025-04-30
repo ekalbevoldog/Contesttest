@@ -7,7 +7,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -42,9 +42,31 @@ import {
   BarChart4,
   DollarSign,
   Target,
-  Megaphone
+  Megaphone,
+  PieChart,
+  ArrowUpRight,
+  ShoppingBag,
+  Eye,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart as RechartsLineChart,
+  Line,
+  BarChart,
+  Bar,
+  Cell,
+  Legend,
+  PieChart as RechartsPieChart,
+  Pie
+} from "recharts";
 
 export default function BusinessDashboard() {
   const [, navigate] = useLocation();
