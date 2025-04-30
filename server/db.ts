@@ -87,13 +87,48 @@ export async function createEssentialTables() {
   try {
     // Check if tables exist first
     let existingTables = {
-      sessions: false,
+      session: false,   // connect-pg-simple session table (singular)
+      sessions: false,  // custom sessions table (plural)
       users: false,
       athleteProfiles: false,
       businessProfiles: false
     };
+
+    // First, check for the connect-pg-simple session table (should be 'session' singular)
+    console.log("Checking if table session (connect-pg-simple) exists...");
+    const pgSessionResult = await supabase.from('session').select('sid').limit(1);
+    existingTables.session = !pgSessionResult.error;
     
-    // Check sessions table
+    if (existingTables.session) {
+      console.log("Table session exists (used by connect-pg-simple)");
+    } else {
+      console.log("Table session does not exist, will create it");
+      // Create the session table with correct structure for connect-pg-simple
+      try {
+        const { error: createError } = await supabaseAdmin.rpc('exec_sql', { 
+          sql: `
+            CREATE TABLE IF NOT EXISTS session (
+              sid VARCHAR NOT NULL PRIMARY KEY,
+              sess JSON NOT NULL,
+              expire TIMESTAMP(6) NOT NULL
+            );
+            
+            CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire);
+          `
+        });
+        
+        if (createError) {
+          console.error("Error creating session table:", createError);
+        } else {
+          console.log("Successfully created session table for connect-pg-simple");
+          existingTables.session = true;
+        }
+      } catch (err) {
+        console.error("Exception creating session table:", err);
+      }
+    }
+    
+    // Check custom sessions table (plural form)
     console.log("Checking if table sessions exists...");
     const sessionsResult = await supabase.from('sessions').select('count');
     existingTables.sessions = !sessionsResult.error;
@@ -140,18 +175,12 @@ export async function createEssentialTables() {
     console.log("Tables after migration:", existingTables);
     
     // If all tables exist, skip creation
-    if (existingTables.sessions && existingTables.users && existingTables.athleteProfiles && existingTables.businessProfiles) {
+    if (existingTables.session && existingTables.users && existingTables.athleteProfiles && existingTables.businessProfiles) {
       console.log("Core tables already exist, skipping table creation...");
       return true;
     }
     
     console.log("Some tables not created, but we'll skip comprehensive migration...");
-    
-    // Skip the migration as we're using a different approach
-    // The tables have already been created directly via SQL
-    console.log("Using existing tables instead of running migration");
-    
-    // Note: We removed the import for './runCompleteMigration.js' since it doesn't exist
     
     console.log("Table initialization complete");
     return true;
