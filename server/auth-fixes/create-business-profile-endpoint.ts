@@ -53,8 +53,40 @@ export async function createBusinessProfileEndpoint(req: Request, res: Response)
     }
     
     if (!user) {
-      console.error('[createBusinessProfileEndpoint] User not found:', userId);
-      return res.status(404).json({ error: 'User not found' });
+      console.log('[createBusinessProfileEndpoint] User not found in database, creating record:', userId);
+      
+      // Get user details from Supabase Auth
+      const { data: authUser, error: authUserError } = await supabase.auth.getUser();
+      
+      if (authUserError || !authUser?.user) {
+        console.error('[createBusinessProfileEndpoint] Error fetching auth user:', authUserError);
+        return res.status(500).json({ error: 'Error fetching authenticated user data' });
+      }
+      
+      // Create user record in users table
+      const newUser = {
+        id: userId,
+        email: authUser.user.email,
+        role: 'business',
+        auth_id: authUser.user.id,
+        created_at: new Date()
+      };
+      
+      const { data: createdUser, error: createUserError } = await supabase
+        .from('users')
+        .insert(newUser)
+        .select()
+        .single();
+      
+      if (createUserError) {
+        console.error('[createBusinessProfileEndpoint] Error creating user record:', createUserError);
+        return res.status(500).json({ error: 'Error creating user record' });
+      }
+      
+      console.log('[createBusinessProfileEndpoint] Created user record:', createdUser);
+      
+      // Use the newly created user record
+      user = createdUser;
     }
     
     // Get session details for the user
