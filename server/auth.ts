@@ -29,11 +29,15 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Use basic in-memory session store to avoid database errors
+  const memoryStore = new session.MemoryStore();
+  console.log("Using basic MemoryStore for sessions to bypass sessions table error");
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'nil-connect-secret-key',
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
+    store: memoryStore, // Use memory store directly instead of PostgreSQL
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

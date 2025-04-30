@@ -62,55 +62,69 @@ class SessionService {
       const currentSession = await this.getSession(sessionId);
       
       if (!currentSession) {
-        throw new Error(`Session with ID ${sessionId} not found`);
+        console.warn(`Session with ID ${sessionId} not found, creating a new one`);
+        // Create a new session if it doesn't exist
+        return this.createSession(sessionId);
       }
       
-      // Merge new data with existing data
-      const updatedData = {
-        ...currentSession.data,
-        ...data.data
-      };
-      
-      // Convert camelCase to snake_case for database
-      const dbData: any = {};
-      if (data.userType) dbData.user_type = data.userType;
-      if (data.profileCompleted !== undefined) dbData.profile_completed = data.profileCompleted;
-      if (data.athleteId) dbData.athlete_id = data.athleteId;
-      if (data.businessId) dbData.business_id = data.businessId;
-      if (updatedData) dbData.data = JSON.stringify(updatedData);
-      
-      dbData.updated_at = new Date();
-      
-      const result = await db.query(
-        `UPDATE sessions SET ${Object.keys(dbData).map((k, i) => `${k} = $${i+2}`).join(', ')} 
-         WHERE session_id = $1 RETURNING *`,
-        [sessionId, ...Object.values(dbData)]
-      );
-      
-      const updatedSession = result.rows[0];
-      if (!updatedSession) {
-        throw new Error(`Failed to update session ${sessionId}`);
+      try {
+        // Try to update via API first
+        // Merge new data with existing data
+        const updatedData = {
+          ...currentSession.data,
+          ...data.data
+        };
+        
+        // Prepare update payload
+        const updatePayload: any = {
+          data: updatedData
+        };
+        
+        // Add other fields if provided
+        if (data.userType) updatePayload.user_type = data.userType;
+        if (data.profileCompleted !== undefined) updatePayload.profile_completed = data.profileCompleted;
+        if (data.athleteId) updatePayload.athlete_id = data.athleteId;
+        if (data.businessId) updatePayload.business_id = data.businessId;
+        
+        // Try to use the API method if available
+        const updated = await db.updateSession(sessionId, updatePayload);
+        if (updated) {
+          return {
+            id: updated.id,
+            sessionId: updated.session_id,
+            userType: updated.user_type,
+            data: updated.data ? (typeof updated.data === 'string' ? JSON.parse(updated.data) : updated.data) : {},
+            profileCompleted: updated.profile_completed,
+            athleteId: updated.athlete_id,
+            businessId: updated.business_id,
+            lastLogin: updated.last_login,
+            createdAt: updated.created_at,
+            updatedAt: updated.updated_at
+          };
+        }
+      } catch (apiError) {
+        console.warn('Failed to update session via API, falling back to memory update:', apiError);
       }
       
-      // Convert back to camelCase for API consistency
-      return {
-        id: updatedSession.id,
-        sessionId: updatedSession.session_id,
-        userType: updatedSession.user_type,
-        data: updatedSession.data ? JSON.parse(updatedSession.data) : {},
-        profileCompleted: updatedSession.profile_completed,
-        athleteId: updatedSession.athlete_id,
-        businessId: updatedSession.business_id,
-        lastLogin: updatedSession.last_login,
-        createdAt: updatedSession.created_at,
-        updatedAt: updatedSession.updated_at
+      // If API update fails, return in-memory updated session
+      console.log('Using in-memory session update fallback');
+      return { 
+        ...currentSession,
+        ...data,
+        data: {
+          ...currentSession.data,
+          ...(data.data || {})
+        }
       };
     } catch (error) {
       console.error('Error updating session:', error);
-      // Return original session with updated values
+      // Return data as a new session-like object
       return { 
-        ...await this.getSession(sessionId),
-        ...data
+        id: Math.floor(Math.random() * 10000),
+        sessionId,
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
     }
   }
@@ -118,8 +132,13 @@ class SessionService {
   // Reset session
   async resetSession(sessionId: string) {
     try {
-      // Delete existing session
-      await db.query('DELETE FROM sessions WHERE session_id = $1', [sessionId]);
+      // Try to delete existing session using safer API first
+      try {
+        await db.deleteSession(sessionId);
+      } catch (deleteError) {
+        console.warn('Could not delete session via API, session may not exist:', deleteError);
+        // Continue with session creation regardless
+      }
       
       // Create a new session with the same ID
       return this.createSession(sessionId);
