@@ -68,7 +68,10 @@ if (isDev) {
   const clientDist = path.join(__dirname, '../client/dist')
   app.use(express.static(clientDist))
   app.get('*', (_req, res) => {
-    res.sendFile(path.join(clientDist, 'index.html'))
+    if (req.originalUrl.startsWith('/api')) {
+      return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(clientDist, 'index.html'));
   })
 }
 
@@ -101,7 +104,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Start server
 const port = parseInt(process.env.PORT || '5000', 10)
 httpServer.listen(port, '0.0.0.0', async () => {
-  console.log(`Server listening on port ${port}`)
+  console.log(`Server listening on port ${port} (${process.env.NODE_ENV} mode)`)
   
   // Initialize database tables for the dashboard after server starts
   console.log("Initializing dashboard tables...")
