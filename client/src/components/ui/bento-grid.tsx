@@ -65,7 +65,7 @@ export const BentoGridItem = ({
               {icon}
             </motion.div>
           )}
-          <h3 className="text-xl font-semibold glow-text">{title}</h3>
+          <h3 className="text-xl font-semibold glow-text font-heading">{title}</h3>
         </div>
         <div className="mt-2 text-white text-sm">{description}</div>
       </div>

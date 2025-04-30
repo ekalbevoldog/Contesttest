@@ -63,7 +63,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-heading">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
                     Connecting Athletes & Brands
                   </span>
@@ -243,7 +243,7 @@ export default function Home() {
               whileHover={{ boxShadow: "0 0 30px rgba(255, 191, 13, 0.2)" }}
             >
               <motion.h2 
-                className="text-3xl md:text-4xl font-bold mb-4"
+                className="text-3xl md:text-4xl font-bold mb-4 font-heading"
                 initial={{ y: 20, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
@@ -312,7 +312,7 @@ export default function Home() {
                       </motion.div>
                       
                       <motion.h3 
-                        className="text-xl font-bold mb-2 text-white glow-text relative z-10"
+                        className="text-xl font-bold mb-2 font-heading text-white glow-text relative z-10"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: 0.2 }}
@@ -371,7 +371,7 @@ export default function Home() {
                       </motion.div>
                       
                       <motion.h3 
-                        className="text-xl font-bold mb-2 text-white glow-text relative z-10"
+                        className="text-xl font-bold mb-2 font-heading text-white glow-text relative z-10"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: 0.3 }}
@@ -430,7 +430,7 @@ export default function Home() {
                       </motion.div>
                       
                       <motion.h3 
-                        className="text-xl font-bold mb-2 text-white glow-text relative z-10"
+                        className="text-xl font-bold mb-2 font-heading text-white glow-text relative z-10"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: 0.4 }}
@@ -501,7 +501,7 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 glow-text">Authentic Influencers</h3>
+                    <h3 className="text-xl font-bold mb-2 font-heading glow-text">Authentic Influencers</h3>
                     <p className="text-white">
                       Connect with college athletes who genuinely align with your brand values and can authentically represent your products.
                     </p>
@@ -515,7 +515,7 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 glow-text">Measurable Results</h3>
+                    <h3 className="text-xl font-bold mb-2 font-heading glow-text">Measurable Results</h3>
                     <p className="text-white">
                       Get detailed analytics on campaign performance and engagement to track your return on investment.
                     </p>
@@ -529,7 +529,7 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 glow-text">Cost-Effective</h3>
+                    <h3 className="text-xl font-bold mb-2 font-heading glow-text">Cost-Effective</h3>
                     <p className="text-white">
                       Access quality influencer marketing at a fraction of the cost of traditional celebrity endorsements.
                     </p>
@@ -590,7 +590,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <ScrollReveal className="text-center mb-16">
               <div className="glass-panel p-8 inline-block">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">
                     How Contested Works
                   </span>
@@ -747,7 +747,7 @@ export default function Home() {
       <section className="py-20 bg-[#121212]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                 Simple, Transparent Pricing
               </span>
@@ -908,7 +908,7 @@ export default function Home() {
         <Parallax direction="up" speed={0.15} className="relative z-10">
           <div className="container mx-auto px-4">
             <ScrollReveal className="text-center mb-16" threshold={0.1}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
                   Success Stories
                 </span>
@@ -925,7 +925,7 @@ export default function Home() {
                 <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-xl font-bold">Sarah Johnson</h3>
+                      <h3 className="text-xl font-bold font-heading">Sarah Johnson</h3>
                       <p className="text-white/80">Division I Volleyball Player</p>
                     </div>
                     <div className="flex -space-x-2">
@@ -974,7 +974,7 @@ export default function Home() {
                 <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-xl font-bold">Mountain Outfitters</h3>
+                      <h3 className="text-xl font-bold font-heading">Mountain Outfitters</h3>
                       <p className="text-white/80">Outdoor Apparel Brand</p>
                     </div>
                     <div className="flex -space-x-2">
@@ -1035,7 +1035,7 @@ export default function Home() {
         <Parallax direction="up" speed={0.05} className="relative z-10">
           <div className="container mx-auto px-4">
             <ScrollReveal className="max-w-3xl mx-auto text-center" threshold={0.1}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to create winning partnerships?</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">Ready to create winning partnerships?</h2>
               <p className="text-xl text-zinc-400 mb-8">
                 Whether you're an athlete looking to monetize your influence or a business seeking authentic brand ambassadors, Contested makes it easy to find your perfect match.
               </p>
@@ -1049,7 +1049,7 @@ export default function Home() {
       {showChat && (
         <div className="fixed bottom-8 right-8 z-50 max-w-md w-full shadow-2xl rounded-lg overflow-hidden">
           <div className="bg-gradient-to-r from-red-500 to-amber-500 text-white p-4 flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Contested Assistant</h3>
+            <h3 className="text-lg font-semibold font-heading">Contested Assistant</h3>
             <button 
               onClick={() => setShowChat(false)}
               className="text-white/80 hover:text-white transition-colors"
