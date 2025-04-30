@@ -29,13 +29,24 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Import session override to handle session storage safely
-  const { setupSessionSafely } = require('./auth-fixes/session-override.js');
+  const sessionSettings: session.SessionOptions = {
+    secret: process.env.SESSION_SECRET || 'nil-connect-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    store: storage.sessionStore,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    }
+  };
+
+  // Set trust proxy when in production
+  if (process.env.NODE_ENV === 'production') {
+    app.set("trust proxy", 1);
+  }
   
-  // Use our safe session setup instead of directly using the database
-  setupSessionSafely(app);
-  
-  // Initialize passport after session
+  app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
