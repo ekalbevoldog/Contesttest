@@ -10,8 +10,22 @@ import {
 
 // API functions for dashboard data
 export async function fetchDashboardConfig(): Promise<DashboardConfig> {
-  const response = await apiRequest('GET', '/api/dashboard/config');
-  return response.json();
+  try {
+    console.log('Fetching dashboard configuration...');
+    const response = await apiRequest('GET', '/api/dashboard/config');
+    
+    if (!response.ok) {
+      console.error('Failed to fetch dashboard config:', response.status, response.statusText);
+      throw new Error(`Failed to fetch dashboard configuration: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Dashboard config received:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in fetchDashboardConfig:', error);
+    throw error;
+  }
 }
 
 export async function saveDashboardConfig(config: DashboardConfig): Promise<void> {

@@ -33,17 +33,28 @@ import { Card } from '@/components/ui/card';
 
 // Function to get widget component by type
 const getWidgetComponent = (widget: Widget, isEditing: boolean = false) => {
-  switch (widget.type) {
-    case 'stats':
-      return <StatsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-    case 'chart':
-      return <ChartWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-    case 'activity':
-      return <ActivityWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-    case 'quickActions':
-      return <QuickActionsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-    default:
-      return <div>Unknown widget type</div>;
+  if (!widget || !widget.type) {
+    console.error("Invalid widget data:", widget);
+    return <div>Invalid widget data</div>;
+  }
+  
+  try {
+    switch (widget.type) {
+      case 'stats':
+        return <StatsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+      case 'chart':
+        return <ChartWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+      case 'activity':
+        return <ActivityWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+      case 'quickActions':
+        return <QuickActionsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+      default:
+        console.warn(`Unknown widget type: ${widget.type}`);
+        return <div>Unknown widget type: {widget.type}</div>;
+    }
+  } catch (error) {
+    console.error("Error rendering widget:", error, widget);
+    return <div>Error rendering widget</div>;
   }
 };
 

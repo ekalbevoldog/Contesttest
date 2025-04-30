@@ -16,24 +16,49 @@ const requireAuth = (req, res, next) => {
 // Get user dashboard configuration
 dashboardRouter.get('/config', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id.toString();
-    const config = await storage.getDashboardConfig(userId);
+    console.log('Dashboard config requested for user:', req.user);
     
-    if (!config) {
-      // If no configuration exists, return a default one
-      const defaultConfig = {
-        userId,
-        widgets: [],
-        lastUpdated: new Date().toISOString(),
-      };
-      await storage.saveDashboardConfig(userId, defaultConfig);
-      return res.json(defaultConfig);
+    // Ensure user.id exists and is a string
+    if (!req.user || !req.user.id) {
+      console.error('Dashboard API: User ID is missing in request');
+      return res.status(400).json({ error: 'User ID is required' });
     }
     
-    return res.json(config);
+    const userId = req.user.id.toString();
+    console.log(`Getting dashboard config for user ID: ${userId}`);
+    
+    try {
+      const config = await storage.getDashboardConfig(userId);
+      console.log('Dashboard config result:', config);
+      
+      if (!config) {
+        console.log(`No config found for user ${userId}, creating default config`);
+        // If no configuration exists, return a default one
+        const defaultConfig = {
+          userId,
+          widgets: [],
+          lastUpdated: new Date().toISOString(),
+        };
+        
+        try {
+          await storage.saveDashboardConfig(userId, defaultConfig);
+          console.log('Default dashboard config saved successfully');
+          return res.json(defaultConfig);
+        } catch (saveError) {
+          console.error('Error saving default dashboard config:', saveError);
+          return res.status(500).json({ error: 'Failed to save default dashboard configuration' });
+        }
+      }
+      
+      console.log('Returning existing dashboard config for user:', userId);
+      return res.json(config);
+    } catch (configError) {
+      console.error('Error retrieving dashboard config:', configError);
+      return res.status(500).json({ error: 'Failed to retrieve dashboard configuration' });
+    }
   } catch (error) {
-    console.error('Error getting dashboard config:', error);
-    return res.status(500).json({ error: 'Failed to get dashboard configuration' });
+    console.error('Unexpected error in dashboard config endpoint:', error);
+    return res.status(500).json({ error: 'An unexpected error occurred' });
   }
 });
 
