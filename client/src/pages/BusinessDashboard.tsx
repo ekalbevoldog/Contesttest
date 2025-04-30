@@ -559,7 +559,7 @@ export default function BusinessDashboard() {
   
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 pt-24 max-w-7xl">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -641,7 +641,7 @@ export default function BusinessDashboard() {
             {/* Welcome Card */}
             <Card className="col-span-full bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
               <CardHeader className="pb-2">
-                <CardTitle className="text-white font-heading">Welcome, {profileData?.name || 'Business Partner'}</CardTitle>
+                <CardTitle className="text-white font-heading">Welcome, {user?.email ? user.email.split('@')[0] : profileData?.name || 'Business Partner'}</CardTitle>
                 <CardDescription className="text-gray-400">
                   Your business dashboard provides tools to manage athlete partnerships.
                 </CardDescription>
