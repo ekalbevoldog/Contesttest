@@ -272,30 +272,13 @@ export default function Header() {
 
     // --- Special Buttons ---
     {
-      label: "AI Assistant", icon: Zap, isButton: true, buttonVariant: 'default',
-      buttonClassName: "relative overflow-hidden bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 hover:border-red-500/50 hover:bg-zinc-900 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-red-500/20",
-      onClick: () => window.dispatchEvent(new CustomEvent('toggle-ai-assistant')),
-      condition: () => true, // Always show AI assistant button
-      desktopOnly: true, // Specific styling for desktop button
-    },
-    {
       label: "Get Started", icon: ArrowRight, isButton: true, buttonVariant: 'default',
       buttonClassName: "relative overflow-hidden ml-2 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-xl",
       href: "/onboarding",
       condition: (user) => !user, // Only show when not logged in
       desktopOnly: true, // Specific styling for desktop button
     },
-    // Mobile AI Assistant Button
-    {
-      label: "Chat with AI Assistant", icon: Zap, isButton: true, buttonVariant: 'default',
-      buttonClassName: "w-full mt-6 relative overflow-hidden border border-zinc-800 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-red-500/20",
-      onClick: () => {
-        setOpen(false);
-        window.dispatchEvent(new CustomEvent('toggle-ai-assistant'));
-      },
-      condition: () => true, // Always show
-      mobileOnly: true,
-    },
+
   ];
 
   // Filter items based on conditions and context (desktop/mobile)
@@ -428,8 +411,7 @@ export default function Header() {
 
           {/* --- Mobile Navigation Trigger --- */}
           <div className="md:hidden flex items-center">
-             {/* Mobile AI Assistant Button (Optional: place near menu or keep separate) */}
-             {/* Consider if a dedicated AI button is needed here or just in the sheet */}
+
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="border border-zinc-800 hover:border-red-500/50 bg-zinc-900/40 backdrop-blur-sm hover:bg-zinc-900/60 relative overflow-hidden transition-all duration-300 shadow-lg hover:shadow-red-500/20">
@@ -504,7 +486,7 @@ export default function Header() {
                     })}
                   </div>
 
-                  {/* Footer Buttons (AI Assistant) */}
+                  {/* Footer Buttons */}
                   <div className="mt-auto pt-4 px-1"> {/* Stick to bottom */}
                     {mobileNavItems.filter(item => item.isButton && item.mobileOnly).map((item, index) => (
                        <Button
