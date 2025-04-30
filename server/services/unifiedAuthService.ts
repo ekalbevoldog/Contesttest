@@ -300,12 +300,25 @@ export class UnifiedAuthService {
    */
   async updateProfile(userId: string, profileData: any): Promise<AuthResult> {
     try {
-      const { data, error } = await this.supabase
-        .from("users")
-        .update(profileData)
-        .eq("auth_id", userId)
-        .select()
-        .single();
+      // Check if userId is a numeric ID or an auth_id (UUID)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      
+      let query;
+      if (isUUID) {
+        console.log(`Updating user by auth_id: ${userId}`);
+        query = this.supabase
+          .from("users")
+          .update(profileData)
+          .eq("auth_id", userId);
+      } else {
+        console.log(`Updating user by id: ${userId}`);
+        query = this.supabase
+          .from("users")
+          .update(profileData)
+          .eq("id", userId);
+      }
+      
+      const { data, error } = await query.select().single();
         
       if (error) {
         console.error("Profile update error:", error);
@@ -418,7 +431,8 @@ export class UnifiedAuthService {
       return {
         success: true,
         user: {
-          id: authData.user.id,
+          id: authIdRecord.id, // Use the database ID, not the auth ID
+          auth_id: authData.user.id,
           email,
           role: authIdRecord.role || "user"
         },
@@ -431,11 +445,25 @@ export class UnifiedAuthService {
       };
     }
     
+    // Make sure the auth_id is updated in the user record if it's missing
+    if (userRecord && userRecord.id && (!userRecord.auth_id || userRecord.auth_id !== authData.user.id)) {
+      console.log(`Updating auth_id for user ${userRecord.id} to ${authData.user.id}`);
+      try {
+        await this.supabase
+          .from("users")
+          .update({ auth_id: authData.user.id })
+          .eq("id", userRecord.id);
+      } catch (updateError) {
+        console.error("Failed to update auth_id:", updateError);
+      }
+    }
+
     // Return user + session
     return {
       success: true,
       user: {
-        id: authData.user.id,
+        id: userRecord.id, // Use the database ID, not the auth ID
+        auth_id: authData.user.id,
         email,
         role: userRecord.role || "user"
       },

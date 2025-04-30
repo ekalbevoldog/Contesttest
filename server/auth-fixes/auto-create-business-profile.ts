@@ -18,100 +18,51 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
   }
   
   try {
-    console.log(`[AutoProfile] Checking if business profile exists for user ${userId}`);
+    console.log(`[AutoProfile] Checking if business profile exists for user with auth_id ${userId}`);
     
-    // Check if profile exists with the Supabase API - double check ID format first
-    if (!isValidUUID(userId)) {
-      console.error(`[AutoProfile] CRITICAL ERROR: User ID is not a valid UUID: ${userId}`);
-      // Try to proceed anyway, but log the warning
+    // First, let's find the user by auth_id in the users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, email, role')
+      .eq('auth_id', userId)
+      .maybeSingle();
+      
+    if (userError) {
+      console.error(`[AutoProfile] Error finding user by auth_id: ${userError.message}`);
+      return false;
     }
     
-    // Check for existing profile with retries
-    let retryCount = 0;
-    const maxRetries = 2;
-    let existingProfile = null;
-    let profileError = null;
-    
-    while (retryCount <= maxRetries) {
-      try {
-        const result = await supabase
-          .from('business_profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-          
-        existingProfile = result.data;
-        profileError = result.error;
-        
-        if (!profileError || existingProfile) {
-          break; // Success or found profile
-        }
-        
-        // If we got an error that's not just "not found", log and retry
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.warn(`[AutoProfile] Error checking profile (attempt ${retryCount+1}): ${profileError.message}`);
-          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
-          retryCount++;
-        } else {
-          break; // It's just a "not found" error, which is expected
-        }
-      } catch (err) {
-        console.error(`[AutoProfile] Exception during profile check (attempt ${retryCount+1}):`, err);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
-        retryCount++;
-      }
+    if (!userData) {
+      console.error(`[AutoProfile] No user found with auth_id: ${userId}`);
+      return false;
     }
     
+    console.log(`[AutoProfile] Found user with ID: ${userData.id} and email: ${userData.email}`);
+    
+    // Now check if this user already has a business profile
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('user_id', userData.id)
+      .maybeSingle();
+      
     if (profileError && profileError.code !== 'PGRST116') {
-      console.error(`[AutoProfile] Error checking business profile with API after ${retryCount} retries: ${profileError.message}`);
+      console.error(`[AutoProfile] Error checking business profile: ${profileError.message}`);
     } else if (existingProfile) {
-      console.log(`[AutoProfile] Business profile already exists:`, existingProfile);
+      console.log(`[AutoProfile] Business profile already exists with ID: ${existingProfile.id}`);
       return true;
     }
     
     // If no profile found, create one
-    console.log(`[AutoProfile] Creating default business profile for user ${userId}`);
+    console.log(`[AutoProfile] Creating default business profile for user ${userData.id}`);
     
-    // Get user email from API with retries
-    retryCount = 0;
-    let userData = null;
-    let userError = null;
-    
-    while (retryCount <= maxRetries) {
-      try {
-        const result = await supabase
-          .from('users')
-          .select('email, role')
-          .eq('id', userId)
-          .maybeSingle();
-          
-        userData = result.data;
-        userError = result.error;
-        
-        if (!userError || userData) {
-          break;
-        }
-        
-        console.warn(`[AutoProfile] Error fetching user data (attempt ${retryCount+1}): ${userError?.message}`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        retryCount++;
-      } catch (err) {
-        console.error(`[AutoProfile] Exception fetching user data (attempt ${retryCount+1}):`, err);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        retryCount++;
-      }
-    }
-    
-    // Verify user is actually a business user type before proceeding
-    if (userData?.role !== 'business') {
-      console.error(`[AutoProfile] User ${userId} has role ${userData?.role}, not 'business'. Skipping profile creation.`);
+    // We already have the user data from the previous query
+    if (userData.role !== 'business') {
+      console.error(`[AutoProfile] User ${userData.id} has role ${userData.role}, not 'business'. Skipping profile creation.`);
       return false;
     }
-      
-    let userEmail = userData?.email || 'unknown@example.com';
-    if (userError) {
-      console.error(`[AutoProfile] Error fetching user data after ${retryCount} retries: ${userError.message}`);
-    }
+    
+    const userEmail = userData.email || 'unknown@example.com';
     
     // Create profile using the API with defensive checks
     return await createBusinessProfile(userId, userEmail);
@@ -289,7 +240,7 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
                 const { data: existingProfileCheck } = await supabase
                   .from('business_profiles')
                   .select('id')
-                  .eq('id', userId)
+                  .eq('user_id', user_id)
                   .maybeSingle();
                   
                 if (existingProfileCheck) {
@@ -319,7 +270,7 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
           const { data: existingCheck } = await supabase
             .from('business_profiles')
             .select('id')
-            .eq('id', userId)
+            .eq('user_id', user_id)
             .maybeSingle();
             
           if (existingCheck) {
@@ -348,7 +299,7 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
         const { data: lastChanceCheck } = await supabase
           .from('business_profiles')
           .select('id')
-          .eq('id', userId)
+          .eq('user_id', user_id)
           .maybeSingle();
           
         if (lastChanceCheck) {

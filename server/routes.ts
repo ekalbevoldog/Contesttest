@@ -12,7 +12,7 @@ import { supabase } from "./supabase.js";
 import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
 import { pool, db as supabaseAdmin } from "./db.js";
 // Import auth fixes
-import { createBusinessProfileEndpoint } from "./auth-fixes/create-business-profile-endpoint.js";
+import { ensureBusinessProfile } from "./auth-fixes/auto-create-business-profile.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -259,7 +259,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupSupabaseAuth(app);
   
   // Register the business profile auto-creation endpoint
-  app.post('/api/create-business-profile', createBusinessProfileEndpoint);
+  app.post('/api/create-business-profile', async (req: Request, res: Response) => {
+    try {
+      const { userId, role, email } = req.body;
+      
+      if (!userId || !role) {
+        return res.status(400).json({ error: 'userId and role are required' });
+      }
+      
+      console.log(`[API] Attempting to ensure business profile for user ${userId} with role ${role}`);
+      
+      const success = await ensureBusinessProfile(userId, role);
+      
+      if (success) {
+        return res.status(200).json({ success: true, message: 'Business profile created/verified' });
+      } else {
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Failed to create business profile',
+          message: 'The system was unable to create or verify the business profile'
+        });
+      }
+    } catch (error) {
+      console.error('[API] Error creating business profile:', error);
+      return res.status(500).json({ error: 'Unexpected error creating business profile' });
+    }
+  });
   
   // Get business profile by user ID
   app.get('/api/business-profile/:userId', async (req: Request, res: Response) => {
@@ -272,11 +297,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[API] Fetching business profile for user ${userId}`);
       
-      // Try with ID field first (this is the correct field in Supabase schema)
+      // First, find the user by auth_id to get the internal user ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', userId)
+        .maybeSingle();
+        
+      if (userError) {
+        console.error('[API] Error finding user by auth_id:', userError);
+        return res.status(500).json({ error: 'Error finding user' });
+      }
+      
+      if (!userData) {
+        console.log(`[API] No user found with auth_id: ${userId}`);
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'No user exists with this ID',
+          userId
+        });
+      }
+      
+      // Now look up business profile with the internal user ID
       let { data: profile, error: profileError } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userData.id)
         .maybeSingle();
       
       if (profileError) {
@@ -449,12 +495,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`User ${userId} exists:`, !!userData);
       }
       
-      // Use the ID field directly (the correct field in Supabase schema)
-      console.log('Querying Supabase for business profile with id field...');
+      // First check if the user exists
+      if (!userData) {
+        console.log(`No user found with ID: ${userId}`);
+        return res.status(404).json({
+          error: 'User not found',
+          message: 'No user exists with this ID',
+          userId
+        });
+      }
+      
+      // Use the user_id field to find the business profile
+      console.log('Querying Supabase for business profile with user_id field...');
       let { data, error } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userData.id)
         .maybeSingle();
         
       if (error) {
