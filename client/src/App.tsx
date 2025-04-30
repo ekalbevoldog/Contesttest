@@ -142,12 +142,15 @@ function App() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
+        console.log('Performing health check...');
         const response = await fetch('/api/health-check');
         if (response.ok) {
           const data = await response.json();
           console.log('Health check results:', data);
+          console.log('Supabase status:', data.supabase?.status);
 
           if (data.supabase?.status === 'error') {
+            console.log('Detected database connection error');
             toast({
               title: "Database Connection Issue",
               description: "There's a problem connecting to the database. Some features may not work properly.",
@@ -155,6 +158,7 @@ function App() {
             });
             setServerHealth('error');
           } else {
+            console.log('Database connection is OK');
             setServerHealth('ok');
           }
         } else {
