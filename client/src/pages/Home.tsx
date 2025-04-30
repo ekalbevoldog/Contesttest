@@ -43,7 +43,7 @@ export default function Home() {
       <section className="relative overflow-hidden bg-black">
         <AnimatedGradient 
           className="absolute inset-0" 
-          colors={['hsl(345, 90%, 55%, 0.15)', 'hsl(35, 100%, 50%, 0.15)', 'hsl(235, 100%, 50%, 0.15)']} 
+          colors={['hsl(45, 100%, 50%, 0.15)', 'hsl(35, 100%, 50%, 0.15)', 'hsl(235, 100%, 50%, 0.15)']} 
           blur={100}
           duration={15}
         />
@@ -54,35 +54,44 @@ export default function Home() {
               <StaggerItem>
                 <FadeIn delay={0.2} direction="up">
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
                       Connecting Athletes & Brands
                     </span>
                     <br /> 
-                    For Authentic Partnerships
+                    <span className="glow-text">For Authentic Partnerships</span>
                   </h1>
                 </FadeIn>
               </StaggerItem>
               
               <StaggerItem>
                 <FadeIn delay={0.4} direction="up">
-                  <p className="text-xl text-zinc-400 max-w-xl">
-                    Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
-                  </p>
+                  <div className="glass-card p-6">
+                    <p className="text-xl text-white max-w-xl">
+                      Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
+                    </p>
+                  </div>
                 </FadeIn>
               </StaggerItem>
               
               <StaggerItem>
                 <FadeIn delay={0.6} direction="up">
-                  {/* Buttons have been removed */}
+                  <div className="flex gap-4">
+                    <Link href="/athletes">
+                      <a className="glass-button">For Athletes</a>
+                    </Link>
+                    <Link href="/businesses">
+                      <a className="glass-button">For Businesses</a>
+                    </Link>
+                  </div>
                 </FadeIn>
               </StaggerItem>
               
               <StaggerItem>
                 <FadeIn delay={0.8} direction="up">
                   <div className="flex items-center gap-4 pt-4">
-                    <div className="text-zinc-400 text-sm flex items-center">
-                      <span className="text-xl font-bold text-red-500 mr-2">500+</span>
-                      <span>successful partnerships created this year</span>
+                    <div className="glass-badge">
+                      <span className="text-xl font-bold text-[#FFBF0D] mr-2">500+</span>
+                      <span>successful partnerships</span>
                     </div>
                   </div>
                 </FadeIn>
@@ -90,10 +99,10 @@ export default function Home() {
             </StaggerContainer>
             
             <FadeIn delay={0.5} direction="left" className="relative h-72 md:h-96 hidden lg:block">
-              <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-red-500/5 to-amber-500/2 rounded-lg transform rotate-3"></div>
-              <div className="absolute top-0 right-0 w-full h-full overflow-hidden rounded-lg flex items-center justify-center">
+              <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-[#FFBF0D]/10 to-amber-500/5 rounded-xl transform rotate-3 border border-[#FFBF0D]/10"></div>
+              <div className="glass-card absolute top-0 right-0 w-full h-full overflow-hidden rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <video 
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-full object-cover rounded-xl opacity-80"
                   autoPlay
                   muted
                   loop
@@ -102,126 +111,135 @@ export default function Home() {
                   <source src="/videos/landing-video.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 to-transparent"></div>
+                <div className="absolute bottom-4 right-4 glass-badge">
+                  <span className="text-sm">Authentic Partnerships</span>
+                </div>
               </div>
             </FadeIn>
           </div>
         </div>
         
         {/* Divider */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500 opacity-70"></div>
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FFBF0D] to-amber-500 opacity-70"></div>
       </section>
       
       {/* Benefits Section */}
-      <section className="py-20 bg-[#111] relative overflow-hidden">
+      <section className="py-20 bg-black relative overflow-hidden">
         <AnimatedGradient 
           className="absolute inset-0" 
-          colors={['hsl(235, 100%, 50%, 0.05)', 'hsl(345, 90%, 55%, 0.05)']} 
+          colors={['hsl(45, 100%, 50%, 0.08)', 'hsl(235, 100%, 50%, 0.05)', 'hsl(345, 90%, 55%, 0.05)']} 
           blur={120}
           duration={20}
         />
-        <div className="container mx-auto px-4">
+        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-3"></div>
+        <div className="container mx-auto px-4 relative z-10">
           <ScrollReveal className="text-center mb-16" threshold={0.2}>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                The Contested Advantage
-              </span>
-            </h2>
-            <p className="text-zinc-400 max-w-2xl mx-auto">
-              Our AI-powered platform creates perfect matches between athletes and businesses, 
-              delivering authentic partnerships that drive real results.
-            </p>
+            <div className="glass-panel p-8 inline-block">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">
+                  The Contested Advantage
+                </span>
+              </h2>
+              <p className="text-white max-w-2xl mx-auto">
+                Our AI-powered platform creates perfect matches between athletes and businesses, 
+                delivering authentic partnerships that drive real results.
+              </p>
+            </div>
           </ScrollReveal>
           
           <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-zinc-900">
-              <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Athletes</TabsTrigger>
-              <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-amber-500 data-[state=active]:text-white">Businesses</TabsTrigger>
-            </TabsList>
+            <div className="glass-card overflow-hidden p-1 mb-8">
+              <TabsList className="grid w-full grid-cols-2 bg-transparent">
+                <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FFBF0D] data-[state=active]:to-amber-400 data-[state=active]:text-black">Athletes</TabsTrigger>
+                <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FFBF0D] data-[state=active]:to-amber-400 data-[state=active]:text-black">Businesses</TabsTrigger>
+              </TabsList>
+            </div>
             
             <TabsContent value="athletes" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <ScrollReveal delay={0.1} direction="up" distance={20}>
-                  <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none h-full">
+                  <div className="glass-card h-full">
                     <CardContent className="p-6">
-                      <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                      <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-white">Monetize Your Influence</h3>
-                      <p className="text-zinc-400">
+                      <h3 className="text-xl font-bold mb-2 text-white glow-text">Monetize Your Influence</h3>
+                      <p className="text-white">
                         Turn your social media presence and athletic achievements into income with partnerships that respect your personal brand.
                       </p>
                     </CardContent>
-                  </Card>
+                  </div>
                 </ScrollReveal>
                 
                 <ScrollReveal delay={0.2} direction="up" distance={20}>
-                  <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none h-full">
+                  <div className="glass-card h-full">
                     <CardContent className="p-6">
-                      <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                      <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
                         </svg>
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-white">Vetted Opportunities</h3>
-                      <p className="text-zinc-400">
+                      <h3 className="text-xl font-bold mb-2 text-white glow-text">Vetted Opportunities</h3>
+                      <p className="text-white">
                         Access quality partnership opportunities specifically matched to your sport, values, content style, and audience.
                       </p>
                     </CardContent>
-                  </Card>
+                  </div>
                 </ScrollReveal>
                 
                 <ScrollReveal delay={0.3} direction="up" distance={20}>
-                  <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none h-full">
+                  <div className="glass-card h-full">
                     <CardContent className="p-6">
-                      <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                      <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                       </div>
-                      <h3 className="text-xl font-bold mb-2 text-white">Career Growth</h3>
-                      <p className="text-zinc-400">
+                      <h3 className="text-xl font-bold mb-2 text-white glow-text">Career Growth</h3>
+                      <p className="text-white">
                         Build a portfolio of professional collaborations that can lead to bigger opportunities throughout your career.
                       </p>
                     </CardContent>
-                  </Card>
+                  </div>
                 </ScrollReveal>
               </div>
               
               <ScrollReveal delay={0.4} direction="up" distance={20} className="w-full">
-                <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
+                <div className="glass-card p-6 mt-8">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-black p-5 rounded-lg shadow-md">
-                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Average<br />Compensation</h4>
-                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                    <div className="glass-panel p-5">
+                      <h4 className="text-base font-semibold text-white mb-1">Average<br />Compensation</h4>
+                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                         <span>$250</span>
                       </div>
-                      <p className="text-xs text-zinc-500">per campaign</p>
+                      <p className="text-xs text-white/70">per campaign</p>
                     </div>
                     
-                    <div className="bg-black p-5 rounded-lg shadow-md">
-                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Match Rate</h4>
-                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                    <div className="glass-panel p-5">
+                      <h4 className="text-base font-semibold text-white mb-1">Match Rate</h4>
+                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                         <span>92%</span>
                       </div>
-                      <p className="text-xs text-zinc-500">of athletes find matches</p>
+                      <p className="text-xs text-white/70">of athletes find matches</p>
                     </div>
                     
-                    <div className="bg-black p-5 rounded-lg shadow-md">
-                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Time to First<br />Match</h4>
-                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                    <div className="glass-panel p-5">
+                      <h4 className="text-base font-semibold text-white mb-1">Time to First<br />Match</h4>
+                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                         <span>48hrs</span>
                       </div>
-                      <p className="text-xs text-zinc-500">average timeframe</p>
+                      <p className="text-xs text-white/70">average timeframe</p>
                     </div>
                     
-                    <div className="bg-black p-5 rounded-lg shadow-md">
-                      <h4 className="text-base font-semibold text-zinc-400 mb-1">Athletes</h4>
-                      <div className="text-3xl font-bold text-red-500 flex items-center">
+                    <div className="glass-panel p-5">
+                      <h4 className="text-base font-semibold text-white mb-1">Athletes</h4>
+                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                         <span>300+</span>
                       </div>
-                      <p className="text-xs text-zinc-500">active on platform</p>
+                      <p className="text-xs text-white/70">active on platform</p>
                     </div>
                   </div>
                 </div>
@@ -230,81 +248,81 @@ export default function Home() {
             
             <TabsContent value="businesses" className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
+                <div className="glass-card h-full">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Authentic Influencers</h3>
-                    <p className="text-zinc-400">
+                    <h3 className="text-xl font-bold mb-2 glow-text">Authentic Influencers</h3>
+                    <p className="text-white">
                       Connect with college athletes who genuinely align with your brand values and can authentically represent your products.
                     </p>
                   </CardContent>
-                </Card>
+                </div>
                 
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
+                <div className="glass-card h-full">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Measurable Results</h3>
-                    <p className="text-zinc-400">
+                    <h3 className="text-xl font-bold mb-2 glow-text">Measurable Results</h3>
+                    <p className="text-white">
                       Get detailed analytics on campaign performance and engagement to track your return on investment.
                     </p>
                   </CardContent>
-                </Card>
+                </div>
                 
-                <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow border-none">
+                <div className="glass-card h-full">
                   <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 text-white">Cost-Effective</h3>
-                    <p className="text-zinc-400">
+                    <h3 className="text-xl font-bold mb-2 glow-text">Cost-Effective</h3>
+                    <p className="text-white">
                       Access quality influencer marketing at a fraction of the cost of traditional celebrity endorsements.
                     </p>
                   </CardContent>
-                </Card>
+                </div>
               </div>
               
-              <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 shadow-lg mt-8">
+              <div className="glass-card p-6 mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-black p-5 rounded-lg shadow-md">
-                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Average ROI</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                  <div className="glass-panel p-5">
+                    <h4 className="text-base font-semibold text-white mb-1">Average ROI</h4>
+                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                       <span>3.37x</span>
                     </div>
-                    <p className="text-xs text-zinc-500">return on investment</p>
+                    <p className="text-xs text-white/70">return on investment</p>
                   </div>
                   
-                  <div className="bg-black p-5 rounded-lg shadow-md">
-                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Engagement Rate</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                  <div className="glass-panel p-5">
+                    <h4 className="text-base font-semibold text-white mb-1">Engagement Rate</h4>
+                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                       <span>5.52%</span>
                     </div>
-                    <p className="text-xs text-zinc-500">avg. across platforms</p>
+                    <p className="text-xs text-white/70">avg. across platforms</p>
                   </div>
                   
-                  <div className="bg-black p-5 rounded-lg shadow-md">
-                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Audience Reached</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                  <div className="glass-panel p-5">
+                    <h4 className="text-base font-semibold text-white mb-1">Audience Reached</h4>
+                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                       <span>1.12M+</span>
                     </div>
-                    <p className="text-xs text-zinc-500">monthly impressions</p>
+                    <p className="text-xs text-white/70">monthly impressions</p>
                   </div>
                   
-                  <div className="bg-black p-5 rounded-lg shadow-md">
-                    <h4 className="text-base font-semibold text-zinc-400 mb-1">Businesses</h4>
-                    <div className="text-3xl font-bold text-red-500 flex items-center">
+                  <div className="glass-panel p-5">
+                    <h4 className="text-base font-semibold text-white mb-1">Businesses</h4>
+                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
                       <span>150+</span>
                     </div>
-                    <p className="text-xs text-zinc-500">active on platform</p>
+                    <p className="text-xs text-white/70">active on platform</p>
                   </div>
                 </div>
               </div>
@@ -314,24 +332,27 @@ export default function Home() {
       </section>
       
       {/* How It Works Section */}
-      <section className="py-24 bg-[#080808] relative overflow-hidden">
+      <section className="py-24 bg-black relative overflow-hidden">
         <AnimatedGradient 
           className="absolute inset-0 opacity-30" 
-          colors={['hsl(345, 90%, 55%, 0.05)', 'hsl(235, 100%, 50%, 0.05)']} 
+          colors={['hsl(45, 100%, 50%, 0.08)', 'hsl(235, 100%, 50%, 0.05)', 'hsl(345, 90%, 55%, 0.05)']} 
           blur={150}
           duration={25}
         />
+        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-3"></div>
         <Parallax direction="up" speed={0.1} className="relative z-10">
           <div className="container mx-auto px-4">
             <ScrollReveal className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                  How Contested Works
-                </span>
-              </h2>
-              <p className="text-zinc-400 max-w-2xl mx-auto">
-                Our intelligent platform makes the connection process seamless for both athletes and businesses
-              </p>
+              <div className="glass-panel p-8 inline-block">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">
+                    How Contested Works
+                  </span>
+                </h2>
+                <p className="text-white max-w-2xl mx-auto">
+                  Our intelligent platform makes the connection process seamless for both athletes and businesses
+                </p>
+              </div>
             </ScrollReveal>
             
             <BentoGrid className="max-w-6xl mx-auto mb-16">
