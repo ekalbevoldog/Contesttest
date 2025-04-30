@@ -1,263 +1,318 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { dashboardQueryOptions, addWidget } from '@/lib/dashboard-service';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { dashboardQueryOptions, addWidget, reorderWidgets } from '@/lib/dashboard-service';
+import { Widget, WidgetType } from '../../shared/dashboard-schema';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, RefreshCw, Settings, Save, Undo } from 'lucide-react';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetDescription, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from '@/components/ui/sheet';
+import { Loader2, Plus } from 'lucide-react';
+import StatsWidget from '@/components/dashboard/StatsWidget';
+import ChartWidget from '@/components/dashboard/ChartWidget';
+import ActivityWidget from '@/components/dashboard/ActivityWidget';
+import QuickActionsWidget from '@/components/dashboard/QuickActionsWidget';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Widget, WidgetType } from '../../shared/dashboard-schema';
-import { 
-  StatsWidget, 
-  ChartWidget, 
-  ActivityWidget, 
-  QuickActionsWidget 
-} from '@/components/dashboard';
-import { useAuth } from '@/hooks/use-auth';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { v4 as uuidv4 } from 'uuid';
+import { Card } from '@/components/ui/card';
+
+// Function to get widget component by type
+const getWidgetComponent = (widget: Widget, isEditing: boolean = false) => {
+  switch (widget.type) {
+    case 'stats':
+      return <StatsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+    case 'chart':
+      return <ChartWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+    case 'activity':
+      return <ActivityWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+    case 'quickActions':
+      return <QuickActionsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
+    default:
+      return <div>Unknown widget type</div>;
+  }
+};
+
+// Widget size CSS classes
+const sizeClasses = {
+  'sm': 'col-span-1',
+  'md': 'col-span-1 md:col-span-2',
+  'lg': 'col-span-1 md:col-span-3',
+  'xl': 'col-span-1 md:col-span-3 lg:col-span-4',
+  'full': 'col-span-full',
+};
 
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [addWidgetOpen, setAddWidgetOpen] = useState(false);
+  const [newWidgetType, setNewWidgetType] = useState<WidgetType>('stats');
+  const [newWidgetTitle, setNewWidgetTitle] = useState('');
   
   // Fetch dashboard configuration
   const { 
     data: dashboardConfig, 
-    isLoading,
+    isLoading, 
     isError,
-    refetch
+    refetch 
   } = useQuery(dashboardQueryOptions.config);
+
+  // Handle adding a new widget
+  const addWidgetMutation = useMutation({
+    mutationFn: addWidget,
+    onSuccess: () => {
+      toast({
+        title: 'Widget added',
+        description: 'The widget has been added to your dashboard.',
+      });
+      refetch();
+      setAddWidgetOpen(false);
+      setNewWidgetTitle('');
+    },
+    onError: (error) => {
+      toast({
+        title: 'Failed to add widget',
+        description: 'There was an error adding the widget. Please try again.',
+        variant: 'destructive',
+      });
+      console.error('Error adding widget:', error);
+    },
+  });
   
-  // Handle refresh of all dashboard data
-  const handleRefreshAll = async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
+  // Handle reordering widgets
+  const reorderWidgetsMutation = useMutation({
+    mutationFn: reorderWidgets,
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Failed to reorder widgets',
+        description: 'There was an error reordering widgets. Please try again.',
+        variant: 'destructive',
+      });
+      console.error('Error reordering widgets:', error);
+    },
+  });
+  
+  // Handle adding a new widget
+  const handleAddWidget = () => {
+    if (!newWidgetTitle.trim()) {
+      toast({
+        title: 'Widget title required',
+        description: 'Please provide a title for the new widget.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
-    toast({
-      title: "Dashboard refreshed",
-      description: "All dashboard widgets have been updated with the latest data.",
+    addWidgetMutation.mutate({
+      type: newWidgetType,
+      title: newWidgetTitle,
+      position: dashboardConfig?.widgets?.length || 0,
+      size: 'md',
+      visible: true,
     });
   };
   
-  // Add a new widget to the dashboard
-  const handleAddWidget = async (widgetType: WidgetType) => {
-    try {
-      await addWidget(widgetType);
-      toast({
-        title: "Widget added",
-        description: `New ${widgetType} widget has been added to your dashboard.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error adding widget",
-        description: "There was an error adding the widget. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  // Toggle edit mode
-  const toggleEditMode = () => {
-    setIsEditing(prev => !prev);
-    
-    if (isEditing) {
-      toast({
-        title: "Edit mode disabled",
-        description: "Your dashboard changes have been saved.",
-      });
-    } else {
-      toast({
-        title: "Edit mode enabled",
-        description: "You can now customize your dashboard widgets.",
-      });
-    }
-  };
-  
-  // Reset the dashboard to default settings
-  const handleResetDashboard = async () => {
-    // This would call a function to reset dashboard to defaults
-    toast({
-      title: "Dashboard reset",
-      description: "Your dashboard has been reset to the default layout.",
-    });
-  };
-  
-  // Render widget based on its type
-  const renderWidget = (widget: Widget) => {
-    if (!widget.visible) return null;
-    
-    switch (widget.type) {
-      case 'stats':
-        return (
-          <StatsWidget 
-            key={widget.id} 
-            widget={widget} 
-            isEditing={isEditing} 
-          />
-        );
-      case 'chart':
-        return (
-          <ChartWidget 
-            key={widget.id} 
-            widget={widget} 
-            isEditing={isEditing} 
-          />
-        );
-      case 'activity':
-        return (
-          <ActivityWidget 
-            key={widget.id} 
-            widget={widget} 
-            isEditing={isEditing} 
-          />
-        );
-      case 'quickActions':
-        return (
-          <QuickActionsWidget 
-            key={widget.id} 
-            widget={widget} 
-            isEditing={isEditing} 
-          />
-        );
-      default:
-        return null;
-    }
-  };
-  
-  // Loading state
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 lg:p-6">
-        <div className="mb-6 flex justify-between items-center">
-          <div>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-96" />
-          </div>
-          <div className="flex space-x-2">
-            <Skeleton className="h-10 w-10 rounded-md" />
-            <Skeleton className="h-10 w-10 rounded-md" />
-            <Skeleton className="h-10 w-28 rounded-md" />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-12 gap-4">
-          {[1, 2, 3, 4].map(index => (
-            <div key={index} className="col-span-6">
-              <Skeleton className="h-64 w-full rounded-md" />
-            </div>
-          ))}
-        </div>
+      <div className="container mx-auto py-8 flex items-center justify-center min-h-[300px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
   
-  // Error state
   if (isError || !dashboardConfig) {
     return (
-      <div className="container mx-auto p-6 text-center">
-        <h2 className="text-2xl font-bold mb-2">Dashboard Error</h2>
-        <p className="text-gray-500 mb-4">
-          There was an error loading your personalized dashboard.
-        </p>
-        <Button onClick={() => refetch()}>Try Again</Button>
+      <div className="container mx-auto py-8">
+        <div className="bg-red-50 p-4 rounded-md text-red-500 text-center">
+          <h2 className="text-lg font-semibold">Error loading dashboard</h2>
+          <p>There was a problem loading your dashboard. Please try refreshing the page.</p>
+          <Button 
+            onClick={() => refetch()} 
+            variant="outline" 
+            className="mt-2"
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
     );
   }
   
+  // Sort widgets by position
+  const sortedWidgets = [...dashboardConfig.widgets].sort((a, b) => a.position - b.position);
+  
+  // Filter visible widgets
+  const visibleWidgets = sortedWidgets.filter(widget => widget.visible);
+  
   return (
-    <div className="container mx-auto p-4 lg:p-6">
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+    <div className="container mx-auto py-6 px-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{user?.role === 'athlete' ? 'Athlete' : user?.role === 'business' ? 'Business' : user?.role === 'compliance' ? 'Compliance Officer' : 'Admin'} Dashboard</h1>
-          <p className="text-gray-500">
-            {isEditing 
-              ? 'Customize your dashboard by adding, removing, or resizing widgets.' 
-              : 'View your personalized dashboard and insights.'}
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back, {user?.username || 'User'}. Here's your personalized dashboard.
           </p>
         </div>
         
-        <div className="flex mt-4 sm:mt-0 space-x-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={handleRefreshAll}
-            disabled={isRefreshing}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={isEditing ? "default" : "outline"}
+            onClick={() => setIsEditing(!isEditing)}
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-          
-          <Button 
-            variant={isEditing ? "default" : "outline"} 
-            size="icon"
-            onClick={toggleEditMode}
-          >
-            {isEditing ? <Save className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
+            {isEditing ? 'Done Editing' : 'Edit Dashboard'}
           </Button>
           
           {isEditing && (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <PlusCircle className="h-4 w-4 mr-2" />
+            <Dialog open={addWidgetOpen} onOpenChange={setAddWidgetOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Widget
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a new widget</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="widget-title">Widget Title</Label>
+                    <Input
+                      id="widget-title"
+                      value={newWidgetTitle}
+                      onChange={(e) => setNewWidgetTitle(e.target.value)}
+                      placeholder="Enter widget title"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="widget-type">Widget Type</Label>
+                    <Select
+                      value={newWidgetType}
+                      onValueChange={(value) => setNewWidgetType(value as WidgetType)}
+                    >
+                      <SelectTrigger id="widget-type">
+                        <SelectValue placeholder="Select widget type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="stats">Statistics</SelectItem>
+                        <SelectItem value="chart">Chart</SelectItem>
+                        <SelectItem value="activity">Activity Feed</SelectItem>
+                        <SelectItem value="quickActions">Quick Actions</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button 
+                    onClick={handleAddWidget}
+                    disabled={addWidgetMutation.isPending}
+                  >
+                    {addWidgetMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Add Widget
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => handleAddWidget('stats')}>
-                    Stats Widget
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAddWidget('chart')}>
-                    Chart Widget
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAddWidget('activity')}>
-                    Activity Widget
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAddWidget('quickActions')}>
-                    Quick Actions Widget
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={handleResetDashboard}
-              >
-                <Undo className="h-4 w-4" />
-              </Button>
-            </>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>
       
-      <div className="grid grid-cols-12 gap-4">
-        {dashboardConfig.widgets.map(widget => renderWidget(widget))}
-      </div>
+      {visibleWidgets.length === 0 ? (
+        <div className="py-12">
+          <Card className="p-8 text-center">
+            <h2 className="text-xl font-semibold mb-2">No widgets added yet</h2>
+            <p className="text-muted-foreground mb-4">
+              Your dashboard is empty. Add widgets to personalize your experience.
+            </p>
+            <Dialog open={addWidgetOpen} onOpenChange={setAddWidgetOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Widget
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a new widget</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="widget-title">Widget Title</Label>
+                    <Input
+                      id="widget-title"
+                      value={newWidgetTitle}
+                      onChange={(e) => setNewWidgetTitle(e.target.value)}
+                      placeholder="Enter widget title"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="widget-type">Widget Type</Label>
+                    <Select
+                      value={newWidgetType}
+                      onValueChange={(value) => setNewWidgetType(value as WidgetType)}
+                    >
+                      <SelectTrigger id="widget-type">
+                        <SelectValue placeholder="Select widget type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="stats">Statistics</SelectItem>
+                        <SelectItem value="chart">Chart</SelectItem>
+                        <SelectItem value="activity">Activity Feed</SelectItem>
+                        <SelectItem value="quickActions">Quick Actions</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button 
+                    onClick={handleAddWidget}
+                    disabled={addWidgetMutation.isPending}
+                  >
+                    {addWidgetMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Add Widget
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {visibleWidgets.map((widget) => (
+            <div key={widget.id} className={sizeClasses[widget.size]}>
+              {getWidgetComponent(widget, isEditing)}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

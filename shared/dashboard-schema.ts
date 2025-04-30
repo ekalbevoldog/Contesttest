@@ -1,64 +1,96 @@
-// Types for dashboard configuration and widget data
+import { z } from 'zod';
 
-// Widget types
+// Widget size options
+export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+
+// Widget type options
 export type WidgetType = 'stats' | 'chart' | 'activity' | 'quickActions';
 
-// Widget interface - base structure for all widget types
-export interface Widget {
-  id: string;
-  type: WidgetType;
-  title: string;
-  description?: string;
-  position: number;
-  size: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  visible: boolean;
-  settings?: Record<string, any>;
+// Widget settings schema
+export interface WidgetSettings {
+  chartType?: 'line' | 'bar' | 'area';
+  dataSource?: string;
+  refreshInterval?: number;
+  colors?: string[];
+  [key: string]: any;
 }
 
-// Dashboard configuration interface
+// Widget schema
+export interface Widget {
+  id: string;
+  title: string;
+  description?: string;
+  type: WidgetType;
+  position: number;
+  size: WidgetSize;
+  visible: boolean;
+  settings?: WidgetSettings;
+}
+
+// Dashboard config schema
 export interface DashboardConfig {
   userId: string;
   widgets: Widget[];
-  lastUpdated: string; // ISO date string
+  lastUpdated: string;
 }
 
-// Stats widget data
+// Stats Widget Data
 export interface StatItem {
   key: string;
   label: string;
   value: string | number;
-  icon?: string; // Lucide icon name
+  icon?: string;
   color?: string;
   trend?: 'up' | 'down' | 'neutral';
-  change?: number; // Percentage change
-  link?: string; // Optional link to more details
+  change?: number;
+  link?: string;
 }
 
-// Chart widget data
-export interface ChartData {
-  data: Record<string, any>[]; // Array of data points
-  series: string[]; // Array of series names
-  xAxis: string; // Property name for X-axis data
-}
-
-// Activity widget data
+// Activity Widget Data
 export interface ActivityItem {
   id: string;
-  type: string;
   title: string;
   description: string;
-  timestamp: string; // ISO date string
-  icon?: string; // Lucide icon name
+  timestamp: string;
+  icon?: string;
   status?: 'success' | 'pending' | 'warning' | 'error';
-  link?: string; // Optional link to more details
+  link?: string;
 }
 
-// Quick actions widget data
+// Chart Widget Data
+export interface ChartData {
+  xAxis: string;
+  series: string[];
+  data: Array<Record<string, any>>;
+}
+
+// Quick Actions Widget Data
 export interface QuickActionItem {
   id: string;
   label: string;
-  icon?: string; // Lucide icon name
-  color?: string;
-  link: string;
   description?: string;
+  icon: string;
+  link: string;
+  color?: string;
 }
+
+// Zod schemas for validation
+export const widgetSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  type: z.enum(['stats', 'chart', 'activity', 'quickActions']),
+  position: z.number(),
+  size: z.enum(['sm', 'md', 'lg', 'xl', 'full']),
+  visible: z.boolean(),
+  settings: z.record(z.any()).optional(),
+});
+
+export const dashboardConfigSchema = z.object({
+  userId: z.string(),
+  widgets: z.array(widgetSchema),
+  lastUpdated: z.string(),
+});
+
+export const createInsertWidgetSchema = () => widgetSchema.omit({ id: true });
+export type InsertWidget = z.infer<ReturnType<typeof createInsertWidgetSchema>>;

@@ -1,4 +1,3 @@
-// Dashboard components barrel file
 export { default as DashboardWidget } from './DashboardWidget';
 export { default as StatsWidget } from './StatsWidget';
 export { default as ChartWidget } from './ChartWidget';
