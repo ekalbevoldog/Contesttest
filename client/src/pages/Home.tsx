@@ -49,10 +49,10 @@ export default function Home() {
           duration={15}
         />
 
-        {/* Floating glass elements in background */}
-        <div className="absolute w-40 h-40 top-1/4 right-1/4 glass-panel floating opacity-30 rounded-full"></div>
-        <div className="absolute w-64 h-64 bottom-1/4 left-1/3 glass-panel floating-slow opacity-20 rounded-full"></div>
-        <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel floating opacity-30 rounded-full glow-pulse"></div>
+        {/* Background glass elements */}
+        <div className="absolute w-40 h-40 top-1/4 right-1/4 glass-panel opacity-30 rounded-full"></div>
+        <div className="absolute w-64 h-64 bottom-1/4 left-1/3 glass-panel opacity-20 rounded-full"></div>
+        <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel opacity-30 rounded-full"></div>
         
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
         <div className="container mx-auto px-4 py-20 relative z-10">
@@ -95,7 +95,7 @@ export default function Home() {
               >
                 <Link href="/athletes">
                   <motion.a 
-                    className="glass-button glow-pulse"
+                    className="glass-button"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -113,17 +113,7 @@ export default function Home() {
                 </Link>
               </motion.div>
               
-              <motion.div 
-                className="flex items-center gap-4 pt-4"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-              >
-                <div className="glass-badge floating-slow">
-                  <span className="text-xl font-bold text-[#FFBF0D] mr-2">500+</span>
-                  <span>successful partnerships</span>
-                </div>
-              </motion.div>
+
             </Parallax>
             
             <Parallax direction="right" speed={0.1} offset={[-15, 15]} className="relative h-72 md:h-96 hidden lg:block">
