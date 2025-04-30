@@ -206,11 +206,19 @@ export default function BusinessDashboard() {
   // Helper function to fetch business profile
   const fetchBusinessProfile = (userId: string) => {
     console.log(`Fetching business profile for user ${userId}`);
+    console.log(`Request URL: /api/supabase/business-profile/${userId}`);
     
-    fetch(`/api/supabase/business-profile/${userId}`)
+    // Add a timestamp to avoid caching issues
+    const url = `/api/supabase/business-profile/${userId}?t=${new Date().getTime()}`;
+    console.log(`Full URL with cache busting: ${url}`);
+    
+    fetch(url)
       .then(res => {
+        console.log('Response status:', res.status);
+        console.log('Response headers:', JSON.stringify([...res.headers.entries()]));
+        
         if (!res.ok) {
-          throw new Error('Failed to fetch business profile');
+          throw new Error(`Failed to fetch business profile: ${res.status} ${res.statusText}`);
         }
         return res.json();
       })
@@ -224,13 +232,19 @@ export default function BusinessDashboard() {
             businessType: data.profile.business_type || '',
             companySize: data.profile.company_size || '',
             email: data.profile.email || '',
-            preferencesJson: data.profile.preferences || ''
+            preferencesJson: data.profile.preferences || '',
+            // Include other fields to ensure display
+            audienceGoals: data.profile.audience_goals || '',
+            productType: data.profile.product_type || '',
+            values: data.profile.values || ''
           };
+          console.log('Setting profile data:', profile);
           setProfileData(profile);
           
           // Store in localStorage for next time
           localStorage.setItem('contestedUserData', JSON.stringify(profile));
         } else {
+          console.log('No profile property in data, using data directly:', data);
           setProfileData(data);
         }
         setIsLoadingProfile(false);

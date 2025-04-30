@@ -318,6 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Endpoint to get business profile from Supabase directly
   app.get('/api/supabase/business-profile/:userId', async (req: Request, res: Response) => {
     try {
+      console.log('Business profile endpoint hit!');
+      console.log('Request params:', req.params);
       const { userId } = req.params;
       
       if (!userId) {
@@ -327,6 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[API] Fetching business profile for user ID: ${userId}`);
       
       // Get business profile from Supabase
+      console.log('Querying Supabase for business profile...');
       const { data, error } = await supabase
         .from('business_profiles')
         .select('*')
