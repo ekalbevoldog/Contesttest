@@ -55,26 +55,26 @@ export default function Home() {
         <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel opacity-30 rounded-full"></div>
         
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="container mx-auto px-6 py-24 md:py-32 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <Parallax className="space-y-8" speed={0.2} direction="up" offset={[-20, 20]}>
+        <div className="container mx-auto px-6 py-40 md:py-48 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <Parallax className="space-y-12" speed={0.2} direction="up" offset={[-20, 20]}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="mb-6"
+                className="mb-12"
               >
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-heading">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-heading mb-4">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
                     Connecting Athletes & Brands
                   </span>
-                  <br /> 
-                  <span className="glow-text">For Authentic Partnerships</span>
+                  <br />
+                  <span className="glow-text mt-4 block">For Authentic Partnerships</span>
                 </h1>
               </motion.div>
               
               <motion.div
-                className="glass-card p-8 mb-8"
+                className="glass-card p-8 mb-16"
                 initial={{ opacity: 0, filter: "blur(4px)" }}
                 animate={{ opacity: 1, filter: "blur(0px)" }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -89,14 +89,14 @@ export default function Home() {
               </motion.div>
               
               <motion.div 
-                className="flex gap-6 mt-8"
+                className="flex gap-8 mt-12"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
                 <Link href="/athletes">
                   <motion.a 
-                    className="glass-button px-8 py-4 text-lg"
+                    className="glass-button text-lg"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -105,7 +105,7 @@ export default function Home() {
                 </Link>
                 <Link href="/businesses">
                   <motion.a 
-                    className="glass-button px-8 py-4 text-lg"
+                    className="glass-button text-lg"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -115,7 +115,7 @@ export default function Home() {
               </motion.div>
             </Parallax>
             
-            <Parallax direction="right" speed={0.1} offset={[-15, 15]} className="relative h-72 md:h-96 hidden lg:block">
+            <Parallax direction="right" speed={0.1} offset={[-15, 15]} className="relative h-96 md:h-[500px] hidden lg:block">
               <motion.div 
                 className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-[#FFBF0D]/10 to-amber-500/5 rounded-xl border border-[#FFBF0D]/10"
                 initial={{ opacity: 0, rotate: 0 }}
