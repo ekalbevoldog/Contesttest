@@ -522,127 +522,329 @@ export default function BusinessDashboard() {
     
   }, [user, authProfile, userType, hasProfile, isLoadingAuth, navigate, toast]);
   
+  // Sample data for charts
+  const campaignData = [
+    { month: 'Jan', impressions: 4000, engagement: 2400, conversion: 1200 },
+    { month: 'Feb', impressions: 5000, engagement: 2800, conversion: 1500 },
+    { month: 'Mar', impressions: 6000, engagement: 3200, conversion: 1800 },
+    { month: 'Apr', impressions: 7000, engagement: 4000, conversion: 2100 },
+    { month: 'May', impressions: 8000, engagement: 4800, conversion: 2400 },
+    { month: 'Jun', impressions: 9000, engagement: 6000, conversion: 2800 },
+  ];
+
+  const audienceData = [
+    { age: '18-24', male: 30, female: 40, other: 10 },
+    { age: '25-34', male: 60, female: 70, other: 15 },
+    { age: '35-44', male: 40, female: 50, other: 10 },
+    { age: '45-54', male: 25, female: 30, other: 5 },
+    { age: '55+', male: 15, female: 20, other: 5 },
+  ];
+
+  const spendingData = [
+    { name: 'Content Creation', value: 40 },
+    { name: 'Platform Fees', value: 15 },
+    { name: 'Athlete Payments', value: 35 },
+    { name: 'Analytics Tools', value: 10 },
+  ];
+
+  const COLORS = ['#FF8042', '#FFBB28', '#00C49F', '#0088FE'];
+
   if (loading || isLoadingProfile) {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0066cc]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FFBF0D]"></div>
       </div>
     );
   }
   
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl">
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Business Dashboard</h1>
-            <p className="text-gray-800 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-slate-500 mt-1">
-                Profile source: {profileSource} | ID: {profileData?.id}
-              </div>
-            )}
+    <div className="min-h-screen bg-black text-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl">
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-white">Business Dashboard</h1>
+              <p className="text-gray-300 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Profile source: {profileSource} | ID: {profileData?.id}
+                </div>
+              )}
+            </div>
+            
+            {/* Dashboard Controls */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-black font-medium"
+              >
+                <Plus className="h-4 w-4" />
+                New Campaign
+              </Button>
+              
+              <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 border border-zinc-700 bg-black/40 hover:bg-zinc-900/80 backdrop-blur-sm">
+                    <Bell className="h-4 w-4 text-gray-300" />
+                    <Badge className="bg-red-500 hover:bg-red-600">2</Badge>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-zinc-900/90 backdrop-blur-md border border-zinc-700 text-white">
+                  <DialogHeader>
+                    <DialogTitle>Notifications</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p>Notification content would go here</p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 border border-zinc-700 bg-black/40 hover:bg-zinc-900/80 backdrop-blur-sm">
+                    <MessageSquare className="h-4 w-4 text-gray-300" />
+                    <Badge className="bg-red-500 hover:bg-red-600">3</Badge>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-zinc-900/90 backdrop-blur-md border border-zinc-700 text-white">
+                  <DialogHeader>
+                    <DialogTitle>Messages</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p>Message content would go here</p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2 border border-zinc-700 bg-black/40 hover:bg-zinc-900/80 backdrop-blur-sm">
+                    <Settings className="h-4 w-4 text-gray-300" />
+                    <span className="text-gray-300">Settings</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-zinc-900/90 backdrop-blur-md border border-zinc-700 text-white">
+                  <DialogHeader>
+                    <DialogTitle>Settings</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p>Settings content would go here</p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
           
-          {/* Dashboard Controls */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="default"
-              size="sm"
-              className="flex items-center gap-2 bg-gradient-to-r from-[#0066cc] to-[#00a3ff] hover:from-[#005bb8] hover:to-[#0091e6]"
-            >
-              <Plus className="h-4 w-4" />
-              New Campaign
-            </Button>
-            
-            <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  <Badge className="bg-[#ff3366] hover:bg-[#e62e5c]">2</Badge>
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Notifications</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <p>Notification content would go here</p>
+          {/* Dashboard Content */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Welcome Card */}
+            <Card className="col-span-full bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white">Welcome, {profileData?.name || 'Business Partner'}</CardTitle>
+                <CardDescription className="text-gray-400">
+                  Your business dashboard provides tools to manage athlete partnerships.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center p-4 border border-zinc-800 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 group">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-red-500/20 flex items-center justify-center mr-4 group-hover:from-amber-500/30 group-hover:to-red-500/30 transition-all duration-300">
+                      <BarChart3 className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Active Campaigns</p>
+                      <p className="text-2xl font-bold text-white">3</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center p-4 border border-zinc-800 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 group">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-red-500/20 flex items-center justify-center mr-4 group-hover:from-amber-500/30 group-hover:to-red-500/30 transition-all duration-300">
+                      <Users className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Active Athletes</p>
+                      <p className="text-2xl font-bold text-white">5</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center p-4 border border-zinc-800 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 group">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-red-500/20 flex items-center justify-center mr-4 group-hover:from-amber-500/30 group-hover:to-red-500/30 transition-all duration-300">
+                      <TrendingUp className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Total Engagement</p>
+                      <p className="text-2xl font-bold text-white">23.4K</p>
+                    </div>
+                  </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+              </CardContent>
+            </Card>
             
-            <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <Badge className="bg-[#ff3366] hover:bg-[#e62e5c]">3</Badge>
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Messages</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <p>Message content would go here</p>
+            {/* Campaign Performance Chart */}
+            <Card className="md:col-span-8 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-white">Campaign Performance</CardTitle>
+                  <Button variant="outline" size="sm" className="h-8 border border-zinc-700 bg-black/40 hover:bg-zinc-900/80 backdrop-blur-sm text-gray-300">
+                    <ChevronRight className="h-4 w-4 mr-1" />
+                    View All
+                  </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+                <CardDescription className="text-gray-400">Monitor your campaign metrics over time</CardDescription>
+              </CardHeader>
+              <CardContent className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={campaignData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="impressionsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#FFBF0D" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#FFBF0D" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="engagementGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#FF5E3A" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#FF5E3A" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <XAxis dataKey="month" stroke="#666" />
+                    <YAxis stroke="#666" />
+                    <Tooltip contentStyle={{ backgroundColor: '#222', borderColor: '#444', color: 'white' }} />
+                    <Legend />
+                    <Area type="monotone" dataKey="impressions" stroke="#FFBF0D" fillOpacity={1} fill="url(#impressionsGradient)" />
+                    <Area type="monotone" dataKey="engagement" stroke="#FF5E3A" fillOpacity={1} fill="url(#engagementGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
             
-            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Settings</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <p>Settings content would go here</p>
+            {/* Budget Allocation Chart */}
+            <Card className="md:col-span-4 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-white">Budget Allocation</CardTitle>
+                <CardDescription className="text-gray-400">Campaign spending breakdown</CardDescription>
+              </CardHeader>
+              <CardContent className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <Pie
+                      data={spendingData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      fill="#8884d8"
+                      paddingAngle={2}
+                      dataKey="value"
+                      label
+                    >
+                      {spendingData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#222', borderColor: '#444', color: 'white' }} />
+                    <Legend />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            
+            {/* Audience Demographics Chart */}
+            <Card className="md:col-span-6 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="text-white">Audience Demographics</CardTitle>
+                <CardDescription className="text-gray-400">Age and gender distribution of your audience</CardDescription>
+              </CardHeader>
+              <CardContent className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={audienceData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <XAxis dataKey="age" stroke="#666" />
+                    <YAxis stroke="#666" />
+                    <Tooltip contentStyle={{ backgroundColor: '#222', borderColor: '#444', color: 'white' }} />
+                    <Legend />
+                    <Bar dataKey="male" stackId="a" fill="#FFBF0D" />
+                    <Bar dataKey="female" stackId="a" fill="#FF5E3A" />
+                    <Bar dataKey="other" stackId="a" fill="#8884D8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            
+            {/* Recent Campaigns */}
+            <Card className="md:col-span-6 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-white">Recent Campaigns</CardTitle>
+                  <Button variant="outline" size="sm" className="h-8 border border-zinc-700 bg-black/40 hover:bg-zinc-900/80 backdrop-blur-sm text-gray-300">
+                    View All
+                  </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    {
+                      name: "Summer Collection Launch",
+                      status: "Active",
+                      athlete: "Marcus Johnson",
+                      reach: "12.5K",
+                      engagement: "3.2K",
+                      icon: <ShoppingBag className="h-5 w-5 text-amber-500" />
+                    },
+                    {
+                      name: "Brand Awareness Q2",
+                      status: "Active",
+                      athlete: "Sarah Williams",
+                      reach: "8.7K",
+                      engagement: "2.1K",
+                      icon: <Megaphone className="h-5 w-5 text-amber-500" />
+                    },
+                    {
+                      name: "Product Promotion",
+                      status: "Scheduled",
+                      athlete: "Jason Blake",
+                      reach: "—",
+                      engagement: "—",
+                      icon: <Eye className="h-5 w-5 text-amber-500" />
+                    }
+                  ].map((campaign, i) => (
+                    <div key={i} className="flex items-center p-3 border border-zinc-800 rounded-lg bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 group">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500/20 to-red-500/20 flex items-center justify-center mr-4 group-hover:from-amber-500/30 group-hover:to-red-500/30 transition-all duration-300">
+                        {campaign.icon}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-white">{campaign.name}</h4>
+                            <p className="text-sm text-gray-400">with {campaign.athlete}</p>
+                          </div>
+                          <Badge className={
+                            campaign.status === "Active" 
+                              ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                              : "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+                          }>
+                            {campaign.status}
+                          </Badge>
+                        </div>
+                        <div className="flex mt-2 space-x-4 text-sm">
+                          <span className="text-gray-400">Reach: <span className="text-white font-medium">{campaign.reach}</span></span>
+                          <span className="text-gray-400">Engagement: <span className="text-white font-medium">{campaign.engagement}</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="border-t border-zinc-800 mt-2 flex justify-center">
+                <Button variant="link" className="text-amber-500 hover:text-amber-400">
+                  Create new campaign
+                  <ArrowUpRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
-        </div>
-        
-        {/* Dashboard Content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="col-span-full">
-            <CardHeader className="pb-2">
-              <CardTitle>Welcome, {profileData?.name || 'Business Partner'}</CardTitle>
-              <CardDescription>
-                Your business dashboard provides tools to manage athlete partnerships.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center p-4 border rounded-lg bg-muted/50">
-                  <BarChart3 className="h-10 w-10 text-[#0066cc] mr-4" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active Campaigns</p>
-                    <p className="text-2xl font-bold">3</p>
-                  </div>
-                </div>
-                <div className="flex items-center p-4 border rounded-lg bg-muted/50">
-                  <Users className="h-10 w-10 text-[#0066cc] mr-4" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active Athletes</p>
-                    <p className="text-2xl font-bold">5</p>
-                  </div>
-                </div>
-                <div className="flex items-center p-4 border rounded-lg bg-muted/50">
-                  <TrendingUp className="h-10 w-10 text-[#0066cc] mr-4" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Engagement</p>
-                    <p className="text-2xl font-bold">23.4K</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
