@@ -326,24 +326,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[API] Fetching business profile for user ${userId}`);
       
-      // First check if a profile exists for this user using id field
-      const { data: profile, error: profileError } = await supabase
+      // Try first with user_id field (correct field according to foreign key relationships)
+      let { data: profile, error: profileError } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .maybeSingle();
       
       if (profileError) {
-        console.error('[API] Error fetching business profile:', profileError);
-        return res.status(500).json({ error: 'Error fetching business profile' });
+        console.error('[API] Error fetching business profile with user_id:', profileError);
+        
+        // Fall back to legacy id field search if the first query had an error
+        const fallbackResult = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+          
+        profile = fallbackResult.data;
+        
+        if (fallbackResult.error) {
+          console.error('[API] Error fetching business profile with id fallback:', fallbackResult.error);
+          return res.status(500).json({ error: 'Error fetching business profile' });
+        }
       }
       
       if (!profile) {
-        console.log(`[API] No business profile found for user ${userId}`);
-        return res.status(404).json({ error: 'Business profile not found' });
+        console.log(`[API] No business profile found for user ${userId} with either user_id or id field`);
+        return res.status(404).json({ 
+          error: 'Business profile not found',
+          message: 'No business profile exists for this user',
+          userId 
+        });
       }
       
-      console.log(`[API] Found business profile for user ${userId}`);
+      console.log(`[API] Found business profile for user ${userId}:`, profile);
       return res.status(200).json({ profile });
     } catch (error) {
       console.error('[API] Unexpected error fetching business profile:', error);
@@ -441,63 +458,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`User ${userId} exists:`, !!userData);
       }
       
-      // Get business profile from Supabase - NOTE: Using 'id' field, not 'user_id'
-      console.log('Querying Supabase for business profile...');
-      const { data, error } = await supabase
+      // Try first with the correct user_id field
+      console.log('Querying Supabase for business profile with user_id field...');
+      let { data, error } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .maybeSingle();
         
       if (error) {
-        console.error('Error fetching business profile:', error);
-        return res.status(500).json({ error: 'Failed to fetch business profile' });
-      }
-      
-      if (!data) {
-        console.log(`No business profile found for user ID: ${userId}`);
+        console.error('Error fetching business profile with user_id:', error);
         
-        // Attempt to create one
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id, email, role')
+        // Fall back to legacy id field search
+        console.log('Falling back to id field for backward compatibility...');
+        const fallbackResult = await supabase
+          .from('business_profiles')
+          .select('*')
           .eq('id', userId)
           .maybeSingle();
           
-        if (userError) {
-          console.error('Error fetching user:', userError);
-          return res.status(404).json({ error: 'Business profile not found' });
-        }
+        data = fallbackResult.data;
+        error = fallbackResult.error;
         
-        if (userData && userData.role === 'business') {
-          // Create a basic business profile with upsert to handle cases where profile might already exist
-          const { data: newProfile, error: createError } = await supabase
-            .from('business_profiles')
-            .upsert({
-              id: userId,
-              name: 'My Business',
-              email: userData.email,
-              product_type: 'Default product',
-              audience_goals: 'Default goals',
-              campaign_vibe: 'Professional',
-              values: 'Default values'
-            }, {
-              onConflict: 'id', 
-              ignoreDuplicates: false // Update if exists
-            })
-            .select()
-            .single();
-            
-          if (createError) {
-            console.error('Error creating business profile:', createError);
-            return res.status(500).json({ error: 'Failed to create business profile' });
-          }
-          
-          console.log('Created new business profile:', newProfile);
-          return res.status(201).json({ profile: newProfile });
+        if (error) {
+          console.error('Error fetching business profile with id fallback:', error);
+          return res.status(500).json({ error: 'Failed to fetch business profile' });
         }
-        
-        return res.status(404).json({ error: 'Business profile not found' });
+      }
+      
+      if (!data) {
+        console.log(`No business profile found for user ID: ${userId} using either field`);
+        return res.status(404).json({ 
+          error: 'Business profile not found',
+          message: 'No business profile exists for this user. Please complete onboarding first.',
+          userId 
+        });
       }
       
       console.log('Found business profile:', data);
