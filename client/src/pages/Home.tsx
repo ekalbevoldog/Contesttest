@@ -55,7 +55,7 @@ export default function Home() {
         <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel opacity-30 rounded-full"></div>
         
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="container mx-auto px-6 py-40 md:py-48 relative z-10">
+        <div className="container mx-auto px-6 py-40 pb-60 md:py-48 md:pb-72 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <Parallax className="space-y-12" speed={0.2} direction="up" offset={[-20, 20]}>
               <motion.div
@@ -89,7 +89,7 @@ export default function Home() {
               </motion.div>
               
               <motion.div 
-                className="flex gap-8 mt-12"
+                className="flex gap-8 mt-12 mb-20"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
