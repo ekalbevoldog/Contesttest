@@ -104,8 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     console.log('[Auth Provider] User data changed:', userData ? 'Data available' : 'No data');
-
+    
     if (userData) {
+      // Log the complete structure for debugging
+      console.log('[Auth Provider] Full userData structure keys:', Object.keys(userData));
+      
       // Extract auth and profile data, handle different response formats
       let authUser, profileData;
 
@@ -114,10 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // New response format with separate auth and profile
         authUser = userData.auth;
         profileData = userData.profile;
+        console.log('[Auth Provider] Found auth and profile in userData.auth format');
       } else if (userData.user) {
         // Alternative format with user object
         authUser = userData.user;
         profileData = userData.profile || userData.user_profile || userData.profile_data;
+        console.log('[Auth Provider] Found user object with keys:', Object.keys(userData.user));
+        console.log('[Auth Provider] Profile data source:', 
+          userData.profile ? 'userData.profile' : 
+          userData.user_profile ? 'userData.user_profile' : 
+          userData.profile_data ? 'userData.profile_data' : 'none found');
       } else if (userData.id && userData.email) {
         // User data directly in response
         authUser = userData;

@@ -268,19 +268,23 @@ export async function createUserProfile(userType: string, profileData: any) {
  */
 export async function getCurrentUser() {
   try {
+    console.log('[Auth Utils] getCurrentUser called');
+    
     // First try to get user from Supabase directly
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError) {
-      console.error('Error getting session:', sessionError);
+      console.error('[Auth Utils] Error getting session:', sessionError);
       return null;
     }
 
     if (!sessionData?.session) {
+      console.log('[Auth Utils] No active session found');
       return null;
     }
 
     // If we have a session, fetch the full user profile from our API
+    console.log('[Auth Utils] Session found, fetching user data from API');
     const response = await fetch('/api/auth/user', {
       method: 'GET',
       headers: {
@@ -290,13 +294,26 @@ export async function getCurrentUser() {
 
     if (!response.ok) {
       if (response.status === 401) {
-        // Not authenticated
+        console.log('[Auth Utils] User not authenticated (401)');
         return null;
       }
+      console.error('[Auth Utils] API error:', response.status, response.statusText);
       throw new Error('Failed to get user profile');
     }
 
-    return await response.json();
+    const userData = await response.json();
+    console.log('[Auth Utils] User data received with keys:', Object.keys(userData));
+    
+    // Debug logs to help diagnose the structure
+    if (userData.user) {
+      console.log('[Auth Utils] User object found with keys:', Object.keys(userData.user));
+    }
+    
+    if (userData.profile) {
+      console.log('[Auth Utils] Profile object found with keys:', Object.keys(userData.profile));
+    }
+    
+    return userData;
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
