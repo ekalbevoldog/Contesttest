@@ -111,7 +111,7 @@ export class SupabaseStorage implements IStorage {
       const PgStore = connectPgSimple(session);
       this.sessionStore = new PgStore({
         pool,
-        tableName: 'session', // Use the table we just created in SQL (singular form)
+        tableName: 'sessions', // Use the table name we just created (plural form)
         createTableIfMissing: false // We've already created the table
       });
       console.log("PostgreSQL session store initialized successfully");

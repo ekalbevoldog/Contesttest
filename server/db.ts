@@ -43,12 +43,33 @@ export async function testConnection() {
   try {
     console.log("Testing database connection...");
     
-    // Simple query to test connection using Supabase
-    const { data, error } = await supabase.from('sessions').select('*').limit(1);
+    // Simple query to test connection using Supabase's health check
+    // This avoids trying to access specific tables that might not exist yet
+    const { data, error } = await supabase.rpc('healthcheck');
     
     if (error) {
-      console.error("Database connection error:", error);
-      return false;
+      // Fallback if healthcheck function not available
+      try {
+        // Try a simple check using session table (connect-pg-simple format)
+        const { data: sessionData, error: sessionError } = await supabase.from('session').select('sid').limit(1);
+        if (sessionError) {
+          console.warn("Session table check failed:", sessionError);
+          // Maybe it's using 'sessions' (plural)
+          const { data: sessionsData, error: sessionsError } = await supabase.from('sessions').select('sid').limit(1);
+          if (sessionsError) {
+            console.warn("Sessions table check failed:", sessionsError);
+            // Last resort: just try to get the current time from Supabase
+            const { data: timeData, error: timeError } = await supabase.rpc('get_timestamp');
+            if (timeError) {
+              console.error("All database connection checks failed:", timeError);
+              return false;
+            }
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Database connection error in fallback check:", fallbackError);
+        return false;
+      }
     }
     
     console.log("Successfully connected to Supabase database");
