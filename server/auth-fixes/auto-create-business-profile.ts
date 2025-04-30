@@ -71,40 +71,70 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
     // Generate a session ID
     const sessionId = uuidv4();
     
-    // Based on our successful testing, we now know the exact required fields:
-    // 1. session_id - required, not null
-    // 2. name - required, not null
-    // 3. audience_goals - required, not null
-    // 4. values - required, not null (from error)
-    // 5. campaign_vibe - required, not null (from error)
-    // 6. product_type - required for API
-    
-    console.log(`[AutoProfile] Creating with all required fields`);
+    // First, add a record to the 'businesses' table since it's required
+    console.log(`[AutoProfile] Creating business record first...`);
     try {
-      const { data, error } = await supabase
-        .from('business_profiles')
+      const { data: businessData, error: businessError } = await supabase
+        .from('businesses')
         .insert({
-          id: userId, // This is the correct field according to the DB schema
-          name: 'My Business',
-          session_id: sessionId,
-          email: email,
-          audience_goals: 'Default goals',
-          campaign_vibe: 'Professional',
-          values: 'Default values',
-          product_type: 'Default product'
+          id: userId,  // Same ID as the user
+          company_name: 'My Business',
+          company_type: 'Other',  // Default value
+          industry_id: 1,  // Default value, will update later
+          description: 'Business account created during registration',
+          website_url: null,
+          zip_code: null
         })
         .select();
         
-      if (error) {
-        console.error(`[AutoProfile] Profile creation error: ${error.message}`);
-        if (error.details) {
-          console.error(`[AutoProfile] Error details: ${error.details}`);
+      if (businessError) {
+        console.error(`[AutoProfile] Failed to create business record: ${businessError.message}`);
+        if (businessError.details) {
+          console.error(`[AutoProfile] Business error details: ${businessError.details}`);
+        }
+        
+        // Check if it failed due to the record already existing
+        if (businessError.code === '23505') { // Unique violation
+          console.log(`[AutoProfile] Business record might already exist, continuing to profile creation`);
+        } else {
+          return false;
+        }
+      } else {
+        console.log(`[AutoProfile] Business record created successfully`);
+      }
+      
+      // Now create the business_profile record
+      console.log(`[AutoProfile] Creating business profile record...`);
+      const { data: profileData, error: profileError } = await supabase
+        .from('business_profiles')
+        .insert({
+          id: userId,  // This links to the businesses table
+          name: 'My Business',
+          session_id: sessionId,
+          email: email,
+          product_type: 'Default product',
+          // Set defaults for other fields
+          industry: null,
+          business_type: null,
+          company_size: null,
+          zipCode: null,
+          budget: null,
+          budgetmin: null,
+          budgetmax: null,
+          haspreviouspartnerships: null
+        })
+        .select();
+      
+      if (profileError) {
+        console.error(`[AutoProfile] Profile creation error: ${profileError.message}`);
+        if (profileError.details) {
+          console.error(`[AutoProfile] Profile error details: ${profileError.details}`);
         }
         return false;
       }
       
-      if (data && data.length > 0) {
-        console.log(`[AutoProfile] Successfully created business profile with ID: ${data[0].id}`);
+      if (profileData && profileData.length > 0) {
+        console.log(`[AutoProfile] Successfully created business profile with ID: ${profileData[0].id}`);
         return true;
       }
       
