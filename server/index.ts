@@ -6,6 +6,7 @@ import { registerRoutes } from './routes.js'
 import { registerPublicRoutes } from './routes-public.js'
 import { setupSupabaseAuth } from './supabaseAuth.js'
 import { setupProfileEndpoints } from './supabaseProfile.js'
+import { initializeDashboardTables } from './dashboard-init.js'
 
 // Load environment variables (including SUPABASE_URL, SUPABASE_ANON_KEY)
 dotenv.config()
@@ -99,4 +100,15 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Start server
 const port = parseInt(process.env.PORT || '5000', 10)
-httpServer.listen(port, '0.0.0.0', () => console.log(`Server listening on port ${port}`))
+httpServer.listen(port, '0.0.0.0', async () => {
+  console.log(`Server listening on port ${port}`)
+  
+  // Initialize database tables for the dashboard after server starts
+  console.log("Initializing dashboard tables...")
+  try {
+    await initializeDashboardTables()
+    console.log("Dashboard tables initialized successfully")
+  } catch (error) {
+    console.error("Error initializing dashboard tables:", error)
+  }
+})

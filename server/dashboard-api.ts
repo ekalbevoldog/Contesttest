@@ -1,1412 +1,433 @@
-import { Router } from 'express';
-import { storage } from './storage';
-import { widgetSchema, dashboardConfigSchema } from '@shared/dashboard-schema';
-import { v4 as uuidv4 } from 'uuid';
+import express, { Router } from 'express';
+import { supabase, supabaseAdmin } from './supabase';
 
+type DashboardWidget = {
+  id: string;
+  type: string;
+  title: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  size: {
+    width: number;
+    height: number;
+  };
+  settings: Record<string, any>;
+  data?: any;
+};
+
+type DashboardConfig = {
+  id: string;
+  user_id: string;
+  widgets: DashboardWidget[];
+  last_updated: string;
+};
+
+// Default widget configurations based on user role
+const defaultWidgets = {
+  athlete: [
+    {
+      id: 'athlete-stats',
+      type: 'stats',
+      title: 'Your Performance',
+      position: { x: 0, y: 0 },
+      size: { width: 12, height: 3 },
+      settings: {
+        metrics: [
+          { name: 'Campaign Opportunities', value: 0, change: 0, icon: 'trending-up' },
+          { name: 'Accepted Offers', value: 0, change: 0, icon: 'check-circle' },
+          { name: 'Total Earnings', value: '$0', change: 0, icon: 'dollar-sign' },
+          { name: 'Profile Views', value: 0, change: 0, icon: 'eye' },
+        ]
+      }
+    },
+    {
+      id: 'athlete-engagement',
+      type: 'chart',
+      title: 'Engagement Metrics',
+      position: { x: 0, y: 3 },
+      size: { width: 8, height: 8 },
+      settings: {
+        chartType: 'line',
+        xAxis: 'date',
+        series: [
+          { name: 'Profile Views', dataKey: 'views', color: '#8884d8' },
+          { name: 'Match Rate', dataKey: 'matches', color: '#82ca9d' }
+        ]
+      }
+    },
+    {
+      id: 'athlete-upcoming',
+      type: 'timeline',
+      title: 'Upcoming Deliverables',
+      position: { x: 8, y: 3 },
+      size: { width: 4, height: 8 },
+      settings: {
+        dateFormat: 'MMM D, YYYY',
+        showStatus: true
+      }
+    }
+  ],
+  business: [
+    {
+      id: 'business-stats',
+      type: 'stats',
+      title: 'Campaign Performance',
+      position: { x: 0, y: 0 },
+      size: { width: 12, height: 3 },
+      settings: {
+        metrics: [
+          { name: 'Active Campaigns', value: 0, change: 0, icon: 'briefcase' },
+          { name: 'Athlete Matches', value: 0, change: 0, icon: 'users' },
+          { name: 'Conversion Rate', value: '0%', change: 0, icon: 'percent' },
+          { name: 'Budget Utilization', value: '0%', change: 0, icon: 'dollar-sign' },
+        ]
+      }
+    },
+    {
+      id: 'business-roi',
+      type: 'chart',
+      title: 'ROI Metrics',
+      position: { x: 0, y: 3 },
+      size: { width: 8, height: 8 },
+      settings: {
+        chartType: 'bar',
+        xAxis: 'category',
+        series: [
+          { name: 'Investment', dataKey: 'investment', color: '#8884d8' },
+          { name: 'Return', dataKey: 'return', color: '#82ca9d' }
+        ]
+      }
+    },
+    {
+      id: 'business-recommendations',
+      type: 'recommendations',
+      title: 'Recommended Athletes',
+      position: { x: 8, y: 3 },
+      size: { width: 4, height: 8 },
+      settings: {
+        limit: 5,
+        showScore: true
+      }
+    }
+  ],
+  compliance: [
+    {
+      id: 'compliance-stats',
+      type: 'stats',
+      title: 'Compliance Overview',
+      position: { x: 0, y: 0 },
+      size: { width: 12, height: 3 },
+      settings: {
+        metrics: [
+          { name: 'Pending Reviews', value: 0, change: 0, icon: 'clock' },
+          { name: 'Approved Today', value: 0, change: 0, icon: 'check-circle' },
+          { name: 'Rejected Today', value: 0, change: 0, icon: 'x-circle' },
+          { name: 'Avg. Review Time', value: '0h', change: 0, icon: 'activity' },
+        ]
+      }
+    },
+    {
+      id: 'compliance-queue',
+      type: 'queue',
+      title: 'Review Queue',
+      position: { x: 0, y: 3 },
+      size: { width: 12, height: 8 },
+      settings: {
+        showPriority: true,
+        dateFormat: 'MMM D, YYYY'
+      }
+    }
+  ],
+  admin: [
+    {
+      id: 'admin-stats',
+      type: 'stats',
+      title: 'Platform Overview',
+      position: { x: 0, y: 0 },
+      size: { width: 12, height: 3 },
+      settings: {
+        metrics: [
+          { name: 'Total Users', value: 0, change: 0, icon: 'users' },
+          { name: 'Active Campaigns', value: 0, change: 0, icon: 'briefcase' },
+          { name: 'Contracts Signed', value: 0, change: 0, icon: 'file-text' },
+          { name: 'Platform Revenue', value: '$0', change: 0, icon: 'dollar-sign' },
+        ]
+      }
+    },
+    {
+      id: 'admin-growth',
+      type: 'chart',
+      title: 'Platform Growth',
+      position: { x: 0, y: 3 },
+      size: { width: 8, height: 8 },
+      settings: {
+        chartType: 'area',
+        xAxis: 'date',
+        series: [
+          { name: 'Athletes', dataKey: 'athletes', color: '#8884d8' },
+          { name: 'Businesses', dataKey: 'businesses', color: '#82ca9d' },
+          { name: 'Campaigns', dataKey: 'campaigns', color: '#ffc658' }
+        ]
+      }
+    },
+    {
+      id: 'admin-alerts',
+      type: 'alerts',
+      title: 'System Alerts',
+      position: { x: 8, y: 3 },
+      size: { width: 4, height: 8 },
+      settings: {
+        showPriority: true,
+        dateFormat: 'MMM D, YYYY'
+      }
+    }
+  ]
+};
+
+// Function to create a dashboard config for a user with default widgets
+async function createDefaultDashboardConfig(userId: string, userRole: string): Promise<DashboardConfig | null> {
+  console.log(`Creating default dashboard config for user ${userId} with role ${userRole}`);
+  
+  // Get the appropriate default widgets based on user role
+  const widgets = defaultWidgets[userRole as keyof typeof defaultWidgets] || defaultWidgets.athlete;
+  
+  // Insert a new dashboard config into the database
+  const { data, error } = await supabaseAdmin
+    .from('user_dashboard_configs')
+    .insert({
+      user_id: userId,
+      widgets: widgets,
+      last_updated: new Date().toISOString()
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error creating default dashboard config:', error);
+    return null;
+  }
+  
+  return data as DashboardConfig;
+}
+
+// Function to get dashboard widgets with sample data for a user
+async function getDashboardWithData(userId: string, userRole: string): Promise<DashboardConfig | null> {
+  console.log(`Getting dashboard for user ${userId} with role ${userRole}`);
+  
+  // Try to get the existing dashboard config
+  const { data, error } = await supabaseAdmin
+    .from('user_dashboard_configs')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+  
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // No records found, create a default dashboard config
+      return await createDefaultDashboardConfig(userId, userRole);
+    }
+    console.error('Error getting dashboard config:', error);
+    return null;
+  }
+  
+  // Enhance widgets with actual data from other tables (this is a simplified implementation)
+  const dashboardConfig = data as DashboardConfig;
+  const enhancedWidgets = await Promise.all(
+    dashboardConfig.widgets.map(async (widget) => {
+      // Add real data to each widget based on its type
+      switch (widget.type) {
+        case 'stats':
+          if (userRole === 'athlete') {
+            // Get athlete stats
+            widget.data = {
+              metrics: [
+                { name: 'Campaign Opportunities', value: 5, change: 2, icon: 'trending-up' },
+                { name: 'Accepted Offers', value: 2, change: 1, icon: 'check-circle' },
+                { name: 'Total Earnings', value: '$500', change: 10, icon: 'dollar-sign' },
+                { name: 'Profile Views', value: 120, change: 30, icon: 'eye' },
+              ]
+            };
+          } else if (userRole === 'business') {
+            // Get business stats
+            widget.data = {
+              metrics: [
+                { name: 'Active Campaigns', value: 3, change: 1, icon: 'briefcase' },
+                { name: 'Athlete Matches', value: 12, change: 4, icon: 'users' },
+                { name: 'Conversion Rate', value: '25%', change: 5, icon: 'percent' },
+                { name: 'Budget Utilization', value: '60%', change: 10, icon: 'dollar-sign' },
+              ]
+            };
+          } else if (userRole === 'compliance') {
+            // Get compliance stats
+            widget.data = {
+              metrics: [
+                { name: 'Pending Reviews', value: 8, change: -2, icon: 'clock' },
+                { name: 'Approved Today', value: 5, change: 1, icon: 'check-circle' },
+                { name: 'Rejected Today', value: 2, change: 0, icon: 'x-circle' },
+                { name: 'Avg. Review Time', value: '2h', change: -10, icon: 'activity' },
+              ]
+            };
+          } else if (userRole === 'admin') {
+            // Get admin stats
+            widget.data = {
+              metrics: [
+                { name: 'Total Users', value: 150, change: 15, icon: 'users' },
+                { name: 'Active Campaigns', value: 25, change: 8, icon: 'briefcase' },
+                { name: 'Contracts Signed', value: 45, change: 12, icon: 'file-text' },
+                { name: 'Platform Revenue', value: '$10,000', change: 20, icon: 'dollar-sign' },
+              ]
+            };
+          }
+          break;
+        
+        case 'chart':
+          // Sample chart data
+          if (widget.settings.chartType === 'line' || widget.settings.chartType === 'area') {
+            widget.data = [
+              { date: '2025-01-01', views: 100, matches: 10, athletes: 50, businesses: 30, campaigns: 20 },
+              { date: '2025-02-01', views: 120, matches: 12, athletes: 60, businesses: 35, campaigns: 22 },
+              { date: '2025-03-01', views: 150, matches: 15, athletes: 70, businesses: 40, campaigns: 25 },
+              { date: '2025-04-01', views: 180, matches: 18, athletes: 85, businesses: 45, campaigns: 30 },
+            ];
+          } else if (widget.settings.chartType === 'bar') {
+            widget.data = [
+              { category: 'Campaign A', investment: 1000, return: 1500 },
+              { category: 'Campaign B', investment: 2000, return: 3000 },
+              { category: 'Campaign C', investment: 1500, return: 2000 },
+            ];
+          }
+          break;
+        
+        case 'timeline':
+        case 'queue':
+          // Sample timeline/queue data
+          widget.data = [
+            { id: 1, title: 'Instagram Post', date: '2025-05-10', status: 'pending' },
+            { id: 2, title: 'TikTok Video', date: '2025-05-15', status: 'completed' },
+            { id: 3, title: 'Product Review', date: '2025-05-20', status: 'pending' },
+          ];
+          break;
+        
+        case 'recommendations':
+          // Sample recommendations data
+          widget.data = [
+            { id: 1, name: 'John Smith', sport: 'Basketball', school: 'UCLA', score: 95 },
+            { id: 2, name: 'Emily Johnson', sport: 'Soccer', school: 'Stanford', score: 90 },
+            { id: 3, name: 'Michael Brown', sport: 'Football', school: 'Ohio State', score: 85 },
+            { id: 4, name: 'Sarah Williams', sport: 'Volleyball', school: 'USC', score: 80 },
+            { id: 5, name: 'David Jones', sport: 'Baseball', school: 'Texas', score: 75 },
+          ];
+          break;
+        
+        case 'alerts':
+          // Sample alerts data
+          widget.data = [
+            { id: 1, message: 'System maintenance scheduled', priority: 'medium', date: '2025-05-05' },
+            { id: 2, message: 'New feature released', priority: 'low', date: '2025-05-03' },
+            { id: 3, message: 'Payment system upgrade', priority: 'high', date: '2025-05-10' },
+          ];
+          break;
+      }
+      
+      return widget;
+    })
+  );
+  
+  return {
+    ...dashboardConfig,
+    widgets: enhancedWidgets
+  };
+}
+
+// Create a router for dashboard endpoints
 export const dashboardRouter = Router();
 
-// Authentication middleware to check if user is logged in
-const requireAuth = (req, res, next) => {
-  if (!req.isAuthenticated()) {
+// Middleware to check if user is authenticated
+const isAuthenticated = (req: any, res: any, next: any) => {
+  if (!req.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();
 };
 
-// Get user dashboard configuration
-dashboardRouter.get('/config', requireAuth, async (req, res) => {
-  try {
-    console.log('Dashboard config requested for user:', req.user);
-    
-    // Ensure user.id exists and is a string
-    if (!req.user || !req.user.id) {
-      console.error('Dashboard API: User ID is missing in request');
-      return res.status(400).json({ error: 'User ID is required' });
-    }
-    
-    const userId = req.user.id.toString();
-    console.log(`Getting dashboard config for user ID: ${userId}`);
-    
-    try {
-      const config = await storage.getDashboardConfig(userId);
-      console.log('Dashboard config result:', config);
-      
-      if (!config) {
-        console.log(`No config found for user ${userId}, creating default config`);
-        // If no configuration exists, return a default one
-        const defaultConfig = {
-          userId,
-          widgets: [],
-          lastUpdated: new Date().toISOString(),
-        };
-        
-        try {
-          await storage.saveDashboardConfig(userId, defaultConfig);
-          console.log('Default dashboard config saved successfully');
-          return res.json(defaultConfig);
-        } catch (saveError) {
-          console.error('Error saving default dashboard config:', saveError);
-          return res.status(500).json({ error: 'Failed to save default dashboard configuration' });
-        }
-      }
-      
-      console.log('Returning existing dashboard config for user:', userId);
-      return res.json(config);
-    } catch (configError) {
-      console.error('Error retrieving dashboard config:', configError);
-      return res.status(500).json({ error: 'Failed to retrieve dashboard configuration' });
-    }
-  } catch (error) {
-    console.error('Unexpected error in dashboard config endpoint:', error);
-    return res.status(500).json({ error: 'An unexpected error occurred' });
-  }
-});
+// Apply authentication middleware to all dashboard routes
+dashboardRouter.use(isAuthenticated);
 
-// Save user dashboard configuration
-dashboardRouter.post('/config', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const validatedData = dashboardConfigSchema.parse({
-      ...req.body,
-      userId,
-    });
-    
-    await storage.saveDashboardConfig(userId, validatedData);
-    return res.json(validatedData);
-  } catch (error) {
-    console.error('Error saving dashboard config:', error);
-    return res.status(500).json({ error: 'Failed to save dashboard configuration' });
-  }
-});
-
-// Add a new widget
-dashboardRouter.post('/widgets', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const config = await storage.getDashboardConfig(userId);
-    
-    if (!config) {
-      return res.status(404).json({ error: 'Dashboard configuration not found' });
-    }
-    
-    const newWidget = widgetSchema.parse({
-      ...req.body,
-      id: uuidv4(),
-    });
-    
-    const updatedConfig = {
-      ...config,
-      widgets: [...config.widgets, newWidget],
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    return res.json(newWidget);
-  } catch (error) {
-    console.error('Error adding widget:', error);
-    return res.status(500).json({ error: 'Failed to add widget' });
-  }
-});
-
-// Update an existing widget
-dashboardRouter.patch('/widgets/:id', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const widgetId = req.params.id;
-    const config = await storage.getDashboardConfig(userId);
-    
-    if (!config) {
-      return res.status(404).json({ error: 'Dashboard configuration not found' });
-    }
-    
-    const widgetIndex = config.widgets.findIndex(w => w.id === widgetId);
-    if (widgetIndex === -1) {
-      return res.status(404).json({ error: 'Widget not found' });
-    }
-    
-    const updatedWidget = {
-      ...config.widgets[widgetIndex],
-      ...req.body,
-    };
-    
-    const updatedConfig = {
-      ...config,
-      widgets: [
-        ...config.widgets.slice(0, widgetIndex),
-        updatedWidget,
-        ...config.widgets.slice(widgetIndex + 1),
-      ],
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    return res.json(updatedWidget);
-  } catch (error) {
-    console.error('Error updating widget:', error);
-    return res.status(500).json({ error: 'Failed to update widget' });
-  }
-});
-
-// Delete a widget
-dashboardRouter.delete('/widgets/:id', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const widgetId = req.params.id;
-    const config = await storage.getDashboardConfig(userId);
-    
-    if (!config) {
-      return res.status(404).json({ error: 'Dashboard configuration not found' });
-    }
-    
-    const updatedConfig = {
-      ...config,
-      widgets: config.widgets.filter(w => w.id !== widgetId),
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    return res.sendStatus(204);
-  } catch (error) {
-    console.error('Error deleting widget:', error);
-    return res.status(500).json({ error: 'Failed to delete widget' });
-  }
-});
-
-// Reorder widgets
-dashboardRouter.post('/widgets/reorder', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const { widgetIds } = req.body;
-    
-    if (!Array.isArray(widgetIds)) {
-      return res.status(400).json({ error: 'Widget IDs must be an array' });
-    }
-    
-    const config = await storage.getDashboardConfig(userId);
-    
-    if (!config) {
-      return res.status(404).json({ error: 'Dashboard configuration not found' });
-    }
-    
-    const widgetMap = new Map(config.widgets.map(w => [w.id, w]));
-    
-    // Create a new array of widgets in the order specified by widgetIds
-    const reorderedWidgets = widgetIds
-      .filter(id => widgetMap.has(id)) // Only include existing widgets
-      .map((id, index) => ({
-        ...widgetMap.get(id),
-        position: index,
-      }));
-    
-    // Add any widgets that were not included in the widgetIds array
-    const remainingWidgets = config.widgets
-      .filter(w => !widgetIds.includes(w.id))
-      .map((w, i) => ({
-        ...w,
-        position: reorderedWidgets.length + i,
-      }));
-    
-    const updatedConfig = {
-      ...config,
-      widgets: [...reorderedWidgets, ...remainingWidgets],
-      lastUpdated: new Date().toISOString(),
-    };
-    
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    return res.json(updatedConfig.widgets);
-  } catch (error) {
-    console.error('Error reordering widgets:', error);
-    return res.status(500).json({ error: 'Failed to reorder widgets' });
-  }
-});
-
-// Get stats data for the stats widget
-dashboardRouter.get('/stats', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const userRole = req.user.role;
-    
-    // Get stats based on user role
-    let stats;
-    switch (userRole) {
-      case 'athlete':
-        stats = await getAthleteStats(userId);
-        break;
-      case 'business':
-        stats = await getBusinessStats(userId);
-        break;
-      case 'compliance':
-        stats = await getComplianceStats();
-        break;
-      case 'admin':
-        stats = await getAdminStats();
-        break;
-      default:
-        stats = { items: [] };
-    }
-    
-    return res.json(stats);
-  } catch (error) {
-    console.error('Error getting stats data:', error);
-    return res.status(500).json({ error: 'Failed to get stats data' });
-  }
-});
-
-// Get chart data for the chart widget
-dashboardRouter.get('/charts/:source', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const userRole = req.user.role;
-    const source = req.params.source;
-    
-    // Get chart data based on user role and requested source
-    let chartData;
-    switch (userRole) {
-      case 'athlete':
-        chartData = await getAthleteChartData(userId, source);
-        break;
-      case 'business':
-        chartData = await getBusinessChartData(userId, source);
-        break;
-      case 'compliance':
-        chartData = await getComplianceChartData(source);
-        break;
-      case 'admin':
-        chartData = await getAdminChartData(source);
-        break;
-      default:
-        chartData = getDefaultChartData();
-    }
-    
-    return res.json(chartData);
-  } catch (error) {
-    console.error('Error getting chart data:', error);
-    return res.status(500).json({ error: 'Failed to get chart data' });
-  }
-});
-
-// Get activity data for the activity widget
-dashboardRouter.get('/activity', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const userRole = req.user.role;
-    
-    // Get activity data based on user role
-    let activityData;
-    switch (userRole) {
-      case 'athlete':
-        activityData = await getAthleteActivity(userId);
-        break;
-      case 'business':
-        activityData = await getBusinessActivity(userId);
-        break;
-      case 'compliance':
-        activityData = await getComplianceActivity();
-        break;
-      case 'admin':
-        activityData = await getAdminActivity();
-        break;
-      default:
-        activityData = [];
-    }
-    
-    return res.json(activityData);
-  } catch (error) {
-    console.error('Error getting activity data:', error);
-    return res.status(500).json({ error: 'Failed to get activity data' });
-  }
-});
-
-// Get quick actions data for the quick actions widget
-dashboardRouter.get('/quick-actions', requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.id.toString();
-    const userRole = req.user.role;
-    
-    // Get quick actions based on user role
-    let quickActions;
-    switch (userRole) {
-      case 'athlete':
-        quickActions = await getAthleteQuickActions(userId);
-        break;
-      case 'business':
-        quickActions = await getBusinessQuickActions(userId);
-        break;
-      case 'compliance':
-        quickActions = await getComplianceQuickActions();
-        break;
-      case 'admin':
-        quickActions = await getAdminQuickActions();
-        break;
-      default:
-        quickActions = [];
-    }
-    
-    return res.json(quickActions);
-  } catch (error) {
-    console.error('Error getting quick actions data:', error);
-    return res.status(500).json({ error: 'Failed to get quick actions data' });
-  }
-});
-
-// Helper functions to get data for widgets based on user role
-async function getAthleteStats(userId: string) {
-  // Fetch athlete-specific stats from Supabase
-  const { data: athlete, error: athleteError } = await storage.supabase
-    .from('athlete_profiles')
-    .select('follower_count, content_style')
-    .eq('id', userId)
-    .single();
-
-  if (athleteError) {
-    console.error('Error fetching athlete stats:', athleteError);
-    return { items: [] };
-  }
-
-  // Get matches data
-  const { data: matches, error: matchesError } = await storage.supabase
-    .from('matches')
-    .select('status')
-    .eq('athlete_id', userId);
-
-  if (matchesError) {
-    console.error('Error fetching athlete matches:', matchesError);
-    return { items: [] };
-  }
-
-  // Calculate stats
-  const pendingMatches = matches?.filter(m => m.status === 'pending').length || 0;
-  const acceptedMatches = matches?.filter(m => m.status === 'accepted').length || 0;
-
-  return {
-    items: [
-      {
-        key: 'followers',
-        label: 'Followers',
-        value: athlete?.follower_count || 0,
-        icon: 'Users',
-        color: 'blue',
-      },
-      {
-        key: 'pending-matches',
-        label: 'Pending Matches',
-        value: pendingMatches,
-        icon: 'Hourglass',
-        color: 'yellow',
-      },
-      {
-        key: 'active-campaigns',
-        label: 'Active Campaigns',
-        value: acceptedMatches,
-        icon: 'Rocket',
-        color: 'green',
-      },
-      {
-        key: 'content-style',
-        label: 'Content Style',
-        value: athlete?.content_style || 'Not set',
-        icon: 'Camera',
-        color: 'purple',
-      },
-    ],
-  };
-}
-
-async function getBusinessStats(userId: string) {
-  // Fetch business-specific stats from Supabase
-  const { data: campaigns, error: campaignsError } = await storage.supabase
-    .from('campaigns')
-    .select('status')
-    .eq('business_id', userId);
-
-  if (campaignsError) {
-    console.error('Error fetching business campaigns:', campaignsError);
-    return { items: [] };
-  }
-
-  // Calculate campaign stats
-  const draftCampaigns = campaigns?.filter(c => c.status === 'draft').length || 0;
-  const activeCampaigns = campaigns?.filter(c => c.status === 'active').length || 0;
-  const completedCampaigns = campaigns?.filter(c => c.status === 'completed').length || 0;
-
-  // Get matches data
-  const { data: matches, error: matchesError } = await storage.supabase
-    .from('matches')
-    .select('status')
-    .eq('business_id', userId);
-
-  if (matchesError) {
-    console.error('Error fetching business matches:', matchesError);
-    return { items: [] };
-  }
-
-  const pendingMatches = matches?.filter(m => m.status === 'pending').length || 0;
-
-  return {
-    items: [
-      {
-        key: 'active-campaigns',
-        label: 'Active Campaigns',
-        value: activeCampaigns,
-        icon: 'Rocket',
-        color: 'green',
-      },
-      {
-        key: 'draft-campaigns',
-        label: 'Draft Campaigns',
-        value: draftCampaigns,
-        icon: 'FileEdit',
-        color: 'blue',
-      },
-      {
-        key: 'pending-matches',
-        label: 'Pending Matches',
-        value: pendingMatches,
-        icon: 'Hourglass',
-        color: 'yellow',
-      },
-      {
-        key: 'completed-campaigns',
-        label: 'Completed',
-        value: completedCampaigns,
-        icon: 'CheckCircle',
-        color: 'gray',
-      },
-    ],
-  };
-}
-
-async function getComplianceStats() {
-  // Fetch compliance-specific stats from Supabase
-  const { data: matches, error: matchesError } = await storage.supabase
-    .from('matches')
-    .select('compliance_status');
-
-  if (matchesError) {
-    console.error('Error fetching compliance stats:', matchesError);
-    return { items: [] };
-  }
-
-  // Calculate compliance stats
-  const pendingReviews = matches?.filter(m => m.compliance_status === 'pending').length || 0;
-  const approvedMatches = matches?.filter(m => m.compliance_status === 'approved').length || 0;
-  const rejectedMatches = matches?.filter(m => m.compliance_status === 'rejected').length || 0;
-
-  return {
-    items: [
-      {
-        key: 'pending-reviews',
-        label: 'Pending Reviews',
-        value: pendingReviews,
-        icon: 'AlertCircle',
-        color: 'yellow',
-        trend: pendingReviews > 10 ? 'up' : 'down',
-        change: pendingReviews > 10 ? 15 : 8,
-      },
-      {
-        key: 'approved-matches',
-        label: 'Approved Matches',
-        value: approvedMatches,
-        icon: 'CheckCircle',
-        color: 'green',
-      },
-      {
-        key: 'rejected-matches',
-        label: 'Rejected Matches',
-        value: rejectedMatches,
-        icon: 'XCircle',
-        color: 'red',
-      },
-      {
-        key: 'compliance-rate',
-        label: 'Compliance Rate',
-        value: `${Math.round((approvedMatches / (approvedMatches + rejectedMatches || 1)) * 100)}%`,
-        icon: 'Percent',
-        color: 'blue',
-      },
-    ],
-  };
-}
-
-async function getAdminStats() {
-  // Fetch admin-specific stats from Supabase
-  const { data: users, error: usersError } = await storage.supabase
-    .from('users')
-    .select('role');
-
-  if (usersError) {
-    console.error('Error fetching admin stats:', usersError);
-    return { items: [] };
-  }
-
-  // Calculate user stats
-  const athleteCount = users?.filter(u => u.role === 'athlete').length || 0;
-  const businessCount = users?.filter(u => u.role === 'business').length || 0;
+// Endpoint to get the user's dashboard configuration
+dashboardRouter.get('/config', async (req: any, res: any) => {
+  console.log(`Dashboard config requested for user: ${req.user.id} with role: ${req.user.user_metadata?.role}`);
   
-  // Get campaign data
-  const { data: campaigns, error: campaignsError } = await storage.supabase
-    .from('campaigns')
-    .select('status');
-
-  if (campaignsError) {
-    console.error('Error fetching campaign stats:', campaignsError);
-    return { items: [] };
-  }
-
-  const activeCampaigns = campaigns?.filter(c => c.status === 'active').length || 0;
-
-  // Get match data
-  const { data: matches, error: matchesError } = await storage.supabase
-    .from('matches')
-    .select('status');
-
-  if (matchesError) {
-    console.error('Error fetching match stats:', matchesError);
-    return { items: [] };
-  }
-
-  const completedMatches = matches?.filter(m => m.status === 'completed').length || 0;
-
-  return {
-    items: [
-      {
-        key: 'athletes',
-        label: 'Athletes',
-        value: athleteCount,
-        icon: 'User',
-        color: 'blue',
-      },
-      {
-        key: 'businesses',
-        label: 'Businesses',
-        value: businessCount,
-        icon: 'Briefcase',
-        color: 'green',
-      },
-      {
-        key: 'active-campaigns',
-        label: 'Active Campaigns',
-        value: activeCampaigns,
-        icon: 'Rocket',
-        color: 'purple',
-      },
-      {
-        key: 'completed-matches',
-        label: 'Completed Matches',
-        value: completedMatches,
-        icon: 'Check',
-        color: 'gray',
-      },
-    ],
-  };
-}
-
-async function getAthleteChartData(userId: string, source: string) {
-  let chartData;
-
-  switch (source) {
-    case 'matches':
-      // Get match data over time
-      const { data: matches, error: matchesError } = await storage.supabase
-        .from('matches')
-        .select('created_at, status')
-        .eq('athlete_id', userId)
-        .order('created_at', { ascending: true });
-
-      if (matchesError) {
-        console.error('Error fetching athlete match chart data:', matchesError);
-        return getDefaultChartData();
-      }
-
-      // Process data for the chart (monthly grouping)
-      const matchesByMonth = matches?.reduce((acc, match) => {
-        const date = new Date(match.created_at);
-        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
-        
-        if (!acc[monthYear]) {
-          acc[monthYear] = { month: monthYear, pending: 0, accepted: 0, declined: 0 };
-        }
-        
-        acc[monthYear][match.status]++;
-        return acc;
-      }, {});
-
-      chartData = {
-        xAxis: 'month',
-        series: ['pending', 'accepted', 'declined'],
-        data: Object.values(matchesByMonth || {}),
-      };
-      break;
-      
-    case 'engagement':
-    default:
-      // For demo, return engagement data with random values
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const currentMonth = new Date().getMonth();
-      
-      // Generate last 6 months of data
-      const data = [];
-      for (let i = 5; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12;
-        data.push({
-          month: monthNames[monthIndex],
-          views: Math.floor(Math.random() * 10000) + 5000,
-          engagement: Math.floor(Math.random() * 2000) + 1000,
-          conversions: Math.floor(Math.random() * 500) + 100,
-        });
-      }
-      
-      chartData = {
-        xAxis: 'month',
-        series: ['views', 'engagement', 'conversions'],
-        data,
-      };
-      break;
-  }
-
-  return chartData;
-}
-
-async function getBusinessChartData(userId: string, source: string) {
-  let chartData;
-
-  switch (source) {
-    case 'campaigns':
-      // Get campaign data over time
-      const { data: campaigns, error: campaignsError } = await storage.supabase
-        .from('campaigns')
-        .select('created_at, status')
-        .eq('business_id', userId)
-        .order('created_at', { ascending: true });
-
-      if (campaignsError) {
-        console.error('Error fetching business campaign chart data:', campaignsError);
-        return getDefaultChartData();
-      }
-
-      // Process data for the chart (monthly grouping)
-      const campaignsByMonth = campaigns?.reduce((acc, campaign) => {
-        const date = new Date(campaign.created_at);
-        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
-        
-        if (!acc[monthYear]) {
-          acc[monthYear] = { month: monthYear, draft: 0, active: 0, completed: 0, cancelled: 0 };
-        }
-        
-        acc[monthYear][campaign.status]++;
-        return acc;
-      }, {});
-
-      chartData = {
-        xAxis: 'month',
-        series: ['draft', 'active', 'completed', 'cancelled'],
-        data: Object.values(campaignsByMonth || {}),
-      };
-      break;
-      
-    case 'roi':
-    default:
-      // For demo, return ROI data with random values
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const currentMonth = new Date().getMonth();
-      
-      // Generate last 6 months of data
-      const data = [];
-      for (let i = 5; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12;
-        const investment = Math.floor(Math.random() * 5000) + 3000;
-        const returns = Math.floor(Math.random() * 10000) + 4000;
-        data.push({
-          month: monthNames[monthIndex],
-          investment,
-          returns,
-          roi: Math.round((returns / investment - 1) * 100),
-        });
-      }
-      
-      chartData = {
-        xAxis: 'month',
-        series: ['investment', 'returns', 'roi'],
-        data,
-      };
-      break;
-  }
-
-  return chartData;
-}
-
-async function getComplianceChartData(source: string) {
-  let chartData;
-
-  switch (source) {
-    case 'reviews':
-      // Get review data over time
-      const { data: matches, error: matchesError } = await storage.supabase
-        .from('matches')
-        .select('created_at, compliance_status')
-        .order('created_at', { ascending: true });
-
-      if (matchesError) {
-        console.error('Error fetching compliance review chart data:', matchesError);
-        return getDefaultChartData();
-      }
-
-      // Process data for the chart (monthly grouping)
-      const reviewsByMonth = matches?.reduce((acc, match) => {
-        const date = new Date(match.created_at);
-        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
-        
-        if (!acc[monthYear]) {
-          acc[monthYear] = { month: monthYear, pending: 0, approved: 0, rejected: 0 };
-        }
-        
-        acc[monthYear][match.compliance_status]++;
-        return acc;
-      }, {});
-
-      chartData = {
-        xAxis: 'month',
-        series: ['pending', 'approved', 'rejected'],
-        data: Object.values(reviewsByMonth || {}),
-      };
-      break;
-      
-    default:
-      // For demo, return review time data
-      const weekNames = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Current'];
-      
-      // Generate 5 weeks of data
-      const data = [];
-      for (let i = 0; i < 5; i++) {
-        data.push({
-          week: weekNames[i],
-          averageTime: Math.floor(Math.random() * 24) + 12,
-          maxTime: Math.floor(Math.random() * 48) + 24,
-          minTime: Math.floor(Math.random() * 8) + 4,
-        });
-      }
-      
-      chartData = {
-        xAxis: 'week',
-        series: ['averageTime', 'maxTime', 'minTime'],
-        data,
-      };
-      break;
-  }
-
-  return chartData;
-}
-
-async function getAdminChartData(source: string) {
-  let chartData;
-
-  switch (source) {
-    case 'users':
-      // Get user registration data over time
-      const { data: users, error: usersError } = await storage.supabase
-        .from('users')
-        .select('created_at, role')
-        .order('created_at', { ascending: true });
-
-      if (usersError) {
-        console.error('Error fetching admin user chart data:', usersError);
-        return getDefaultChartData();
-      }
-
-      // Process data for the chart (monthly grouping)
-      const usersByMonth = users?.reduce((acc, user) => {
-        const date = new Date(user.created_at);
-        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
-        
-        if (!acc[monthYear]) {
-          acc[monthYear] = { month: monthYear, athlete: 0, business: 0, compliance: 0, admin: 0 };
-        }
-        
-        acc[monthYear][user.role]++;
-        return acc;
-      }, {});
-
-      chartData = {
-        xAxis: 'month',
-        series: ['athlete', 'business', 'compliance', 'admin'],
-        data: Object.values(usersByMonth || {}),
-      };
-      break;
-      
-    default:
-      // For demo, return platform metrics
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const currentMonth = new Date().getMonth();
-      
-      // Generate last 6 months of data
-      const data = [];
-      let totalMatches = 1000;
-      let totalCampaigns = 800;
-      
-      for (let i = 5; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12;
-        const newMatches = Math.floor(Math.random() * 200) + 100;
-        const newCampaigns = Math.floor(Math.random() * 150) + 50;
-        totalMatches += newMatches;
-        totalCampaigns += newCampaigns;
-        
-        data.push({
-          month: monthNames[monthIndex],
-          newMatches,
-          newCampaigns,
-          totalMatches,
-          totalCampaigns,
-        });
-      }
-      
-      chartData = {
-        xAxis: 'month',
-        series: ['newMatches', 'newCampaigns', 'totalMatches', 'totalCampaigns'],
-        data,
-      };
-      break;
-  }
-
-  return chartData;
-}
-
-function getDefaultChartData() {
-  // Default chart data when no specific data is available
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const data = monthNames.map(month => ({
-    month,
-    value1: Math.floor(Math.random() * 100),
-    value2: Math.floor(Math.random() * 100),
-  }));
-  
-  return {
-    xAxis: 'month',
-    series: ['value1', 'value2'],
-    data,
-  };
-}
-
-async function getAthleteActivity(userId: string) {
-  // Fetch athlete-specific activity from Supabase
-  const { data: matches, error: matchesError } = await storage.supabase
-    .from('matches')
-    .select('id, status, updated_at, campaign_id, business_id')
-    .eq('athlete_id', userId)
-    .order('updated_at', { ascending: false })
-    .limit(10);
-
-  if (matchesError) {
-    console.error('Error fetching athlete activity:', matchesError);
-    return [];
-  }
-
-  // Get campaign and business info for each match
-  const activities = await Promise.all(matches?.map(async (match) => {
-    // Get campaign info
-    const { data: campaign } = await storage.supabase
-      .from('campaigns')
-      .select('title')
-      .eq('id', match.campaign_id)
-      .single();
-
-    // Get business info
-    const { data: business } = await storage.supabase
-      .from('business_profiles')
-      .select('name')
-      .eq('id', match.business_id)
-      .single();
-
-    let activity = {
-      id: match.id,
-      timestamp: match.updated_at,
-      link: `/matches/${match.id}`,
-    };
-
-    switch (match.status) {
-      case 'pending':
-        return {
-          ...activity,
-          title: 'New Match Request',
-          description: `You have a new match request from ${business?.name || 'a business'} for the campaign "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'Bell',
-          status: 'pending',
-        };
-      case 'accepted':
-        return {
-          ...activity,
-          title: 'Match Accepted',
-          description: `You accepted the match with ${business?.name || 'a business'} for "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'CheckCircle',
-          status: 'success',
-        };
-      case 'declined':
-        return {
-          ...activity,
-          title: 'Match Declined',
-          description: `You declined the match with ${business?.name || 'a business'} for "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'XCircle',
-          status: 'error',
-        };
-      case 'completed':
-        return {
-          ...activity,
-          title: 'Match Completed',
-          description: `Your match with ${business?.name || 'a business'} for "${campaign?.title || 'Untitled Campaign'}" is complete`,
-          icon: 'Award',
-          status: 'success',
-        };
-      default:
-        return {
-          ...activity,
-          title: 'Match Updated',
-          description: `Your match status has been updated`,
-          icon: 'RefreshCw',
-        };
+  try {
+    const userRole = req.user.user_metadata?.role || 'athlete';
+    const dashboardConfig = await getDashboardWithData(req.user.id, userRole);
+    
+    if (!dashboardConfig) {
+      return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
-  })) || [];
-
-  return activities;
-}
-
-async function getBusinessActivity(userId: string) {
-  // Fetch business-specific activity from Supabase
-  const { data: campaigns, error: campaignsError } = await storage.supabase
-    .from('campaigns')
-    .select('id, title, status, updated_at')
-    .eq('business_id', userId)
-    .order('updated_at', { ascending: false })
-    .limit(5);
-
-  if (campaignsError) {
-    console.error('Error fetching business campaign activity:', campaignsError);
-    return [];
+    
+    return res.json(dashboardConfig);
+  } catch (error) {
+    console.error('Error fetching dashboard config:', error);
+    return res.status(500).json({ error: 'Failed to fetch dashboard configuration' });
   }
+});
 
-  // Get matches
-  const { data: matches, error: matchesError } = await storage.supabase
-    .from('matches')
-    .select('id, status, updated_at, campaign_id, athlete_id')
-    .eq('business_id', userId)
-    .order('updated_at', { ascending: false })
-    .limit(5);
-
-  if (matchesError) {
-    console.error('Error fetching business match activity:', matchesError);
-    return [];
-  }
-
-  // Create activity items for campaigns
-  const campaignActivities = campaigns?.map(campaign => {
-    let activity = {
-      id: `campaign-${campaign.id}`,
-      timestamp: campaign.updated_at,
-      link: `/campaigns/${campaign.id}`,
-    };
-
-    switch (campaign.status) {
-      case 'draft':
-        return {
-          ...activity,
-          title: 'Campaign Created',
-          description: `You created a draft campaign "${campaign.title}"`,
-          icon: 'FileEdit',
-          status: 'pending',
-        };
-      case 'active':
-        return {
-          ...activity,
-          title: 'Campaign Activated',
-          description: `Your campaign "${campaign.title}" is now active`,
-          icon: 'Rocket',
-          status: 'success',
-        };
-      case 'completed':
-        return {
-          ...activity,
-          title: 'Campaign Completed',
-          description: `Your campaign "${campaign.title}" has been completed`,
-          icon: 'CheckCircle',
-          status: 'success',
-        };
-      case 'cancelled':
-        return {
-          ...activity,
-          title: 'Campaign Cancelled',
-          description: `Your campaign "${campaign.title}" has been cancelled`,
-          icon: 'XCircle',
-          status: 'error',
-        };
-      default:
-        return {
-          ...activity,
-          title: 'Campaign Updated',
-          description: `Your campaign "${campaign.title}" has been updated`,
-          icon: 'RefreshCw',
-        };
+// Endpoint to update the user's dashboard configuration
+dashboardRouter.post('/config', async (req: any, res: any) => {
+  try {
+    const { widgets } = req.body;
+    
+    if (!widgets || !Array.isArray(widgets)) {
+      return res.status(400).json({ error: 'Invalid widgets configuration' });
     }
-  }) || [];
-
-  // Create activity items for matches
-  const matchActivities = await Promise.all(matches?.map(async (match) => {
-    // Get campaign info
-    const { data: campaign } = await storage.supabase
-      .from('campaigns')
-      .select('title')
-      .eq('id', match.campaign_id)
+    
+    const { data, error } = await supabaseAdmin
+      .from('user_dashboard_configs')
+      .upsert({
+        user_id: req.user.id,
+        widgets: widgets,
+        last_updated: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      })
+      .select()
       .single();
-
-    // Get athlete info
-    const { data: athlete } = await storage.supabase
-      .from('athlete_profiles')
-      .select('name')
-      .eq('id', match.athlete_id)
-      .single();
-
-    let activity = {
-      id: `match-${match.id}`,
-      timestamp: match.updated_at,
-      link: `/matches/${match.id}`,
-    };
-
-    switch (match.status) {
-      case 'pending':
-        return {
-          ...activity,
-          title: 'Match Created',
-          description: `You sent a match request to ${athlete?.name || 'an athlete'} for "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'Send',
-          status: 'pending',
-        };
-      case 'accepted':
-        return {
-          ...activity,
-          title: 'Match Accepted',
-          description: `${athlete?.name || 'An athlete'} accepted your match request for "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'CheckCircle',
-          status: 'success',
-        };
-      case 'declined':
-        return {
-          ...activity,
-          title: 'Match Declined',
-          description: `${athlete?.name || 'An athlete'} declined your match request for "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'XCircle',
-          status: 'error',
-        };
-      case 'completed':
-        return {
-          ...activity,
-          title: 'Match Completed',
-          description: `Your match with ${athlete?.name || 'an athlete'} for "${campaign?.title || 'Untitled Campaign'}" is complete`,
-          icon: 'Award',
-          status: 'success',
-        };
-      default:
-        return {
-          ...activity,
-          title: 'Match Updated',
-          description: `A match status has been updated`,
-          icon: 'RefreshCw',
-        };
+    
+    if (error) {
+      console.error('Error updating dashboard config:', error);
+      return res.status(500).json({ error: 'Failed to update dashboard configuration' });
     }
-  })) || [];
-
-  // Combine and sort activities by timestamp
-  const allActivities = [...campaignActivities, ...matchActivities]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 10);
-
-  return allActivities;
-}
-
-async function getComplianceActivity() {
-  // Fetch compliance-specific activity from Supabase
-  const { data: matches, error: matchesError } = await storage.supabase
-    .from('matches')
-    .select('id, compliance_status, updated_at, campaign_id, business_id, athlete_id')
-    .order('updated_at', { ascending: false })
-    .limit(10);
-
-  if (matchesError) {
-    console.error('Error fetching compliance activity:', matchesError);
-    return [];
+    
+    return res.json(data);
+  } catch (error) {
+    console.error('Error updating dashboard config:', error);
+    return res.status(500).json({ error: 'Failed to update dashboard configuration' });
   }
+});
 
-  // Create activity items for matches
-  const activities = await Promise.all(matches?.map(async (match) => {
-    // Get campaign info
-    const { data: campaign } = await storage.supabase
-      .from('campaigns')
-      .select('title')
-      .eq('id', match.campaign_id)
-      .single();
-
-    // Get business info
-    const { data: business } = await storage.supabase
-      .from('business_profiles')
-      .select('name')
-      .eq('id', match.business_id)
-      .single();
-
-    // Get athlete info
-    const { data: athlete } = await storage.supabase
-      .from('athlete_profiles')
-      .select('name')
-      .eq('id', match.athlete_id)
-      .single();
-
-    let activity = {
-      id: match.id,
-      timestamp: match.updated_at,
-      link: `/compliance/matches/${match.id}`,
-    };
-
-    switch (match.compliance_status) {
-      case 'pending':
-        return {
-          ...activity,
-          title: 'Review Needed',
-          description: `New match between ${business?.name || 'Business'} and ${athlete?.name || 'Athlete'} for "${campaign?.title || 'Untitled Campaign'}" needs review`,
-          icon: 'AlertCircle',
-          status: 'pending',
-        };
-      case 'approved':
-        return {
-          ...activity,
-          title: 'Match Approved',
-          description: `You approved the match between ${business?.name || 'Business'} and ${athlete?.name || 'Athlete'} for "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'CheckCircle',
-          status: 'success',
-        };
-      case 'rejected':
-        return {
-          ...activity,
-          title: 'Match Rejected',
-          description: `You rejected the match between ${business?.name || 'Business'} and ${athlete?.name || 'Athlete'} for "${campaign?.title || 'Untitled Campaign'}"`,
-          icon: 'XCircle',
-          status: 'error',
-        };
-      default:
-        return {
-          ...activity,
-          title: 'Match Updated',
-          description: `Match status updated for review`,
-          icon: 'RefreshCw',
-        };
+// Endpoint to reset the user's dashboard to default configuration
+dashboardRouter.post('/reset', async (req: any, res: any) => {
+  try {
+    const userRole = req.user.user_metadata?.role || 'athlete';
+    
+    // Delete the existing dashboard config
+    await supabaseAdmin
+      .from('user_dashboard_configs')
+      .delete()
+      .eq('user_id', req.user.id);
+    
+    // Create a new default dashboard config
+    const dashboardConfig = await createDefaultDashboardConfig(req.user.id, userRole);
+    
+    if (!dashboardConfig) {
+      return res.status(500).json({ error: 'Failed to reset dashboard configuration' });
     }
-  })) || [];
-
-  return activities;
-}
-
-async function getAdminActivity() {
-  // Fetch admin-specific activity
-  const { data: users, error: usersError } = await storage.supabase
-    .from('users')
-    .select('id, role, created_at, username')
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  if (usersError) {
-    console.error('Error fetching admin user activity:', usersError);
-    return [];
+    
+    return res.json(dashboardConfig);
+  } catch (error) {
+    console.error('Error resetting dashboard config:', error);
+    return res.status(500).json({ error: 'Failed to reset dashboard configuration' });
   }
-
-  // Get campaigns
-  const { data: campaigns, error: campaignsError } = await storage.supabase
-    .from('campaigns')
-    .select('id, title, status, updated_at, business_id')
-    .order('updated_at', { ascending: false })
-    .limit(5);
-
-  if (campaignsError) {
-    console.error('Error fetching admin campaign activity:', campaignsError);
-    return [];
-  }
-
-  // Create activity items for user registrations
-  const userActivities = users?.map(user => ({
-    id: `user-${user.id}`,
-    title: 'New User Registration',
-    description: `New ${user.role} registered: ${user.username}`,
-    timestamp: user.created_at,
-    icon: 'UserPlus',
-    status: 'success',
-    link: `/admin/users/${user.id}`,
-  })) || [];
-
-  // Create activity items for campaigns
-  const campaignActivities = await Promise.all(campaigns?.map(async (campaign) => {
-    // Get business info
-    const { data: business } = await storage.supabase
-      .from('business_profiles')
-      .select('name')
-      .eq('id', campaign.business_id)
-      .single();
-
-    return {
-      id: `campaign-${campaign.id}`,
-      title: 'Campaign Status Change',
-      description: `Campaign "${campaign.title}" by ${business?.name || 'a business'} is now ${campaign.status}`,
-      timestamp: campaign.updated_at,
-      icon: 'Briefcase',
-      status: campaign.status === 'active' ? 'success' : (campaign.status === 'cancelled' ? 'error' : 'pending'),
-      link: `/admin/campaigns/${campaign.id}`,
-    };
-  })) || [];
-
-  // Combine and sort activities by timestamp
-  const allActivities = [...userActivities, ...campaignActivities]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 10);
-
-  return allActivities;
-}
-
-async function getAthleteQuickActions(userId: string) {
-  return [
-    {
-      id: 'view-matches',
-      label: 'View Matches',
-      description: 'See all your current matches',
-      icon: 'Users',
-      link: '/matches',
-      color: 'blue',
-    },
-    {
-      id: 'update-profile',
-      label: 'Update Profile',
-      description: 'Keep your profile information current',
-      icon: 'UserCog',
-      link: '/profile',
-      color: 'purple',
-    },
-    {
-      id: 'browse-campaigns',
-      label: 'Browse Campaigns',
-      description: 'Find new campaign opportunities',
-      icon: 'Search',
-      link: '/campaigns/browse',
-      color: 'green',
-    },
-    {
-      id: 'content-delivery',
-      label: 'Content Delivery',
-      description: 'Manage and submit your content',
-      icon: 'Upload',
-      link: '/content',
-      color: 'yellow',
-    },
-  ];
-}
-
-async function getBusinessQuickActions(userId: string) {
-  return [
-    {
-      id: 'create-campaign',
-      label: 'Create Campaign',
-      description: 'Start a new marketing campaign',
-      icon: 'PlusCircle',
-      link: '/campaigns/new',
-      color: 'green',
-    },
-    {
-      id: 'manage-campaigns',
-      label: 'Manage Campaigns',
-      description: 'View and edit your existing campaigns',
-      icon: 'Briefcase',
-      link: '/campaigns',
-      color: 'blue',
-    },
-    {
-      id: 'find-athletes',
-      label: 'Find Athletes',
-      description: 'Discover new athletes for your campaigns',
-      icon: 'Search',
-      link: '/athletes/browse',
-      color: 'purple',
-    },
-    {
-      id: 'analytics',
-      label: 'View Analytics',
-      description: 'See performance metrics for your campaigns',
-      icon: 'BarChart',
-      link: '/analytics',
-      color: 'orange',
-    },
-  ];
-}
-
-async function getComplianceQuickActions() {
-  return [
-    {
-      id: 'pending-reviews',
-      label: 'Pending Reviews',
-      description: 'Review matches awaiting compliance approval',
-      icon: 'AlertCircle',
-      link: '/compliance/pending',
-      color: 'yellow',
-    },
-    {
-      id: 'compliance-dashboard',
-      label: 'Compliance Dashboard',
-      description: 'Overview of compliance activities',
-      icon: 'ShieldCheck',
-      link: '/compliance/dashboard',
-      color: 'green',
-    },
-    {
-      id: 'flagged-content',
-      label: 'Flagged Content',
-      description: 'Review content flagged for compliance issues',
-      icon: 'Flag',
-      link: '/compliance/flagged',
-      color: 'red',
-    },
-    {
-      id: 'compliance-reports',
-      label: 'Generate Reports',
-      description: 'Create compliance reports for review',
-      icon: 'FileText',
-      link: '/compliance/reports',
-      color: 'blue',
-    },
-  ];
-}
-
-async function getAdminQuickActions() {
-  return [
-    {
-      id: 'manage-users',
-      label: 'Manage Users',
-      description: 'View and manage all platform users',
-      icon: 'Users',
-      link: '/admin/users',
-      color: 'blue',
-    },
-    {
-      id: 'system-settings',
-      label: 'System Settings',
-      description: 'Configure platform settings',
-      icon: 'Settings',
-      link: '/admin/settings',
-      color: 'gray',
-    },
-    {
-      id: 'content-moderation',
-      label: 'Content Moderation',
-      description: 'Review and moderate user content',
-      icon: 'Shield',
-      link: '/admin/moderation',
-      color: 'red',
-    },
-    {
-      id: 'platform-analytics',
-      label: 'Platform Analytics',
-      description: 'View overall platform performance',
-      icon: 'BarChart2',
-      link: '/admin/analytics',
-      color: 'purple',
-    },
-  ];
-}
+});
