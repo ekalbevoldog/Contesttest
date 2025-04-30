@@ -79,7 +79,7 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('business_profiles')
-        .insert({
+        .upsert({
           id: userId,  // This uses the user ID directly
           name: 'My Business',
           session_id: sessionId,
@@ -94,6 +94,9 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
           budgetmin: null,
           budgetmax: null,
           haspreviouspartnerships: null
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false // Update if exists
         })
         .select();
       
