@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProfilePage() {
-  const { user, isLoading, userData } = useSupabaseAuth();
+  const { user, isLoading, profile, userType } = useAuth();
   const [, navigate] = useLocation();
   const [redirecting, setRedirecting] = useState(false);
   const { toast } = useToast();
@@ -14,7 +14,8 @@ export default function ProfilePage() {
   useEffect(() => {
     console.log('[ProfilePage] Loaded with user:', user);
     console.log('[ProfilePage] Loading status:', isLoading);
-    console.log('[ProfilePage] User data:', userData);
+    console.log('[ProfilePage] Profile data:', profile);
+    console.log('[ProfilePage] User type:', userType);
     
     const redirectBasedOnRole = () => {
       if (isLoading) {
@@ -35,18 +36,15 @@ export default function ProfilePage() {
       
       setRedirecting(true);
       
-      // Determine the role - try multiple sources to be sure
-      // First check userType which is now consistently provided by our backend
-      // Then fall back to other sources
+      // Log available role information
       console.log('[ProfilePage] User data available:', {
-        userDataType: userData?.userType,
-        userDataRole: userData?.role,
+        userType,
         userRole: user?.role,
         userMetadataRole: user?.user_metadata?.role
       });
       
-      // Use consistent role determination logic across the application
-      const role = userData?.userType || userData?.role || user?.role || user?.user_metadata?.role || 'visitor';
+      // Use the role from useAuth hook which already implements proper role determination
+      const role = userType || user?.role || 'visitor';
       
       console.log('[ProfilePage] Final detected role/userType:', role);
       
@@ -87,7 +85,7 @@ export default function ProfilePage() {
     // Add a small delay to ensure auth state is properly loaded
     const timer = setTimeout(redirectBasedOnRole, 1000);
     return () => clearTimeout(timer);
-  }, [user, isLoading, userData, navigate, toast]);
+  }, [user, isLoading, profile, userType, navigate, toast]);
 
   const handleManualRedirect = (path: string) => {
     console.log(`[ProfilePage] Manual redirect to ${path}`);
