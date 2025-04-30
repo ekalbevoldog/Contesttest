@@ -245,8 +245,11 @@ export default function BusinessDashboard() {
       .then(data => {
         console.log('Successfully fetched business profile:', data);
         if (data?.profile) {
+          // Important: business_profiles does not have an id field,
+          // it uses user_id as its primary key
           const profile: ProfileData = {
-            id: data.profile.id,
+            // Use user_id as the id since there's no separate id field
+            id: parseInt(data.profile.user_id) || undefined,
             name: data.profile.name || '',
             industry: data.profile.industry || '',
             businessType: data.profile.business_type || '',
@@ -263,6 +266,15 @@ export default function BusinessDashboard() {
           
           // Store in localStorage for next time
           localStorage.setItem('contestedUserData', JSON.stringify(profile));
+          
+          // Broadcast profile was successfully loaded
+          if (window.parent) {
+            try {
+              window.parent.postMessage({ type: 'PROFILE_LOADED', profileType: 'business' }, '*');
+            } catch (e) {
+              console.error('Error posting profile message:', e);
+            }
+          }
         } else {
           console.log('No profile property in data, using data directly:', data);
           setProfileData(data);
@@ -290,6 +302,27 @@ export default function BusinessDashboard() {
           title: "Profile Error",
           description: "We're having trouble loading your profile. Some features may be limited.",
           variant: "destructive"
+        });
+        
+        // Try one more time to auto-create the profile
+        fetch('/api/create-business-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId: user?.id })
+        })
+        .then(res => {
+          if (res.ok) {
+            console.log('Auto-recovery successful. Profile created.');
+            setTimeout(() => {
+              // Reload the page after a short delay
+              window.location.reload();
+            }, 1500);
+          }
+        })
+        .catch(() => {
+          console.error('Auto-recovery failed.');
         });
       });
   };
