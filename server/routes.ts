@@ -2393,6 +2393,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session refresh endpoint to match client calls to /api/auth/refresh-session
+  app.post("/api/auth/refresh-session", async (req: Request, res: Response) => {
+    try {
+      console.log('[Auth] Session refresh request received');
+      
+      // Extract the token from Authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('[Auth] No bearer token in Authorization header');
+        return res.status(401).json({ error: 'No token provided' });
+      }
+      
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      
+      // Verify the token with Supabase
+      try {
+        const { data: authData, error: verifyError } = await supabase.auth.getUser(token);
+        
+        if (verifyError || !authData?.user) {
+          console.error('[Auth] Token verification failed:', verifyError);
+          return res.status(401).json({ error: 'Invalid token' });
+        }
+        
+        // Get user info from database to include role and other metadata
+        const userId = authData.user.id;
+        const { rows, error: userError } = await supabase.query(
+          'SELECT id, email, role, username, auth_id FROM users WHERE auth_id = $1',
+          [userId]
+        );
+        
+        const user = rows && rows.length > 0 ? rows[0] : null;
+        
+        if (userError || !user) {
+          console.error('[Auth] User lookup failed:', userError || 'User not found');
+          // Still return 200 as the auth token is valid, even if we couldn't find the user in our DB
+          return res.status(200).json({ 
+            message: 'Session refreshed, but user data not available',
+            authenticated: true
+          });
+        }
+        
+        console.log('[Auth] Session refreshed successfully for user:', user.id);
+        return res.status(200).json({ 
+          message: 'Session refreshed successfully',
+          authenticated: true,
+          user
+        });
+      } catch (tokenError) {
+        console.error('[Auth] Error verifying token:', tokenError);
+        return res.status(401).json({ error: 'Token verification failed' });
+      }
+    } catch (error) {
+      console.error('[Auth] Session refresh error:', error);
+      return res.status(500).json({ error: 'Server error during session refresh' });
+    }
+  });
+
   // Logout endpoint
   app.post("/api/auth/logout", async (req: Request, res: Response) => {
     try {
