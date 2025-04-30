@@ -55,13 +55,14 @@ export default function Home() {
         <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel opacity-30 rounded-full"></div>
         
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <Parallax className="space-y-4" speed={0.2} direction="up" offset={[-20, 20]}>
+        <div className="container mx-auto px-6 py-24 md:py-32 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <Parallax className="space-y-8" speed={0.2} direction="up" offset={[-20, 20]}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
+                className="mb-6"
               >
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-heading">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
@@ -73,7 +74,7 @@ export default function Home() {
               </motion.div>
               
               <motion.div
-                className="glass-card p-6 mb-2"
+                className="glass-card p-8 mb-8"
                 initial={{ opacity: 0, filter: "blur(4px)" }}
                 animate={{ opacity: 1, filter: "blur(0px)" }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -88,14 +89,14 @@ export default function Home() {
               </motion.div>
               
               <motion.div 
-                className="flex gap-4 mt-4"
+                className="flex gap-6 mt-8"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
                 <Link href="/athletes">
                   <motion.a 
-                    className="glass-button"
+                    className="glass-button px-8 py-4 text-lg"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -104,7 +105,7 @@ export default function Home() {
                 </Link>
                 <Link href="/businesses">
                   <motion.a 
-                    className="glass-button"
+                    className="glass-button px-8 py-4 text-lg"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
