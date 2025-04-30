@@ -2159,6 +2159,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     if (matchingProfile) {
                       console.log(`Found matching business profile using string comparison`);
                       profileData = matchingProfile;
+                    } else {
+                      // Auto-create profile for business user when none is found
+                      console.log(`No business profile found for user, auto-creating one`);
+                      
+                      try {
+                        // Create a basic business profile
+                        const { data: newProfile, error: createError } = await supabase
+                          .from('business_profiles')
+                          .insert({
+                            user_id: dbUser.id,
+                            name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Business Account",
+                            email: user.email,
+                            created_at: new Date(),
+                            updated_at: new Date()
+                          })
+                          .select('*')
+                          .single();
+                          
+                        if (createError) {
+                          console.error(`Error creating business profile: ${createError.message}`);
+                        } else if (newProfile) {
+                          console.log(`Successfully created business profile with ID: ${newProfile.id}`);
+                          profileData = newProfile;
+                        }
+                      } catch (createErr) {
+                        console.error(`Exception creating business profile: ${createErr}`);
+                      }
                     }
                   }
                 }
@@ -2251,6 +2278,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       if (matchingProfile) {
                         console.log(`Found matching business profile using string comparison`);
                         profileData = matchingProfile;
+                      } else {
+                        // Auto-create profile for business user when none is found
+                        console.log(`No business profile found for user, auto-creating one`);
+                        
+                        try {
+                          // Create a basic business profile
+                          const { data: newProfile, error: createError } = await supabase
+                            .from('business_profiles')
+                            .insert({
+                              user_id: emailUser.id,
+                              name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Business Account",
+                              email: user.email,
+                              created_at: new Date(),
+                              updated_at: new Date()
+                            })
+                            .select('*')
+                            .single();
+                            
+                          if (createError) {
+                            console.error(`Error creating business profile: ${createError.message}`);
+                          } else if (newProfile) {
+                            console.log(`Successfully created business profile with ID: ${newProfile.id}`);
+                            profileData = newProfile;
+                          }
+                        } catch (createErr) {
+                          console.error(`Exception creating business profile: ${createErr}`);
+                        }
                       }
                     }
                   }
@@ -2284,7 +2338,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               console.log(`Created new user record: ${newUser.id}`);
 
-              // Return basic user data
+              // For business users, auto-create a profile
+              let profileData = null;
+              if (userType === 'business') {
+                try {
+                  console.log(`Auto-creating business profile for new user ${newUser.id}`);
+                  // Create a basic business profile
+                  const { data: newProfile, error: createError } = await supabase
+                    .from('business_profiles')
+                    .insert({
+                      user_id: newUser.id,
+                      name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Business Account",
+                      email: user.email,
+                      created_at: new Date(),
+                      updated_at: new Date()
+                    })
+                    .select('*')
+                    .single();
+                    
+                  if (createError) {
+                    console.error(`Error creating business profile: ${createError.message}`);
+                  } else if (newProfile) {
+                    console.log(`Successfully created business profile with ID: ${newProfile.id}`);
+                    profileData = newProfile;
+                  }
+                } catch (createErr) {
+                  console.error(`Exception creating business profile: ${createErr}`);
+                }
+              }
+
+              // Return user data with profile if created
               return res.status(200).json({
                 user: {
                   id: user.id,
@@ -2292,7 +2375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   userType: userType,
                   ...newUser
                 },
-                profile: null
+                profile: profileData
               });
             } catch (createErr) {
               console.error(`Error creating user record: ${createErr}`);
