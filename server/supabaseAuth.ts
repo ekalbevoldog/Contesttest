@@ -305,6 +305,36 @@ export function setupSupabaseAuth(app: Express) {
           userType: data.role // Set userType to match the role for consistency
         };
         
+        console.log(`[Auth] User found: ${data.id}, role: ${data.role}`);
+        
+        // If user is a business, fetch their business profile and include it directly
+        if (data.role === 'business') {
+          console.log(`[Auth] Business user profile check, ensuring business profile exists`);
+          try {
+            // Import the function to avoid circular dependencies
+            const { ensureBusinessProfile } = require('./auth-fixes/auto-create-business-profile');
+            // This will create a profile if one doesn't exist
+            await ensureBusinessProfile(data.id.toString(), data.role);
+            
+            // Now fetch the profile to return it
+            const { getBusinessByUserId } = require('./supabaseProfile');
+            const businessProfile = await getBusinessByUserId(data.id.toString());
+            
+            if (businessProfile) {
+              console.log('[Auth] Successfully fetched business profile for response');
+              return res.status(200).json({ 
+                user: userWithType,
+                profile: businessProfile,
+                profileType: 'business'
+              });
+            }
+          } catch (profileError) {
+            console.error('[Auth] Error handling business profile:', profileError);
+            // Continue with normal response if profile handling fails
+          }
+        }
+        
+        // If we're here, either user is not a business or we couldn't fetch their profile
         console.log(`[Auth] Sending user data with role: ${data.role}, userType: ${userWithType.userType}`);
         return res.status(200).json({ user: userWithType });
       } catch (err) {
