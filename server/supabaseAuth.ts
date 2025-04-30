@@ -509,14 +509,52 @@ export function setupSupabaseAuth(app: Express) {
           return res.status(200).json({ message: "User already exists", user: userData });
         }
         
-        // Prepare user data for insertion - removed username field as it doesn't exist in Supabase
+        // Check if auth_id column exists before inserting
+        let hasAuthIdColumn = true;
+        try {
+          const { error: columnCheckError } = await supabase
+            .from('users')
+            .select('auth_id')
+            .limit(1);
+            
+          if (columnCheckError) {
+            console.warn("[Auth] auth_id column check failed:", columnCheckError);
+            hasAuthIdColumn = false;
+            
+            // Try to add the column if it doesn't exist
+            try {
+              console.log("[Auth] Attempting to add auth_id column to users table");
+              const { error: alterError } = await supabaseAdmin.rpc('exec_sql', {
+                sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id TEXT UNIQUE"
+              });
+              
+              if (alterError) {
+                console.error("[Auth] Failed to add auth_id column:", alterError);
+              } else {
+                console.log("[Auth] Successfully added auth_id column");
+                hasAuthIdColumn = true;
+              }
+            } catch (alterErr) {
+              console.error("[Auth] Exception adding auth_id column:", alterErr);
+            }
+          }
+        } catch (columnCheckErr) {
+          console.error("[Auth] Error checking for auth_id column:", columnCheckErr);
+        }
+        
+        // Prepare user data for insertion - with or without auth_id based on column existence
         const userToInsert = { 
           email, 
           role: dbRole, 
-          auth_id: authUserId,
-          // username field removed - it doesn't exist in the Supabase users table
           created_at: new Date() 
         };
+        
+        // Only include auth_id if the column exists
+        if (hasAuthIdColumn) {
+          userToInsert['auth_id'] = authUserId;
+        } else {
+          console.warn("[Auth] Omitting auth_id from insert due to missing column");
+        }
         
         // Insert the new user
         console.log(`[Auth] Inserting new user with data:`, JSON.stringify(userToInsert));

@@ -174,13 +174,52 @@ export class UnifiedAuthService {
           dbRole = "athlete";
       }
       
+      // Check if auth_id column exists before inserting
+      let hasAuthIdColumn = true;
+      try {
+        const { error: columnCheckError } = await this.supabase
+          .from('users')
+          .select('auth_id')
+          .limit(1);
+          
+        if (columnCheckError) {
+          console.warn("auth_id column check failed:", columnCheckError);
+          hasAuthIdColumn = false;
+          
+          // Try to add the column if it doesn't exist
+          try {
+            console.log("Attempting to add auth_id column to users table");
+            const { error: alterError } = await this.supabase.rpc('exec_sql', {
+              sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id TEXT UNIQUE"
+            });
+            
+            if (alterError) {
+              console.error("Failed to add auth_id column:", alterError);
+            } else {
+              console.log("Successfully added auth_id column");
+              hasAuthIdColumn = true;
+            }
+          } catch (alterErr) {
+            console.error("Exception adding auth_id column:", alterErr);
+          }
+        }
+      } catch (columnCheckErr) {
+        console.error("Error checking for auth_id column:", columnCheckErr);
+      }
+      
       // Store the user in our database
       const userToInsert = { 
         email, 
         role: dbRole, 
-        auth_id: signUpData.user?.id,
         created_at: new Date() 
       };
+      
+      // Only include auth_id if the column exists
+      if (hasAuthIdColumn && signUpData.user?.id) {
+        userToInsert['auth_id'] = signUpData.user.id;
+      } else {
+        console.warn("Omitting auth_id from insert due to missing column or missing auth ID");
+      }
       
       const { data: insertedUser, error: insertErr } = await this.supabase
         .from("users")
