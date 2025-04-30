@@ -434,11 +434,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         if (userData && userData.role === 'business') {
-          // Create a basic business profile
+          // Create a basic business profile - Note using 'id' field, not 'user_id'
           const { data: newProfile, error: createError } = await supabase
             .from('business_profiles')
             .insert({
-              user_id: userId,
+              id: userId,
               name: 'My Business',
               email: userData.email,
               product_type: 'Default product',
