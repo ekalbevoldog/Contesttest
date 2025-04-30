@@ -1,819 +1,1387 @@
 import { Router } from 'express';
 import { storage } from './storage';
+import { widgetSchema, dashboardConfigSchema } from '@shared/dashboard-schema';
 import { v4 as uuidv4 } from 'uuid';
-import { DashboardConfig, Widget, WidgetType } from '../shared/dashboard-schema';
 
-const dashboardRouter = Router();
+export const dashboardRouter = Router();
 
-// Get dashboard configuration for the current user
-dashboardRouter.get('/', async (req, res) => {
+// Authentication middleware to check if user is logged in
+const requireAuth = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+};
+
+// Get user dashboard configuration
+dashboardRouter.get('/config', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
     const userId = req.user.id.toString();
-    const dashboardConfig = await storage.getDashboardConfig(userId);
+    const config = await storage.getDashboardConfig(userId);
     
-    if (!dashboardConfig) {
-      // If no dashboard config exists, create default config
-      const defaultConfig = await createDefaultConfig(userId, req.user.role);
+    if (!config) {
+      // If no configuration exists, return a default one
+      const defaultConfig = {
+        userId,
+        widgets: [],
+        lastUpdated: new Date().toISOString(),
+      };
+      await storage.saveDashboardConfig(userId, defaultConfig);
       return res.json(defaultConfig);
     }
     
-    res.json(dashboardConfig);
+    return res.json(config);
   } catch (error) {
     console.error('Error getting dashboard config:', error);
-    res.status(500).json({ error: 'Failed to get dashboard configuration' });
+    return res.status(500).json({ error: 'Failed to get dashboard configuration' });
   }
 });
 
-// Save dashboard configuration
-dashboardRouter.post('/', async (req, res) => {
+// Save user dashboard configuration
+dashboardRouter.post('/config', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
     const userId = req.user.id.toString();
-    const config = req.body as DashboardConfig;
+    const validatedData = dashboardConfigSchema.parse({
+      ...req.body,
+      userId,
+    });
     
-    if (config.userId !== userId) {
-      return res.status(403).json({ error: 'Forbidden: User ID mismatch' });
-    }
-    
-    await storage.saveDashboardConfig(userId, config);
-    res.status(200).json({ success: true });
+    await storage.saveDashboardConfig(userId, validatedData);
+    return res.json(validatedData);
   } catch (error) {
     console.error('Error saving dashboard config:', error);
-    res.status(500).json({ error: 'Failed to save dashboard configuration' });
+    return res.status(500).json({ error: 'Failed to save dashboard configuration' });
   }
 });
 
-// Get default dashboard configuration
-dashboardRouter.get('/default', async (req, res) => {
+// Add a new widget
+dashboardRouter.post('/widgets', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
     const userId = req.user.id.toString();
-    const userRole = req.user.role;
+    const config = await storage.getDashboardConfig(userId);
     
-    const defaultConfig = await createDefaultConfig(userId, userRole);
-    res.json(defaultConfig);
-  } catch (error) {
-    console.error('Error getting default dashboard config:', error);
-    res.status(500).json({ error: 'Failed to get default dashboard configuration' });
-  }
-});
-
-// Reset dashboard to default configuration
-dashboardRouter.post('/reset', async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userId = req.user.id.toString();
-    const userRole = req.user.role;
-    
-    const defaultConfig = await createDefaultConfig(userId, userRole);
-    await storage.saveDashboardConfig(userId, defaultConfig);
-    
-    res.json(defaultConfig);
-  } catch (error) {
-    console.error('Error resetting dashboard config:', error);
-    res.status(500).json({ error: 'Failed to reset dashboard configuration' });
-  }
-});
-
-// Reorder widgets
-dashboardRouter.post('/reorder', async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userId = req.user.id.toString();
-    const { widgetIds } = req.body;
-    
-    if (!Array.isArray(widgetIds)) {
-      return res.status(400).json({ error: 'Invalid widget IDs' });
-    }
-    
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
+    if (!config) {
       return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
-    // Reorder widgets based on the provided widget IDs
-    const reorderedWidgets = widgetIds.map((id, index) => {
-      const widget = dashboardConfig.widgets.find(w => w.id === id);
-      if (widget) {
-        return { ...widget, position: index };
-      }
-      return null;
-    }).filter(Boolean) as Widget[];
-    
-    // Add any widgets that weren't included in the widgetIds array
-    const remainingWidgets = dashboardConfig.widgets
-      .filter(w => !widgetIds.includes(w.id))
-      .map((w, i) => ({ ...w, position: reorderedWidgets.length + i }));
+    const newWidget = widgetSchema.parse({
+      ...req.body,
+      id: uuidv4(),
+    });
     
     const updatedConfig = {
-      ...dashboardConfig,
-      widgets: [...reorderedWidgets, ...remainingWidgets],
-      lastUpdated: new Date().toISOString()
+      ...config,
+      widgets: [...config.widgets, newWidget],
+      lastUpdated: new Date().toISOString(),
     };
     
     await storage.saveDashboardConfig(userId, updatedConfig);
-    res.json(updatedConfig);
-  } catch (error) {
-    console.error('Error reordering widgets:', error);
-    res.status(500).json({ error: 'Failed to reorder widgets' });
-  }
-});
-
-// Widget-specific routes
-const widgetsRouter = Router();
-
-// Add a widget
-widgetsRouter.post('/add', async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userId = req.user.id.toString();
-    const { type } = req.body;
-    
-    if (!type || !['stats', 'chart', 'activity', 'quickActions'].includes(type)) {
-      return res.status(400).json({ error: 'Invalid widget type' });
-    }
-    
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
-      return res.status(404).json({ error: 'Dashboard configuration not found' });
-    }
-    
-    // Create new widget
-    const newWidget = createWidget(type as WidgetType, dashboardConfig.widgets.length);
-    
-    const updatedConfig = {
-      ...dashboardConfig,
-      widgets: [...dashboardConfig.widgets, newWidget],
-      lastUpdated: new Date().toISOString()
-    };
-    
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    res.json(newWidget);
+    return res.json(newWidget);
   } catch (error) {
     console.error('Error adding widget:', error);
-    res.status(500).json({ error: 'Failed to add widget' });
+    return res.status(500).json({ error: 'Failed to add widget' });
   }
 });
 
-// Update a widget
-widgetsRouter.patch('/:widgetId', async (req, res) => {
+// Update an existing widget
+dashboardRouter.patch('/widgets/:id', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
     const userId = req.user.id.toString();
-    const { widgetId } = req.params;
-    const updates = req.body;
+    const widgetId = req.params.id;
+    const config = await storage.getDashboardConfig(userId);
     
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
+    if (!config) {
       return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
-    const widgetIndex = dashboardConfig.widgets.findIndex(w => w.id === widgetId);
-    
+    const widgetIndex = config.widgets.findIndex(w => w.id === widgetId);
     if (widgetIndex === -1) {
       return res.status(404).json({ error: 'Widget not found' });
     }
     
-    // Update widget
     const updatedWidget = {
-      ...dashboardConfig.widgets[widgetIndex],
-      ...updates
+      ...config.widgets[widgetIndex],
+      ...req.body,
     };
     
-    const updatedWidgets = [...dashboardConfig.widgets];
-    updatedWidgets[widgetIndex] = updatedWidget;
-    
     const updatedConfig = {
-      ...dashboardConfig,
-      widgets: updatedWidgets,
-      lastUpdated: new Date().toISOString()
+      ...config,
+      widgets: [
+        ...config.widgets.slice(0, widgetIndex),
+        updatedWidget,
+        ...config.widgets.slice(widgetIndex + 1),
+      ],
+      lastUpdated: new Date().toISOString(),
     };
     
     await storage.saveDashboardConfig(userId, updatedConfig);
-    res.json(updatedWidget);
+    return res.json(updatedWidget);
   } catch (error) {
     console.error('Error updating widget:', error);
-    res.status(500).json({ error: 'Failed to update widget' });
+    return res.status(500).json({ error: 'Failed to update widget' });
   }
 });
 
-// Remove a widget
-widgetsRouter.delete('/:widgetId', async (req, res) => {
+// Delete a widget
+dashboardRouter.delete('/widgets/:id', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
     const userId = req.user.id.toString();
-    const { widgetId } = req.params;
+    const widgetId = req.params.id;
+    const config = await storage.getDashboardConfig(userId);
     
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
+    if (!config) {
       return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
-    // Filter out the widget to remove
-    const updatedWidgets = dashboardConfig.widgets
-      .filter(w => w.id !== widgetId)
-      .map((w, i) => ({ ...w, position: i })); // Update positions
-    
     const updatedConfig = {
-      ...dashboardConfig,
-      widgets: updatedWidgets,
-      lastUpdated: new Date().toISOString()
+      ...config,
+      widgets: config.widgets.filter(w => w.id !== widgetId),
+      lastUpdated: new Date().toISOString(),
     };
     
     await storage.saveDashboardConfig(userId, updatedConfig);
-    res.status(200).json({ success: true });
+    return res.sendStatus(204);
   } catch (error) {
-    console.error('Error removing widget:', error);
-    res.status(500).json({ error: 'Failed to remove widget' });
+    console.error('Error deleting widget:', error);
+    return res.status(500).json({ error: 'Failed to delete widget' });
   }
 });
 
-// Mock data endpoints for widgets
-const dataRouter = Router();
-
-// Get stats data
-dataRouter.get('/stats', (req, res) => {
+// Reorder widgets
+dashboardRouter.post('/widgets/reorder', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user.id.toString();
+    const { widgetIds } = req.body;
+    
+    if (!Array.isArray(widgetIds)) {
+      return res.status(400).json({ error: 'Widget IDs must be an array' });
     }
     
-    const userRole = req.user.role;
-    const statsData = getMockStatsData(userRole);
+    const config = await storage.getDashboardConfig(userId);
     
-    res.json(statsData);
-  } catch (error) {
-    console.error('Error getting stats data:', error);
-    res.status(500).json({ error: 'Failed to get stats data' });
-  }
-});
-
-// Get chart data
-dataRouter.get('/:source', (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!config) {
+      return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
-    const { source } = req.params;
-    const userRole = req.user.role;
+    const widgetMap = new Map(config.widgets.map(w => [w.id, w]));
     
-    const chartData = getMockChartData(source, userRole);
-    res.json(chartData);
+    // Create a new array of widgets in the order specified by widgetIds
+    const reorderedWidgets = widgetIds
+      .filter(id => widgetMap.has(id)) // Only include existing widgets
+      .map((id, index) => ({
+        ...widgetMap.get(id),
+        position: index,
+      }));
+    
+    // Add any widgets that were not included in the widgetIds array
+    const remainingWidgets = config.widgets
+      .filter(w => !widgetIds.includes(w.id))
+      .map((w, i) => ({
+        ...w,
+        position: reorderedWidgets.length + i,
+      }));
+    
+    const updatedConfig = {
+      ...config,
+      widgets: [...reorderedWidgets, ...remainingWidgets],
+      lastUpdated: new Date().toISOString(),
+    };
+    
+    await storage.saveDashboardConfig(userId, updatedConfig);
+    return res.json(updatedConfig.widgets);
   } catch (error) {
-    console.error('Error getting chart data:', error);
-    res.status(500).json({ error: 'Failed to get chart data' });
+    console.error('Error reordering widgets:', error);
+    return res.status(500).json({ error: 'Failed to reorder widgets' });
   }
 });
 
-// Get activity data
-dataRouter.get('/activities', (req, res) => {
+// Get stats data for the stats widget
+dashboardRouter.get('/stats', requireAuth, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
+    const userId = req.user.id.toString();
     const userRole = req.user.role;
-    const activityData = getMockActivityData(userRole);
     
-    res.json(activityData);
-  } catch (error) {
-    console.error('Error getting activity data:', error);
-    res.status(500).json({ error: 'Failed to get activity data' });
-  }
-});
-
-// Get quick actions data
-dataRouter.get('/quickActions', (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userRole = req.user.role;
-    const quickActionsData = getMockQuickActionsData(userRole);
-    
-    res.json(quickActionsData);
-  } catch (error) {
-    console.error('Error getting quick actions data:', error);
-    res.status(500).json({ error: 'Failed to get quick actions data' });
-  }
-});
-
-// Helper functions
-function createWidget(type: WidgetType, position: number): Widget {
-  const id = uuidv4();
-  let title = '';
-  let description = '';
-  let size: 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
-  let settings = {};
-  
-  switch (type) {
-    case 'stats':
-      title = 'Key Metrics';
-      description = 'Overview of important statistics';
-      size = 'lg';
-      break;
-    case 'chart':
-      title = 'Performance Trends';
-      description = 'Visualize your data over time';
-      size = 'lg';
-      settings = {
-        chartType: 'line',
-        timeRange: '30d',
-        showControls: true,
-        showLegend: true
-      };
-      break;
-    case 'activity':
-      title = 'Recent Activity';
-      description = 'Latest updates and notifications';
-      size = 'md';
-      settings = {
-        maxItems: 5
-      };
-      break;
-    case 'quickActions':
-      title = 'Quick Actions';
-      description = 'Frequently used actions';
-      size = 'md';
-      settings = {
-        columns: 3
-      };
-      break;
-  }
-  
-  return {
-    id,
-    type,
-    title,
-    description,
-    size,
-    position,
-    visible: true,
-    settings
-  };
-}
-
-// Create default dashboard configuration based on user role
-async function createDefaultConfig(userId: string, userRole: string): Promise<DashboardConfig> {
-  const widgets: Widget[] = [];
-  
-  // Common widgets for all roles
-  widgets.push(createWidget('stats', 0));
-  widgets.push(createWidget('activity', 1));
-  
-  // Role-specific widgets
-  if (userRole === 'athlete') {
-    widgets.push(createWidget('chart', 2));
-    widgets.push(createWidget('quickActions', 3));
-  } else if (userRole === 'business') {
-    widgets.push(createWidget('chart', 2));
-    widgets.push(createWidget('quickActions', 3));
-  } else if (userRole === 'compliance' || userRole === 'admin') {
-    widgets.push(createWidget('chart', 2));
-    widgets.push(createWidget('quickActions', 3));
-  }
-  
-  return {
-    userId,
-    widgets,
-    lastUpdated: new Date().toISOString()
-  };
-}
-
-// Mock data functions (these will be replaced with real data from your database)
-function getMockStatsData(userRole: string) {
-  switch (userRole) {
-    case 'athlete':
-      return {
-        items: [
-          { key: 'matches', label: 'Matches', value: 12, trend: 'up', change: 25, icon: 'Users', color: 'blue' },
-          { key: 'campaigns', label: 'Active Campaigns', value: 3, trend: 'up', change: 50, icon: 'Megaphone', color: 'green' },
-          { key: 'earnings', label: 'Earnings', value: '$2,500', trend: 'up', change: 15, icon: 'DollarSign', color: 'amber' },
-          { key: 'followers', label: 'New Followers', value: 102, trend: 'down', change: 5, icon: 'Heart', color: 'red' }
-        ],
-        timestamp: new Date().toISOString()
-      };
-    case 'business':
-      return {
-        items: [
-          { key: 'campaigns', label: 'Active Campaigns', value: 5, trend: 'up', change: 20, icon: 'Megaphone', color: 'green' },
-          { key: 'matches', label: 'Athlete Matches', value: 27, trend: 'up', change: 35, icon: 'Users', color: 'blue' },
-          { key: 'budget', label: 'Budget Used', value: '$12,500', trend: 'neutral', change: 0, icon: 'DollarSign', color: 'amber' },
-          { key: 'engagement', label: 'Engagement Rate', value: '12.5%', trend: 'up', change: 8, icon: 'BarChart', color: 'purple' }
-        ],
-        timestamp: new Date().toISOString()
-      };
-    case 'compliance':
-    case 'admin':
-      return {
-        items: [
-          { key: 'pending', label: 'Pending Reviews', value: 23, trend: 'down', change: 10, icon: 'Clock', color: 'amber' },
-          { key: 'approved', label: 'Approved', value: 145, trend: 'up', change: 32, icon: 'CheckCircle', color: 'green' },
-          { key: 'rejected', label: 'Rejected', value: 12, trend: 'down', change: 15, icon: 'XCircle', color: 'red' },
-          { key: 'users', label: 'Active Users', value: 1250, trend: 'up', change: 5, icon: 'Users', color: 'blue' }
-        ],
-        timestamp: new Date().toISOString()
-      };
-    default:
-      return {
-        items: [],
-        timestamp: new Date().toISOString()
-      };
-  }
-}
-
-function getMockChartData(source: string, userRole: string) {
-  const now = new Date();
-  const data = [];
-  
-  // Generate dates for the last 30 days
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(now.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-    
-    switch (source) {
-      case 'engagement':
-        data.push({
-          date: dateStr,
-          views: Math.floor(Math.random() * 1000) + 500,
-          likes: Math.floor(Math.random() * 200) + 100,
-          shares: Math.floor(Math.random() * 50) + 20
-        });
+    // Get stats based on user role
+    let stats;
+    switch (userRole) {
+      case 'athlete':
+        stats = await getAthleteStats(userId);
         break;
-      case 'campaigns':
-        data.push({
-          date: dateStr,
-          active: Math.floor(Math.random() * 10) + 1,
-          completed: Math.floor(Math.random() * 5),
-          pending: Math.floor(Math.random() * 3)
-        });
+      case 'business':
+        stats = await getBusinessStats(userId);
         break;
-      case 'revenue':
-        data.push({
-          date: dateStr,
-          amount: Math.floor(Math.random() * 1000) + 200
-        });
+      case 'compliance':
+        stats = await getComplianceStats();
         break;
-      case 'performance':
-        data.push({
-          date: dateStr,
-          clicks: Math.floor(Math.random() * 500) + 100,
-          conversions: Math.floor(Math.random() * 50) + 10,
-          roi: (Math.random() * 20 + 5).toFixed(2)
-        });
+      case 'admin':
+        stats = await getAdminStats();
         break;
       default:
-        // Default data with random values
-        data.push({
-          date: dateStr,
-          value1: Math.floor(Math.random() * 100) + 50,
-          value2: Math.floor(Math.random() * 100) + 25
-        });
+        stats = { items: [] };
     }
+    
+    return res.json(stats);
+  } catch (error) {
+    console.error('Error getting stats data:', error);
+    return res.status(500).json({ error: 'Failed to get stats data' });
   }
+});
+
+// Get chart data for the chart widget
+dashboardRouter.get('/charts/:source', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id.toString();
+    const userRole = req.user.role;
+    const source = req.params.source;
+    
+    // Get chart data based on user role and requested source
+    let chartData;
+    switch (userRole) {
+      case 'athlete':
+        chartData = await getAthleteChartData(userId, source);
+        break;
+      case 'business':
+        chartData = await getBusinessChartData(userId, source);
+        break;
+      case 'compliance':
+        chartData = await getComplianceChartData(source);
+        break;
+      case 'admin':
+        chartData = await getAdminChartData(source);
+        break;
+      default:
+        chartData = getDefaultChartData();
+    }
+    
+    return res.json(chartData);
+  } catch (error) {
+    console.error('Error getting chart data:', error);
+    return res.status(500).json({ error: 'Failed to get chart data' });
+  }
+});
+
+// Get activity data for the activity widget
+dashboardRouter.get('/activity', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id.toString();
+    const userRole = req.user.role;
+    
+    // Get activity data based on user role
+    let activityData;
+    switch (userRole) {
+      case 'athlete':
+        activityData = await getAthleteActivity(userId);
+        break;
+      case 'business':
+        activityData = await getBusinessActivity(userId);
+        break;
+      case 'compliance':
+        activityData = await getComplianceActivity();
+        break;
+      case 'admin':
+        activityData = await getAdminActivity();
+        break;
+      default:
+        activityData = [];
+    }
+    
+    return res.json(activityData);
+  } catch (error) {
+    console.error('Error getting activity data:', error);
+    return res.status(500).json({ error: 'Failed to get activity data' });
+  }
+});
+
+// Get quick actions data for the quick actions widget
+dashboardRouter.get('/quick-actions', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id.toString();
+    const userRole = req.user.role;
+    
+    // Get quick actions based on user role
+    let quickActions;
+    switch (userRole) {
+      case 'athlete':
+        quickActions = await getAthleteQuickActions(userId);
+        break;
+      case 'business':
+        quickActions = await getBusinessQuickActions(userId);
+        break;
+      case 'compliance':
+        quickActions = await getComplianceQuickActions();
+        break;
+      case 'admin':
+        quickActions = await getAdminQuickActions();
+        break;
+      default:
+        quickActions = [];
+    }
+    
+    return res.json(quickActions);
+  } catch (error) {
+    console.error('Error getting quick actions data:', error);
+    return res.status(500).json({ error: 'Failed to get quick actions data' });
+  }
+});
+
+// Helper functions to get data for widgets based on user role
+async function getAthleteStats(userId: string) {
+  // Fetch athlete-specific stats from Supabase
+  const { data: athlete, error: athleteError } = await storage.supabase
+    .from('athlete_profiles')
+    .select('follower_count, content_style')
+    .eq('id', userId)
+    .single();
+
+  if (athleteError) {
+    console.error('Error fetching athlete stats:', athleteError);
+    return { items: [] };
+  }
+
+  // Get matches data
+  const { data: matches, error: matchesError } = await storage.supabase
+    .from('matches')
+    .select('status')
+    .eq('athlete_id', userId);
+
+  if (matchesError) {
+    console.error('Error fetching athlete matches:', matchesError);
+    return { items: [] };
+  }
+
+  // Calculate stats
+  const pendingMatches = matches?.filter(m => m.status === 'pending').length || 0;
+  const acceptedMatches = matches?.filter(m => m.status === 'accepted').length || 0;
+
+  return {
+    items: [
+      {
+        key: 'followers',
+        label: 'Followers',
+        value: athlete?.follower_count || 0,
+        icon: 'Users',
+        color: 'blue',
+      },
+      {
+        key: 'pending-matches',
+        label: 'Pending Matches',
+        value: pendingMatches,
+        icon: 'Hourglass',
+        color: 'yellow',
+      },
+      {
+        key: 'active-campaigns',
+        label: 'Active Campaigns',
+        value: acceptedMatches,
+        icon: 'Rocket',
+        color: 'green',
+      },
+      {
+        key: 'content-style',
+        label: 'Content Style',
+        value: athlete?.content_style || 'Not set',
+        icon: 'Camera',
+        color: 'purple',
+      },
+    ],
+  };
+}
+
+async function getBusinessStats(userId: string) {
+  // Fetch business-specific stats from Supabase
+  const { data: campaigns, error: campaignsError } = await storage.supabase
+    .from('campaigns')
+    .select('status')
+    .eq('business_id', userId);
+
+  if (campaignsError) {
+    console.error('Error fetching business campaigns:', campaignsError);
+    return { items: [] };
+  }
+
+  // Calculate campaign stats
+  const draftCampaigns = campaigns?.filter(c => c.status === 'draft').length || 0;
+  const activeCampaigns = campaigns?.filter(c => c.status === 'active').length || 0;
+  const completedCampaigns = campaigns?.filter(c => c.status === 'completed').length || 0;
+
+  // Get matches data
+  const { data: matches, error: matchesError } = await storage.supabase
+    .from('matches')
+    .select('status')
+    .eq('business_id', userId);
+
+  if (matchesError) {
+    console.error('Error fetching business matches:', matchesError);
+    return { items: [] };
+  }
+
+  const pendingMatches = matches?.filter(m => m.status === 'pending').length || 0;
+
+  return {
+    items: [
+      {
+        key: 'active-campaigns',
+        label: 'Active Campaigns',
+        value: activeCampaigns,
+        icon: 'Rocket',
+        color: 'green',
+      },
+      {
+        key: 'draft-campaigns',
+        label: 'Draft Campaigns',
+        value: draftCampaigns,
+        icon: 'FileEdit',
+        color: 'blue',
+      },
+      {
+        key: 'pending-matches',
+        label: 'Pending Matches',
+        value: pendingMatches,
+        icon: 'Hourglass',
+        color: 'yellow',
+      },
+      {
+        key: 'completed-campaigns',
+        label: 'Completed',
+        value: completedCampaigns,
+        icon: 'CheckCircle',
+        color: 'gray',
+      },
+    ],
+  };
+}
+
+async function getComplianceStats() {
+  // Fetch compliance-specific stats from Supabase
+  const { data: matches, error: matchesError } = await storage.supabase
+    .from('matches')
+    .select('compliance_status');
+
+  if (matchesError) {
+    console.error('Error fetching compliance stats:', matchesError);
+    return { items: [] };
+  }
+
+  // Calculate compliance stats
+  const pendingReviews = matches?.filter(m => m.compliance_status === 'pending').length || 0;
+  const approvedMatches = matches?.filter(m => m.compliance_status === 'approved').length || 0;
+  const rejectedMatches = matches?.filter(m => m.compliance_status === 'rejected').length || 0;
+
+  return {
+    items: [
+      {
+        key: 'pending-reviews',
+        label: 'Pending Reviews',
+        value: pendingReviews,
+        icon: 'AlertCircle',
+        color: 'yellow',
+        trend: pendingReviews > 10 ? 'up' : 'down',
+        change: pendingReviews > 10 ? 15 : 8,
+      },
+      {
+        key: 'approved-matches',
+        label: 'Approved Matches',
+        value: approvedMatches,
+        icon: 'CheckCircle',
+        color: 'green',
+      },
+      {
+        key: 'rejected-matches',
+        label: 'Rejected Matches',
+        value: rejectedMatches,
+        icon: 'XCircle',
+        color: 'red',
+      },
+      {
+        key: 'compliance-rate',
+        label: 'Compliance Rate',
+        value: `${Math.round((approvedMatches / (approvedMatches + rejectedMatches || 1)) * 100)}%`,
+        icon: 'Percent',
+        color: 'blue',
+      },
+    ],
+  };
+}
+
+async function getAdminStats() {
+  // Fetch admin-specific stats from Supabase
+  const { data: users, error: usersError } = await storage.supabase
+    .from('users')
+    .select('role');
+
+  if (usersError) {
+    console.error('Error fetching admin stats:', usersError);
+    return { items: [] };
+  }
+
+  // Calculate user stats
+  const athleteCount = users?.filter(u => u.role === 'athlete').length || 0;
+  const businessCount = users?.filter(u => u.role === 'business').length || 0;
   
-  let series: string[] = [];
-  let xAxis = 'date';
-  
+  // Get campaign data
+  const { data: campaigns, error: campaignsError } = await storage.supabase
+    .from('campaigns')
+    .select('status');
+
+  if (campaignsError) {
+    console.error('Error fetching campaign stats:', campaignsError);
+    return { items: [] };
+  }
+
+  const activeCampaigns = campaigns?.filter(c => c.status === 'active').length || 0;
+
+  // Get match data
+  const { data: matches, error: matchesError } = await storage.supabase
+    .from('matches')
+    .select('status');
+
+  if (matchesError) {
+    console.error('Error fetching match stats:', matchesError);
+    return { items: [] };
+  }
+
+  const completedMatches = matches?.filter(m => m.status === 'completed').length || 0;
+
+  return {
+    items: [
+      {
+        key: 'athletes',
+        label: 'Athletes',
+        value: athleteCount,
+        icon: 'User',
+        color: 'blue',
+      },
+      {
+        key: 'businesses',
+        label: 'Businesses',
+        value: businessCount,
+        icon: 'Briefcase',
+        color: 'green',
+      },
+      {
+        key: 'active-campaigns',
+        label: 'Active Campaigns',
+        value: activeCampaigns,
+        icon: 'Rocket',
+        color: 'purple',
+      },
+      {
+        key: 'completed-matches',
+        label: 'Completed Matches',
+        value: completedMatches,
+        icon: 'Check',
+        color: 'gray',
+      },
+    ],
+  };
+}
+
+async function getAthleteChartData(userId: string, source: string) {
+  let chartData;
+
   switch (source) {
+    case 'matches':
+      // Get match data over time
+      const { data: matches, error: matchesError } = await storage.supabase
+        .from('matches')
+        .select('created_at, status')
+        .eq('athlete_id', userId)
+        .order('created_at', { ascending: true });
+
+      if (matchesError) {
+        console.error('Error fetching athlete match chart data:', matchesError);
+        return getDefaultChartData();
+      }
+
+      // Process data for the chart (monthly grouping)
+      const matchesByMonth = matches?.reduce((acc, match) => {
+        const date = new Date(match.created_at);
+        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+        
+        if (!acc[monthYear]) {
+          acc[monthYear] = { month: monthYear, pending: 0, accepted: 0, declined: 0 };
+        }
+        
+        acc[monthYear][match.status]++;
+        return acc;
+      }, {});
+
+      chartData = {
+        xAxis: 'month',
+        series: ['pending', 'accepted', 'declined'],
+        data: Object.values(matchesByMonth || {}),
+      };
+      break;
+      
     case 'engagement':
-      series = ['views', 'likes', 'shares'];
+    default:
+      // For demo, return engagement data with random values
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentMonth = new Date().getMonth();
+      
+      // Generate last 6 months of data
+      const data = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12;
+        data.push({
+          month: monthNames[monthIndex],
+          views: Math.floor(Math.random() * 10000) + 5000,
+          engagement: Math.floor(Math.random() * 2000) + 1000,
+          conversions: Math.floor(Math.random() * 500) + 100,
+        });
+      }
+      
+      chartData = {
+        xAxis: 'month',
+        series: ['views', 'engagement', 'conversions'],
+        data,
+      };
       break;
+  }
+
+  return chartData;
+}
+
+async function getBusinessChartData(userId: string, source: string) {
+  let chartData;
+
+  switch (source) {
     case 'campaigns':
-      series = ['active', 'completed', 'pending'];
+      // Get campaign data over time
+      const { data: campaigns, error: campaignsError } = await storage.supabase
+        .from('campaigns')
+        .select('created_at, status')
+        .eq('business_id', userId)
+        .order('created_at', { ascending: true });
+
+      if (campaignsError) {
+        console.error('Error fetching business campaign chart data:', campaignsError);
+        return getDefaultChartData();
+      }
+
+      // Process data for the chart (monthly grouping)
+      const campaignsByMonth = campaigns?.reduce((acc, campaign) => {
+        const date = new Date(campaign.created_at);
+        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+        
+        if (!acc[monthYear]) {
+          acc[monthYear] = { month: monthYear, draft: 0, active: 0, completed: 0, cancelled: 0 };
+        }
+        
+        acc[monthYear][campaign.status]++;
+        return acc;
+      }, {});
+
+      chartData = {
+        xAxis: 'month',
+        series: ['draft', 'active', 'completed', 'cancelled'],
+        data: Object.values(campaignsByMonth || {}),
+      };
       break;
-    case 'revenue':
-      series = ['amount'];
-      break;
-    case 'performance':
-      series = ['clicks', 'conversions', 'roi'];
-      break;
+      
+    case 'roi':
     default:
-      series = ['value1', 'value2'];
+      // For demo, return ROI data with random values
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentMonth = new Date().getMonth();
+      
+      // Generate last 6 months of data
+      const data = [];
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12;
+        const investment = Math.floor(Math.random() * 5000) + 3000;
+        const returns = Math.floor(Math.random() * 10000) + 4000;
+        data.push({
+          month: monthNames[monthIndex],
+          investment,
+          returns,
+          roi: Math.round((returns / investment - 1) * 100),
+        });
+      }
+      
+      chartData = {
+        xAxis: 'month',
+        series: ['investment', 'returns', 'roi'],
+        data,
+      };
+      break;
   }
-  
-  return { data, series, xAxis };
+
+  return chartData;
 }
 
-function getMockActivityData(userRole: string) {
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const threeDaysAgo = new Date(now);
-  threeDaysAgo.setDate(now.getDate() - 3);
-  const lastWeek = new Date(now);
-  lastWeek.setDate(now.getDate() - 7);
+async function getComplianceChartData(source: string) {
+  let chartData;
+
+  switch (source) {
+    case 'reviews':
+      // Get review data over time
+      const { data: matches, error: matchesError } = await storage.supabase
+        .from('matches')
+        .select('created_at, compliance_status')
+        .order('created_at', { ascending: true });
+
+      if (matchesError) {
+        console.error('Error fetching compliance review chart data:', matchesError);
+        return getDefaultChartData();
+      }
+
+      // Process data for the chart (monthly grouping)
+      const reviewsByMonth = matches?.reduce((acc, match) => {
+        const date = new Date(match.created_at);
+        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+        
+        if (!acc[monthYear]) {
+          acc[monthYear] = { month: monthYear, pending: 0, approved: 0, rejected: 0 };
+        }
+        
+        acc[monthYear][match.compliance_status]++;
+        return acc;
+      }, {});
+
+      chartData = {
+        xAxis: 'month',
+        series: ['pending', 'approved', 'rejected'],
+        data: Object.values(reviewsByMonth || {}),
+      };
+      break;
+      
+    default:
+      // For demo, return review time data
+      const weekNames = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Current'];
+      
+      // Generate 5 weeks of data
+      const data = [];
+      for (let i = 0; i < 5; i++) {
+        data.push({
+          week: weekNames[i],
+          averageTime: Math.floor(Math.random() * 24) + 12,
+          maxTime: Math.floor(Math.random() * 48) + 24,
+          minTime: Math.floor(Math.random() * 8) + 4,
+        });
+      }
+      
+      chartData = {
+        xAxis: 'week',
+        series: ['averageTime', 'maxTime', 'minTime'],
+        data,
+      };
+      break;
+  }
+
+  return chartData;
+}
+
+async function getAdminChartData(source: string) {
+  let chartData;
+
+  switch (source) {
+    case 'users':
+      // Get user registration data over time
+      const { data: users, error: usersError } = await storage.supabase
+        .from('users')
+        .select('created_at, role')
+        .order('created_at', { ascending: true });
+
+      if (usersError) {
+        console.error('Error fetching admin user chart data:', usersError);
+        return getDefaultChartData();
+      }
+
+      // Process data for the chart (monthly grouping)
+      const usersByMonth = users?.reduce((acc, user) => {
+        const date = new Date(user.created_at);
+        const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+        
+        if (!acc[monthYear]) {
+          acc[monthYear] = { month: monthYear, athlete: 0, business: 0, compliance: 0, admin: 0 };
+        }
+        
+        acc[monthYear][user.role]++;
+        return acc;
+      }, {});
+
+      chartData = {
+        xAxis: 'month',
+        series: ['athlete', 'business', 'compliance', 'admin'],
+        data: Object.values(usersByMonth || {}),
+      };
+      break;
+      
+    default:
+      // For demo, return platform metrics
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const currentMonth = new Date().getMonth();
+      
+      // Generate last 6 months of data
+      const data = [];
+      let totalMatches = 1000;
+      let totalCampaigns = 800;
+      
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = (currentMonth - i + 12) % 12;
+        const newMatches = Math.floor(Math.random() * 200) + 100;
+        const newCampaigns = Math.floor(Math.random() * 150) + 50;
+        totalMatches += newMatches;
+        totalCampaigns += newCampaigns;
+        
+        data.push({
+          month: monthNames[monthIndex],
+          newMatches,
+          newCampaigns,
+          totalMatches,
+          totalCampaigns,
+        });
+      }
+      
+      chartData = {
+        xAxis: 'month',
+        series: ['newMatches', 'newCampaigns', 'totalMatches', 'totalCampaigns'],
+        data,
+      };
+      break;
+  }
+
+  return chartData;
+}
+
+function getDefaultChartData() {
+  // Default chart data when no specific data is available
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const data = monthNames.map(month => ({
+    month,
+    value1: Math.floor(Math.random() * 100),
+    value2: Math.floor(Math.random() * 100),
+  }));
   
-  switch (userRole) {
-    case 'athlete':
-      return [
-        {
-          id: '1',
-          type: 'match',
-          icon: 'Users',
-          title: 'New Match',
-          description: 'You matched with Nike for their winter campaign',
-          timestamp: now.toISOString(),
-          status: 'success',
-          link: '/matches/123'
-        },
-        {
-          id: '2',
-          type: 'payment',
-          icon: 'DollarSign',
-          title: 'Payment Received',
-          description: 'Received $500 from Adidas campaign',
-          timestamp: yesterday.toISOString(),
-          status: 'success',
-          link: '/payments/456'
-        },
-        {
-          id: '3',
-          type: 'campaign',
-          icon: 'Megaphone',
-          title: 'Campaign Update',
-          description: 'Under Armour campaign needs your attention',
-          timestamp: threeDaysAgo.toISOString(),
-          status: 'pending',
-          link: '/campaigns/789'
-        },
-        {
-          id: '4',
-          type: 'message',
-          icon: 'MessageSquare',
-          title: 'New Message',
-          description: 'Message from Puma about upcoming campaign',
-          timestamp: lastWeek.toISOString(),
-          link: '/messages/101'
-        }
-      ];
-    case 'business':
-      return [
-        {
-          id: '1',
-          type: 'campaign',
-          icon: 'Megaphone',
-          title: 'Campaign Created',
-          description: 'Summer promotional campaign successfully created',
-          timestamp: now.toISOString(),
-          status: 'success',
-          link: '/campaigns/123'
-        },
-        {
-          id: '2',
-          type: 'match',
-          icon: 'Users',
-          title: 'New Athlete Matches',
-          description: '5 new athletes matched with your campaign',
-          timestamp: yesterday.toISOString(),
-          status: 'success',
-          link: '/matches'
-        },
-        {
-          id: '3',
-          type: 'alert',
-          icon: 'AlertCircle',
-          title: 'Budget Alert',
-          description: 'Campaign is nearing its budget limit',
-          timestamp: threeDaysAgo.toISOString(),
-          status: 'warning',
-          link: '/campaigns/456/budget'
-        },
-        {
-          id: '4',
-          type: 'message',
-          icon: 'MessageSquare',
-          title: 'New Messages',
-          description: '2 athletes have sent you messages',
-          timestamp: lastWeek.toISOString(),
-          link: '/messages'
-        }
-      ];
-    case 'compliance':
-    case 'admin':
-      return [
-        {
-          id: '1',
-          type: 'review',
-          icon: 'CheckCircle',
-          title: 'Campaign Approved',
-          description: 'Nike winter campaign approved',
-          timestamp: now.toISOString(),
-          status: 'success',
-          link: '/campaigns/123'
-        },
-        {
-          id: '2',
-          type: 'alert',
-          icon: 'AlertTriangle',
-          title: 'Content Alert',
-          description: 'Adidas campaign content needs review',
-          timestamp: yesterday.toISOString(),
-          status: 'error',
-          link: '/campaigns/456'
-        },
-        {
-          id: '3',
-          type: 'notification',
+  return {
+    xAxis: 'month',
+    series: ['value1', 'value2'],
+    data,
+  };
+}
+
+async function getAthleteActivity(userId: string) {
+  // Fetch athlete-specific activity from Supabase
+  const { data: matches, error: matchesError } = await storage.supabase
+    .from('matches')
+    .select('id, status, updated_at, campaign_id, business_id')
+    .eq('athlete_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(10);
+
+  if (matchesError) {
+    console.error('Error fetching athlete activity:', matchesError);
+    return [];
+  }
+
+  // Get campaign and business info for each match
+  const activities = await Promise.all(matches?.map(async (match) => {
+    // Get campaign info
+    const { data: campaign } = await storage.supabase
+      .from('campaigns')
+      .select('title')
+      .eq('id', match.campaign_id)
+      .single();
+
+    // Get business info
+    const { data: business } = await storage.supabase
+      .from('business_profiles')
+      .select('name')
+      .eq('id', match.business_id)
+      .single();
+
+    let activity = {
+      id: match.id,
+      timestamp: match.updated_at,
+      link: `/matches/${match.id}`,
+    };
+
+    switch (match.status) {
+      case 'pending':
+        return {
+          ...activity,
+          title: 'New Match Request',
+          description: `You have a new match request from ${business?.name || 'a business'} for the campaign "${campaign?.title || 'Untitled Campaign'}"`,
           icon: 'Bell',
-          title: 'New Athletes',
-          description: '12 new athletes registered today',
-          timestamp: threeDaysAgo.toISOString(),
-          link: '/users/athletes'
-        },
-        {
-          id: '4',
-          type: 'update',
-          icon: 'RefreshCw',
-          title: 'System Update',
-          description: 'Platform updated to version 2.5',
-          timestamp: lastWeek.toISOString(),
-          status: 'success',
-          link: '/system/updates'
-        }
-      ];
-    default:
-      return [];
-  }
-}
-
-function getMockQuickActionsData(userRole: string) {
-  switch (userRole) {
-    case 'athlete':
-      return [
-        {
-          id: '1',
-          label: 'Browse Campaigns',
-          icon: 'Search',
-          link: '/campaigns',
-          color: 'blue'
-        },
-        {
-          id: '2',
-          label: 'View Matches',
-          icon: 'Users',
-          link: '/matches',
-          color: 'green'
-        },
-        {
-          id: '3',
-          label: 'Check Messages',
-          icon: 'MessageSquare',
-          link: '/messages',
-          color: 'purple'
-        },
-        {
-          id: '4',
-          label: 'Update Profile',
-          icon: 'User',
-          link: '/profile',
-          color: 'amber'
-        },
-        {
-          id: '5',
-          label: 'View Earnings',
-          icon: 'DollarSign',
-          link: '/earnings',
-          color: 'cyan'
-        },
-        {
-          id: '6',
-          label: 'Get Support',
-          icon: 'HelpCircle',
-          link: '/support',
-          color: 'red'
-        }
-      ];
-    case 'business':
-      return [
-        {
-          id: '1',
-          label: 'Create Campaign',
-          icon: 'PlusCircle',
-          link: '/campaigns/new',
-          color: 'green'
-        },
-        {
-          id: '2',
-          label: 'View Athletes',
-          icon: 'Users',
-          link: '/athletes',
-          color: 'blue'
-        },
-        {
-          id: '3',
-          label: 'Manage Campaigns',
-          icon: 'Layers',
-          link: '/campaigns',
-          color: 'purple'
-        },
-        {
-          id: '4',
-          label: 'Review Matches',
-          icon: 'CheckSquare',
-          link: '/matches',
-          color: 'amber'
-        },
-        {
-          id: '5',
-          label: 'View Analytics',
-          icon: 'BarChart2',
-          link: '/analytics',
-          color: 'cyan'
-        },
-        {
-          id: '6',
-          label: 'Get Support',
-          icon: 'HelpCircle',
-          link: '/support',
-          color: 'red'
-        }
-      ];
-    case 'compliance':
-    case 'admin':
-      return [
-        {
-          id: '1',
-          label: 'Review Campaigns',
+          status: 'pending',
+        };
+      case 'accepted':
+        return {
+          ...activity,
+          title: 'Match Accepted',
+          description: `You accepted the match with ${business?.name || 'a business'} for "${campaign?.title || 'Untitled Campaign'}"`,
           icon: 'CheckCircle',
-          link: '/compliance/campaigns',
-          color: 'amber'
-        },
-        {
-          id: '2',
-          label: 'Manage Users',
-          icon: 'Users',
-          link: '/admin/users',
-          color: 'blue'
-        },
-        {
-          id: '3',
-          label: 'View Reports',
-          icon: 'FileText',
-          link: '/reports',
-          color: 'green'
-        },
-        {
-          id: '4',
-          label: 'System Settings',
-          icon: 'Settings',
-          link: '/admin/settings',
-          color: 'purple'
-        },
-        {
-          id: '5',
-          label: 'Audit Log',
-          icon: 'List',
-          link: '/admin/audit',
-          color: 'cyan'
-        },
-        {
-          id: '6',
-          label: 'Help Center',
-          icon: 'HelpCircle',
-          link: '/help',
-          color: 'red'
-        }
-      ];
-    default:
-      return [];
-  }
+          status: 'success',
+        };
+      case 'declined':
+        return {
+          ...activity,
+          title: 'Match Declined',
+          description: `You declined the match with ${business?.name || 'a business'} for "${campaign?.title || 'Untitled Campaign'}"`,
+          icon: 'XCircle',
+          status: 'error',
+        };
+      case 'completed':
+        return {
+          ...activity,
+          title: 'Match Completed',
+          description: `Your match with ${business?.name || 'a business'} for "${campaign?.title || 'Untitled Campaign'}" is complete`,
+          icon: 'Award',
+          status: 'success',
+        };
+      default:
+        return {
+          ...activity,
+          title: 'Match Updated',
+          description: `Your match status has been updated`,
+          icon: 'RefreshCw',
+        };
+    }
+  })) || [];
+
+  return activities;
 }
 
-// Register routes
-dashboardRouter.use('/widgets', widgetsRouter);
-dashboardRouter.use('/data', dataRouter);
+async function getBusinessActivity(userId: string) {
+  // Fetch business-specific activity from Supabase
+  const { data: campaigns, error: campaignsError } = await storage.supabase
+    .from('campaigns')
+    .select('id, title, status, updated_at')
+    .eq('business_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(5);
 
-export { dashboardRouter };
+  if (campaignsError) {
+    console.error('Error fetching business campaign activity:', campaignsError);
+    return [];
+  }
+
+  // Get matches
+  const { data: matches, error: matchesError } = await storage.supabase
+    .from('matches')
+    .select('id, status, updated_at, campaign_id, athlete_id')
+    .eq('business_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(5);
+
+  if (matchesError) {
+    console.error('Error fetching business match activity:', matchesError);
+    return [];
+  }
+
+  // Create activity items for campaigns
+  const campaignActivities = campaigns?.map(campaign => {
+    let activity = {
+      id: `campaign-${campaign.id}`,
+      timestamp: campaign.updated_at,
+      link: `/campaigns/${campaign.id}`,
+    };
+
+    switch (campaign.status) {
+      case 'draft':
+        return {
+          ...activity,
+          title: 'Campaign Created',
+          description: `You created a draft campaign "${campaign.title}"`,
+          icon: 'FileEdit',
+          status: 'pending',
+        };
+      case 'active':
+        return {
+          ...activity,
+          title: 'Campaign Activated',
+          description: `Your campaign "${campaign.title}" is now active`,
+          icon: 'Rocket',
+          status: 'success',
+        };
+      case 'completed':
+        return {
+          ...activity,
+          title: 'Campaign Completed',
+          description: `Your campaign "${campaign.title}" has been completed`,
+          icon: 'CheckCircle',
+          status: 'success',
+        };
+      case 'cancelled':
+        return {
+          ...activity,
+          title: 'Campaign Cancelled',
+          description: `Your campaign "${campaign.title}" has been cancelled`,
+          icon: 'XCircle',
+          status: 'error',
+        };
+      default:
+        return {
+          ...activity,
+          title: 'Campaign Updated',
+          description: `Your campaign "${campaign.title}" has been updated`,
+          icon: 'RefreshCw',
+        };
+    }
+  }) || [];
+
+  // Create activity items for matches
+  const matchActivities = await Promise.all(matches?.map(async (match) => {
+    // Get campaign info
+    const { data: campaign } = await storage.supabase
+      .from('campaigns')
+      .select('title')
+      .eq('id', match.campaign_id)
+      .single();
+
+    // Get athlete info
+    const { data: athlete } = await storage.supabase
+      .from('athlete_profiles')
+      .select('name')
+      .eq('id', match.athlete_id)
+      .single();
+
+    let activity = {
+      id: `match-${match.id}`,
+      timestamp: match.updated_at,
+      link: `/matches/${match.id}`,
+    };
+
+    switch (match.status) {
+      case 'pending':
+        return {
+          ...activity,
+          title: 'Match Created',
+          description: `You sent a match request to ${athlete?.name || 'an athlete'} for "${campaign?.title || 'Untitled Campaign'}"`,
+          icon: 'Send',
+          status: 'pending',
+        };
+      case 'accepted':
+        return {
+          ...activity,
+          title: 'Match Accepted',
+          description: `${athlete?.name || 'An athlete'} accepted your match request for "${campaign?.title || 'Untitled Campaign'}"`,
+          icon: 'CheckCircle',
+          status: 'success',
+        };
+      case 'declined':
+        return {
+          ...activity,
+          title: 'Match Declined',
+          description: `${athlete?.name || 'An athlete'} declined your match request for "${campaign?.title || 'Untitled Campaign'}"`,
+          icon: 'XCircle',
+          status: 'error',
+        };
+      case 'completed':
+        return {
+          ...activity,
+          title: 'Match Completed',
+          description: `Your match with ${athlete?.name || 'an athlete'} for "${campaign?.title || 'Untitled Campaign'}" is complete`,
+          icon: 'Award',
+          status: 'success',
+        };
+      default:
+        return {
+          ...activity,
+          title: 'Match Updated',
+          description: `A match status has been updated`,
+          icon: 'RefreshCw',
+        };
+    }
+  })) || [];
+
+  // Combine and sort activities by timestamp
+  const allActivities = [...campaignActivities, ...matchActivities]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 10);
+
+  return allActivities;
+}
+
+async function getComplianceActivity() {
+  // Fetch compliance-specific activity from Supabase
+  const { data: matches, error: matchesError } = await storage.supabase
+    .from('matches')
+    .select('id, compliance_status, updated_at, campaign_id, business_id, athlete_id')
+    .order('updated_at', { ascending: false })
+    .limit(10);
+
+  if (matchesError) {
+    console.error('Error fetching compliance activity:', matchesError);
+    return [];
+  }
+
+  // Create activity items for matches
+  const activities = await Promise.all(matches?.map(async (match) => {
+    // Get campaign info
+    const { data: campaign } = await storage.supabase
+      .from('campaigns')
+      .select('title')
+      .eq('id', match.campaign_id)
+      .single();
+
+    // Get business info
+    const { data: business } = await storage.supabase
+      .from('business_profiles')
+      .select('name')
+      .eq('id', match.business_id)
+      .single();
+
+    // Get athlete info
+    const { data: athlete } = await storage.supabase
+      .from('athlete_profiles')
+      .select('name')
+      .eq('id', match.athlete_id)
+      .single();
+
+    let activity = {
+      id: match.id,
+      timestamp: match.updated_at,
+      link: `/compliance/matches/${match.id}`,
+    };
+
+    switch (match.compliance_status) {
+      case 'pending':
+        return {
+          ...activity,
+          title: 'Review Needed',
+          description: `New match between ${business?.name || 'Business'} and ${athlete?.name || 'Athlete'} for "${campaign?.title || 'Untitled Campaign'}" needs review`,
+          icon: 'AlertCircle',
+          status: 'pending',
+        };
+      case 'approved':
+        return {
+          ...activity,
+          title: 'Match Approved',
+          description: `You approved the match between ${business?.name || 'Business'} and ${athlete?.name || 'Athlete'} for "${campaign?.title || 'Untitled Campaign'}"`,
+          icon: 'CheckCircle',
+          status: 'success',
+        };
+      case 'rejected':
+        return {
+          ...activity,
+          title: 'Match Rejected',
+          description: `You rejected the match between ${business?.name || 'Business'} and ${athlete?.name || 'Athlete'} for "${campaign?.title || 'Untitled Campaign'}"`,
+          icon: 'XCircle',
+          status: 'error',
+        };
+      default:
+        return {
+          ...activity,
+          title: 'Match Updated',
+          description: `Match status updated for review`,
+          icon: 'RefreshCw',
+        };
+    }
+  })) || [];
+
+  return activities;
+}
+
+async function getAdminActivity() {
+  // Fetch admin-specific activity
+  const { data: users, error: usersError } = await storage.supabase
+    .from('users')
+    .select('id, role, created_at, username')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (usersError) {
+    console.error('Error fetching admin user activity:', usersError);
+    return [];
+  }
+
+  // Get campaigns
+  const { data: campaigns, error: campaignsError } = await storage.supabase
+    .from('campaigns')
+    .select('id, title, status, updated_at, business_id')
+    .order('updated_at', { ascending: false })
+    .limit(5);
+
+  if (campaignsError) {
+    console.error('Error fetching admin campaign activity:', campaignsError);
+    return [];
+  }
+
+  // Create activity items for user registrations
+  const userActivities = users?.map(user => ({
+    id: `user-${user.id}`,
+    title: 'New User Registration',
+    description: `New ${user.role} registered: ${user.username}`,
+    timestamp: user.created_at,
+    icon: 'UserPlus',
+    status: 'success',
+    link: `/admin/users/${user.id}`,
+  })) || [];
+
+  // Create activity items for campaigns
+  const campaignActivities = await Promise.all(campaigns?.map(async (campaign) => {
+    // Get business info
+    const { data: business } = await storage.supabase
+      .from('business_profiles')
+      .select('name')
+      .eq('id', campaign.business_id)
+      .single();
+
+    return {
+      id: `campaign-${campaign.id}`,
+      title: 'Campaign Status Change',
+      description: `Campaign "${campaign.title}" by ${business?.name || 'a business'} is now ${campaign.status}`,
+      timestamp: campaign.updated_at,
+      icon: 'Briefcase',
+      status: campaign.status === 'active' ? 'success' : (campaign.status === 'cancelled' ? 'error' : 'pending'),
+      link: `/admin/campaigns/${campaign.id}`,
+    };
+  })) || [];
+
+  // Combine and sort activities by timestamp
+  const allActivities = [...userActivities, ...campaignActivities]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 10);
+
+  return allActivities;
+}
+
+async function getAthleteQuickActions(userId: string) {
+  return [
+    {
+      id: 'view-matches',
+      label: 'View Matches',
+      description: 'See all your current matches',
+      icon: 'Users',
+      link: '/matches',
+      color: 'blue',
+    },
+    {
+      id: 'update-profile',
+      label: 'Update Profile',
+      description: 'Keep your profile information current',
+      icon: 'UserCog',
+      link: '/profile',
+      color: 'purple',
+    },
+    {
+      id: 'browse-campaigns',
+      label: 'Browse Campaigns',
+      description: 'Find new campaign opportunities',
+      icon: 'Search',
+      link: '/campaigns/browse',
+      color: 'green',
+    },
+    {
+      id: 'content-delivery',
+      label: 'Content Delivery',
+      description: 'Manage and submit your content',
+      icon: 'Upload',
+      link: '/content',
+      color: 'yellow',
+    },
+  ];
+}
+
+async function getBusinessQuickActions(userId: string) {
+  return [
+    {
+      id: 'create-campaign',
+      label: 'Create Campaign',
+      description: 'Start a new marketing campaign',
+      icon: 'PlusCircle',
+      link: '/campaigns/new',
+      color: 'green',
+    },
+    {
+      id: 'manage-campaigns',
+      label: 'Manage Campaigns',
+      description: 'View and edit your existing campaigns',
+      icon: 'Briefcase',
+      link: '/campaigns',
+      color: 'blue',
+    },
+    {
+      id: 'find-athletes',
+      label: 'Find Athletes',
+      description: 'Discover new athletes for your campaigns',
+      icon: 'Search',
+      link: '/athletes/browse',
+      color: 'purple',
+    },
+    {
+      id: 'analytics',
+      label: 'View Analytics',
+      description: 'See performance metrics for your campaigns',
+      icon: 'BarChart',
+      link: '/analytics',
+      color: 'orange',
+    },
+  ];
+}
+
+async function getComplianceQuickActions() {
+  return [
+    {
+      id: 'pending-reviews',
+      label: 'Pending Reviews',
+      description: 'Review matches awaiting compliance approval',
+      icon: 'AlertCircle',
+      link: '/compliance/pending',
+      color: 'yellow',
+    },
+    {
+      id: 'compliance-dashboard',
+      label: 'Compliance Dashboard',
+      description: 'Overview of compliance activities',
+      icon: 'ShieldCheck',
+      link: '/compliance/dashboard',
+      color: 'green',
+    },
+    {
+      id: 'flagged-content',
+      label: 'Flagged Content',
+      description: 'Review content flagged for compliance issues',
+      icon: 'Flag',
+      link: '/compliance/flagged',
+      color: 'red',
+    },
+    {
+      id: 'compliance-reports',
+      label: 'Generate Reports',
+      description: 'Create compliance reports for review',
+      icon: 'FileText',
+      link: '/compliance/reports',
+      color: 'blue',
+    },
+  ];
+}
+
+async function getAdminQuickActions() {
+  return [
+    {
+      id: 'manage-users',
+      label: 'Manage Users',
+      description: 'View and manage all platform users',
+      icon: 'Users',
+      link: '/admin/users',
+      color: 'blue',
+    },
+    {
+      id: 'system-settings',
+      label: 'System Settings',
+      description: 'Configure platform settings',
+      icon: 'Settings',
+      link: '/admin/settings',
+      color: 'gray',
+    },
+    {
+      id: 'content-moderation',
+      label: 'Content Moderation',
+      description: 'Review and moderate user content',
+      icon: 'Shield',
+      link: '/admin/moderation',
+      color: 'red',
+    },
+    {
+      id: 'platform-analytics',
+      label: 'Platform Analytics',
+      description: 'View overall platform performance',
+      icon: 'BarChart2',
+      link: '/admin/analytics',
+      color: 'purple',
+    },
+  ];
+}
