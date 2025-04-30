@@ -298,17 +298,38 @@ export class SupabaseStorage implements IStorage {
     try {
       console.log(`Getting athlete profile for user ID ${userId}`);
       
-      const { data, error } = await supabase
+      // Athletes in Supabase may use either the ID as primary key or user_id field
+      // First try directly by ID (UUID primary key matching auth user id)
+      let { data, error } = await supabase
         .from('athlete_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .maybeSingle();
         
-      if (error) {
+      if (!data && (!error || error.code === 'PGRST116')) {
+        // If not found by ID, try user_id field as fallback
+        console.log("Athlete profile not found by ID, trying user_id field...");
+        const result = await supabase
+          .from('athlete_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        data = result.data;
+        error = result.error;
+      }
+      
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching athlete profile by user ID:', error);
         return undefined;
       }
       
+      if (!data) {
+        console.log(`No athlete profile found for user ID ${userId}`);
+        return undefined;
+      }
+      
+      console.log(`Found athlete profile for user ID ${userId}:`, data);
       return this.mapAthleteFromDb(data);
     } catch (error) {
       console.error('Exception getting athlete by user ID:', error);
@@ -400,18 +421,38 @@ export class SupabaseStorage implements IStorage {
     try {
       console.log(`Getting business profile for user ID ${userId}`);
       
-      // Look for business profile by ID field (not user_id)
-      const { data, error } = await supabase
+      // The business profiles in Supabase should use the auth.user.id as the id field
+      // First try directly by ID (UUID primary key matching auth user id)
+      let { data, error } = await supabase
         .from('business_profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
         
-      if (error) {
+      if (!data && (!error || error.code === 'PGRST116')) {
+        // If not found by ID, try user_id field as fallback
+        console.log("Business profile not found by ID, trying user_id field...");
+        const result = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        data = result.data;
+        error = result.error;
+      }
+      
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching business profile by user ID:', error);
         return undefined;
       }
       
+      if (!data) {
+        console.log(`No business profile found for user ID ${userId}`);
+        return undefined;
+      }
+      
+      console.log(`Found business profile for user ID ${userId}:`, data);
       return this.mapBusinessFromDb(data);
     } catch (error) {
       console.error('Exception getting business by user ID:', error);
