@@ -35,7 +35,7 @@ export const BentoGridItem = ({
   return (
     <motion.div
       className={cn(
-        "row-span-1 rounded-xl group/bento hover:shadow-xl transition-all duration-200 shadow-input dark:shadow-none",
+        "row-span-1 rounded-xl group/bento hover:shadow-xl transition-all duration-200 glass-card border border-white/10",
         className
       )}
       initial={{ opacity: 0, y: 10 }}
@@ -47,17 +47,17 @@ export const BentoGridItem = ({
       }}
       viewport={{ once: true }}
     >
-      <div className="bg-zinc-900 h-full w-full p-6 rounded-xl overflow-hidden">
+      <div className="backdrop-blur-sm h-full w-full p-6 rounded-xl overflow-hidden">
         {header}
         <div className="flex items-center gap-3 mt-4">
           {icon && (
-            <div className="rounded-full bg-red-500/20 p-3 text-red-500">
+            <div className="rounded-full bg-[#FFBF0D]/20 p-3 text-[#FFBF0D]">
               {icon}
             </div>
           )}
-          <h3 className="text-xl font-semibold text-white">{title}</h3>
+          <h3 className="text-xl font-semibold glow-text">{title}</h3>
         </div>
-        <div className="mt-2 text-zinc-400 text-sm">{description}</div>
+        <div className="mt-2 text-white text-sm">{description}</div>
       </div>
     </motion.div>
   );
