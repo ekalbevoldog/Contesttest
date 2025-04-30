@@ -315,6 +315,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', createBusinessProfileEndpoint);
   
+  // Get business profile by user ID
+  app.get('/api/business-profile/:userId', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'userId is required' });
+      }
+      
+      console.log(`[API] Fetching business profile for user ${userId}`);
+      
+      // First check if a profile exists for this user using id field
+      const { data: profile, error: profileError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (profileError) {
+        console.error('[API] Error fetching business profile:', profileError);
+        return res.status(500).json({ error: 'Error fetching business profile' });
+      }
+      
+      if (!profile) {
+        console.log(`[API] No business profile found for user ${userId}`);
+        return res.status(404).json({ error: 'Business profile not found' });
+      }
+      
+      console.log(`[API] Found business profile for user ${userId}`);
+      return res.status(200).json({ profile });
+    } catch (error) {
+      console.error('[API] Unexpected error fetching business profile:', error);
+      return res.status(500).json({ error: 'Unexpected error fetching business profile' });
+    }
+  });
+  
   // API diagnostic health check
   app.get('/api/diagnostic/check', async (req: Request, res: Response) => {
     try {

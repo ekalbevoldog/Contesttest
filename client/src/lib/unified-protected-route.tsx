@@ -35,10 +35,12 @@ export function UnifiedProtectedRoute({
   const { 
     user, 
     profile, 
-    userType, 
-    hasProfile: userHasProfile, 
     isLoading: isAuthLoading 
   } = useAuth();
+  
+  // Extract user type and profile status from available data
+  const userType = user?.role || 'visitor';
+  const userHasProfile = !!profile;
   
   // Also get Supabase auth for backwards compatibility
   const { user: supabaseUser, isLoading: isSupabaseLoading } = useSupabaseAuth();
