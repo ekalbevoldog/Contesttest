@@ -4,45 +4,71 @@ import { motion } from 'framer-motion';
 interface FloatingElementProps {
   children: ReactNode;
   className?: string;
-  floatIntensity?: number;
-  duration?: number;
-  hoverScale?: number;
-  disabled?: boolean; // Option to disable the floating animation
   delay?: number;
+  intensity?: 'subtle' | 'medium' | 'strong';
+  duration?: number;
+  offsetY?: number;
+  offsetX?: number;
+  rotate?: number;
 }
 
 export const FloatingElement: React.FC<FloatingElementProps> = ({
   children,
   className = '',
-  floatIntensity = 2.5, // Reduced default intensity for subtlety
-  duration = 4,
-  hoverScale = 1.01, // More subtle hover effect
-  disabled = false,
   delay = 0,
+  intensity = 'subtle',
+  duration = 6,
+  offsetY = 10,
+  offsetX = 0,
+  rotate = 0
 }) => {
-  // More subtle animation
-  const floatingAnimation = disabled ? {} : {
-    y: [-floatIntensity, floatIntensity],
-    transition: {
-      duration,
-      repeat: Infinity,
-      repeatType: 'reverse' as const,
-      ease: [0.33, 1, 0.68, 1], // Custom cubic-bezier for smoother motion
-      delay,
+  // Set intensity multipliers
+  let intensityFactor;
+  switch (intensity) {
+    case 'strong':
+      intensityFactor = 1.5;
+      break;
+    case 'medium':
+      intensityFactor = 1;
+      break;
+    case 'subtle':
+    default:
+      intensityFactor = 0.6;
+      break;
+  }
+
+  // Adjust values based on intensity
+  const adjustedY = offsetY * intensityFactor;
+  const adjustedX = offsetX * intensityFactor;
+  const adjustedRotate = rotate * intensityFactor;
+
+  // Animation variants
+  const floatingAnimation = {
+    initial: {
+      y: 0,
+      x: 0,
+      rotate: 0
     },
+    animate: {
+      y: [0, -adjustedY, 0],
+      x: [0, adjustedX, 0],
+      rotate: [0, adjustedRotate, 0],
+      transition: {
+        duration: duration,
+        ease: "easeInOut",
+        repeat: Infinity,
+        repeatType: "mirror" as const,
+        delay: delay
+      }
+    }
   };
 
   return (
     <motion.div
-      animate={floatingAnimation}
-      whileHover={{ 
-        scale: hoverScale, 
-        transition: { 
-          duration: 0.3, 
-          ease: [0.22, 1, 0.36, 1] // Smooth cubic-bezier curve
-        } 
-      }}
-      className={className}
+      className={`${className}`}
+      variants={floatingAnimation}
+      initial="initial"
+      animate="animate"
     >
       {children}
     </motion.div>

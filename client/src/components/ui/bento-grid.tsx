@@ -46,14 +46,24 @@ export const BentoGridItem = ({
         ease: [0.22, 1, 0.36, 1],
       }}
       viewport={{ once: true }}
+      whileHover={{ 
+        y: -5, 
+        x: 0,
+        transition: { duration: 0.3, ease: "easeOut" }
+      }}
+      whileTap={{ scale: 0.98 }}
     >
       <div className="backdrop-blur-sm h-full w-full p-6 rounded-xl overflow-hidden">
         {header}
         <div className="flex items-center gap-3 mt-4">
           {icon && (
-            <div className="rounded-full bg-[#FFBF0D]/20 p-3 text-[#FFBF0D]">
+            <motion.div 
+              className="rounded-full bg-[#FFBF0D]/20 p-3 text-[#FFBF0D]"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
               {icon}
-            </div>
+            </motion.div>
           )}
           <h3 className="text-xl font-semibold glow-text">{title}</h3>
         </div>
