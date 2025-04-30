@@ -126,6 +126,21 @@ export class SupabaseStorage implements IStorage {
   // Session operations
   async getSession(sessionId: string): Promise<Session | undefined> {
     try {
+      // First check the connect-pg-simple 'session' table (used for auth)
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('session')
+        .select('*')
+        .eq('sid', sessionId)
+        .single();
+        
+      if (!sessionError && sessionData) {
+        console.log('Found session in connect-pg-simple table:', sessionData.sid);
+        // This is a connect-pg-simple session, not our custom format
+        // We don't map it to our Session type as it's handled by the session middleware
+        return undefined;
+      }
+        
+      // If not found in connect-pg-simple table, try our custom sessions table
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
