@@ -551,14 +551,17 @@ export function setupSupabaseAuth(app: Express) {
         
         // Only include auth_id if the column exists
         if (hasAuthIdColumn) {
-          userToInsert['auth_id'] = authUserId;
+          // Using typecasting to avoid TypeScript error
+          (userToInsert as any)['auth_id'] = authUserId;
         } else {
           console.warn("[Auth] Omitting auth_id from insert due to missing column");
         }
         
-        // Insert the new user
+        // Insert the new user - using supabaseAdmin to bypass RLS policies
         console.log(`[Auth] Inserting new user with data:`, JSON.stringify(userToInsert));
-        const { data, error: insertErr } = await supabase
+        
+        // Use supabaseAdmin to bypass RLS policies
+        const { data, error: insertErr } = await supabaseAdmin
           .from("users")
           .insert(userToInsert)
           .select()
