@@ -456,3 +456,22 @@ export interface MessageMetadata {
   userId?: number | null;
   userType?: string | null;
 }
+
+// User preferences type definitions
+export const userPreferencesSchema = z.object({
+  id: z.number(),
+  user_id: z.string(),
+  preference_type: z.string(),
+  data: z.record(z.any()),
+  created_at: z.date().optional(),
+  updated_at: z.date().optional()
+});
+
+export const insertUserPreferencesSchema = userPreferencesSchema.omit({
+  id: true,
+  created_at: true,
+  updated_at: true
+});
+
+export type UserPreferences = z.infer<typeof userPreferencesSchema>;
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
