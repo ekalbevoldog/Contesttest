@@ -376,6 +376,8 @@ export class DashboardManager {
 
 // Create a singleton instance
 export const dashboardManager = new DashboardManager();
+// Export as dashboardWs for backward compatibility with existing code
+export const dashboardWs = dashboardManager;
 
 // Local storage dashboard cache
 export class DashboardLocalStorageCache {

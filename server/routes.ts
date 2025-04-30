@@ -14,7 +14,7 @@ import { pool, db as supabaseAdmin } from "./db.js";
 // Import auth fixes
 import { ensureBusinessProfile } from "./auth-fixes/auto-create-business-profile.js";
 // Import dashboard API router
-import { dashboardRouter } from "./dashboard-api.js";
+import { dashboardApiRouter } from "./dashboard-api.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupSupabaseAuth(app);
   
   // Register dashboard API endpoints
-  app.use('/api/dashboard', dashboardRouter);
+  app.use('/api/dashboard', dashboardApiRouter);
   
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', async (req: Request, res: Response) => {
