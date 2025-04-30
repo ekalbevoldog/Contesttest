@@ -2,8 +2,21 @@
  * Simple logger implementation for Contested app
  */
 
+// Log levels
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
+// Default log level from environment or 'info' if not specified
+const defaultLogLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
+
+// Log level priority
+const logLevelPriority: Record<LogLevel, number> = {
+  'debug': 0,
+  'info': 1,
+  'warn': 2,
+  'error': 3
+};
+
+// Logger interface
 interface Logger {
   debug: (message: string, ...args: any[]) => void;
   info: (message: string, ...args: any[]) => void;
@@ -11,54 +24,53 @@ interface Logger {
   error: (message: string, ...args: any[]) => void;
 }
 
-// Default log level from environment or 'info'
-const LOG_LEVEL = (process.env.LOG_LEVEL || 'info').toLowerCase() as LogLevel;
-
-// Log level priority (higher number = higher priority)
-const LOG_LEVELS: Record<LogLevel, number> = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3
+// Helper to check if we should log at a given level
+const shouldLog = (level: LogLevel): boolean => {
+  const configuredPriority = logLevelPriority[defaultLogLevel];
+  const messagePriority = logLevelPriority[level];
+  return messagePriority >= configuredPriority;
 };
 
-// Current log level priority
-const CURRENT_LOG_LEVEL = LOG_LEVELS[LOG_LEVEL] || LOG_LEVELS.info;
-
-// ANSI color codes for console output
-const COLORS = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  dim: '\x1b[2m',
-  debug: '\x1b[2m', // Dim (gray)
-  info: '\x1b[36m', // Cyan
-  warn: '\x1b[33m', // Yellow
-  error: '\x1b[31m', // Red
+// Format the log message with timestamp
+const formatLogMessage = (level: LogLevel, message: string, args: any[]): string => {
+  const timestamp = new Date().toISOString();
+  const formattedArgs = args.map(arg => {
+    if (typeof arg === 'object') {
+      try {
+        return JSON.stringify(arg);
+      } catch (e) {
+        return '[Object]';
+      }
+    }
+    return String(arg);
+  }).join(' ');
+  
+  return `[${timestamp}] [${level.toUpperCase()}] ${message} ${formattedArgs}`.trim();
 };
 
 // Logger implementation
 export const logger: Logger = {
   debug: (message: string, ...args: any[]) => {
-    if (CURRENT_LOG_LEVEL <= LOG_LEVELS.debug) {
-      console.log(`${COLORS.debug}[DEBUG]${COLORS.reset} ${message}`, ...args);
+    if (shouldLog('debug')) {
+      console.debug(formatLogMessage('debug', message, args));
     }
   },
   
   info: (message: string, ...args: any[]) => {
-    if (CURRENT_LOG_LEVEL <= LOG_LEVELS.info) {
-      console.log(`${COLORS.info}[INFO]${COLORS.reset} ${message}`, ...args);
+    if (shouldLog('info')) {
+      console.info(formatLogMessage('info', message, args));
     }
   },
   
   warn: (message: string, ...args: any[]) => {
-    if (CURRENT_LOG_LEVEL <= LOG_LEVELS.warn) {
-      console.warn(`${COLORS.warn}[WARN]${COLORS.reset} ${message}`, ...args);
+    if (shouldLog('warn')) {
+      console.warn(formatLogMessage('warn', message, args));
     }
   },
   
   error: (message: string, ...args: any[]) => {
-    if (CURRENT_LOG_LEVEL <= LOG_LEVELS.error) {
-      console.error(`${COLORS.error}[ERROR]${COLORS.reset} ${message}`, ...args);
+    if (shouldLog('error')) {
+      console.error(formatLogMessage('error', message, args));
     }
   }
 };
