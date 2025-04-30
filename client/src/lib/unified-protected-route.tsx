@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { isAuthenticated, getStoredAuthData } from "./simple-auth";
+import { useAuth } from "@/hooks/use-auth"; // Import the enhanced useAuth hook
 
 interface ProtectedRouteProps {
   component: React.ComponentType<any>;
@@ -30,17 +31,102 @@ export function UnifiedProtectedRoute({
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   
-  // Try both auth methods - Supabase is primary, simple-auth is fallback
+  // Use our enhanced auth hook which handles profile detection more reliably
+  const { 
+    user, 
+    profile, 
+    userType, 
+    hasProfile: userHasProfile, 
+    isLoading: isAuthLoading 
+  } = useAuth();
+  
+  // Also get Supabase auth for backwards compatibility
   const { user: supabaseUser, isLoading: isSupabaseLoading } = useSupabaseAuth();
   
   useEffect(() => {
-    // Wait for Supabase auth to complete loading
-    if (isSupabaseLoading) return;
+    // Wait for both auth methods to complete loading
+    if (isAuthLoading || isSupabaseLoading) return;
     
-    // Check if authenticated with Supabase
+    console.log('[UnifiedProtectedRoute] Auth state:', {
+      hasUser: !!user,
+      userType,
+      hasProfile: userHasProfile,
+      requiredRole,
+      requiresProfile
+    });
+    
+    // First try our main auth hook which has enhanced profile detection
+    if (user) {
+      // Determine user role using the enhanced userType property
+      const effectiveRole = userType || user.role || user.userType || 'visitor';
+      
+      // Check role requirement if specified
+      if (requiredRole) {
+        const hasRequiredRole = Array.isArray(requiredRole)
+          ? requiredRole.includes(effectiveRole)
+          : effectiveRole === requiredRole;
+        
+        if (!hasRequiredRole) {
+          console.log('[UnifiedProtectedRoute] User does not have required role. Has:', effectiveRole, 'Required:', requiredRole);
+          // User does not have the required role, redirect to appropriate dashboard
+          redirectBasedOnRole(effectiveRole);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // Check profile requirement if specified
+      if (requiresProfile && !userHasProfile) {
+        console.log('[UnifiedProtectedRoute] Profile required but user has no profile');
+        
+        // Special handling for business users - attempt to auto-create their profile via API
+        if (effectiveRole === 'business') {
+          console.log('[UnifiedProtectedRoute] Business user without profile, triggering creation');
+          
+          // Create a minimal business profile automatically
+          fetch('/api/create-business-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id })
+          })
+          .then(response => {
+            if (response.ok) {
+              console.log('[UnifiedProtectedRoute] Created business profile successfully');
+              // Set authorized after profile creation
+              setIsAuthorized(true);
+              setUserData(user);
+              setIsLoading(false);
+            } else {
+              // If creation fails, redirect to onboarding
+              console.error('[UnifiedProtectedRoute] Profile creation failed, redirecting');
+              navigate(redirectPath);
+              setIsLoading(false);
+            }
+          })
+          .catch(err => {
+            console.error('[UnifiedProtectedRoute] Error creating profile:', err);
+            navigate(redirectPath);
+            setIsLoading(false);
+          });
+          
+          return;
+        }
+        
+        // For other roles, just redirect to onboarding
+        navigate(redirectPath);
+        setIsLoading(false);
+        return;
+      }
+      
+      // User is authenticated and meets all requirements
+      setIsAuthorized(true);
+      setUserData(user);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Fallback to Supabase auth if our main hook doesn't have a user
     if (supabaseUser) {
-      // User is authenticated in Supabase
-      // Prioritize userType which should be consistently set by our endpoint
       const userRole = supabaseUser.userType || supabaseUser.role || supabaseUser.user_metadata?.role || 'visitor';
       
       // Check role requirement if specified
@@ -62,11 +148,9 @@ export function UnifiedProtectedRoute({
         const hasProfile = checkProfileCompletion(supabaseUser);
         if (!hasProfile) {
           // User does not have a complete profile, redirect
-          if (redirectPath) {
-            navigate(redirectPath);
-            setIsLoading(false);
-            return;
-          }
+          navigate(redirectPath);
+          setIsLoading(false);
+          return;
         }
       }
       
@@ -77,7 +161,7 @@ export function UnifiedProtectedRoute({
       return;
     }
     
-    // Fallback to simple-auth if not authenticated with Supabase
+    // Fallback to simple-auth if not authenticated with other methods
     const simpleAuthUser = isAuthenticated() ? getStoredAuthData()?.user : null;
     if (simpleAuthUser) {
       const userRole = simpleAuthUser.role || 'visitor';
@@ -103,10 +187,11 @@ export function UnifiedProtectedRoute({
       return;
     }
     
-    // Not authenticated with either method, redirect to auth page
+    console.log('[UnifiedProtectedRoute] No authenticated user found, redirecting to auth page');
+    // Not authenticated with any method, redirect to auth page
     navigate(redirectPath || '/auth');
     setIsLoading(false);
-  }, [supabaseUser, isSupabaseLoading, requiredRole, requiresProfile, redirectPath, navigate]);
+  }, [user, userType, userHasProfile, supabaseUser, isAuthLoading, isSupabaseLoading, requiredRole, requiresProfile, redirectPath, navigate]);
   
   // Helper function to redirect based on user role
   function redirectBasedOnRole(role: string) {
@@ -139,7 +224,11 @@ export function UnifiedProtectedRoute({
     if (role === 'athlete') {
       return !!profile.sport && !!profile.name;
     } else if (role === 'business') {
-      return !!profile.businessName && !!profile.industry;
+      // Accept more variations of business profile fields
+      return !!(
+        (profile.name || profile.businessName) && 
+        (profile.industry || profile.productType || profile.values)
+      );
     }
     
     return true; // Default to true for other roles

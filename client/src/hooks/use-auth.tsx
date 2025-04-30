@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState, useEffect } from "react";
+import { createContext, ReactNode, useContext, useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -515,6 +515,20 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
 
+  // Extract user type from user data with a reliable priority order
+  const userType = useMemo(() => {
+    if (!context.user) return null;
+    
+    // Priority order for determining user type:
+    // 1. Explicit userType property
+    // 2. role property 
+    // 3. user_metadata.role
+    return context.user.userType || 
+           context.user.role || 
+           (context.user.user_metadata && context.user.user_metadata.role) || 
+           null;
+  }, [context.user]);
+
   // Add a convenience method for logout
   const logout = () => {
     if (context.logoutMutation) {
@@ -522,8 +536,31 @@ export function useAuth() {
     }
   };
 
+  // Enhanced profile check that works more reliably
+  const hasProfile = useMemo(() => {
+    // If no user or profile explicitly set to null, definitely no profile
+    if (!context.user || context.profile === null) return false;
+    
+    // If profile exists in the context, user has a profile
+    if (context.profile) return true;
+    
+    // For business users, check if they have business profile fields
+    if (userType === 'business' && context.user.businessProfile) return true;
+    
+    // For athlete users, check if they have athlete profile fields
+    if (userType === 'athlete' && context.user.athleteProfile) return true;
+    
+    // Default assumption based on roles that don't require profiles
+    if (userType === 'admin' || userType === 'compliance') return true;
+    
+    // No profile detected through any means
+    return false;
+  }, [context.user, context.profile, userType]);
+
   return {
     ...context,
     logout,
+    userType,
+    hasProfile
   };
 }
