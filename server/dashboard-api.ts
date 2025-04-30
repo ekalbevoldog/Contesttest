@@ -416,11 +416,34 @@ export const dashboardRouter = Router();
 const isAuthenticated = (req: any, res: any, next: any) => {
   console.log('[Dashboard API] isAuthenticated middleware running, req.user:', req.user);
   
+  // Check for token in Authorization header
+  const authHeader = req.headers.authorization;
+  
+  // Log all request headers for debugging
+  console.log('[Dashboard API] Request headers:', req.headers);
+  
   if (!req.user) {
-    console.log('[Dashboard API] No user in request. Headers:', req.headers);
+    console.log('[Dashboard API] No user in request object');
     
-    // For debugging purposes temporarily - allow requests without authentication
-    // but set a default test user for the request
+    // Check for Bearer token
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      console.log(`[Dashboard API] Found Bearer token: ${token.substring(0, 10)}...`);
+      
+      // We should verify the token and extract user data here
+      // For now, just simulate an authenticated user
+      req.user = {
+        id: '00000000-0000-0000-0000-000000000001',
+        role: 'athlete',
+        user_metadata: { role: 'athlete' }
+      };
+      console.log('[Dashboard API] Set user from Bearer token:', req.user);
+      next();
+      return;
+    }
+    
+    // If no token, use a debug user for development
+    console.log('[Dashboard API] No bearer token found, using debug user');
     req.user = {
       id: '00000000-0000-0000-0000-000000000000',
       role: 'athlete',
@@ -433,10 +456,22 @@ const isAuthenticated = (req: any, res: any, next: any) => {
     // Comment out the actual authentication check for now
     // return res.status(401).json({ error: 'Unauthorized' });
   }
+  
+  console.log('[Dashboard API] User authenticated:', req.user.id);
   next();
 };
 
-// Apply authentication middleware to all dashboard routes
+// Add a simple health-check endpoint WITHOUT authentication
+dashboardRouter.get('/health', (req: any, res: any) => {
+  console.log('[Dashboard API] Health check received');
+  return res.status(200).json({ 
+    status: 'ok',
+    message: 'Dashboard API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Apply authentication middleware to all other dashboard routes
 dashboardRouter.use(isAuthenticated);
 
 // Endpoint to get the user's dashboard configuration

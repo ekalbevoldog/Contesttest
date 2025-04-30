@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { dashboardQueryOptions, addWidget, reorderWidgets } from '@/lib/dashboard-service';
-import { Widget, WidgetType } from '../../shared/dashboard-schema';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  dashboardQueryOptions, 
+  addWidget, 
+  reorderWidgets, 
+  dashboardWs,
+  DashboardLocalStorageCache
+} from '@/lib/dashboard-service';
+import { Widget, WidgetType, DashboardConfig } from '../../shared/dashboard-schema';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, AlertTriangle, WifiOff } from 'lucide-react';
 import StatsWidget from '@/components/dashboard/StatsWidget';
 import ChartWidget from '@/components/dashboard/ChartWidget';
 import ActivityWidget from '@/components/dashboard/ActivityWidget';
@@ -30,6 +36,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { v4 as uuidv4 } from 'uuid';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Function to get widget component by type
 const getWidgetComponent = (widget: Widget, isEditing: boolean = false) => {
@@ -70,18 +78,227 @@ const sizeClasses = {
 const Dashboard: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [addWidgetOpen, setAddWidgetOpen] = useState(false);
   const [newWidgetType, setNewWidgetType] = useState<WidgetType>('stats');
   const [newWidgetTitle, setNewWidgetTitle] = useState('');
+  const [wsConnected, setWsConnected] = useState(false);
+  const [useOfflineMode, setUseOfflineMode] = useState(false);
+  const [localDashboardConfig, setLocalDashboardConfig] = useState<DashboardConfig | null>(null);
+  
+  // Generate default widgets based on user role
+  const generateDefaultWidgets = useCallback((userId: string, role: string): Widget[] => {
+    const defaultWidgets: Widget[] = [];
+    
+    // Stats widget for all roles
+    defaultWidgets.push({
+      id: `stats-${uuidv4()}`,
+      type: 'stats',
+      title: 'Key Metrics',
+      position: 0,
+      size: 'md',
+      visible: true,
+      settings: {
+        refreshInterval: 300,
+      }
+    });
+    
+    // Different widgets based on role
+    if (role === 'athlete') {
+      defaultWidgets.push({
+        id: `activity-${uuidv4()}`,
+        type: 'activity',
+        title: 'Recent Activity',
+        position: 1,
+        size: 'md',
+        visible: true,
+        settings: {}
+      });
+      
+      defaultWidgets.push({
+        id: `opportunities-${uuidv4()}`,
+        type: 'quickActions',
+        title: 'Available Opportunities',
+        position: 2,
+        size: 'md',
+        visible: true,
+        settings: {
+          maxItems: 5,
+          showIcons: true
+        }
+      });
+    } else if (role === 'business') {
+      defaultWidgets.push({
+        id: `chart-${uuidv4()}`,
+        type: 'chart',
+        title: 'Campaign Performance',
+        position: 1,
+        size: 'lg',
+        visible: true,
+        settings: {
+          chartType: 'bar',
+          dataKey: 'campaigns'
+        }
+      });
+      
+      defaultWidgets.push({
+        id: `actions-${uuidv4()}`,
+        type: 'quickActions',
+        title: 'Campaign Actions',
+        position: 2,
+        size: 'sm',
+        visible: true,
+        settings: {}
+      });
+    } else {
+      // Admin or compliance officer
+      defaultWidgets.push({
+        id: `chart-${uuidv4()}`,
+        type: 'chart',
+        title: 'Platform Analytics',
+        position: 1,
+        size: 'lg', 
+        visible: true,
+        settings: {
+          chartType: 'line',
+          dataKey: 'analytics'
+        }
+      });
+    }
+    
+    return defaultWidgets;
+  }, []);
+  
+  // Create local cache in case API fails
+  const createLocalDashboardConfig = useCallback(() => {
+    if (!user) return null;
+    
+    const userId = user.id || localStorage.getItem('userId') || 'anonymous';
+    const role = user.role || localStorage.getItem('userRole') || 'athlete';
+    
+    // Store the user ID and role for reference
+    localStorage.setItem('userId', userId);
+    localStorage.setItem('userRole', role);
+    
+    // Generate default widgets for this user
+    const widgets = generateDefaultWidgets(userId, role);
+    
+    const dashboardConfig: DashboardConfig = {
+      userId: userId,
+      lastUpdated: new Date().toISOString(),
+      widgets
+    };
+    
+    // Save to localStorage
+    DashboardLocalStorageCache.saveConfig(dashboardConfig);
+    
+    return dashboardConfig;
+  }, [user, generateDefaultWidgets]);
   
   // Fetch dashboard configuration
   const { 
     data: dashboardConfig, 
     isLoading, 
     isError,
+    error,
     refetch 
-  } = useQuery(dashboardQueryOptions.config);
+  } = useQuery({
+    ...dashboardQueryOptions.config,
+    retry: 1, // Don't retry too many times
+    refetchOnWindowFocus: false, // Disable automatic refetches on window focus
+    onError: () => {
+      // On error, try to use cached config
+      const cachedConfig = DashboardLocalStorageCache.loadConfig();
+      if (cachedConfig) {
+        setLocalDashboardConfig(cachedConfig);
+        setUseOfflineMode(true);
+        toast({
+          title: "Using offline dashboard",
+          description: "Could not connect to server. Using locally cached dashboard configuration.",
+          variant: "warning"
+        });
+      } else {
+        // If no cached config, create a default one
+        const newConfig = createLocalDashboardConfig();
+        if (newConfig) {
+          setLocalDashboardConfig(newConfig);
+          setUseOfflineMode(true);
+          toast({
+            title: "Using default dashboard",
+            description: "Created a default dashboard configuration for offline use.",
+            variant: "warning"
+          });
+        }
+      }
+    },
+    onSuccess: (data) => {
+      // On success, update the local cache
+      DashboardLocalStorageCache.saveConfig(data);
+      setUseOfflineMode(false);
+    }
+  });
+  
+  // Set up WebSocket connection for real-time dashboard updates
+  useEffect(() => {
+    if (user?.id) {
+      // Set user info in the WebSocket manager
+      dashboardWs.setUser(user.id, user.role || 'athlete');
+      
+      // Connect to WebSocket for real-time updates
+      dashboardWs.connect();
+      
+      // Listen for connection status
+      const connectionUnsubscribe = dashboardWs.on('connection', (data) => {
+        setWsConnected(data.status === 'connected');
+        if (data.status === 'connected') {
+          console.log('[Dashboard Page] WebSocket connected');
+          // Request latest dashboard data via WebSocket
+          dashboardWs.send('get_dashboard', { userId: user.id });
+        }
+      });
+      
+      // Listen for dashboard updates
+      const dashboardUnsubscribe = dashboardWs.on('dashboard_update', (data) => {
+        console.log('[Dashboard Page] Received dashboard update via WebSocket:', data);
+        // Update the react-query cache with the new data
+        queryClient.setQueryData(['/api/dashboard/config'], data.config);
+        toast({
+          title: "Dashboard updated",
+          description: "Your dashboard has been updated in real-time.",
+        });
+      });
+      
+      return () => {
+        // Clean up event listeners and close connection when component unmounts
+        connectionUnsubscribe();
+        dashboardUnsubscribe();
+        dashboardWs.disconnect();
+      };
+    }
+  }, [user, queryClient, toast]);
+  
+  // Log dashboard configuration for debugging
+  useEffect(() => {
+    console.log('[Dashboard Page] Auth user:', user);
+    console.log('[Dashboard Page] Dashboard config fetch status:', { 
+      isLoading, 
+      isError, 
+      hasData: !!dashboardConfig,
+      usingOfflineMode: useOfflineMode,
+      localCache: !!localDashboardConfig,
+      wsConnected
+    });
+    if (error) {
+      console.error('[Dashboard Page] Error fetching dashboard config:', error);
+    }
+    if (dashboardConfig) {
+      console.log('[Dashboard Page] Dashboard config loaded:', dashboardConfig);
+    }
+    if (localDashboardConfig) {
+      console.log('[Dashboard Page] Local dashboard config:', localDashboardConfig);
+    }
+  }, [dashboardConfig, isLoading, isError, error, user, useOfflineMode, localDashboardConfig, wsConnected]);
 
   // Handle adding a new widget
   const addWidgetMutation = useMutation({
@@ -141,34 +358,111 @@ const Dashboard: React.FC = () => {
     });
   };
   
-  if (isLoading) {
+  // Helper function to handle automatic dashboard initialization
+  const handleDashboardInit = useCallback(() => {
+    // If we're in offline mode and have a local config, use that
+    if (useOfflineMode && localDashboardConfig) {
+      // Use the cached dashboard configuration
+      return localDashboardConfig;
+    }
+    
+    // If still loading, show loading state
+    if (isLoading) {
+      return null;
+    }
+    
+    // Use the fetched dashboard configuration if available
+    if (dashboardConfig) {
+      return dashboardConfig;
+    }
+    
+    // As a last resort, create a new local dashboard config
+    const newConfig = createLocalDashboardConfig();
+    if (newConfig) {
+      return newConfig;
+    }
+    
+    // If all else fails, return empty config
+    return {
+      userId: user?.id || 'anonymous',
+      lastUpdated: new Date().toISOString(),
+      widgets: []
+    };
+  }, [isLoading, dashboardConfig, useOfflineMode, localDashboardConfig, createLocalDashboardConfig, user]);
+  
+  // Get the active dashboard config
+  const activeDashboardConfig = handleDashboardInit();
+  
+  // Show loading state
+  if (isLoading && !useOfflineMode && !localDashboardConfig) {
     return (
       <div className="container mx-auto py-8 flex items-center justify-center min-h-[300px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  if (isError || !dashboardConfig) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="bg-red-50 p-4 rounded-md text-red-500 text-center">
-          <h2 className="text-lg font-semibold">Error loading dashboard</h2>
-          <p>There was a problem loading your dashboard. Please try refreshing the page.</p>
-          <Button 
-            onClick={() => refetch()} 
-            variant="outline" 
-            className="mt-2"
-          >
-            Refresh
-          </Button>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
   
+  // If we have a critical error and no fallback
+  if ((isError || !activeDashboardConfig) && !useOfflineMode && !localDashboardConfig) {
+    return (
+      <div className="container mx-auto py-8">
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error loading dashboard</AlertTitle>
+          <AlertDescription>
+            We couldn't load your dashboard data. This could be due to a network issue or a server problem.
+          </AlertDescription>
+        </Alert>
+        
+        <div className="flex flex-col gap-4 items-center justify-center">
+          <p>Please try one of the following:</p>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => refetch()} 
+              variant="outline"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry Connection
+            </Button>
+            
+            <Button 
+              onClick={() => {
+                const newConfig = createLocalDashboardConfig();
+                if (newConfig) {
+                  setLocalDashboardConfig(newConfig);
+                  setUseOfflineMode(true);
+                  toast({
+                    title: "Using offline mode",
+                    description: "Created a default dashboard for offline use.",
+                  });
+                }
+              }}
+            >
+              <WifiOff className="h-4 w-4 mr-2" />
+              Use Offline Mode
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // If we have no dashboard config at all (very unlikely)
+  if (!activeDashboardConfig) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Dashboard Unavailable</h2>
+        <p className="mb-4">We couldn't initialize your dashboard. Please try again later.</p>
+        <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+      </div>
+    );
+  }
+  
   // Sort widgets by position
-  const sortedWidgets = [...dashboardConfig.widgets].sort((a, b) => a.position - b.position);
+  const sortedWidgets = [...activeDashboardConfig.widgets].sort((a, b) => a.position - b.position);
   
   // Filter visible widgets
   const visibleWidgets = sortedWidgets.filter(widget => widget.visible);
