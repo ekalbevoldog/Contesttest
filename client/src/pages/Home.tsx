@@ -55,9 +55,9 @@ export default function Home() {
         <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel opacity-30 rounded-full"></div>
         
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="container mx-auto px-4 py-20 relative z-10">
+        <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <Parallax className="space-y-6" speed={0.2} direction="up" offset={[-20, 20]}>
+            <Parallax className="space-y-4" speed={0.2} direction="up" offset={[-20, 20]}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -73,7 +73,7 @@ export default function Home() {
               </motion.div>
               
               <motion.div
-                className="glass-card p-6"
+                className="glass-card p-6 mb-2"
                 initial={{ opacity: 0, filter: "blur(4px)" }}
                 animate={{ opacity: 1, filter: "blur(0px)" }}
                 transition={{ duration: 0.8, delay: 0.4 }}
@@ -88,7 +88,7 @@ export default function Home() {
               </motion.div>
               
               <motion.div 
-                className="flex gap-4"
+                className="flex gap-4 mt-4"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
@@ -112,8 +112,6 @@ export default function Home() {
                   </motion.a>
                 </Link>
               </motion.div>
-              
-
             </Parallax>
             
             <Parallax direction="right" speed={0.1} offset={[-15, 15]} className="relative h-72 md:h-96 hidden lg:block">
