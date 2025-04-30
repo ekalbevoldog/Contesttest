@@ -315,6 +315,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', createBusinessProfileEndpoint);
   
+  // API diagnostic health check
+  app.get('/api/diagnostic/check', async (req: Request, res: Response) => {
+    try {
+      console.log('Diagnostic API health check');
+      
+      // Check Supabase connection
+      const { data: health, error: healthError } = await supabase
+        .from('users')
+        .select('id')
+        .limit(1);
+      
+      if (healthError) {
+        console.error('Supabase connection error:', healthError);
+        return res.status(500).json({ 
+          status: 'error', 
+          supabase: false,
+          error: healthError.message 
+        });
+      }
+      
+      // Check business_profiles table structure
+      const { data: profilesCheck, error: profilesError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .limit(1);
+      
+      return res.status(200).json({
+        status: 'ok',
+        supabase: true,
+        businessProfilesAccessible: !profilesError,
+        timestamp: new Date().toISOString(),
+        profilesError: profilesError ? profilesError.message : null
+      });
+    } catch (error) {
+      console.error('Error in diagnostic endpoint:', error);
+      return res.status(500).json({ 
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Endpoint to list all business profiles - DEBUG ONLY
+  app.get('/api/admin/business-profiles', async (req: Request, res: Response) => {
+    try {
+      console.log('Listing all business profiles - debug mode');
+      
+      const { data, error } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .limit(50);
+      
+      if (error) {
+        console.error('Error fetching business profiles list:', error);
+        return res.status(500).json({ error: 'Failed to fetch business profiles' });
+      }
+      
+      return res.status(200).json({ profiles: data || [] });
+    } catch (error) {
+      console.error('Error in business profiles list endpoint:', error);
+      return res.status(500).json({ error: 'Server error processing request' });
+    }
+  });
+
   // Endpoint to get business profile from Supabase directly
   app.get('/api/supabase/business-profile/:userId', async (req: Request, res: Response) => {
     try {
@@ -327,6 +391,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`[API] Fetching business profile for user ID: ${userId}`);
+      
+      // Check if user exists in users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, role')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error(`Error fetching user ${userId}:`, userError);
+      } else {
+        console.log(`User ${userId} exists:`, !!userData);
+      }
       
       // Get business profile from Supabase
       console.log('Querying Supabase for business profile...');
