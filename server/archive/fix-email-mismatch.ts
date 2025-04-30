@@ -7,16 +7,6 @@
 
 import { supabase, supabaseAdmin } from '../supabase.js';
 
-// Parse command line arguments
-const args = process.argv.slice(2);
-const userId = args.find(arg => arg.startsWith('--user-id='))?.split('=')[1];
-const correctEmail = args.find(arg => arg.startsWith('--correct-email='))?.split('=')[1];
-const authId = args.find(arg => arg.startsWith('--auth-id='))?.split('=')[1];
-const dryRun = args.includes('--dry-run');
-
-/**
- * Fix email mismatch for a user
- */
 export async function fixEmailMismatch(
   userId: string | number,
   correctEmail?: string,
