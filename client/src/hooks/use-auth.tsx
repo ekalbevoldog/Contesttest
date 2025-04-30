@@ -444,15 +444,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await logoutUser();
     },
     onSuccess: () => {
+      console.log('[Auth Provider] Logout successful, clearing data');
       // Clear user state
       setUser(null);
       setProfile(null);
 
+      // Import our dashboard auth helpers
+      const { clearAuthInfo } = require('@/lib/dashboard-service');
+
       // Clear localStorage completely
       if (typeof window !== 'undefined') {
+        // Clear standard auth data
         localStorage.removeItem('contestedUserData');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
+        localStorage.removeItem('authToken');
+        
+        // Use our helper to ensure all auth tokens are cleared
+        try {
+          clearAuthInfo();
+        } catch (err) {
+          console.error('[Auth Provider] Error clearing auth info:', err);
+        }
         localStorage.removeItem('contested-auth');
         localStorage.removeItem('supabase.auth.token');
         localStorage.removeItem('sb-auth-token');

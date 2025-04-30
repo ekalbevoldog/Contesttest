@@ -469,9 +469,37 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="container mx-auto py-6 px-4">
+      {useOfflineMode && (
+        <Alert variant="warning" className="mb-4">
+          <WifiOff className="h-4 w-4" />
+          <AlertTitle>Offline Mode Active</AlertTitle>
+          <AlertDescription>
+            You're currently using a locally cached version of your dashboard. 
+            Some features may be limited.
+            <Button 
+              variant="link" 
+              className="p-0 h-auto font-semibold text-primary ml-2"
+              onClick={() => {
+                setUseOfflineMode(false);
+                refetch();
+              }}
+            >
+              Try reconnecting
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            {wsConnected && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                Live
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground">
             Welcome back, {user?.username || 'User'}. Here's your personalized dashboard.
           </p>
