@@ -533,7 +533,7 @@ export default function AthleteDashboard() {
       <div className="flex flex-col gap-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-4xl font-bold">
+            <h1 className="text-4xl font-bold font-heading">
               <span className="bg-gradient-to-r from-blue-700 to-indigo-800 bg-clip-text text-transparent">
                 Athlete Dashboard
               </span>

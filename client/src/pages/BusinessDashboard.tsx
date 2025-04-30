@@ -563,7 +563,7 @@ export default function BusinessDashboard() {
         <div className="flex flex-col gap-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-white">Business Dashboard</h1>
+              <h1 className="text-3xl font-bold text-white font-heading">Business Dashboard</h1>
               <p className="text-gray-300 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
               {process.env.NODE_ENV === 'development' && (
                 <div className="text-xs text-gray-500 mt-1">
@@ -641,7 +641,7 @@ export default function BusinessDashboard() {
             {/* Welcome Card */}
             <Card className="col-span-full bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
               <CardHeader className="pb-2">
-                <CardTitle className="text-white">Welcome, {profileData?.name || 'Business Partner'}</CardTitle>
+                <CardTitle className="text-white font-heading">Welcome, {profileData?.name || 'Business Partner'}</CardTitle>
                 <CardDescription className="text-gray-400">
                   Your business dashboard provides tools to manage athlete partnerships.
                 </CardDescription>
@@ -683,7 +683,7 @@ export default function BusinessDashboard() {
             <Card className="md:col-span-8 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-white">Campaign Performance</CardTitle>
+                  <CardTitle className="text-white font-heading">Campaign Performance</CardTitle>
                   <Button variant="outline" size="sm" className="h-8 border border-zinc-700 bg-black/40 hover:bg-zinc-900/80 backdrop-blur-sm text-gray-300">
                     <ChevronRight className="h-4 w-4 mr-1" />
                     View All
@@ -719,7 +719,7 @@ export default function BusinessDashboard() {
             {/* Budget Allocation Chart */}
             <Card className="md:col-span-4 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-white">Budget Allocation</CardTitle>
+                <CardTitle className="text-white font-heading">Budget Allocation</CardTitle>
                 <CardDescription className="text-gray-400">Campaign spending breakdown</CardDescription>
               </CardHeader>
               <CardContent className="h-80">
@@ -750,7 +750,7 @@ export default function BusinessDashboard() {
             {/* Audience Demographics Chart */}
             <Card className="md:col-span-6 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-white">Audience Demographics</CardTitle>
+                <CardTitle className="text-white font-heading">Audience Demographics</CardTitle>
                 <CardDescription className="text-gray-400">Age and gender distribution of your audience</CardDescription>
               </CardHeader>
               <CardContent className="h-80">
@@ -776,7 +776,7 @@ export default function BusinessDashboard() {
             <Card className="md:col-span-6 bg-zinc-900/40 backdrop-blur-sm border border-zinc-800 shadow-lg hover:shadow-amber-500/5 transition-all duration-300">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-white">Recent Campaigns</CardTitle>
+                  <CardTitle className="text-white font-heading">Recent Campaigns</CardTitle>
                   <Button variant="outline" size="sm" className="h-8 border border-zinc-700 bg-black/40 hover:bg-zinc-900/80 backdrop-blur-sm text-gray-300">
                     View All
                   </Button>
