@@ -22,11 +22,11 @@ export async function createBusinessProfileEndpoint(req: Request, res: Response)
     
     console.log(`[createBusinessProfileEndpoint] Creating profile for user ${userId}`);
     
-    // First check if a profile already exists for this user using user_id field
+    // First check if a profile already exists for this user using id field
     const { data: existingProfile, error: profileCheckError } = await supabase
       .from('business_profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .maybeSingle();
     
     if (profileCheckError) {
@@ -58,16 +58,17 @@ export async function createBusinessProfileEndpoint(req: Request, res: Response)
     }
     
     // Get session details for the user
+    // Sessions table does use user_id field
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
     
-    // Create minimal business profile with proper user_id field
+    // Create minimal business profile with ID field correctly mapped to the user's ID
     const businessProfile = {
       name: user.username || 'New Business',
-      user_id: user.id, // Correct field to link to users table
+      id: userId, // ID in business_profiles directly maps to user's ID
       session_id: session?.id || null,
       values: '',
       product_type: '',
