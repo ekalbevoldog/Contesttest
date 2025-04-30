@@ -11,6 +11,8 @@ import { sessionService } from "./services/sessionService.js";
 import { supabase } from "./supabase.js";
 import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
 import { pool, db as supabaseAdmin } from "./db.js";
+// Import auth fixes
+import { createBusinessProfileEndpoint } from "./auth-fixes/create-business-profile-endpoint.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -309,6 +311,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup authentication with Supabase
   setupSupabaseAuth(app);
+  
+  // Register the business profile auto-creation endpoint
+  app.post('/api/create-business-profile', createBusinessProfileEndpoint);
 
   // Database schema diagnostic endpoint
   app.get("/api/db/schema/check", async (req: Request, res: Response) => {
