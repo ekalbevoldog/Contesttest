@@ -149,21 +149,43 @@ export default function BusinessDashboard() {
     // First priority: use profile from auth context if available
     if (authProfile) {
       console.log('Using profile data from auth context:', authProfile);
+      console.log('Auth profile has keys:', Object.keys(authProfile));
       
       const profileToUse: ProfileData = {
-        id: typeof authProfile.id === 'number' ? authProfile.id : 
-            authProfile.id ? parseInt(authProfile.id as string, 10) : undefined,
+        // Handle ID which could be a string UUID or number
+        id: typeof authProfile.id === 'number' 
+            ? authProfile.id 
+            : authProfile.id 
+              ? parseInt(authProfile.id as string, 10) || undefined
+              : undefined,
+              
+        // Handle all the field names with both camelCase and snake_case variants
         name: authProfile.name || authProfile.business_name || '',
-        productType: authProfile.productType || authProfile.product_type || '',
-        audienceGoals: authProfile.audienceGoals || authProfile.audience_goals || '',
-        values: authProfile.values || '',
         email: authProfile.email || user?.email || '',
+        
+        // Industry field
         industry: authProfile.industry || '',
+        
+        // Business type field
         businessType: authProfile.businessType || authProfile.business_type || '',
+        
+        // Company size field
         companySize: authProfile.companySize || authProfile.company_size || '',
+        
+        // Product type field
+        productType: authProfile.productType || authProfile.product_type || '',
+        
+        // Audience goals field
+        audienceGoals: authProfile.audienceGoals || authProfile.audience_goals || '',
+        
+        // Values field
+        values: authProfile.values || '',
+        
+        // Preferences
         preferencesJson: authProfile.preferences || authProfile.preferencesJson || ''
       };
       
+      console.log('Mapped auth profile data:', profileToUse);
       setProfileData(profileToUse);
       setIsLoadingProfile(false);
       setLoading(false);
@@ -188,22 +210,58 @@ export default function BusinessDashboard() {
       })
       .then(data => {
         console.log('Successfully created business profile:', data);
-        if (data?.profile) {
+        
+        // The profile might be directly in data or nested in a profile property
+        const profileData = data?.profile || data;
+        
+        if (profileData) {
+          console.log('Processing created profile data with keys:', Object.keys(profileData));
+          
           const profile: ProfileData = {
-            id: data.profile.id,
-            name: data.profile.name || '',
-            industry: data.profile.industry || '',
-            businessType: data.profile.business_type || '',
-            companySize: data.profile.company_size || '',
-            email: data.profile.email || '',
-            preferencesJson: data.profile.preferences || ''
+            // Handle ID which could be a string UUID or number
+            id: typeof profileData.id === 'number' 
+                ? profileData.id 
+                : profileData.id 
+                  ? parseInt(profileData.id as string, 10) || undefined
+                  : undefined,
+                  
+            // Handle all the field names with both camelCase and snake_case variants
+            name: profileData.name || profileData.business_name || '',
+            email: profileData.email || user?.email || '',
+            
+            // Industry field
+            industry: profileData.industry || '',
+            
+            // Business type field
+            businessType: profileData.businessType || profileData.business_type || '',
+            
+            // Company size field
+            companySize: profileData.companySize || profileData.company_size || '',
+            
+            // Product type field
+            productType: profileData.productType || profileData.product_type || '',
+            
+            // Audience goals field
+            audienceGoals: profileData.audienceGoals || profileData.audience_goals || '',
+            
+            // Values field
+            values: profileData.values || '',
+            
+            // Preferences
+            preferencesJson: profileData.preferences || profileData.preferencesJson || ''
           };
+          
+          console.log('Mapped created profile data:', profile);
           setProfileData(profile);
           
           // Store in localStorage for next time
           localStorage.setItem('contestedUserData', JSON.stringify(profile));
         } else {
-          setProfileData(data);
+          console.log('No valid profile data found in response');
+          setProfileData({
+            email: user?.email || '',
+            name: 'Business Account'
+          });
         }
         setIsLoadingProfile(false);
         setLoading(false);
@@ -244,28 +302,62 @@ export default function BusinessDashboard() {
       })
       .then(data => {
         console.log('Successfully fetched business profile:', data);
-        if (data?.profile) {
+        
+        // The profile might be directly in data or nested in a profile property
+        const profileData = data?.profile || data;
+        
+        if (profileData) {
+          console.log('Processing profile data with keys:', Object.keys(profileData));
+          
           const profile: ProfileData = {
-            id: data.profile.id,
-            name: data.profile.name || '',
-            industry: data.profile.industry || '',
-            businessType: data.profile.business_type || '',
-            companySize: data.profile.company_size || '',
-            email: data.profile.email || '',
-            preferencesJson: data.profile.preferences || '',
-            // Include other fields to ensure display
-            audienceGoals: data.profile.audience_goals || '',
-            productType: data.profile.product_type || '',
-            values: data.profile.values || ''
+            // Handle ID which could be a string UUID or number
+            id: typeof profileData.id === 'number' 
+                ? profileData.id 
+                : profileData.id 
+                  ? parseInt(profileData.id as string, 10) || undefined
+                  : undefined,
+                  
+            // Handle all the field names with both camelCase and snake_case variants
+            name: profileData.name || profileData.business_name || '',
+            email: profileData.email || user?.email || '',
+            
+            // Industry field
+            industry: profileData.industry || '',
+            
+            // Business type field
+            businessType: profileData.businessType || profileData.business_type || '',
+            
+            // Company size field
+            companySize: profileData.companySize || profileData.company_size || '',
+            
+            // Product type field
+            productType: profileData.productType || profileData.product_type || '',
+            
+            // Audience goals field
+            audienceGoals: profileData.audienceGoals || profileData.audience_goals || '',
+            
+            // Values field
+            values: profileData.values || '',
+            
+            // Preferences
+            preferencesJson: profileData.preferences || profileData.preferencesJson || ''
           };
-          console.log('Setting profile data:', profile);
+          
+          console.log('Mapped profile data:', profile);
           setProfileData(profile);
           
           // Store in localStorage for next time
           localStorage.setItem('contestedUserData', JSON.stringify(profile));
         } else {
-          console.log('No profile property in data, using data directly:', data);
-          setProfileData(data);
+          console.log('No valid profile data found in response');
+          
+          // Create a minimal profile with user email
+          const minimalProfile: ProfileData = {
+            email: user?.email || '',
+            name: 'Business Account'
+          };
+          
+          setProfileData(minimalProfile);
         }
         setIsLoadingProfile(false);
         setLoading(false);
