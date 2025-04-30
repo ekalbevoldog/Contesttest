@@ -1,175 +1,794 @@
-import { Router } from 'express';
-import { storage } from './storage';
+import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { DashboardConfig, Widget, WidgetType } from '../shared/dashboard-schema';
+import { storage } from './storage';
+import { widgetSchema, dashboardConfigSchema } from '../shared/dashboard-schema';
 
-const dashboardRouter = Router();
+const router = Router();
 
-// Get dashboard configuration for the current user
-dashboardRouter.get('/', async (req, res) => {
+// Helper function to check authentication
+const ensureAuthenticated = (req: Request, res: Response, next: Function) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+// Generate sample data based on user type
+const getSampleWidgetData = (req: Request, dataType: string, source: string = 'default') => {
+  const userType = req.user?.role || 'athlete';
+  const userId = req.user?.id.toString() || '';
+  
+  // Stats Widget Data
+  if (dataType === 'stats') {
+    if (userType === 'athlete') {
+      return {
+        items: [
+          {
+            key: 'followers',
+            label: 'Followers',
+            value: '2.4k',
+            icon: 'Users',
+            color: 'blue',
+            trend: 'up',
+            change: 12,
+            link: '/analytics'
+          },
+          {
+            key: 'engagement',
+            label: 'Engagement Rate',
+            value: '4.7%',
+            icon: 'BarChart2',
+            color: 'green',
+            trend: 'up',
+            change: 2.3,
+          },
+          {
+            key: 'offers',
+            label: 'Pending Offers',
+            value: '3',
+            icon: 'FileText',
+            color: 'amber',
+            link: '/offers'
+          },
+          {
+            key: 'campaigns',
+            label: 'Active Campaigns',
+            value: '2',
+            icon: 'Briefcase',
+            color: 'purple',
+            link: '/campaigns'
+          }
+        ]
+      };
+    } else if (userType === 'business') {
+      return {
+        items: [
+          {
+            key: 'campaigns',
+            label: 'Active Campaigns',
+            value: '4',
+            icon: 'Briefcase',
+            color: 'purple',
+            link: '/campaigns'
+          },
+          {
+            key: 'athletes',
+            label: 'Partnered Athletes',
+            value: '7',
+            icon: 'Users',
+            color: 'blue',
+            trend: 'up',
+            change: 3,
+            link: '/partners'
+          },
+          {
+            key: 'budget',
+            label: 'Budget Utilized',
+            value: '68%',
+            icon: 'DollarSign',
+            color: 'amber',
+            trend: 'up',
+            change: 8,
+          },
+          {
+            key: 'roi',
+            label: 'Estimated ROI',
+            value: '2.3x',
+            icon: 'TrendingUp',
+            color: 'green',
+            trend: 'up',
+            change: 0.5,
+            link: '/analytics'
+          }
+        ]
+      };
+    } else if (userType === 'compliance') {
+      return {
+        items: [
+          {
+            key: 'pending',
+            label: 'Pending Reviews',
+            value: '12',
+            icon: 'Clock',
+            color: 'amber',
+            link: '/pending-reviews'
+          },
+          {
+            key: 'approved',
+            label: 'Approved This Week',
+            value: '34',
+            icon: 'CheckCircle',
+            color: 'green',
+            trend: 'up',
+            change: 8,
+          },
+          {
+            key: 'rejected',
+            label: 'Rejected This Week',
+            value: '6',
+            icon: 'XCircle',
+            color: 'red',
+            trend: 'down',
+            change: 2,
+          },
+          {
+            key: 'overdue',
+            label: 'Overdue Reviews',
+            value: '3',
+            icon: 'AlertTriangle',
+            color: 'red',
+            link: '/overdue'
+          }
+        ]
+      };
+    } else {
+      // Admin stats
+      return {
+        items: [
+          {
+            key: 'athletes',
+            label: 'Total Athletes',
+            value: '1.2k',
+            icon: 'User',
+            color: 'blue',
+            trend: 'up',
+            change: 5,
+            link: '/athletes'
+          },
+          {
+            key: 'businesses',
+            label: 'Total Businesses',
+            value: '642',
+            icon: 'Briefcase',
+            color: 'purple',
+            trend: 'up',
+            change: 3,
+            link: '/businesses'
+          },
+          {
+            key: 'campaigns',
+            label: 'Active Campaigns',
+            value: '213',
+            icon: 'Activity',
+            color: 'green',
+            link: '/campaigns'
+          },
+          {
+            key: 'revenue',
+            label: 'Monthly Revenue',
+            value: '$28.5k',
+            icon: 'DollarSign',
+            color: 'green',
+            trend: 'up',
+            change: 12,
+            link: '/revenue'
+          }
+        ]
+      };
+    }
+  }
+  
+  // Chart Widget Data
+  else if (dataType === 'chart') {
+    if (source === 'engagement') {
+      return {
+        xAxis: 'date',
+        series: ['views', 'likes', 'comments', 'shares'],
+        data: [
+          { date: 'Jan', views: 4000, likes: 2400, comments: 1200, shares: 800 },
+          { date: 'Feb', views: 3000, likes: 1398, comments: 800, shares: 500 },
+          { date: 'Mar', views: 2000, likes: 9800, comments: 2200, shares: 1800 },
+          { date: 'Apr', views: 2780, likes: 3908, comments: 1800, shares: 1500 },
+          { date: 'May', views: 1890, likes: 4800, comments: 2400, shares: 1900 },
+          { date: 'Jun', views: 2390, likes: 3800, comments: 2100, shares: 1700 },
+          { date: 'Jul', views: 3490, likes: 4300, comments: 2500, shares: 2000 }
+        ]
+      };
+    } else if (source === 'campaigns') {
+      return {
+        xAxis: 'month',
+        series: ['active', 'completed', 'pending'],
+        data: [
+          { month: 'Jan', active: 10, completed: 5, pending: 3 },
+          { month: 'Feb', active: 12, completed: 8, pending: 5 },
+          { month: 'Mar', active: 15, completed: 10, pending: 8 },
+          { month: 'Apr', active: 18, completed: 12, pending: 6 },
+          { month: 'May', active: 20, completed: 15, pending: 10 },
+          { month: 'Jun', active: 24, completed: 18, pending: 8 }
+        ]
+      };
+    } else if (source === 'revenue') {
+      return {
+        xAxis: 'month',
+        series: ['revenue', 'expenses', 'profit'],
+        data: [
+          { month: 'Jan', revenue: 10000, expenses: 7000, profit: 3000 },
+          { month: 'Feb', revenue: 12000, expenses: 7500, profit: 4500 },
+          { month: 'Mar', revenue: 15000, expenses: 8000, profit: 7000 },
+          { month: 'Apr', revenue: 18000, expenses: 9000, profit: 9000 },
+          { month: 'May', revenue: 20000, expenses: 10000, profit: 10000 },
+          { month: 'Jun', revenue: 22000, expenses: 11000, profit: 11000 }
+        ]
+      };
+    } else {
+      // Default chart data
+      return {
+        xAxis: 'month',
+        series: ['value'],
+        data: [
+          { month: 'Jan', value: 4000 },
+          { month: 'Feb', value: 3000 },
+          { month: 'Mar', value: 2000 },
+          { month: 'Apr', value: 2780 },
+          { month: 'May', value: 1890 },
+          { month: 'Jun', value: 2390 },
+          { month: 'Jul', value: 3490 }
+        ]
+      };
+    }
+  }
+  
+  // Activity Widget Data
+  else if (dataType === 'activity') {
+    if (userType === 'athlete') {
+      return [
+        {
+          id: '1',
+          title: 'New campaign offer',
+          description: 'Nike has sent you a new campaign offer',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          icon: 'MailOpen',
+          status: 'pending',
+          link: '/offers/123'
+        },
+        {
+          id: '2',
+          title: 'Campaign approved',
+          description: 'Your Adidas campaign was approved by compliance',
+          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+          icon: 'CheckCircle',
+          status: 'success',
+          link: '/campaigns/456'
+        },
+        {
+          id: '3',
+          title: 'Payment received',
+          description: 'You received $1,200 for the Under Armour campaign',
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'DollarSign',
+          status: 'success'
+        },
+        {
+          id: '4',
+          title: 'Content submission required',
+          description: 'Please submit content for the Reebok campaign',
+          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'AlertCircle',
+          status: 'warning',
+          link: '/campaigns/789/submit'
+        }
+      ];
+    } else if (userType === 'business') {
+      return [
+        {
+          id: '1',
+          title: 'New athlete match',
+          description: 'We found 5 new athlete matches for your campaign',
+          timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+          icon: 'Users',
+          status: 'success',
+          link: '/matches'
+        },
+        {
+          id: '2',
+          title: 'Campaign launched',
+          description: 'Your summer campaign has been launched successfully',
+          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'Zap',
+          status: 'success',
+          link: '/campaigns/123'
+        },
+        {
+          id: '3',
+          title: 'Content approval needed',
+          description: 'John Smith has submitted content for your review',
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'FileText',
+          status: 'pending',
+          link: '/content/456'
+        },
+        {
+          id: '4',
+          title: 'Billing update',
+          description: 'Your monthly invoice has been generated',
+          timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'CreditCard',
+          link: '/billing'
+        }
+      ];
+    } else if (userType === 'compliance') {
+      return [
+        {
+          id: '1',
+          title: 'New review request',
+          description: 'Campaign agreement needs compliance review',
+          timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+          icon: 'FileText',
+          status: 'pending',
+          link: '/reviews/123'
+        },
+        {
+          id: '2',
+          title: 'Content flagged',
+          description: 'Athlete content flagged for review',
+          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+          icon: 'Flag',
+          status: 'warning',
+          link: '/content/456'
+        },
+        {
+          id: '3',
+          title: 'Review completed',
+          description: 'You approved Nike spring campaign',
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'CheckCircle',
+          status: 'success'
+        },
+        {
+          id: '4',
+          title: 'Policy update',
+          description: 'Compliance policy updated - review changes',
+          timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'Book',
+          link: '/policies'
+        }
+      ];
+    } else {
+      // Admin activities
+      return [
+        {
+          id: '1',
+          title: 'New business registration',
+          description: 'Adidas registered as a new business',
+          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+          icon: 'Briefcase',
+          status: 'success',
+          link: '/businesses/123'
+        },
+        {
+          id: '2',
+          title: 'System alert',
+          description: 'Unusual login activity detected',
+          timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+          icon: 'AlertTriangle',
+          status: 'warning',
+          link: '/security'
+        },
+        {
+          id: '3',
+          title: 'Revenue milestone',
+          description: 'Platform reached $1M in monthly revenue',
+          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'DollarSign',
+          status: 'success'
+        },
+        {
+          id: '4',
+          title: 'New feature deployed',
+          description: 'Messaging system deployed to production',
+          timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          icon: 'Package',
+          link: '/releases'
+        }
+      ];
+    }
+  }
+  
+  // Quick Actions Widget Data
+  else if (dataType === 'quickActions') {
+    if (userType === 'athlete') {
+      return [
+        {
+          id: '1',
+          label: 'Review Offers',
+          description: 'Review pending campaign offers',
+          icon: 'Inbox',
+          link: '/offers',
+          color: 'blue'
+        },
+        {
+          id: '2',
+          label: 'Submit Content',
+          description: 'Upload content for active campaigns',
+          icon: 'Upload',
+          link: '/submit-content',
+          color: 'green'
+        },
+        {
+          id: '3',
+          label: 'Update Profile',
+          description: 'Keep your profile information current',
+          icon: 'User',
+          link: '/profile',
+          color: 'purple'
+        },
+        {
+          id: '4',
+          label: 'View Analytics',
+          description: 'Check your performance metrics',
+          icon: 'BarChart2',
+          link: '/analytics',
+          color: 'amber'
+        }
+      ];
+    } else if (userType === 'business') {
+      return [
+        {
+          id: '1',
+          label: 'Create Campaign',
+          description: 'Start a new marketing campaign',
+          icon: 'Plus',
+          link: '/campaigns/new',
+          color: 'blue'
+        },
+        {
+          id: '2',
+          label: 'Browse Athletes',
+          description: 'Find athletes that match your needs',
+          icon: 'Search',
+          link: '/athletes',
+          color: 'purple'
+        },
+        {
+          id: '3',
+          label: 'Review Content',
+          description: 'Review submitted campaign content',
+          icon: 'FileText',
+          link: '/content-review',
+          color: 'amber'
+        },
+        {
+          id: '4',
+          label: 'Campaign Analytics',
+          description: 'Track your campaign performance',
+          icon: 'PieChart',
+          link: '/analytics',
+          color: 'green'
+        }
+      ];
+    } else if (userType === 'compliance') {
+      return [
+        {
+          id: '1',
+          label: 'Pending Reviews',
+          description: 'Review pending campaigns and content',
+          icon: 'Clock',
+          link: '/pending-reviews',
+          color: 'amber'
+        },
+        {
+          id: '2',
+          label: 'Flag Content',
+          description: 'Flag problematic content for review',
+          icon: 'Flag',
+          link: '/flag-content',
+          color: 'red'
+        },
+        {
+          id: '3',
+          label: 'Policy Updates',
+          description: 'View recent compliance policy changes',
+          icon: 'FileText',
+          link: '/policies',
+          color: 'blue'
+        },
+        {
+          id: '4',
+          label: 'Generate Report',
+          description: 'Create compliance reports',
+          icon: 'FileText',
+          link: '/reports',
+          color: 'green'
+        }
+      ];
+    } else {
+      // Admin quick actions
+      return [
+        {
+          id: '1',
+          label: 'User Management',
+          description: 'Manage platform users',
+          icon: 'Users',
+          link: '/users',
+          color: 'blue'
+        },
+        {
+          id: '2',
+          label: 'System Settings',
+          description: 'Configure application settings',
+          icon: 'Settings',
+          link: '/settings',
+          color: 'purple'
+        },
+        {
+          id: '3',
+          label: 'Analytics Dashboard',
+          description: 'View platform analytics',
+          icon: 'BarChart2',
+          link: '/admin-analytics',
+          color: 'green'
+        },
+        {
+          id: '4',
+          label: 'Support Tickets',
+          description: 'Handle user support tickets',
+          icon: 'HelpCircle',
+          link: '/support',
+          color: 'amber'
+        }
+      ];
+    }
+  }
+  
+  return null;
+};
+
+// Get dashboard configuration
+router.get('/config', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user?.id.toString() || '';
+    
+    // Get user's dashboard configuration from storage
+    let config = await storage.getDashboardConfig(userId);
+    
+    // If no configuration exists, create a default one
+    if (!config) {
+      const userType = req.user?.role || 'athlete';
+      const defaultWidgets = [];
+      
+      // Create default widgets based on user type
+      if (userType === 'athlete') {
+        defaultWidgets.push(
+          {
+            id: uuidv4(),
+            title: 'Your Statistics',
+            type: 'stats',
+            position: 0,
+            size: 'full',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Engagement Over Time',
+            type: 'chart',
+            position: 1,
+            size: 'lg',
+            visible: true,
+            settings: { 
+              chartType: 'line',
+              dataSource: 'engagement'
+            }
+          },
+          {
+            id: uuidv4(),
+            title: 'Recent Activity',
+            type: 'activity',
+            position: 2,
+            size: 'md',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Quick Actions',
+            type: 'quickActions',
+            position: 3,
+            size: 'sm',
+            visible: true
+          }
+        );
+      } else if (userType === 'business') {
+        defaultWidgets.push(
+          {
+            id: uuidv4(),
+            title: 'Campaign Overview',
+            type: 'stats',
+            position: 0,
+            size: 'full',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Campaign Performance',
+            type: 'chart',
+            position: 1,
+            size: 'lg',
+            visible: true,
+            settings: { 
+              chartType: 'bar',
+              dataSource: 'campaigns'
+            }
+          },
+          {
+            id: uuidv4(),
+            title: 'Recent Activity',
+            type: 'activity',
+            position: 2,
+            size: 'md',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Quick Actions',
+            type: 'quickActions',
+            position: 3,
+            size: 'sm',
+            visible: true
+          }
+        );
+      } else if (userType === 'compliance') {
+        defaultWidgets.push(
+          {
+            id: uuidv4(),
+            title: 'Review Status',
+            type: 'stats',
+            position: 0,
+            size: 'full',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Review Activity',
+            type: 'activity',
+            position: 1,
+            size: 'lg',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Quick Actions',
+            type: 'quickActions',
+            position: 2,
+            size: 'md',
+            visible: true
+          }
+        );
+      } else {
+        // Admin
+        defaultWidgets.push(
+          {
+            id: uuidv4(),
+            title: 'Platform Overview',
+            type: 'stats',
+            position: 0,
+            size: 'full',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Revenue',
+            type: 'chart',
+            position: 1,
+            size: 'lg',
+            visible: true,
+            settings: { 
+              chartType: 'area',
+              dataSource: 'revenue'
+            }
+          },
+          {
+            id: uuidv4(),
+            title: 'Recent Activity',
+            type: 'activity',
+            position: 2,
+            size: 'md',
+            visible: true
+          },
+          {
+            id: uuidv4(),
+            title: 'Admin Actions',
+            type: 'quickActions',
+            position: 3,
+            size: 'sm',
+            visible: true
+          }
+        );
+      }
+      
+      // Create and save the default configuration
+      config = {
+        userId,
+        widgets: defaultWidgets,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      await storage.saveDashboardConfig(userId, config);
     }
     
-    const userId = req.user.id.toString();
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
-      // If no dashboard config exists, create default config
-      const defaultConfig = await createDefaultConfig(userId, req.user.role);
-      return res.json(defaultConfig);
-    }
-    
-    res.json(dashboardConfig);
+    res.json(config);
   } catch (error) {
     console.error('Error getting dashboard config:', error);
     res.status(500).json({ error: 'Failed to get dashboard configuration' });
   }
 });
 
-// Save dashboard configuration
-dashboardRouter.post('/', async (req, res) => {
+// Update dashboard configuration
+router.post('/config', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user?.id.toString() || '';
+    const config = req.body;
+    
+    // Validate config
+    const validation = dashboardConfigSchema.safeParse(config);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid dashboard configuration', details: validation.error });
     }
     
-    const userId = req.user.id.toString();
-    const config = req.body as DashboardConfig;
-    
+    // Ensure userId matches the authenticated user
     if (config.userId !== userId) {
-      return res.status(403).json({ error: 'Forbidden: User ID mismatch' });
+      return res.status(403).json({ error: 'Unauthorized to modify this dashboard' });
     }
     
+    // Save the updated configuration
     await storage.saveDashboardConfig(userId, config);
-    res.status(200).json({ success: true });
+    
+    res.json(config);
   } catch (error) {
     console.error('Error saving dashboard config:', error);
     res.status(500).json({ error: 'Failed to save dashboard configuration' });
   }
 });
 
-// Get default dashboard configuration
-dashboardRouter.get('/default', async (req, res) => {
+// Add a new widget
+router.post('/widgets', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user?.id.toString() || '';
+    const widgetData = req.body;
+    
+    // Validate widget data
+    const validation = widgetSchema.safeParse(widgetData);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid widget data', details: validation.error });
     }
     
-    const userId = req.user.id.toString();
-    const userRole = req.user.role;
-    
-    const defaultConfig = await createDefaultConfig(userId, userRole);
-    res.json(defaultConfig);
-  } catch (error) {
-    console.error('Error getting default dashboard config:', error);
-    res.status(500).json({ error: 'Failed to get default dashboard configuration' });
-  }
-});
-
-// Reset dashboard to default configuration
-dashboardRouter.post('/reset', async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userId = req.user.id.toString();
-    const userRole = req.user.role;
-    
-    const defaultConfig = await createDefaultConfig(userId, userRole);
-    await storage.saveDashboardConfig(userId, defaultConfig);
-    
-    res.json(defaultConfig);
-  } catch (error) {
-    console.error('Error resetting dashboard config:', error);
-    res.status(500).json({ error: 'Failed to reset dashboard configuration' });
-  }
-});
-
-// Reorder widgets
-dashboardRouter.post('/reorder', async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userId = req.user.id.toString();
-    const { widgetIds } = req.body;
-    
-    if (!Array.isArray(widgetIds)) {
-      return res.status(400).json({ error: 'Invalid widget IDs' });
-    }
-    
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
+    // Get the current dashboard config
+    const config = await storage.getDashboardConfig(userId);
+    if (!config) {
       return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
-    // Reorder widgets based on the provided widget IDs
-    const reorderedWidgets = widgetIds.map((id, index) => {
-      const widget = dashboardConfig.widgets.find(w => w.id === id);
-      if (widget) {
-        return { ...widget, position: index };
-      }
-      return null;
-    }).filter(Boolean) as Widget[];
-    
-    // Add any widgets that weren't included in the widgetIds array
-    const remainingWidgets = dashboardConfig.widgets
-      .filter(w => !widgetIds.includes(w.id))
-      .map((w, i) => ({ ...w, position: reorderedWidgets.length + i }));
-    
-    const updatedConfig = {
-      ...dashboardConfig,
-      widgets: [...reorderedWidgets, ...remainingWidgets],
-      lastUpdated: new Date().toISOString()
+    // Add the new widget with a generated ID
+    const newWidget = {
+      ...widgetData,
+      id: widgetData.id || uuidv4()
     };
     
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    res.json(updatedConfig);
-  } catch (error) {
-    console.error('Error reordering widgets:', error);
-    res.status(500).json({ error: 'Failed to reorder widgets' });
-  }
-});
-
-// Widget-specific routes
-const widgetsRouter = Router();
-
-// Add a widget
-widgetsRouter.post('/add', async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    config.widgets.push(newWidget);
+    config.lastUpdated = new Date().toISOString();
     
-    const userId = req.user.id.toString();
-    const { type } = req.body;
+    // Save the updated configuration
+    await storage.saveDashboardConfig(userId, config);
     
-    if (!type || !['stats', 'chart', 'activity', 'quickActions'].includes(type)) {
-      return res.status(400).json({ error: 'Invalid widget type' });
-    }
-    
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
-      return res.status(404).json({ error: 'Dashboard configuration not found' });
-    }
-    
-    // Create new widget
-    const newWidget = createWidget(type as WidgetType, dashboardConfig.widgets.length);
-    
-    const updatedConfig = {
-      ...dashboardConfig,
-      widgets: [...dashboardConfig.widgets, newWidget],
-      lastUpdated: new Date().toISOString()
-    };
-    
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    res.json(newWidget);
+    res.status(201).json(newWidget);
   } catch (error) {
     console.error('Error adding widget:', error);
     res.status(500).json({ error: 'Failed to add widget' });
@@ -177,99 +796,116 @@ widgetsRouter.post('/add', async (req, res) => {
 });
 
 // Update a widget
-widgetsRouter.patch('/:widgetId', async (req, res) => {
+router.patch('/widgets/:id', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userId = req.user.id.toString();
-    const { widgetId } = req.params;
+    const userId = req.user?.id.toString() || '';
+    const widgetId = req.params.id;
     const updates = req.body;
     
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
+    // Get the current dashboard config
+    const config = await storage.getDashboardConfig(userId);
+    if (!config) {
       return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
-    const widgetIndex = dashboardConfig.widgets.findIndex(w => w.id === widgetId);
-    
+    // Find the widget to update
+    const widgetIndex = config.widgets.findIndex(w => w.id === widgetId);
     if (widgetIndex === -1) {
       return res.status(404).json({ error: 'Widget not found' });
     }
     
-    // Update widget
-    const updatedWidget = {
-      ...dashboardConfig.widgets[widgetIndex],
+    // Update the widget
+    config.widgets[widgetIndex] = {
+      ...config.widgets[widgetIndex],
       ...updates
     };
     
-    const updatedWidgets = [...dashboardConfig.widgets];
-    updatedWidgets[widgetIndex] = updatedWidget;
+    config.lastUpdated = new Date().toISOString();
     
-    const updatedConfig = {
-      ...dashboardConfig,
-      widgets: updatedWidgets,
-      lastUpdated: new Date().toISOString()
-    };
+    // Save the updated configuration
+    await storage.saveDashboardConfig(userId, config);
     
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    res.json(updatedWidget);
+    res.json(config.widgets[widgetIndex]);
   } catch (error) {
     console.error('Error updating widget:', error);
     res.status(500).json({ error: 'Failed to update widget' });
   }
 });
 
-// Remove a widget
-widgetsRouter.delete('/:widgetId', async (req, res) => {
+// Delete a widget
+router.delete('/widgets/:id', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    const userId = req.user?.id.toString() || '';
+    const widgetId = req.params.id;
     
-    const userId = req.user.id.toString();
-    const { widgetId } = req.params;
-    
-    const dashboardConfig = await storage.getDashboardConfig(userId);
-    
-    if (!dashboardConfig) {
+    // Get the current dashboard config
+    const config = await storage.getDashboardConfig(userId);
+    if (!config) {
       return res.status(404).json({ error: 'Dashboard configuration not found' });
     }
     
-    // Filter out the widget to remove
-    const updatedWidgets = dashboardConfig.widgets
-      .filter(w => w.id !== widgetId)
-      .map((w, i) => ({ ...w, position: i })); // Update positions
+    // Find the widget to delete
+    const widgetIndex = config.widgets.findIndex(w => w.id === widgetId);
+    if (widgetIndex === -1) {
+      return res.status(404).json({ error: 'Widget not found' });
+    }
     
-    const updatedConfig = {
-      ...dashboardConfig,
-      widgets: updatedWidgets,
-      lastUpdated: new Date().toISOString()
-    };
+    // Remove the widget
+    config.widgets.splice(widgetIndex, 1);
+    config.lastUpdated = new Date().toISOString();
     
-    await storage.saveDashboardConfig(userId, updatedConfig);
-    res.status(200).json({ success: true });
+    // Save the updated configuration
+    await storage.saveDashboardConfig(userId, config);
+    
+    res.sendStatus(204);
   } catch (error) {
-    console.error('Error removing widget:', error);
-    res.status(500).json({ error: 'Failed to remove widget' });
+    console.error('Error deleting widget:', error);
+    res.status(500).json({ error: 'Failed to delete widget' });
   }
 });
 
-// Mock data endpoints for widgets
-const dataRouter = Router();
-
-// Get stats data
-dataRouter.get('/stats', (req, res) => {
+// Reorder widgets
+router.post('/widgets/reorder', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const userId = req.user?.id.toString() || '';
+    const { widgetIds } = req.body;
+    
+    if (!Array.isArray(widgetIds)) {
+      return res.status(400).json({ error: 'Widget IDs must be an array' });
     }
     
-    const userRole = req.user.role;
-    const statsData = getMockStatsData(userRole);
+    // Get the current dashboard config
+    const config = await storage.getDashboardConfig(userId);
+    if (!config) {
+      return res.status(404).json({ error: 'Dashboard configuration not found' });
+    }
     
+    // Create a map of widget IDs to their new positions
+    const positionMap = new Map(widgetIds.map((id, index) => [id, index]));
+    
+    // Update the positions of widgets
+    config.widgets.forEach(widget => {
+      if (positionMap.has(widget.id)) {
+        widget.position = positionMap.get(widget.id)!;
+      }
+    });
+    
+    config.lastUpdated = new Date().toISOString();
+    
+    // Save the updated configuration
+    await storage.saveDashboardConfig(userId, config);
+    
+    res.json(config.widgets);
+  } catch (error) {
+    console.error('Error reordering widgets:', error);
+    res.status(500).json({ error: 'Failed to reorder widgets' });
+  }
+});
+
+// Get stats data for the stats widget
+router.get('/stats', ensureAuthenticated, (req: Request, res: Response) => {
+  try {
+    const statsData = getSampleWidgetData(req, 'stats');
     res.json(statsData);
   } catch (error) {
     console.error('Error getting stats data:', error);
@@ -277,17 +913,11 @@ dataRouter.get('/stats', (req, res) => {
   }
 });
 
-// Get chart data
-dataRouter.get('/:source', (req, res) => {
+// Get chart data for the chart widget
+router.get('/charts/:source?', ensureAuthenticated, (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const { source } = req.params;
-    const userRole = req.user.role;
-    
-    const chartData = getMockChartData(source, userRole);
+    const source = req.params.source || 'default';
+    const chartData = getSampleWidgetData(req, 'chart', source);
     res.json(chartData);
   } catch (error) {
     console.error('Error getting chart data:', error);
@@ -295,16 +925,10 @@ dataRouter.get('/:source', (req, res) => {
   }
 });
 
-// Get activity data
-dataRouter.get('/activities', (req, res) => {
+// Get activity data for the activity widget
+router.get('/activity', ensureAuthenticated, (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userRole = req.user.role;
-    const activityData = getMockActivityData(userRole);
-    
+    const activityData = getSampleWidgetData(req, 'activity');
     res.json(activityData);
   } catch (error) {
     console.error('Error getting activity data:', error);
@@ -312,16 +936,10 @@ dataRouter.get('/activities', (req, res) => {
   }
 });
 
-// Get quick actions data
-dataRouter.get('/quickActions', (req, res) => {
+// Get quick actions data for the quick actions widget
+router.get('/quick-actions', ensureAuthenticated, (req: Request, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    const userRole = req.user.role;
-    const quickActionsData = getMockQuickActionsData(userRole);
-    
+    const quickActionsData = getSampleWidgetData(req, 'quickActions');
     res.json(quickActionsData);
   } catch (error) {
     console.error('Error getting quick actions data:', error);
@@ -329,491 +947,4 @@ dataRouter.get('/quickActions', (req, res) => {
   }
 });
 
-// Helper functions
-function createWidget(type: WidgetType, position: number): Widget {
-  const id = uuidv4();
-  let title = '';
-  let description = '';
-  let size: 'sm' | 'md' | 'lg' | 'xl' | 'full' = 'md';
-  let settings = {};
-  
-  switch (type) {
-    case 'stats':
-      title = 'Key Metrics';
-      description = 'Overview of important statistics';
-      size = 'lg';
-      break;
-    case 'chart':
-      title = 'Performance Trends';
-      description = 'Visualize your data over time';
-      size = 'lg';
-      settings = {
-        chartType: 'line',
-        timeRange: '30d',
-        showControls: true,
-        showLegend: true
-      };
-      break;
-    case 'activity':
-      title = 'Recent Activity';
-      description = 'Latest updates and notifications';
-      size = 'md';
-      settings = {
-        maxItems: 5
-      };
-      break;
-    case 'quickActions':
-      title = 'Quick Actions';
-      description = 'Frequently used actions';
-      size = 'md';
-      settings = {
-        columns: 3
-      };
-      break;
-  }
-  
-  return {
-    id,
-    type,
-    title,
-    description,
-    size,
-    position,
-    visible: true,
-    settings
-  };
-}
-
-// Create default dashboard configuration based on user role
-async function createDefaultConfig(userId: string, userRole: string): Promise<DashboardConfig> {
-  const widgets: Widget[] = [];
-  
-  // Common widgets for all roles
-  widgets.push(createWidget('stats', 0));
-  widgets.push(createWidget('activity', 1));
-  
-  // Role-specific widgets
-  if (userRole === 'athlete') {
-    widgets.push(createWidget('chart', 2));
-    widgets.push(createWidget('quickActions', 3));
-  } else if (userRole === 'business') {
-    widgets.push(createWidget('chart', 2));
-    widgets.push(createWidget('quickActions', 3));
-  } else if (userRole === 'compliance' || userRole === 'admin') {
-    widgets.push(createWidget('chart', 2));
-    widgets.push(createWidget('quickActions', 3));
-  }
-  
-  return {
-    userId,
-    widgets,
-    lastUpdated: new Date().toISOString()
-  };
-}
-
-// Mock data functions (these will be replaced with real data from your database)
-function getMockStatsData(userRole: string) {
-  switch (userRole) {
-    case 'athlete':
-      return {
-        items: [
-          { key: 'matches', label: 'Matches', value: 12, trend: 'up', change: 25, icon: 'Users', color: 'blue' },
-          { key: 'campaigns', label: 'Active Campaigns', value: 3, trend: 'up', change: 50, icon: 'Megaphone', color: 'green' },
-          { key: 'earnings', label: 'Earnings', value: '$2,500', trend: 'up', change: 15, icon: 'DollarSign', color: 'amber' },
-          { key: 'followers', label: 'New Followers', value: 102, trend: 'down', change: 5, icon: 'Heart', color: 'red' }
-        ],
-        timestamp: new Date().toISOString()
-      };
-    case 'business':
-      return {
-        items: [
-          { key: 'campaigns', label: 'Active Campaigns', value: 5, trend: 'up', change: 20, icon: 'Megaphone', color: 'green' },
-          { key: 'matches', label: 'Athlete Matches', value: 27, trend: 'up', change: 35, icon: 'Users', color: 'blue' },
-          { key: 'budget', label: 'Budget Used', value: '$12,500', trend: 'neutral', change: 0, icon: 'DollarSign', color: 'amber' },
-          { key: 'engagement', label: 'Engagement Rate', value: '12.5%', trend: 'up', change: 8, icon: 'BarChart', color: 'purple' }
-        ],
-        timestamp: new Date().toISOString()
-      };
-    case 'compliance':
-    case 'admin':
-      return {
-        items: [
-          { key: 'pending', label: 'Pending Reviews', value: 23, trend: 'down', change: 10, icon: 'Clock', color: 'amber' },
-          { key: 'approved', label: 'Approved', value: 145, trend: 'up', change: 32, icon: 'CheckCircle', color: 'green' },
-          { key: 'rejected', label: 'Rejected', value: 12, trend: 'down', change: 15, icon: 'XCircle', color: 'red' },
-          { key: 'users', label: 'Active Users', value: 1250, trend: 'up', change: 5, icon: 'Users', color: 'blue' }
-        ],
-        timestamp: new Date().toISOString()
-      };
-    default:
-      return {
-        items: [],
-        timestamp: new Date().toISOString()
-      };
-  }
-}
-
-function getMockChartData(source: string, userRole: string) {
-  const now = new Date();
-  const data = [];
-  
-  // Generate dates for the last 30 days
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(now.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-    
-    switch (source) {
-      case 'engagement':
-        data.push({
-          date: dateStr,
-          views: Math.floor(Math.random() * 1000) + 500,
-          likes: Math.floor(Math.random() * 200) + 100,
-          shares: Math.floor(Math.random() * 50) + 20
-        });
-        break;
-      case 'campaigns':
-        data.push({
-          date: dateStr,
-          active: Math.floor(Math.random() * 10) + 1,
-          completed: Math.floor(Math.random() * 5),
-          pending: Math.floor(Math.random() * 3)
-        });
-        break;
-      case 'revenue':
-        data.push({
-          date: dateStr,
-          amount: Math.floor(Math.random() * 1000) + 200
-        });
-        break;
-      case 'performance':
-        data.push({
-          date: dateStr,
-          clicks: Math.floor(Math.random() * 500) + 100,
-          conversions: Math.floor(Math.random() * 50) + 10,
-          roi: (Math.random() * 20 + 5).toFixed(2)
-        });
-        break;
-      default:
-        // Default data with random values
-        data.push({
-          date: dateStr,
-          value1: Math.floor(Math.random() * 100) + 50,
-          value2: Math.floor(Math.random() * 100) + 25
-        });
-    }
-  }
-  
-  let series: string[] = [];
-  let xAxis = 'date';
-  
-  switch (source) {
-    case 'engagement':
-      series = ['views', 'likes', 'shares'];
-      break;
-    case 'campaigns':
-      series = ['active', 'completed', 'pending'];
-      break;
-    case 'revenue':
-      series = ['amount'];
-      break;
-    case 'performance':
-      series = ['clicks', 'conversions', 'roi'];
-      break;
-    default:
-      series = ['value1', 'value2'];
-  }
-  
-  return { data, series, xAxis };
-}
-
-function getMockActivityData(userRole: string) {
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const threeDaysAgo = new Date(now);
-  threeDaysAgo.setDate(now.getDate() - 3);
-  const lastWeek = new Date(now);
-  lastWeek.setDate(now.getDate() - 7);
-  
-  switch (userRole) {
-    case 'athlete':
-      return [
-        {
-          id: '1',
-          type: 'match',
-          icon: 'Users',
-          title: 'New Match',
-          description: 'You matched with Nike for their winter campaign',
-          timestamp: now.toISOString(),
-          status: 'success',
-          link: '/matches/123'
-        },
-        {
-          id: '2',
-          type: 'payment',
-          icon: 'DollarSign',
-          title: 'Payment Received',
-          description: 'Received $500 from Adidas campaign',
-          timestamp: yesterday.toISOString(),
-          status: 'success',
-          link: '/payments/456'
-        },
-        {
-          id: '3',
-          type: 'campaign',
-          icon: 'Megaphone',
-          title: 'Campaign Update',
-          description: 'Under Armour campaign needs your attention',
-          timestamp: threeDaysAgo.toISOString(),
-          status: 'pending',
-          link: '/campaigns/789'
-        },
-        {
-          id: '4',
-          type: 'message',
-          icon: 'MessageSquare',
-          title: 'New Message',
-          description: 'Message from Puma about upcoming campaign',
-          timestamp: lastWeek.toISOString(),
-          link: '/messages/101'
-        }
-      ];
-    case 'business':
-      return [
-        {
-          id: '1',
-          type: 'campaign',
-          icon: 'Megaphone',
-          title: 'Campaign Created',
-          description: 'Summer promotional campaign successfully created',
-          timestamp: now.toISOString(),
-          status: 'success',
-          link: '/campaigns/123'
-        },
-        {
-          id: '2',
-          type: 'match',
-          icon: 'Users',
-          title: 'New Athlete Matches',
-          description: '5 new athletes matched with your campaign',
-          timestamp: yesterday.toISOString(),
-          status: 'success',
-          link: '/matches'
-        },
-        {
-          id: '3',
-          type: 'alert',
-          icon: 'AlertCircle',
-          title: 'Budget Alert',
-          description: 'Campaign is nearing its budget limit',
-          timestamp: threeDaysAgo.toISOString(),
-          status: 'warning',
-          link: '/campaigns/456/budget'
-        },
-        {
-          id: '4',
-          type: 'message',
-          icon: 'MessageSquare',
-          title: 'New Messages',
-          description: '2 athletes have sent you messages',
-          timestamp: lastWeek.toISOString(),
-          link: '/messages'
-        }
-      ];
-    case 'compliance':
-    case 'admin':
-      return [
-        {
-          id: '1',
-          type: 'review',
-          icon: 'CheckCircle',
-          title: 'Campaign Approved',
-          description: 'Nike winter campaign approved',
-          timestamp: now.toISOString(),
-          status: 'success',
-          link: '/campaigns/123'
-        },
-        {
-          id: '2',
-          type: 'alert',
-          icon: 'AlertTriangle',
-          title: 'Content Alert',
-          description: 'Adidas campaign content needs review',
-          timestamp: yesterday.toISOString(),
-          status: 'error',
-          link: '/campaigns/456'
-        },
-        {
-          id: '3',
-          type: 'notification',
-          icon: 'Bell',
-          title: 'New Athletes',
-          description: '12 new athletes registered today',
-          timestamp: threeDaysAgo.toISOString(),
-          link: '/users/athletes'
-        },
-        {
-          id: '4',
-          type: 'update',
-          icon: 'RefreshCw',
-          title: 'System Update',
-          description: 'Platform updated to version 2.5',
-          timestamp: lastWeek.toISOString(),
-          status: 'success',
-          link: '/system/updates'
-        }
-      ];
-    default:
-      return [];
-  }
-}
-
-function getMockQuickActionsData(userRole: string) {
-  switch (userRole) {
-    case 'athlete':
-      return [
-        {
-          id: '1',
-          label: 'Browse Campaigns',
-          icon: 'Search',
-          link: '/campaigns',
-          color: 'blue'
-        },
-        {
-          id: '2',
-          label: 'View Matches',
-          icon: 'Users',
-          link: '/matches',
-          color: 'green'
-        },
-        {
-          id: '3',
-          label: 'Check Messages',
-          icon: 'MessageSquare',
-          link: '/messages',
-          color: 'purple'
-        },
-        {
-          id: '4',
-          label: 'Update Profile',
-          icon: 'User',
-          link: '/profile',
-          color: 'amber'
-        },
-        {
-          id: '5',
-          label: 'View Earnings',
-          icon: 'DollarSign',
-          link: '/earnings',
-          color: 'cyan'
-        },
-        {
-          id: '6',
-          label: 'Get Support',
-          icon: 'HelpCircle',
-          link: '/support',
-          color: 'red'
-        }
-      ];
-    case 'business':
-      return [
-        {
-          id: '1',
-          label: 'Create Campaign',
-          icon: 'PlusCircle',
-          link: '/campaigns/new',
-          color: 'green'
-        },
-        {
-          id: '2',
-          label: 'View Athletes',
-          icon: 'Users',
-          link: '/athletes',
-          color: 'blue'
-        },
-        {
-          id: '3',
-          label: 'Manage Campaigns',
-          icon: 'Layers',
-          link: '/campaigns',
-          color: 'purple'
-        },
-        {
-          id: '4',
-          label: 'Review Matches',
-          icon: 'CheckSquare',
-          link: '/matches',
-          color: 'amber'
-        },
-        {
-          id: '5',
-          label: 'View Analytics',
-          icon: 'BarChart2',
-          link: '/analytics',
-          color: 'cyan'
-        },
-        {
-          id: '6',
-          label: 'Get Support',
-          icon: 'HelpCircle',
-          link: '/support',
-          color: 'red'
-        }
-      ];
-    case 'compliance':
-    case 'admin':
-      return [
-        {
-          id: '1',
-          label: 'Review Campaigns',
-          icon: 'CheckCircle',
-          link: '/compliance/campaigns',
-          color: 'amber'
-        },
-        {
-          id: '2',
-          label: 'Manage Users',
-          icon: 'Users',
-          link: '/admin/users',
-          color: 'blue'
-        },
-        {
-          id: '3',
-          label: 'View Reports',
-          icon: 'FileText',
-          link: '/reports',
-          color: 'green'
-        },
-        {
-          id: '4',
-          label: 'System Settings',
-          icon: 'Settings',
-          link: '/admin/settings',
-          color: 'purple'
-        },
-        {
-          id: '5',
-          label: 'Audit Log',
-          icon: 'List',
-          link: '/admin/audit',
-          color: 'cyan'
-        },
-        {
-          id: '6',
-          label: 'Help Center',
-          icon: 'HelpCircle',
-          link: '/help',
-          color: 'red'
-        }
-      ];
-    default:
-      return [];
-  }
-}
-
-// Register routes
-dashboardRouter.use('/widgets', widgetsRouter);
-dashboardRouter.use('/data', dataRouter);
-
-export { dashboardRouter };
+export const dashboardRouter = router;
