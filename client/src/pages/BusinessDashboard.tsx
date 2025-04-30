@@ -77,6 +77,7 @@ export default function BusinessDashboard() {
   const { user, profile: authProfile, userType, hasProfile, isLoading: isLoadingAuth } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profileSource, setProfileSource] = useState<string>('unknown');
   
   useEffect(() => {
     console.log("========== Business Dashboard useEffect executing ==========");
@@ -146,10 +147,55 @@ export default function BusinessDashboard() {
     console.log("Confirmed business role. Checking for profile...");
     console.log("Profile state:", { hasProfile, authProfile });
     
-    // First priority: use profile from auth context if available
+    // Check if profile data is directly embedded in the user object
+    if (user.profile) {
+      console.log('FOUND PROFILE DIRECTLY IN USER OBJECT:', user.profile);
+      console.log('User profile has keys:', Object.keys(user.profile));
+      setProfileSource('user.profile');
+      
+      const profileFromUser: ProfileData = {
+        // Handle ID which could be a string UUID or number
+        id: typeof user.profile.id === 'number' 
+            ? user.profile.id 
+            : user.profile.id 
+              ? parseInt(user.profile.id as string, 10) || undefined
+              : undefined,
+              
+        // Handle all the field names with both camelCase and snake_case variants
+        name: user.profile.name || user.profile.business_name || '',
+        email: user.profile.email || user?.email || '',
+        
+        // Industry field
+        industry: user.profile.industry || '',
+        
+        // Business type field
+        businessType: user.profile.businessType || user.profile.business_type || '',
+        
+        // Company size field
+        companySize: user.profile.companySize || user.profile.company_size || '',
+        
+        // Product type field
+        productType: user.profile.productType || user.profile.product_type || '',
+        
+        // Values field
+        values: user.profile.values || '',
+        
+        // Preferences
+        preferencesJson: user.profile.preferences || user.profile.preferencesJson || ''
+      };
+      
+      console.log('Mapped user.profile data:', profileFromUser);
+      setProfileData(profileFromUser);
+      setIsLoadingProfile(false);
+      setLoading(false);
+      return;
+    }
+    
+    // Second priority: use profile from auth context
     if (authProfile) {
       console.log('Using profile data from auth context:', authProfile);
       console.log('Auth profile has keys:', Object.keys(authProfile));
+      setProfileSource('authProfile');
       
       const profileToUse: ProfileData = {
         // Handle ID which could be a string UUID or number
@@ -308,6 +354,7 @@ export default function BusinessDashboard() {
         
         if (profileData) {
           console.log('Processing profile data with keys:', Object.keys(profileData));
+          setProfileSource('api_fetch');
           
           const profile: ProfileData = {
             // Handle ID which could be a string UUID or number
@@ -401,6 +448,11 @@ export default function BusinessDashboard() {
           <div>
             <h1 className="text-3xl font-bold">Business Dashboard</h1>
             <p className="text-gray-800 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-slate-500 mt-1">
+                Profile source: {profileSource} | ID: {profileData?.id}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <Dialog open={notificationOpen} onOpenChange={setNotificationOpen}>
