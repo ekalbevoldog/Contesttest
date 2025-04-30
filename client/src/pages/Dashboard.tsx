@@ -207,35 +207,42 @@ const Dashboard: React.FC = () => {
     ...dashboardQueryOptions.config,
     retry: 1, // Don't retry too many times
     refetchOnWindowFocus: false, // Disable automatic refetches on window focus
-    onError: () => {
-      // On error, try to use cached config
-      const cachedConfig = DashboardLocalStorageCache.loadConfig();
-      if (cachedConfig) {
-        setLocalDashboardConfig(cachedConfig);
-        setUseOfflineMode(true);
-        toast({
-          title: "Using offline dashboard",
-          description: "Could not connect to server. Using locally cached dashboard configuration.",
-          variant: "warning"
-        });
-      } else {
-        // If no cached config, create a default one
-        const newConfig = createLocalDashboardConfig();
-        if (newConfig) {
-          setLocalDashboardConfig(newConfig);
+    onSettled: (data, error) => {
+      // Always check if we should use fallback config
+      if (error || !data || (data && data.widgets && data.widgets.length === 0)) {
+        console.log('[Dashboard] API response invalid or empty, checking for local cache');
+        // First try to use cached config
+        const cachedConfig = DashboardLocalStorageCache.loadConfig();
+        if (cachedConfig) {
+          console.log('[Dashboard] Using cached config:', cachedConfig);
+          setLocalDashboardConfig(cachedConfig);
           setUseOfflineMode(true);
           toast({
-            title: "Using default dashboard",
-            description: "Created a default dashboard configuration for offline use.",
+            title: "Using offline dashboard",
+            description: "Using locally cached dashboard configuration.",
             variant: "warning"
           });
+        } else {
+          // If no cached config, create a default one
+          console.log('[Dashboard] No cached config, creating default config');
+          const newConfig = createLocalDashboardConfig();
+          if (newConfig) {
+            console.log('[Dashboard] Created default config:', newConfig);
+            setLocalDashboardConfig(newConfig);
+            setUseOfflineMode(true);
+            toast({
+              title: "Using default dashboard",
+              description: "Created a default dashboard configuration.",
+              variant: "warning"
+            });
+          }
         }
+      } else if (data) {
+        // On success with valid data, update the local cache
+        console.log('[Dashboard] Received valid config from API, caching');
+        DashboardLocalStorageCache.saveConfig(data);
+        setUseOfflineMode(false);
       }
-    },
-    onSuccess: (data) => {
-      // On success, update the local cache
-      DashboardLocalStorageCache.saveConfig(data);
-      setUseOfflineMode(false);
     }
   });
   
