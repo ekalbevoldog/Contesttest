@@ -1,6 +1,10 @@
 import { WebSocket } from 'ws';
 import { storage } from '../storage.js';
 
+// WebSockets have been disabled for Supabase compatibility
+// Using HTTP polling instead
+console.log('[WebSocketService] WebSockets are disabled - using HTTP polling for real-time updates');
+
 interface ConnectedClient {
   ws: WebSocket;
   userId?: number;
@@ -8,105 +12,52 @@ interface ConnectedClient {
   lastActivity: Date;
 }
 
+/**
+ * WEBSOCKET SERVICE DISABLED
+ * This service has been fully disabled as WebSockets are not compatible
+ * with the current Supabase implementation. All real-time updates are
+ * now handled via HTTP polling.
+ */
 class WebSocketService {
   private clients: Map<string, ConnectedClient> = new Map();
   private messageQueue: Map<number, any[]> = new Map();
 
-  registerClient(sessionId: string, ws: WebSocket, userType: number) { // Added userType parameter
-    this.clients.set(sessionId, {
-      ws,
-      userType, // Added userType
-      lastActivity: new Date()
-    });
-
-    ws.on('message', async (data: string) => {
-      try {
-        const message = JSON.parse(data);
-
-        if (message.type === 'presence') {
-          this.updatePresence(sessionId);
-        } else if (message.type === 'message') {
-          await this.handleNewMessage(message);
-        }
-      } catch (error) {
-        console.error('Error processing WebSocket message:', error);
-      }
-    });
-
-    ws.on('close', () => {
-      this.clients.delete(sessionId);
-      this.broadcastPresence();
-    });
+  // All methods disabled - WebSockets not compatible with Supabase
+  registerClient(sessionId: string, ws: WebSocket, userType: number) { 
+    console.log('[WebSocketService] registerClient called, but WebSockets are disabled');
+    return; // Do nothing - WebSockets are disabled
   }
 
+  // All methods disabled - WebSockets not compatible with Supabase
+  
   private async handleNewMessage(message: any) {
-    try {
-      // Store message in database
-      const storedMessage = await storage.storeMessage(message.sessionId, message.sender, message.content, {
-        recipientId: message.recipientId
-      });
-
-      // Find clients with matching role
-      Array.from(this.clients.entries()).forEach(([sessionId, client]) => {
-        if (client.userType === message.recipientId && client.ws.readyState === WebSocket.OPEN) {
-          client.ws.send(JSON.stringify({
-            type: 'message',
-            content: message.content,
-            sender: message.sender,
-            timestamp: new Date()
-          }));
-        }
-      });
-
-      // Update unread counts
-      this.updateUnreadCounts(message.sessionId);
-    } catch (error) {
-      console.error('Error handling new message:', error);
-    }
+    console.log('[WebSocketService] handleNewMessage called, but WebSockets are disabled');
+    return; // Do nothing - WebSockets are disabled
   }
 
   private updatePresence(sessionId: string) {
-    const client = this.clients.get(sessionId);
-    if (client) {
-      client.lastActivity = new Date();
-      this.broadcastPresence();
-    }
+    console.log('[WebSocketService] updatePresence called, but WebSockets are disabled');
+    return; // Do nothing - WebSockets are disabled
   }
 
   private broadcastPresence() {
-    const presence = Array.from(this.clients.entries()).map(([sessionId, client]) => ({
-      sessionId,
-      lastActivity: client.lastActivity
-    }));
-
-    this.broadcast({
-      type: 'presence_update',
-      presence
-    });
+    console.log('[WebSocketService] broadcastPresence called, but WebSockets are disabled');
+    return; // Do nothing - WebSockets are disabled
   }
 
   private broadcastMessage(message: any) {
-    this.broadcast(message);
+    console.log('[WebSocketService] broadcastMessage called, but WebSockets are disabled');
+    return; // Do nothing - WebSockets are disabled
   }
 
   private broadcast(data: any) {
-    const payload = JSON.stringify(data);
-    this.clients.forEach(client => {
-      if (client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(payload);
-      }
-    });
+    console.log('[WebSocketService] broadcast called, but WebSockets are disabled');
+    return; // Do nothing - WebSockets are disabled
   }
 
   private async updateUnreadCounts(sessionId: string) {
-    const unreadCounts = await storage.getUnreadMessageCounts(sessionId);
-    const client = this.clients.get(sessionId);
-    if (client?.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(JSON.stringify({
-        type: 'unread_update',
-        counts: unreadCounts
-      }));
-    }
+    console.log('[WebSocketService] updateUnreadCounts called, but WebSockets are disabled');
+    return; // Do nothing - WebSockets are disabled
   }
 }
 

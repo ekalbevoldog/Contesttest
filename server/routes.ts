@@ -2433,6 +2433,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
   // Updated WebSocket server path to match client-side configuration
+  // WebSockets have been disabled for compatibility with Supabase
+  // Instead we use HTTP polling for real-time updates
+  console.log('[Server] WebSocket server disabled - using HTTP polling for real-time updates');
+  
+  /* WEBSOCKET CODE DISABLED
   const wss = new WebSocketServer({ server: httpServer, path: '/api/contested-ws' });
 
   // Using the globally defined wsConnections Map (defined at the top of the file)
@@ -2440,7 +2445,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   wss.on('connection', (ws: CustomWebSocket) => {
     console.log('WebSocket client connected - waiting for registration');
+  */
 
+    /* WEBSOCKET CODE DISABLED
     // Handle incoming messages
     ws.on('message', async (message: string) => {
       try {
@@ -2605,7 +2612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     });
-  });
+  }); */
 
   // Helper function to send a WebSocket message to a client
   const sendWebSocketMessage = (sessionId: string, data: any) => {
