@@ -151,22 +151,28 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
     const maxRetries = 3;
     let success = false;
     
-    // Profile data to insert/update
+    // Profile data to insert/update - matching our new schema
     const profileData = {
       id: userId,  // This uses the user ID directly
-      name: 'My Business',
-      session_id: sessionId,
-      email: email,
-      product_type: 'Default product',
-      // Set defaults for other fields
+      business_type: 'product', // Default to product business
       industry: null,
-      business_type: null,
-      company_size: null,
-      zipCode: null,
-      budget: null,
-      budgetmin: null,
-      budgetmax: null,
-      haspreviouspartnerships: null
+      access_restriction: 'unrestricted',
+      goal_identification: ['Brand Awareness'],
+      has_past_partnership: false,
+      budget_min: 500,
+      budget_max: 5000,
+      zip_code: null,
+      operating_location: [],
+      contact_name: null,
+      contact_title: null,
+      contact_email: email,
+      contact_phone: null,
+      business_size: 'small_team',
+      // Dashboard fields
+      product_type: 'Default product',
+      audience_goals: 'Increase brand visibility',
+      values: 'Quality, Innovation, Customer Satisfaction',
+      target_schools_sports: 'All',
     };
     
     // Log the exact data being sent to the API for debugging
