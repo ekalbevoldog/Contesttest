@@ -329,9 +329,24 @@ export function setupProfileEndpoints(app: Express) {
     const conflictKey = generatedUserType === 'athlete' ? 'user_id' : 'id';
     console.log(`Using ${conflictKey} as conflict key for ${table} upsert`);
     
-    const { data: profile, error } = await supabaseAdmin
-      .from(table)
-      .upsert(base, { onConflict: conflictKey })
+    // Double-check that the ID field is present before attempting upsert
+    if (!base[conflictKey]) {
+      console.error(`[CRITICAL] Missing ${conflictKey} field for ${table} upsert. Data:`, base);
+      return res.status(400).json({ 
+        error: "Missing required ID field", 
+        message: "Profile creation failed due to missing ID field",
+        details: "Please contact support with error code: PROFILE-ID-MISSING"
+      });
+    }
+    
+    // Log the full profile data for debugging
+    console.log(`Attempting profile upsert with data:`, JSON.stringify(base, null, 2));
+    
+    // Perform the upsert with robust error handling
+    try {
+      const { data: profile, error } = await supabaseAdmin
+        .from(table)
+        .upsert(base, { onConflict: conflictKey })
       .select()
       .single();
 
@@ -341,16 +356,35 @@ export function setupProfileEndpoints(app: Express) {
     }
 
     // Mirror into domain tables
-    await syncToDomain(generatedUserType, profile);
+    try {
+      await syncToDomain(generatedUserType, profile);
+    } catch (syncError) {
+      console.error('[CRITICAL] Error syncing profile to domain table:', syncError);
+      // Continue despite sync error - the profile exists in the main table
+    }
 
     // Mark user as having completed their profile
     if (userId) {
-      await safelyUpdateUserProfile(userId, profile.id);
+      try {
+        await safelyUpdateUserProfile(userId, profile.id);
+      } catch (updateError) {
+        console.error('[WARNING] Error updating user profile status:', updateError);
+        // Continue despite error - this is a non-critical update
+      }
     } else {
       console.warn('No userId available, skipping profile linkage');
     }
 
     return res.status(200).json({ profile });
+    
+    } catch (upsertError) {
+      console.error('[CRITICAL] Unexpected error during profile upsert:', upsertError);
+      return res.status(500).json({ 
+        error: "Profile creation failed",
+        message: "An unexpected error occurred",
+        details: "Please try again or contact support with error code: PROFILE-UPSERT-FAILED" 
+      });
+    }
   });
 
   // Fetch athlete profile
