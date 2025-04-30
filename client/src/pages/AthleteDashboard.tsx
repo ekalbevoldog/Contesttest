@@ -661,7 +661,7 @@ export default function AthleteDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#ffebec]">Active Partnerships</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec] font-heading">Active Partnerships</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -672,7 +672,7 @@ export default function AthleteDashboard() {
           </Card>
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#ffebec]">New Opportunities</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec] font-heading">New Opportunities</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -683,7 +683,7 @@ export default function AthleteDashboard() {
           </Card>
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#ffebec]">Upcoming Deliverables</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec] font-heading">Upcoming Deliverables</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -694,7 +694,7 @@ export default function AthleteDashboard() {
           </Card>
           <Card className="border-blue-700/20 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-[#ffebec]">Earned This Month</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#ffebec] font-heading">Earned This Month</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-end gap-2">
@@ -720,7 +720,7 @@ export default function AthleteDashboard() {
           <TabsContent value="offers" className="space-y-6">
             <Card className="border-blue-700/20 shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <Trophy className="h-5 w-5 text-blue-700" />
                   Current Partnership Offers
                 </CardTitle>
@@ -742,7 +742,7 @@ export default function AthleteDashboard() {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <CardTitle className="text-lg">{offer.brand}</CardTitle>
+                                <CardTitle className="text-lg font-heading">{offer.brand}</CardTitle>
                                 <CardDescription>{offer.campaign}</CardDescription>
                               </div>
                             </div>
@@ -798,7 +798,7 @@ export default function AthleteDashboard() {
 
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <Users className="h-5 w-5 text-primary" />
                   Active Partnerships
                 </CardTitle>
@@ -820,7 +820,7 @@ export default function AthleteDashboard() {
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <CardTitle className="text-lg">{partnership.brand}</CardTitle>
+                                <CardTitle className="text-lg font-heading">{partnership.brand}</CardTitle>
                                 <CardDescription>{partnership.campaign}</CardDescription>
                               </div>
                             </div>
@@ -898,7 +898,7 @@ export default function AthleteDashboard() {
           <TabsContent value="deliverables" className="space-y-6">
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <Clock className="h-5 w-5 text-primary" />
                   Upcoming Deliverables
                 </CardTitle>
@@ -926,7 +926,7 @@ export default function AthleteDashboard() {
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <CardTitle className="text-lg">{deliverable.task}</CardTitle>
+                                    <CardTitle className="text-lg font-heading">{deliverable.task}</CardTitle>
                                     <CardDescription>{partnership.brand} - {partnership.campaign}</CardDescription>
                                   </div>
                                 </div>
@@ -995,7 +995,7 @@ export default function AthleteDashboard() {
 
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <CheckCircle2 className="h-5 w-5 text-primary" />
                   Completed Deliverables
                 </CardTitle>
@@ -1045,7 +1045,7 @@ export default function AthleteDashboard() {
           <TabsContent value="performance" className="space-y-6">
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <LineChart className="h-5 w-5 text-primary" />
                   Performance Metrics
                 </CardTitle>
@@ -1078,7 +1078,7 @@ export default function AthleteDashboard() {
                 </div>
 
                 <div className="mt-8">
-                  <h3 className="text-lg font-medium mb-4">Platform Breakdown</h3>
+                  <h3 className="text-lg font-medium mb-4 font-heading">Platform Breakdown</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="bg-muted/50">
                       <CardHeader className="pb-2">
@@ -1149,7 +1149,7 @@ export default function AthleteDashboard() {
                 </div>
 
                 <div className="mt-8">
-                  <h3 className="text-lg font-medium mb-4">Campaign Impact</h3>
+                  <h3 className="text-lg font-medium mb-4 font-heading">Campaign Impact</h3>
                   <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md mb-6">
                     <BarChart3 className="h-16 w-16 text-gray-600" />
                     <span className="ml-2 text-blue-700 font-medium">Campaign performance visualization</span>
@@ -1256,7 +1256,7 @@ export default function AthleteDashboard() {
 
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <FileText className="h-5 w-5 text-primary" />
                   Recent Transactions
                 </CardTitle>
@@ -1332,7 +1332,7 @@ export default function AthleteDashboard() {
           <TabsContent value="education" className="space-y-6">
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <BookOpen className="h-5 w-5 text-primary" />
                   Education Center
                 </CardTitle>
@@ -1347,7 +1347,7 @@ export default function AthleteDashboard() {
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
                           <div>
-                            <CardTitle className="text-lg">{resource.title}</CardTitle>
+                            <CardTitle className="text-lg font-heading">{resource.title}</CardTitle>
                             <CardDescription>{resource.description}</CardDescription>
                           </div>
                           <Badge 
@@ -1390,7 +1390,7 @@ export default function AthleteDashboard() {
 
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <Target className="h-5 w-5 text-primary" />
                   Best Practices
                 </CardTitle>
@@ -1458,7 +1458,7 @@ export default function AthleteDashboard() {
           <TabsContent value="documents" className="space-y-6">
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <FileText className="h-5 w-5 text-primary" />
                   Partnership Contracts
                 </CardTitle>
@@ -1501,7 +1501,7 @@ export default function AthleteDashboard() {
 
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <FileText className="h-5 w-5 text-primary" />
                   Tax Documents
                 </CardTitle>
@@ -1542,7 +1542,7 @@ export default function AthleteDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="border-primary/20 md:col-span-2">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 font-heading">
                     <User className="h-5 w-5 text-primary" />
                     Account Information
                   </CardTitle>
@@ -1604,7 +1604,7 @@ export default function AthleteDashboard() {
 
               <Card className="border-primary/20">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 font-heading">
                     <Share2 className="h-5 w-5 text-primary" />
                     Refer a Friend
                   </CardTitle>
@@ -1647,7 +1647,7 @@ export default function AthleteDashboard() {
 
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <Bell className="h-5 w-5 text-primary" />
                   Notification Preferences
                 </CardTitle>
@@ -1688,7 +1688,7 @@ export default function AthleteDashboard() {
             {/* Shareable Profile Link */}
             <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 font-heading">
                   <Link className="h-5 w-5 text-primary" />
                   Shareable Profile Link
                 </CardTitle>
