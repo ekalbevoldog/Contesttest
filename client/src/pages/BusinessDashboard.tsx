@@ -73,8 +73,8 @@ export default function BusinessDashboard() {
     preferencesJson?: string;
   };
   
-  // Get profile info using our auth context
-  const { user, profile: authProfile, isLoading: isLoadingAuth } = useAuth();
+  // Get profile info using our enhanced auth context
+  const { user, profile: authProfile, userType, hasProfile, isLoading: isLoadingAuth } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
@@ -82,11 +82,49 @@ export default function BusinessDashboard() {
     // If we're still loading the auth state, wait
     if (isLoadingAuth) return;
     
-    console.log('BusinessDashboard: fetching profile data, auth state:', { 
+    console.log('BusinessDashboard: auth state:', { 
       user, 
       authProfile,
+      userType,
+      hasProfile,
       role: user?.role || user?.userType 
     });
+    
+    // Check if user is authenticated
+    if (!user) {
+      console.log('No authenticated user found, redirecting to login');
+      setIsLoadingProfile(false);
+      setLoading(false);
+      
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to view your dashboard",
+        variant: "destructive"
+      });
+      
+      navigate("/auth");
+      return;
+    }
+    
+    // Verify this is a business user
+    const effectiveRole = userType || user.role || user.userType;
+    if (effectiveRole !== 'business') {
+      console.log(`User has role ${effectiveRole}, not business. Redirecting to appropriate dashboard`);
+      setIsLoadingProfile(false);
+      setLoading(false);
+      
+      // Redirect based on role
+      if (effectiveRole === 'athlete') {
+        navigate('/athlete/dashboard');
+      } else if (effectiveRole === 'compliance') {
+        navigate('/compliance/dashboard');
+      } else if (effectiveRole === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
+      return;
+    }
     
     // First priority: use profile from auth context if available
     if (authProfile) {
@@ -112,75 +150,115 @@ export default function BusinessDashboard() {
       return;
     }
     
-    // If we have user but no profile yet - this happens after registration
-    if (user && !authProfile) {
-      console.log(`Using userId ${user.id} to fetch business profile`);
+    // If user doesn't have a profile yet, try to create one
+    if (!hasProfile) {
+      console.log('Business user without profile, attempting to create one');
       
-      fetch(`/api/supabase/business-profile/${user.id}`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error('Failed to fetch business profile');
-          }
-          return res.json();
-        })
-        .then(data => {
-          console.log('Successfully fetched business profile:', data);
-          // Map the Supabase profile data to our ProfileData format
-          if (data?.profile) {
-            const profile: ProfileData = {
-              id: data.profile.id,
-              name: data.profile.name || '',
-              industry: data.profile.industry || '',
-              businessType: data.profile.business_type || '',
-              companySize: data.profile.company_size || '',
-              email: data.profile.email || '',
-              preferencesJson: data.profile.preferences || ''
-            };
-            setProfileData(profile);
-            
-            // Store in localStorage for next time
-            localStorage.setItem('contestedUserData', JSON.stringify(profile));
-          } else {
-            setProfileData(data);
-          }
-          setIsLoadingProfile(false);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Error fetching business profile:', err);
+      // First attempt to create a profile
+      fetch('/api/create-business-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to create business profile');
+        }
+        return res.json();
+      })
+      .then(data => {
+        console.log('Successfully created business profile:', data);
+        if (data?.profile) {
+          const profile: ProfileData = {
+            id: data.profile.id,
+            name: data.profile.name || '',
+            industry: data.profile.industry || '',
+            businessType: data.profile.business_type || '',
+            companySize: data.profile.company_size || '',
+            email: data.profile.email || '',
+            preferencesJson: data.profile.preferences || ''
+          };
+          setProfileData(profile);
           
-          // Set a default profile with basic user info if we at least have the user
-          if (user) {
-            const defaultProfile: ProfileData = {
-              name: user.fullName || '',
-              email: user.email || ''
-            };
-            setProfileData(defaultProfile);
-          }
-          
-          setIsLoadingProfile(false);
-          setLoading(false);
-        });
-    } else if (!user) {
-      console.log('No authenticated user found, redirecting to login');
-      setIsLoadingProfile(false);
-      setLoading(false);
-      
-      // If no user, show a toast and redirect
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to view your dashboard",
-        variant: "destructive"
+          // Store in localStorage for next time
+          localStorage.setItem('contestedUserData', JSON.stringify(profile));
+        } else {
+          setProfileData(data);
+        }
+        setIsLoadingProfile(false);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error creating business profile, falling back to fetch:', err);
+        
+        // Fall back to fetching profile directly
+        fetchBusinessProfile(user.id);
       });
       
-      // Navigate to auth page
-      navigate("/auth");
-    } else {
-      // Fallback case - we have a user but something else went wrong
-      setIsLoadingProfile(false);
-      setLoading(false);
+      return;
     }
-  }, [user, authProfile, isLoadingAuth, navigate, toast]);
+    
+    // If we have user but couldn't get profile from auth context, fetch it directly
+    fetchBusinessProfile(user.id);
+    
+  }, [user, authProfile, userType, hasProfile, isLoadingAuth, navigate, toast]);
+  
+  // Helper function to fetch business profile
+  const fetchBusinessProfile = (userId: string) => {
+    console.log(`Fetching business profile for user ${userId}`);
+    
+    fetch(`/api/supabase/business-profile/${userId}`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch business profile');
+        }
+        return res.json();
+      })
+      .then(data => {
+        console.log('Successfully fetched business profile:', data);
+        if (data?.profile) {
+          const profile: ProfileData = {
+            id: data.profile.id,
+            name: data.profile.name || '',
+            industry: data.profile.industry || '',
+            businessType: data.profile.business_type || '',
+            companySize: data.profile.company_size || '',
+            email: data.profile.email || '',
+            preferencesJson: data.profile.preferences || ''
+          };
+          setProfileData(profile);
+          
+          // Store in localStorage for next time
+          localStorage.setItem('contestedUserData', JSON.stringify(profile));
+        } else {
+          setProfileData(data);
+        }
+        setIsLoadingProfile(false);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching business profile:', err);
+        
+        // Set a default profile with basic user info if we at least have the user
+        if (user) {
+          const defaultProfile: ProfileData = {
+            name: user.fullName || '',
+            email: user.email || ''
+          };
+          setProfileData(defaultProfile);
+        }
+        
+        setIsLoadingProfile(false);
+        setLoading(false);
+        
+        // Show a toast with the error
+        toast({
+          title: "Profile Error",
+          description: "We're having trouble loading your profile. Some features may be limited.",
+          variant: "destructive"
+        });
+      });
+  };
   
   if (loading || isLoadingProfile) {
     return (
