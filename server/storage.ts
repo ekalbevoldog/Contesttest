@@ -398,10 +398,11 @@ export class SupabaseStorage implements IStorage {
     try {
       console.log(`Getting business profile for user ID ${userId}`);
       
+      // Look for business profile by ID field (not user_id)
       const { data, error } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .maybeSingle();
         
       if (error) {
