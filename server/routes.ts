@@ -358,10 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Diagnostic API health check');
       
       // Check Supabase connection
-      const { data: health, error: healthError } = await supabase
-        .from('users')
-        .select('id')
-        .limit(1);
+      const { rows: health, error: healthError } = await supabase.query('SELECT id FROM users LIMIT 1');
       
       if (healthError) {
         console.error('Supabase connection error:', healthError);
@@ -373,10 +370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check business_profiles table structure
-      const { data: profilesCheck, error: profilesError } = await supabase
-        .from('business_profiles')
-        .select('*')
-        .limit(1);
+      const { rows: profilesCheck, error: profilesError } = await supabase.query('SELECT * FROM business_profiles LIMIT 1');
       
       return res.status(200).json({
         status: 'ok',
@@ -403,7 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check Supabase connection
       let supabaseHealth = { status: "unknown", error: null };
       try {
-        const { data, error } = await supabase.from('users').select('*').limit(1);
+        const { rows, error } = await supabase.query('SELECT id FROM users LIMIT 1');
         supabaseHealth = {
           status: error ? "error" : "ok",
           error: error ? error.message : null,
