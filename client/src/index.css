@@ -5,6 +5,15 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Oblivion';
+  src: url('/fonts/Oblivion.woff2') format('woff2'),
+       url('/fonts/Oblivion.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .special-callout {
   font-family: 'BNCringeScript', cursive;
   font-size: 1.5em;
@@ -34,6 +43,7 @@
     --glass-shine: rgba(255, 255, 255, 0.1);
     --glass-shadow: rgba(0, 0, 0, 0.25);
     --glass-glow: rgba(255, 191, 13, 0.3);
+    --font-heading: 'Oblivion', system-ui, sans-serif;
   }
 
   * {
@@ -47,6 +57,14 @@
       radial-gradient(circle at top right, rgba(255, 191, 13, 0.15), transparent 500px),
       radial-gradient(circle at bottom left, rgba(0, 200, 255, 0.1), transparent 500px),
       radial-gradient(circle at center, rgba(140, 67, 255, 0.05), transparent 800px);
+  }
+
+  /* Apply Oblivion font to all headings */
+  h1, h2, h3, h4, h5, h6, 
+  .text-2xl, .text-3xl, .text-4xl, .text-5xl,
+  .font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
   }
 }
 
