@@ -1,280 +1,227 @@
-import { apiRequest } from './queryClient';
-import { 
-  DashboardConfig, 
-  StatsData, 
-  ChartData, 
-  ActivityData, 
-  QuickActionsData 
-} from '../../shared/dashboard-schema';
-import { v4 as uuidv4 } from 'uuid';
+import { apiRequest, queryClient } from "./queryClient";
+import {
+  DashboardConfig,
+  Widget,
+  WidgetSize,
+  StatsData,
+  ChartData,
+  ActivityData,
+  QuickActionsData
+} from "../../shared/dashboard-schema";
+
+// Base URL for dashboard API endpoints
+const DASHBOARD_API_BASE = "/api/dashboard";
 
 /**
- * Dashboard service that handles all dashboard-related API calls
+ * Fetch dashboard configuration for the current user
+ * Creates default configuration if none exists
  */
-
-// Fetch the user's dashboard configuration
 export async function fetchDashboardConfig(): Promise<DashboardConfig> {
   try {
-    const response = await apiRequest('GET', '/api/dashboard');
-    const data = await response.json();
-    return data;
+    const response = await apiRequest("GET", DASHBOARD_API_BASE);
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching dashboard config:', error);
-    // Return default configuration if there's an error
-    return getDefaultDashboardConfig('unknown');
+    console.error("Error fetching dashboard config:", error);
+    throw new Error("Failed to load dashboard configuration");
   }
 }
 
-// Save the user's dashboard configuration
-export async function saveDashboardConfig(config: DashboardConfig): Promise<{ success: boolean }> {
+/**
+ * Save dashboard configuration
+ */
+export async function saveDashboardConfig(config: DashboardConfig): Promise<void> {
   try {
-    const response = await apiRequest('POST', '/api/dashboard', config);
-    const data = await response.json();
-    return data;
+    await apiRequest("POST", DASHBOARD_API_BASE, config);
+    // Invalidate cached dashboard config
+    queryClient.invalidateQueries({ queryKey: [DASHBOARD_API_BASE] });
   } catch (error) {
-    console.error('Error saving dashboard config:', error);
-    throw error;
+    console.error("Error saving dashboard config:", error);
+    throw new Error("Failed to save dashboard configuration");
   }
 }
 
-// Update a specific widget
-export async function updateWidget(widgetId: string, updates: Partial<any>): Promise<{ success: boolean }> {
+/**
+ * Update a specific widget
+ */
+export async function updateWidget(widgetId: string, updates: Partial<Widget>): Promise<void> {
   try {
-    const response = await apiRequest('PATCH', `/api/dashboard/widgets/${widgetId}`, updates);
-    const data = await response.json();
-    return data;
+    await apiRequest("PATCH", `${DASHBOARD_API_BASE}/widgets/${widgetId}`, updates);
+    // Invalidate cached dashboard config
+    queryClient.invalidateQueries({ queryKey: [DASHBOARD_API_BASE] });
   } catch (error) {
-    console.error('Error updating widget:', error);
-    throw error;
+    console.error(`Error updating widget ${widgetId}:`, error);
+    throw new Error("Failed to update widget");
   }
 }
 
-// Remove a widget from the dashboard
-export async function removeWidget(widgetId: string): Promise<{ success: boolean }> {
+/**
+ * Remove a widget from the dashboard
+ */
+export async function removeWidget(widgetId: string): Promise<void> {
   try {
-    const response = await apiRequest('DELETE', `/api/dashboard/widgets/${widgetId}`);
-    const data = await response.json();
-    return data;
+    await apiRequest("DELETE", `${DASHBOARD_API_BASE}/widgets/${widgetId}`);
+    // Invalidate cached dashboard config
+    queryClient.invalidateQueries({ queryKey: [DASHBOARD_API_BASE] });
   } catch (error) {
-    console.error('Error removing widget:', error);
-    throw error;
+    console.error(`Error removing widget ${widgetId}:`, error);
+    throw new Error("Failed to remove widget");
   }
 }
 
-// Fetch stats data for stats widget
+/**
+ * Add a new widget to the dashboard
+ */
+export async function addWidget(widget: Omit<Widget, 'id'>): Promise<void> {
+  try {
+    // Fetch current config
+    const config = await fetchDashboardConfig();
+    
+    // Create a new widget with a unique ID
+    const newWidget: Widget = {
+      ...widget,
+      id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    };
+    
+    // Add the widget to the config
+    config.widgets.push(newWidget);
+    
+    // Save the updated config
+    await saveDashboardConfig(config);
+  } catch (error) {
+    console.error("Error adding widget:", error);
+    throw new Error("Failed to add widget");
+  }
+}
+
+/**
+ * Reorder widgets by updating positions
+ */
+export async function reorderWidgets(widgetIds: string[]): Promise<void> {
+  try {
+    // Fetch current config
+    const config = await fetchDashboardConfig();
+    
+    // Create a map of widget IDs to their new positions
+    const positionMap = new Map<string, number>();
+    widgetIds.forEach((id, index) => {
+      positionMap.set(id, index);
+    });
+    
+    // Update widget positions
+    config.widgets.forEach(widget => {
+      if (positionMap.has(widget.id)) {
+        widget.position = positionMap.get(widget.id) as number;
+      }
+    });
+    
+    // Sort widgets by position
+    config.widgets.sort((a, b) => a.position - b.position);
+    
+    // Save the updated config
+    await saveDashboardConfig(config);
+  } catch (error) {
+    console.error("Error reordering widgets:", error);
+    throw new Error("Failed to reorder widgets");
+  }
+}
+
+/**
+ * Fetch stats data for the stats widget
+ */
 export async function fetchStatsData(): Promise<StatsData> {
   try {
-    const response = await apiRequest('GET', '/api/dashboard/data/stats');
-    const data = await response.json();
-    return data;
+    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/stats`);
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching stats data:', error);
-    throw error;
+    console.error("Error fetching stats data:", error);
+    throw new Error("Failed to load stats data");
   }
 }
 
-// Fetch chart data for chart widget
+/**
+ * Fetch chart data for the chart widget
+ */
 export async function fetchChartData(dataSource: string): Promise<ChartData> {
   try {
-    const response = await apiRequest('GET', `/api/dashboard/data/${dataSource}`);
-    const data = await response.json();
-    return data;
+    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/${dataSource}`);
+    return await response.json();
   } catch (error) {
-    console.error(`Error fetching chart data for source ${dataSource}:`, error);
-    throw error;
+    console.error(`Error fetching chart data for ${dataSource}:`, error);
+    throw new Error(`Failed to load chart data for ${dataSource}`);
   }
 }
 
-// Fetch activity data for activity widget
+/**
+ * Fetch activity data for the activity widget
+ */
 export async function fetchActivityData(): Promise<ActivityData> {
   try {
-    const response = await apiRequest('GET', '/api/dashboard/data/activities');
-    const data = await response.json();
-    return data;
+    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/activities`);
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching activity data:', error);
-    throw error;
+    console.error("Error fetching activity data:", error);
+    throw new Error("Failed to load activity data");
   }
 }
 
-// Fetch quick actions data for quick actions widget
+/**
+ * Fetch quick actions data for the quick actions widget
+ */
 export async function fetchQuickActionsData(): Promise<QuickActionsData> {
   try {
-    const response = await apiRequest('GET', '/api/dashboard/data/quickActions');
-    const data = await response.json();
-    return data;
+    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/quickActions`);
+    return await response.json();
   } catch (error) {
-    console.error('Error fetching quick actions data:', error);
+    console.error("Error fetching quick actions data:", error);
+    throw new Error("Failed to load quick actions data");
+  }
+}
+
+/**
+ * Fetch widget data based on widget type and settings
+ */
+export async function fetchWidgetData(widget: Widget): Promise<any> {
+  try {
+    switch (widget.type) {
+      case 'stats':
+        return fetchStatsData();
+      case 'chart':
+        return fetchChartData(widget.settings?.dataSource || 'default');
+      case 'activity':
+        return fetchActivityData();
+      case 'quickActions':
+        return fetchQuickActionsData();
+      default:
+        throw new Error(`Unsupported widget type: ${widget.type}`);
+    }
+  } catch (error) {
+    console.error(`Error fetching data for widget ${widget.id}:`, error);
     throw error;
   }
 }
 
-// Default dashboard config based on user type
-export function getDefaultDashboardConfig(userType: string): DashboardConfig {
-  // Create default dashboard configuration based on user type
-  return {
-    widgets: [
-      {
-        id: `stats-${uuidv4().substring(0, 8)}`,
-        type: 'stats',
-        title: 'Key Metrics',
-        description: 'Overview of your performance metrics',
-        size: 'lg',
-        position: 0,
-        visible: true
-      },
-      {
-        id: `chart-${uuidv4().substring(0, 8)}`,
-        type: 'chart',
-        title: 'Performance Trends',
-        description: 'Visualize your data over time',
-        size: 'md',
-        position: 1,
-        settings: {
-          chartType: 'line',
-          dataSource: userType === 'business' ? 'campaigns' : 'engagement',
-          showLegend: true
-        },
-        visible: true
-      },
-      {
-        id: `activity-${uuidv4().substring(0, 8)}`,
-        type: 'activity',
-        title: 'Recent Activity',
-        description: 'Latest updates and notifications',
-        size: 'md',
-        position: 2,
-        settings: {
-          maxItems: 5
-        },
-        visible: true
-      },
-      {
-        id: `quick-actions-${uuidv4().substring(0, 8)}`,
-        type: 'quickActions',
-        title: 'Quick Actions',
-        description: 'Common tasks and shortcuts',
-        size: 'sm',
-        position: 3,
-        visible: true
-      }
-    ],
-    layout: 'grid'
-  };
-}
-
-// Default quick actions based on user type
-export function getDefaultQuickActions(userType: string): QuickActionsData {
-  switch (userType) {
-    case 'business':
-      return [
-        {
-          id: 'create-campaign',
-          label: 'Create Campaign',
-          description: 'Start a new marketing campaign',
-          icon: 'FilePlus',
-          color: 'blue',
-          link: '/business/campaigns/new'
-        },
-        {
-          id: 'browse-athletes',
-          label: 'Browse Athletes',
-          description: 'Discover potential partnerships',
-          icon: 'Users',
-          color: 'indigo',
-          link: '/business/athletes'
-        },
-        {
-          id: 'manage-offers',
-          label: 'Manage Offers',
-          description: 'View and edit your active offers',
-          icon: 'ClipboardList',
-          color: 'amber',
-          link: '/business/offers'
-        }
-      ];
-    case 'athlete':
-      return [
-        {
-          id: 'view-offers',
-          label: 'View Offers',
-          description: 'See your partnership opportunities',
-          icon: 'Mail',
-          color: 'blue',
-          link: '/athlete/offers'
-        },
-        {
-          id: 'update-profile',
-          label: 'Update Profile',
-          description: 'Keep your information current',
-          icon: 'UserCircle',
-          color: 'indigo',
-          link: '/athlete/profile'
-        },
-        {
-          id: 'view-partnerships',
-          label: 'View Partnerships',
-          description: 'Manage your active partnerships',
-          icon: 'Handshake',
-          color: 'emerald',
-          link: '/athlete/partnerships'
-        }
-      ];
-    case 'admin':
-      return [
-        {
-          id: 'user-management',
-          label: 'User Management',
-          description: 'Manage user accounts and access',
-          icon: 'Users',
-          color: 'blue',
-          link: '/admin/users'
-        },
-        {
-          id: 'content-moderation',
-          label: 'Content Moderation',
-          description: 'Review reported content',
-          icon: 'Shield',
-          color: 'red',
-          link: '/admin/moderation'
-        },
-        {
-          id: 'system-settings',
-          label: 'System Settings',
-          description: 'Configure application settings',
-          icon: 'Settings',
-          color: 'gray',
-          link: '/admin/settings'
-        }
-      ];
-    case 'compliance':
-      return [
-        {
-          id: 'pending-reviews',
-          label: 'Pending Reviews',
-          description: 'Review partnerships awaiting approval',
-          icon: 'ClipboardCheck',
-          color: 'amber',
-          link: '/compliance/reviews'
-        },
-        {
-          id: 'content-reports',
-          label: 'Content Reports',
-          description: 'Investigate reported content',
-          icon: 'Flag',
-          color: 'red',
-          link: '/compliance/reports'
-        },
-        {
-          id: 'audit-log',
-          label: 'Audit Log',
-          description: 'View system activity history',
-          icon: 'History',
-          color: 'blue',
-          link: '/compliance/audit'
-        }
-      ];
-    default:
-      return [];
-  }
-}
+/**
+ * Hook data fetchers for TanStack Query
+ */
+export const dashboardQueryOptions = {
+  dashboardConfig: {
+    queryKey: [DASHBOARD_API_BASE],
+    queryFn: fetchDashboardConfig,
+  },
+  statsData: {
+    queryKey: [`${DASHBOARD_API_BASE}/data/stats`],
+    queryFn: fetchStatsData,
+  },
+  activityData: {
+    queryKey: [`${DASHBOARD_API_BASE}/data/activities`],
+    queryFn: fetchActivityData,
+  },
+  quickActionsData: {
+    queryKey: [`${DASHBOARD_API_BASE}/data/quickActions`],
+    queryFn: fetchQuickActionsData,
+  },
+  chartData: (dataSource: string) => ({
+    queryKey: [`${DASHBOARD_API_BASE}/data/${dataSource}`],
+    queryFn: () => fetchChartData(dataSource),
+  }),
+};

@@ -1,30 +1,34 @@
-// Dashboard Widget Types
+// Dashboard widgets configuration types
 
 // Widget sizes
 export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
-// Base Widget interface that all widget types extend
+// Widget types
+export type WidgetType = 'stats' | 'chart' | 'activity' | 'quickActions';
+
+// Base widget configuration
 export interface Widget {
   id: string;
-  type: 'stats' | 'chart' | 'activity' | 'quickActions' | 'custom';
+  type: WidgetType;
   title: string;
   description?: string;
   size: WidgetSize;
   position: number;
-  settings?: Record<string, any>;
   visible: boolean;
+  settings?: Record<string, any>;
 }
 
-// Stats Widget
-export interface StatsWidget extends Widget {
-  type: 'stats';
+// Dashboard configuration
+export interface DashboardConfig {
+  widgets: Widget[];
+  layout: 'grid' | 'list' | 'custom';
 }
 
-// Stats data for stats widget
-export interface StatsDataItem {
+// Stats widget data types
+export interface StatItem {
   key: string;
   label: string;
-  value: string | number;
+  value: number | string;
   icon?: string;
   color?: string;
   trend?: 'up' | 'down' | 'neutral';
@@ -32,22 +36,10 @@ export interface StatsDataItem {
 }
 
 export interface StatsData {
-  items: StatsDataItem[];
+  items: StatItem[];
 }
 
-// Chart Widget
-export interface ChartWidget extends Widget {
-  type: 'chart';
-  settings?: {
-    chartType: 'line' | 'bar' | 'area' | 'pie' | 'radar' | 'scatter';
-    dataSource: string;
-    period?: 'day' | 'week' | 'month' | 'year';
-    showLegend?: boolean;
-    colors?: string[];
-  };
-}
-
-// Chart data for chart widget
+// Chart widget data types
 export interface ChartData {
   data: Record<string, any>[];
   series: string[];
@@ -55,68 +47,28 @@ export interface ChartData {
   yAxis?: string;
 }
 
-// Activity Widget
-export interface ActivityWidget extends Widget {
-  type: 'activity';
-  settings?: {
-    maxItems?: number;
-    filter?: string;
-  };
-}
-
-// Activity data for activity widget
+// Activity widget data types
 export interface ActivityItem {
   id: string;
   title: string;
-  description?: string;
-  timestamp: Date | string;
+  description: string;
+  timestamp: string;
   type: string;
   icon?: string;
-  status?: 'success' | 'error' | 'warning' | 'info' | 'pending';
-  user?: {
-    id?: string | number;
-    name?: string;
-    avatar?: string;
-  };
+  status?: 'pending' | 'success' | 'warning' | 'error';
   link?: string;
 }
 
 export type ActivityData = ActivityItem[];
 
-// Quick Actions Widget
-export interface QuickActionsWidget extends Widget {
-  type: 'quickActions';
-}
-
-// Quick action data for quick actions widget
-export interface QuickAction {
+// Quick actions widget data types
+export interface QuickActionItem {
   id: string;
   label: string;
-  description?: string;
+  description: string;
   icon?: string;
   color?: string;
-  link?: string;
-  action?: string;
+  link: string;
 }
 
-export type QuickActionsData = QuickAction[];
-
-// Custom Widget (for extensibility)
-export interface CustomWidget extends Widget {
-  type: 'custom';
-  componentName: string;
-}
-
-// Dashboard Configuration
-export interface DashboardConfig {
-  widgets: Widget[];
-  layout?: 'grid' | 'masonry' | 'rows';
-  theme?: string;
-}
-
-// Dashboard User Preferences
-export interface DashboardPreferences {
-  userId: string;
-  dashboardConfig: DashboardConfig;
-  lastUpdated?: Date;
-}
+export type QuickActionsData = QuickActionItem[];

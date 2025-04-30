@@ -1528,6 +1528,98 @@ export class SupabaseStorage implements IStorage {
       created_at: new Date()
     };
   }
+
+  // User Preferences operations
+  async getUserPreferences(userId: string, preferenceType: string): Promise<{ user_id: string; preference_type: string; data: any } | undefined> {
+    try {
+      console.log(`Getting user preferences for userId ${userId} and type ${preferenceType}`);
+      
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('preference_type', preferenceType)
+        .maybeSingle();
+        
+      if (error) {
+        console.error(`Error getting user preferences for type ${preferenceType}:`, error);
+        return undefined;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`Exception getting user preferences for type ${preferenceType}:`, error);
+      return undefined;
+    }
+  }
+  
+  async saveUserPreferences(preferences: { user_id: string; preference_type: string; data: any }): Promise<{ user_id: string; preference_type: string; data: any }> {
+    try {
+      console.log(`Saving user preferences for userId ${preferences.user_id} and type ${preferences.preference_type}`);
+      
+      // Check if preferences already exist for this user and type
+      const existingPrefs = await this.getUserPreferences(preferences.user_id, preferences.preference_type);
+      
+      let data, error;
+      
+      if (existingPrefs) {
+        // Update existing preferences
+        ({ data, error } = await supabase
+          .from('user_preferences')
+          .update({
+            data: preferences.data,
+            updated_at: new Date()
+          })
+          .eq('user_id', preferences.user_id)
+          .eq('preference_type', preferences.preference_type)
+          .select()
+          .single());
+      } else {
+        // Insert new preferences
+        ({ data, error } = await supabase
+          .from('user_preferences')
+          .insert({
+            user_id: preferences.user_id,
+            preference_type: preferences.preference_type,
+            data: preferences.data,
+            created_at: new Date(),
+            updated_at: new Date()
+          })
+          .select()
+          .single());
+      }
+      
+      if (error) {
+        console.error('Error saving user preferences:', error);
+        throw new Error(`Failed to save user preferences: ${error.message}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Exception saving user preferences:', error);
+      throw new Error('Failed to save user preferences');
+    }
+  }
+  
+  async deleteUserPreferences(userId: string, preferenceType: string): Promise<void> {
+    try {
+      console.log(`Deleting user preferences for userId ${userId} and type ${preferenceType}`);
+      
+      const { error } = await supabase
+        .from('user_preferences')
+        .delete()
+        .eq('user_id', userId)
+        .eq('preference_type', preferenceType);
+        
+      if (error) {
+        console.error('Error deleting user preferences:', error);
+        throw new Error(`Failed to delete user preferences: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Exception deleting user preferences:', error);
+      throw new Error(`Failed to delete user preferences for user ${userId} and type ${preferenceType}`);
+    }
+  }
 }
 
 // Memory storage implementation (simplified version)
@@ -1622,6 +1714,25 @@ export class MemStorage implements IStorage {
   async storeFeedback(feedback: InsertFeedback): Promise<Feedback> { return { id: 1, ...feedback, status: 'pending' } as Feedback; }
   async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> { return { id: feedbackId, status } as Feedback; }
   async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> { return { id: feedbackId } as Feedback; }
+
+  // User Preferences operations
+  async getUserPreferences(userId: string, preferenceType: string): Promise<{ user_id: string; preference_type: string; data: any } | undefined> {
+    console.log(`MemStorage.getUserPreferences called with userId: ${userId}, preferenceType: ${preferenceType}`);
+    return {
+      user_id: userId,
+      preference_type: preferenceType,
+      data: {}
+    };
+  }
+  
+  async saveUserPreferences(preferences: { user_id: string; preference_type: string; data: any }): Promise<{ user_id: string; preference_type: string; data: any }> {
+    console.log(`MemStorage.saveUserPreferences called`, preferences);
+    return preferences;
+  }
+  
+  async deleteUserPreferences(userId: string, preferenceType: string): Promise<void> {
+    console.log(`MemStorage.deleteUserPreferences called with userId: ${userId}, preferenceType: ${preferenceType}`);
+  }
 }
 
 // Import the object storage
