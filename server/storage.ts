@@ -3,7 +3,7 @@ import {
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
 } from "@shared/schema.js";
-import { DashboardPreferences } from "../shared/dashboard-schema.js";
+import { DashboardConfig } from "../shared/dashboard-schema.js";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
@@ -28,6 +28,10 @@ export interface IStorage {
   getSessionByUserId(userId: string): Promise<Session | undefined>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(sessionId: string, data: Partial<Session>): Promise<Session>;
+  
+  // Dashboard operations
+  getDashboardConfig(userId: string): Promise<DashboardConfig | null>;
+  saveDashboardConfig(userId: string, config: DashboardConfig): Promise<void>;
   deleteSession(sessionId: string): Promise<void>;
 
   // Athlete operations

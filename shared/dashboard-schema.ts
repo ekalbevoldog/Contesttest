@@ -1,78 +1,64 @@
-// Dashboard schema types
+// Types for dashboard configuration and widget data
 
 // Widget types
 export type WidgetType = 'stats' | 'chart' | 'activity' | 'quickActions';
 
-// Widget sizes
-export type WidgetSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
-
-// Base widget interface
+// Widget interface - base structure for all widget types
 export interface Widget {
   id: string;
   type: WidgetType;
   title: string;
   description?: string;
-  size: WidgetSize;
   position: number;
+  size: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   visible: boolean;
   settings?: Record<string, any>;
 }
 
-// Dashboard configuration
+// Dashboard configuration interface
 export interface DashboardConfig {
   userId: string;
   widgets: Widget[];
-  lastUpdated?: string;
+  lastUpdated: string; // ISO date string
 }
 
-// Stats Widget Data Types
+// Stats widget data
 export interface StatItem {
   key: string;
   label: string;
   value: string | number;
-  trend?: 'up' | 'down' | 'neutral';
-  change?: number;
-  icon?: string;
+  icon?: string; // Lucide icon name
   color?: string;
-  link?: string;
+  trend?: 'up' | 'down' | 'neutral';
+  change?: number; // Percentage change
+  link?: string; // Optional link to more details
 }
 
-export interface StatsData {
-  items: StatItem[];
-  timestamp?: string;
-}
-
-// Chart Widget Data Types
+// Chart widget data
 export interface ChartData {
-  data: any[];
-  series: string[];
-  xAxis?: string;
-  timestamp?: string;
+  data: Record<string, any>[]; // Array of data points
+  series: string[]; // Array of series names
+  xAxis: string; // Property name for X-axis data
 }
 
-// Activity Widget Data Types
+// Activity widget data
 export interface ActivityItem {
   id: string;
   type: string;
-  icon?: string;
   title: string;
   description: string;
-  timestamp: string;
-  status?: string;
-  link?: string;
+  timestamp: string; // ISO date string
+  icon?: string; // Lucide icon name
+  status?: 'success' | 'pending' | 'warning' | 'error';
+  link?: string; // Optional link to more details
 }
 
-export type ActivityData = ActivityItem[];
-
-// Quick Actions Widget Data Types
+// Quick actions widget data
 export interface QuickActionItem {
   id: string;
   label: string;
-  description?: string;
-  icon?: string;
-  link: string;
+  icon?: string; // Lucide icon name
   color?: string;
-  action?: string;
+  link: string;
+  description?: string;
 }
-
-export type QuickActionsData = QuickActionItem[];
