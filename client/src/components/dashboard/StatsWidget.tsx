@@ -1,130 +1,146 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  ArrowUpIcon, 
-  ArrowDownIcon, 
-  ArrowRightIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
-  BarChart
-} from 'lucide-react';
+import { dashboardQueryOptions } from '@/lib/dashboard-service';
 import DashboardWidget from './DashboardWidget';
-import type { StatsWidget as StatsWidgetType, StatsData, StatsDataItem } from '../../../shared/dashboard-schema';
-import { fetchStatsData } from '@/lib/dashboard-service';
-import { cn } from '@/lib/utils';
+import { Widget, StatItem } from '../../../shared/dashboard-schema';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import * as Icons from 'lucide-react';
 
-interface StatsWidgetProps {
-  widget: StatsWidgetType;
-  className?: string;
-}
+// Icon mapping function (dynamic icon rendering)
+const getDynamicIcon = (iconName: string) => {
+  const IconComponent = Icons[iconName as keyof typeof Icons];
+  return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
+};
 
-// Renders individual stat items
-const StatItem: React.FC<{ item: StatsDataItem }> = ({ item }) => {
-  // Determine trend indicator
-  const getTrendIndicator = () => {
-    if (!item.trend) return null;
-    
-    const trendIcons = {
-      up: <ArrowUpIcon className="h-4 w-4 text-emerald-500" />,
-      down: <ArrowDownIcon className="h-4 w-4 text-red-500" />,
-      neutral: <ArrowRightIcon className="h-4 w-4 text-gray-400" />
-    };
-    
-    return trendIcons[item.trend];
-  };
-
-  // Format the change value
-  const formatChange = () => {
-    if (item.change === undefined) return null;
-    
-    const isPositive = item.change > 0;
-    const color = isPositive ? 'text-emerald-500' : item.change < 0 ? 'text-red-500' : 'text-gray-400';
-    const value = `${isPositive ? '+' : ''}${item.change}%`;
-    
-    return <span className={color}>{value}</span>;
-  };
-
+// Trend indicator component
+const TrendIndicator = ({ trend, change }: { trend?: string; change?: number }) => {
+  if (!trend || !change) return null;
+  
   return (
-    <div className="flex flex-col px-3 py-2 rounded-lg backdrop-blur-sm bg-white/5 border border-gray-800">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-gray-400">{item.label}</span>
-        <div className="flex items-center space-x-1">
-          {getTrendIndicator()}
-          <span className="text-xs">{formatChange()}</span>
+    <div className="flex items-center">
+      {trend === 'up' && <ArrowUp className="h-3 w-3 text-green-500 mr-1" />}
+      {trend === 'down' && <ArrowDown className="h-3 w-3 text-red-500 mr-1" />}
+      {trend === 'neutral' && <Minus className="h-3 w-3 text-gray-500 mr-1" />}
+      <span className={`text-xs font-medium ${
+        trend === 'up' ? 'text-green-500' : 
+        trend === 'down' ? 'text-red-500' : 
+        'text-gray-500'
+      }`}>
+        {change}%
+      </span>
+    </div>
+  );
+};
+
+// Stat item component
+const StatItemComponent = ({ item }: { item: StatItem }) => {
+  const bgColorMap: Record<string, string> = {
+    blue: 'bg-blue-100',
+    green: 'bg-green-100',
+    red: 'bg-red-100',
+    amber: 'bg-amber-100',
+    indigo: 'bg-indigo-100',
+    purple: 'bg-purple-100',
+    pink: 'bg-pink-100',
+    gray: 'bg-gray-100'
+  };
+  
+  const textColorMap: Record<string, string> = {
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    red: 'text-red-600',
+    amber: 'text-amber-600',
+    indigo: 'text-indigo-600',
+    purple: 'text-purple-600',
+    pink: 'text-pink-600',
+    gray: 'text-gray-600'
+  };
+  
+  const bgColor = item.color ? bgColorMap[item.color] || 'bg-gray-100' : 'bg-gray-100';
+  const textColor = item.color ? textColorMap[item.color] || 'text-gray-600' : 'text-gray-600';
+  
+  return (
+    <div className="flex flex-col p-4 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+      <div className="flex justify-between mb-2">
+        <div className={`${bgColor} p-2 rounded-md`}>
+          {item.icon && <div className={textColor}>{getDynamicIcon(item.icon)}</div>}
         </div>
+        <TrendIndicator trend={item.trend} change={item.change} />
       </div>
-      <div className="flex items-center space-x-2">
-        {item.icon && (
-          <div className={cn(
-            "w-8 h-8 rounded-md flex items-center justify-center",
-            item.color ? `bg-${item.color}-500/20 text-${item.color}-500` : "bg-primary/20 text-primary"
-          )}>
-            {item.icon === 'trending-up' && <TrendingUpIcon className="h-4 w-4" />}
-            {item.icon === 'trending-down' && <TrendingDownIcon className="h-4 w-4" />}
-            {item.icon === 'bar-chart' && <BarChart className="h-4 w-4" />}
-          </div>
-        )}
-        <div className={cn("text-lg font-semibold", !item.icon && "ml-1")}>
-          {item.value}
-        </div>
+      <div className="mt-2">
+        <div className="text-2xl font-bold">{item.value}</div>
+        <div className="text-sm text-gray-500">{item.label}</div>
       </div>
     </div>
   );
 };
 
 // Loading skeleton for stats
-const StatsSkeletonLoader: React.FC = () => {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="flex flex-col p-3 rounded-lg backdrop-blur-sm bg-white/5 border border-gray-800">
-          <div className="flex items-center justify-between mb-1">
-            <Skeleton className="h-3 w-16 bg-gray-700" />
-            <Skeleton className="h-3 w-8 bg-gray-700" />
-          </div>
-          <div className="flex items-center space-x-2 mt-1">
-            <Skeleton className="h-8 w-8 rounded-md bg-gray-700" />
-            <Skeleton className="h-6 w-16 bg-gray-700" />
-          </div>
+const StatsLoadingSkeleton = () => (
+  <div className="grid grid-cols-2 gap-4">
+    {[1, 2, 3, 4].map(index => (
+      <div key={index} className="flex flex-col p-4 rounded-lg border border-gray-100">
+        <div className="flex justify-between mb-2">
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-4 w-16" />
         </div>
-      ))}
-    </div>
-  );
-};
-
-const StatsWidget: React.FC<StatsWidgetProps> = ({ widget, className }) => {
-  // Fetch stats data from the API
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['/api/dashboard/data/stats', widget.id],
-    queryFn: fetchStatsData,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  // When there's an error, display a message
-  if (error) {
-    return (
-      <DashboardWidget widget={widget} className={className} onRefresh={() => refetch()}>
-        <div className="h-full flex items-center justify-center text-red-400 text-sm">
-          Error loading stats: {error instanceof Error ? error.message : 'Unknown error'}
+        <div className="mt-2">
+          <Skeleton className="h-8 w-20 mb-2" />
+          <Skeleton className="h-4 w-24" />
         </div>
-      </DashboardWidget>
-    );
-  }
+      </div>
+    ))}
+  </div>
+);
 
+interface StatsWidgetProps {
+  widget: Widget;
+  onRefresh?: () => void;
+  isEditing?: boolean;
+}
+
+const StatsWidget: React.FC<StatsWidgetProps> = ({ widget, onRefresh, isEditing = false }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Fetch stats data using TanStack Query
+  const { 
+    data: statsData, 
+    isLoading,
+    isError,
+    refetch
+  } = useQuery(dashboardQueryOptions.statsData);
+  
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+    if (onRefresh) onRefresh();
+  };
+  
   return (
-    <DashboardWidget widget={widget} className={className} isLoading={isLoading} onRefresh={() => refetch()}>
-      {isLoading ? (
-        <StatsSkeletonLoader />
-      ) : data && data.items && data.items.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {data.items.map((item) => (
-            <StatItem key={item.key} item={item} />
+    <DashboardWidget 
+      widget={widget} 
+      onRefresh={handleRefresh}
+      isLoading={isLoading || isRefreshing}
+      isEditing={isEditing}
+    >
+      {isLoading || isRefreshing ? (
+        <StatsLoadingSkeleton />
+      ) : isError ? (
+        <div className="p-4 text-center text-red-500">
+          Failed to load stats. Please try refreshing.
+        </div>
+      ) : statsData?.items && statsData.items.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {statsData.items.map(item => (
+            <StatItemComponent key={item.key} item={item} />
           ))}
         </div>
       ) : (
-        <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-          No stats data available
+        <div className="p-4 text-center text-gray-500">
+          No stats available to display.
         </div>
       )}
     </DashboardWidget>

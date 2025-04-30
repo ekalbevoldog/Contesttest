@@ -1,279 +1,286 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { dashboardQueryOptions } from '@/lib/dashboard-service';
+import DashboardWidget from './DashboardWidget';
+import { Widget } from '../../../shared/dashboard-schema';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  LineChart,
-  Line,
-  BarChart as RechartsBarChart,
-  Bar,
-  AreaChart,
-  Area,
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
   PieChart,
   Pie,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ScatterChart,
-  Scatter,
-  ZAxis
+  Cell
 } from 'recharts';
-import DashboardWidget from './DashboardWidget';
-import type { ChartWidget as ChartWidgetType, ChartData } from '../../../shared/dashboard-schema';
-import { fetchChartData } from '@/lib/dashboard-service';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface ChartWidgetProps {
-  widget: ChartWidgetType;
-  className?: string;
+// Chart types
+type ChartType = 'line' | 'bar' | 'pie';
+
+// Colors for chart elements
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+const ChartLoadingSkeleton = () => (
+  <div className="w-full h-64">
+    <Skeleton className="w-full h-full rounded-md" />
+  </div>
+);
+
+interface ChartControlsProps {
+  chartType: ChartType;
+  timeRange?: string;
+  onChartTypeChange: (type: ChartType) => void;
+  onTimeRangeChange?: (range: string) => void;
+  dataSource?: string;
+  availableDataSources?: string[];
+  onDataSourceChange?: (source: string) => void;
+  showControls: boolean;
 }
 
-// Loading skeleton for charts
-const ChartSkeletonLoader: React.FC = () => {
+const ChartControls: React.FC<ChartControlsProps> = ({
+  chartType,
+  timeRange,
+  onChartTypeChange,
+  onTimeRangeChange,
+  dataSource,
+  availableDataSources,
+  onDataSourceChange,
+  showControls
+}) => {
+  if (!showControls) return null;
+  
   return (
-    <div className="w-full h-full min-h-[200px] flex items-center justify-center">
-      <Skeleton className="h-48 w-full rounded-md bg-gray-700" />
+    <div className="flex flex-wrap gap-2 mb-4">
+      <Select value={chartType} onValueChange={(value) => onChartTypeChange(value as ChartType)}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Chart Type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="line">Line Chart</SelectItem>
+            <SelectItem value="bar">Bar Chart</SelectItem>
+            <SelectItem value="pie">Pie Chart</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      
+      {timeRange && onTimeRangeChange && (
+        <Select value={timeRange} onValueChange={onTimeRangeChange}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Time Range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="90d">Last 90 Days</SelectItem>
+              <SelectItem value="1y">Last Year</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      )}
+      
+      {dataSource && onDataSourceChange && availableDataSources && (
+        <Select value={dataSource} onValueChange={onDataSourceChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Data Source" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {availableDataSources.map(source => (
+                <SelectItem key={source} value={source}>
+                  {source.charAt(0).toUpperCase() + source.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 };
 
-const ChartWidget: React.FC<ChartWidgetProps> = ({ widget, className }) => {
-  // Default settings
-  const chartType = widget.settings?.chartType || 'line';
+interface ChartWidgetProps {
+  widget: Widget;
+  onRefresh?: () => void;
+  isEditing?: boolean;
+}
+
+const ChartWidget: React.FC<ChartWidgetProps> = ({ widget, onRefresh, isEditing = false }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Get chart settings from widget or defaults
   const dataSource = widget.settings?.dataSource || 'default';
-  const showLegend = widget.settings?.showLegend ?? true;
-  const colors = widget.settings?.colors || ['#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
-
-  // Fetch chart data from the API
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['/api/dashboard/data', dataSource],
-    queryFn: () => fetchChartData(dataSource),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  // When there's an error, display a message
-  if (error) {
-    return (
-      <DashboardWidget widget={widget} className={className} onRefresh={() => refetch()}>
-        <div className="h-full min-h-[200px] flex items-center justify-center text-red-400 text-sm">
-          Error loading chart: {error instanceof Error ? error.message : 'Unknown error'}
-        </div>
-      </DashboardWidget>
-    );
-  }
-
-  // Render the appropriate chart based on chartType
+  const [chartType, setChartType] = useState<ChartType>(widget.settings?.chartType || 'line');
+  const [timeRange, setTimeRange] = useState<string>(widget.settings?.timeRange || '30d');
+  
+  // Fetch chart data using TanStack Query
+  const { 
+    data: chartData, 
+    isLoading,
+    isError,
+    refetch
+  } = useQuery(dashboardQueryOptions.chartData(dataSource));
+  
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+    if (onRefresh) onRefresh();
+  };
+  
+  // Available data sources based on user role
+  const availableDataSources = widget.settings?.availableDataSources || [
+    'engagement', 'campaigns', 'revenue', 'performance'
+  ];
+  
+  // Handle chart type change
+  const handleChartTypeChange = (type: ChartType) => {
+    setChartType(type);
+  };
+  
+  // Handle time range change
+  const handleTimeRangeChange = (range: string) => {
+    setTimeRange(range);
+  };
+  
+  // Handle data source change
+  const handleDataSourceChange = (source: string) => {
+    // This would need to re-fetch data with the new source
+    console.log('Changing data source to:', source);
+  };
+  
+  // Render appropriate chart based on type
   const renderChart = () => {
-    if (!data || !data.data || data.data.length === 0) {
+    if (!chartData || !chartData.data || chartData.data.length === 0) {
       return (
-        <div className="h-full min-h-[200px] flex items-center justify-center text-gray-400 text-sm">
-          No chart data available
+        <div className="flex items-center justify-center h-64 text-gray-500">
+          No data available for the selected chart.
         </div>
       );
     }
-
-    const chartData = data.data;
-    const series = data.series || [];
-
+    
+    const { data, series } = chartData;
+    
     switch (chartType) {
       case 'line':
         return (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <XAxis dataKey={data.xAxis || 'name'} stroke="#6b7280" fontSize={12} />
-              <YAxis stroke="#6b7280" fontSize={12} />
-              {showLegend && <Legend />}
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} 
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
-              {series.map((s, i) => (
+            <LineChart
+              data={data}
+              margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={chartData.xAxis || 'date'} />
+              <YAxis />
+              <Tooltip />
+              {widget.settings?.showLegend && <Legend />}
+              {series.map((seriesKey, index) => (
                 <Line 
-                  key={s} 
+                  key={seriesKey}
                   type="monotone" 
-                  dataKey={s} 
-                  stroke={colors[i % colors.length]} 
-                  strokeWidth={2}
-                  activeDot={{ r: 6 }}
+                  dataKey={seriesKey} 
+                  stroke={COLORS[index % COLORS.length]} 
+                  activeDot={{ r: 8 }} 
                 />
               ))}
             </LineChart>
           </ResponsiveContainer>
         );
-
+        
       case 'bar':
         return (
           <ResponsiveContainer width="100%" height={300}>
-            <RechartsBarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <XAxis dataKey={data.xAxis || 'name'} stroke="#6b7280" fontSize={12} />
-              <YAxis stroke="#6b7280" fontSize={12} />
-              {showLegend && <Legend />}
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} 
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
-              {series.map((s, i) => (
+            <BarChart
+              data={data}
+              margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={chartData.xAxis || 'date'} />
+              <YAxis />
+              <Tooltip />
+              {widget.settings?.showLegend && <Legend />}
+              {series.map((seriesKey, index) => (
                 <Bar 
-                  key={s} 
-                  dataKey={s} 
-                  fill={colors[i % colors.length]} 
-                  radius={[4, 4, 0, 0]}
+                  key={seriesKey}
+                  dataKey={seriesKey} 
+                  fill={COLORS[index % COLORS.length]} 
                 />
               ))}
-            </RechartsBarChart>
+            </BarChart>
           </ResponsiveContainer>
         );
-
-      case 'area':
-        return (
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <defs>
-                {series.map((s, i) => (
-                  <linearGradient key={`gradient-${s}`} id={`color-${s}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={colors[i % colors.length]} stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor={colors[i % colors.length]} stopOpacity={0.2}/>
-                  </linearGradient>
-                ))}
-              </defs>
-              <XAxis dataKey={data.xAxis || 'name'} stroke="#6b7280" fontSize={12} />
-              <YAxis stroke="#6b7280" fontSize={12} />
-              {showLegend && <Legend />}
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} 
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
-              {series.map((s, i) => (
-                <Area 
-                  key={s} 
-                  type="monotone" 
-                  dataKey={s} 
-                  stroke={colors[i % colors.length]} 
-                  fillOpacity={1} 
-                  fill={`url(#color-${s})`}
-                />
-              ))}
-            </AreaChart>
-          </ResponsiveContainer>
-        );
-
+        
       case 'pie':
+        // For pie chart, transform the data
+        const pieData = series.map((seriesKey, index) => {
+          // Sum up values for this series across all data points
+          const value = data.reduce((sum, item) => sum + (Number(item[seriesKey]) || 0), 0);
+          return { name: seriesKey, value };
+        });
+        
         return (
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={chartData}
+                data={pieData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={2}
-                dataKey={series[0] || 'value'}
-                nameKey={data.xAxis || 'name'}
-                label
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              {showLegend && <Legend />}
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} 
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
+              {widget.settings?.showLegend && <Legend />}
+              <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         );
-
-      case 'radar':
-        return (
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart cx="50%" cy="50%" outerRadius={90} data={chartData}>
-              <PolarGrid stroke="#374151" />
-              <PolarAngleAxis dataKey={data.xAxis || 'name'} stroke="#9ca3af" />
-              <PolarRadiusAxis stroke="#9ca3af" />
-              {series.map((s, i) => (
-                <Radar 
-                  key={s} 
-                  name={s} 
-                  dataKey={s} 
-                  stroke={colors[i % colors.length]} 
-                  fill={colors[i % colors.length]} 
-                  fillOpacity={0.3} 
-                />
-              ))}
-              {showLegend && <Legend />}
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} 
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
-        );
-
-      case 'scatter':
-        return (
-          <ResponsiveContainer width="100%" height={300}>
-            <ScatterChart margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-              <XAxis 
-                dataKey={data.xAxis || 'x'} 
-                type="number" 
-                name={data.xAxis || 'x'} 
-                stroke="#6b7280" 
-                fontSize={12} 
-              />
-              <YAxis 
-                dataKey={series[0] || 'y'} 
-                type="number" 
-                name={series[0] || 'y'} 
-                stroke="#6b7280" 
-                fontSize={12} 
-              />
-              {series.length > 1 && (
-                <ZAxis 
-                  dataKey={series[1] || 'z'} 
-                  type="number" 
-                  range={[50, 500]} 
-                  name={series[1] || 'z'} 
-                />
-              )}
-              <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }}
-                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} 
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#9ca3af' }}
-              />
-              {showLegend && <Legend />}
-              <Scatter name="Data" data={chartData} fill={colors[0]} />
-            </ScatterChart>
-          </ResponsiveContainer>
-        );
-
+        
       default:
-        return (
-          <div className="h-full min-h-[200px] flex items-center justify-center text-gray-400 text-sm">
-            Unsupported chart type: {chartType}
-          </div>
-        );
+        return null;
     }
   };
-
+  
   return (
-    <DashboardWidget widget={widget} className={className} isLoading={isLoading} onRefresh={() => refetch()}>
-      <div className="pb-4">
-        {isLoading ? <ChartSkeletonLoader /> : renderChart()}
-      </div>
+    <DashboardWidget 
+      widget={widget} 
+      onRefresh={handleRefresh}
+      isLoading={isLoading || isRefreshing}
+      isEditing={isEditing}
+    >
+      <ChartControls 
+        chartType={chartType}
+        timeRange={timeRange}
+        onChartTypeChange={handleChartTypeChange}
+        onTimeRangeChange={handleTimeRangeChange}
+        dataSource={dataSource}
+        availableDataSources={availableDataSources}
+        onDataSourceChange={handleDataSourceChange}
+        showControls={Boolean(widget.settings?.showControls)}
+      />
+      
+      {isLoading || isRefreshing ? (
+        <ChartLoadingSkeleton />
+      ) : isError ? (
+        <div className="p-4 text-center text-red-500">
+          Failed to load chart data. Please try refreshing.
+        </div>
+      ) : (
+        renderChart()
+      )}
     </DashboardWidget>
   );
 };

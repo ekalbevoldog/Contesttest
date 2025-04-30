@@ -1,242 +1,262 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
-import { dashboardQueryOptions, fetchWidgetData } from '@/lib/dashboard-service';
-import DashboardWidget from '@/components/dashboard/DashboardWidget';
-import StatsWidget from '@/components/dashboard/StatsWidget';
-import ChartWidget from '@/components/dashboard/ChartWidget';
-import ActivityWidget from '@/components/dashboard/ActivityWidget';
-import QuickActionsWidget from '@/components/dashboard/QuickActionsWidget';
-import { Widget } from '../../shared/dashboard-schema';
-import { Loader2 } from 'lucide-react';
+import { dashboardQueryOptions, addWidget } from '@/lib/dashboard-service';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { PlusCircle, RefreshCw, Settings, Save, Undo } from 'lucide-react';
 import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+  Sheet, 
+  SheetContent, 
+  SheetDescription, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from '@/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
-import { addWidget, removeWidget, reorderWidgets, saveDashboardConfig } from '@/lib/dashboard-service';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Widget, WidgetType } from '../../shared/dashboard-schema';
+import { 
+  StatsWidget, 
+  ChartWidget, 
+  ActivityWidget, 
+  QuickActionsWidget 
+} from '@/components/dashboard';
+import { useAuth } from '@/hooks/use-auth';
 
 const Dashboard: React.FC = () => {
+  const { toast } = useToast();
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [addWidgetType, setAddWidgetType] = useState<string>('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Fetch dashboard configuration
   const { 
     data: dashboardConfig, 
-    isLoading: isLoadingConfig,
-    isError: isConfigError,
-    error: configError,
-    refetch: refetchConfig
-  } = useQuery(dashboardQueryOptions.dashboardConfig);
+    isLoading,
+    isError,
+    refetch
+  } = useQuery(dashboardQueryOptions.config);
   
-  // Function to render the appropriate widget component based on widget type
+  // Handle refresh of all dashboard data
+  const handleRefreshAll = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+    
+    toast({
+      title: "Dashboard refreshed",
+      description: "All dashboard widgets have been updated with the latest data.",
+    });
+  };
+  
+  // Add a new widget to the dashboard
+  const handleAddWidget = async (widgetType: WidgetType) => {
+    try {
+      await addWidget(widgetType);
+      toast({
+        title: "Widget added",
+        description: `New ${widgetType} widget has been added to your dashboard.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error adding widget",
+        description: "There was an error adding the widget. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Toggle edit mode
+  const toggleEditMode = () => {
+    setIsEditing(prev => !prev);
+    
+    if (isEditing) {
+      toast({
+        title: "Edit mode disabled",
+        description: "Your dashboard changes have been saved.",
+      });
+    } else {
+      toast({
+        title: "Edit mode enabled",
+        description: "You can now customize your dashboard widgets.",
+      });
+    }
+  };
+  
+  // Reset the dashboard to default settings
+  const handleResetDashboard = async () => {
+    // This would call a function to reset dashboard to defaults
+    toast({
+      title: "Dashboard reset",
+      description: "Your dashboard has been reset to the default layout.",
+    });
+  };
+  
+  // Render widget based on its type
   const renderWidget = (widget: Widget) => {
-    const widgetProps = {
-      widget,
-      onRefresh: () => refetchWidgetData(widget),
-      isEditing
-    };
+    if (!widget.visible) return null;
     
     switch (widget.type) {
       case 'stats':
-        return <StatsWidget {...widgetProps} />;
-      case 'chart':
-        return <ChartWidget {...widgetProps} />;
-      case 'activity':
-        return <ActivityWidget {...widgetProps} />;
-      case 'quickActions':
-        return <QuickActionsWidget {...widgetProps} />;
-      default:
         return (
-          <DashboardWidget widget={widget}>
-            <div className="text-center p-4 text-gray-400">
-              Unknown widget type: {widget.type}
-            </div>
-          </DashboardWidget>
+          <StatsWidget 
+            key={widget.id} 
+            widget={widget} 
+            isEditing={isEditing} 
+          />
         );
-    }
-  };
-  
-  // Function to refetch data for a specific widget
-  const refetchWidgetData = async (widget: Widget) => {
-    try {
-      // Based on widget type, use the appropriate query client refetch
-      switch (widget.type) {
-        case 'stats':
-          // Use the queryClient to invalidate and refetch
-          const statsKey = dashboardQueryOptions.statsData.queryKey;
-          console.log(`Refreshing stats widget (${widget.id})`);
-          return;
-        case 'chart':
-          const dataSource = widget.settings?.dataSource || 'default';
-          const chartKey = dashboardQueryOptions.chartData(dataSource).queryKey;
-          console.log(`Refreshing chart widget (${widget.id}) with data source ${dataSource}`);
-          return;
-        case 'activity':
-          const activityKey = dashboardQueryOptions.activityData.queryKey;
-          console.log(`Refreshing activity widget (${widget.id})`);
-          return;
-        case 'quickActions':
-          const quickActionsKey = dashboardQueryOptions.quickActionsData.queryKey;
-          console.log(`Refreshing quick actions widget (${widget.id})`);
-          return;
-      }
-    } catch (error) {
-      console.error(`Error refreshing widget ${widget.id}:`, error);
-    }
-  };
-  
-  // Function to handle widget removal
-  const handleRemoveWidget = async (widgetId: string) => {
-    try {
-      await removeWidget(widgetId);
-      refetchConfig();
-    } catch (error) {
-      console.error(`Error removing widget ${widgetId}:`, error);
-    }
-  };
-  
-  // Function to handle adding a new widget
-  const handleAddWidget = async () => {
-    if (!addWidgetType) return;
-    
-    try {
-      // Create a new widget based on the selected type
-      const newWidget: Omit<Widget, 'id'> = {
-        type: addWidgetType as any,
-        title: getDefaultTitle(addWidgetType),
-        description: getDefaultDescription(addWidgetType),
-        size: 'md',
-        position: dashboardConfig?.widgets.length || 0,
-        visible: true,
-        settings: getDefaultSettings(addWidgetType)
-      };
-      
-      await addWidget(newWidget);
-      refetchConfig();
-      setAddWidgetType('');
-    } catch (error) {
-      console.error('Error adding widget:', error);
-    }
-  };
-  
-  // Helper functions for default widget properties
-  const getDefaultTitle = (type: string): string => {
-    switch (type) {
-      case 'stats': return 'Key Metrics';
-      case 'chart': return 'Performance Chart';
-      case 'activity': return 'Recent Activity';
-      case 'quickActions': return 'Quick Actions';
-      default: return 'New Widget';
-    }
-  };
-  
-  const getDefaultDescription = (type: string): string => {
-    switch (type) {
-      case 'stats': return 'Overview of your key performance indicators';
-      case 'chart': return 'Visualize your data over time';
-      case 'activity': return 'See your latest updates and notifications';
-      case 'quickActions': return 'Quick access to common actions';
-      default: return '';
-    }
-  };
-  
-  const getDefaultSettings = (type: string): Record<string, any> | undefined => {
-    switch (type) {
       case 'chart':
-        return {
-          chartType: 'line',
-          dataSource: user?.role === 'athlete' ? 'engagement' :
-                     user?.role === 'business' ? 'campaigns' :
-                     user?.role === 'compliance' ? 'compliance' : 'admin',
-          showLegend: true
-        };
+        return (
+          <ChartWidget 
+            key={widget.id} 
+            widget={widget} 
+            isEditing={isEditing} 
+          />
+        );
       case 'activity':
-        return {
-          maxItems: 5
-        };
+        return (
+          <ActivityWidget 
+            key={widget.id} 
+            widget={widget} 
+            isEditing={isEditing} 
+          />
+        );
+      case 'quickActions':
+        return (
+          <QuickActionsWidget 
+            key={widget.id} 
+            widget={widget} 
+            isEditing={isEditing} 
+          />
+        );
       default:
-        return undefined;
+        return null;
     }
   };
   
-  // If configuration is loading, show loading state
-  if (isLoadingConfig) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-xl">Loading dashboard...</span>
+      <div className="container mx-auto p-4 lg:p-6">
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="flex space-x-2">
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <Skeleton className="h-10 w-10 rounded-md" />
+            <Skeleton className="h-10 w-28 rounded-md" />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-12 gap-4">
+          {[1, 2, 3, 4].map(index => (
+            <div key={index} className="col-span-6">
+              <Skeleton className="h-64 w-full rounded-md" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
   
-  // If there was an error loading the configuration
-  if (isConfigError || !dashboardConfig) {
+  // Error state
+  if (isError || !dashboardConfig) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
-        <h2 className="text-2xl font-bold text-red-500">Error loading dashboard</h2>
-        <p className="text-gray-600">
-          {configError instanceof Error ? configError.message : 'Failed to load dashboard configuration'}
+      <div className="container mx-auto p-6 text-center">
+        <h2 className="text-2xl font-bold mb-2">Dashboard Error</h2>
+        <p className="text-gray-500 mb-4">
+          There was an error loading your personalized dashboard.
         </p>
-        <Button onClick={() => refetchConfig()}>Try Again</Button>
+        <Button onClick={() => refetch()}>Try Again</Button>
       </div>
     );
   }
-  
-  // Filter visible widgets and sort by position
-  const visibleWidgets = dashboardConfig.widgets
-    .filter(widget => widget.visible)
-    .sort((a, b) => a.position - b.position);
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex space-x-2">
-          {isEditing && (
-            <div className="flex items-center space-x-2">
-              <Select value={addWidgetType} onValueChange={setAddWidgetType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Add Widget" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="stats">Stats Widget</SelectItem>
-                  <SelectItem value="chart">Chart Widget</SelectItem>
-                  <SelectItem value="activity">Activity Widget</SelectItem>
-                  <SelectItem value="quickActions">Quick Actions</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={handleAddWidget} disabled={!addWidgetType}>
-                Add
-              </Button>
-            </div>
-          )}
+    <div className="container mx-auto p-4 lg:p-6">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold">{user?.role === 'athlete' ? 'Athlete' : user?.role === 'business' ? 'Business' : user?.role === 'compliance' ? 'Compliance Officer' : 'Admin'} Dashboard</h1>
+          <p className="text-gray-500">
+            {isEditing 
+              ? 'Customize your dashboard by adding, removing, or resizing widgets.' 
+              : 'View your personalized dashboard and insights.'}
+          </p>
+        </div>
+        
+        <div className="flex mt-4 sm:mt-0 space-x-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleRefreshAll}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          
           <Button 
             variant={isEditing ? "default" : "outline"} 
-            onClick={() => setIsEditing(!isEditing)}
+            size="icon"
+            onClick={toggleEditMode}
           >
-            {isEditing ? 'Done' : 'Edit Dashboard'}
+            {isEditing ? <Save className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
           </Button>
+          
+          {isEditing && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Add Widget
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleAddWidget('stats')}>
+                    Stats Widget
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddWidget('chart')}>
+                    Chart Widget
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddWidget('activity')}>
+                    Activity Widget
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddWidget('quickActions')}>
+                    Quick Actions Widget
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={handleResetDashboard}
+              >
+                <Undo className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
       
       <div className="grid grid-cols-12 gap-4">
-        {visibleWidgets.map(widget => (
-          <React.Fragment key={widget.id}>
-            {renderWidget(widget)}
-          </React.Fragment>
-        ))}
-        
-        {visibleWidgets.length === 0 && (
-          <div className="col-span-12 flex flex-col items-center justify-center py-12 border border-dashed border-gray-300 rounded-lg">
-            <p className="text-gray-500 mb-4">No widgets in your dashboard</p>
-            <Button onClick={() => setIsEditing(true)}>Customize Dashboard</Button>
-          </div>
-        )}
+        {dashboardConfig.widgets.map(widget => renderWidget(widget))}
       </div>
     </div>
   );

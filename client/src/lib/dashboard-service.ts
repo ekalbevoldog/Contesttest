@@ -1,227 +1,131 @@
-import { apiRequest, queryClient } from "./queryClient";
-import {
-  DashboardConfig,
-  Widget,
-  WidgetSize,
-  StatsData,
-  ChartData,
-  ActivityData,
-  QuickActionsData
-} from "../../shared/dashboard-schema";
+import { apiRequest, queryClient } from './queryClient';
+import { 
+  DashboardConfig, 
+  StatsData, 
+  ChartData, 
+  ActivityData, 
+  QuickActionsData 
+} from '../../shared/dashboard-schema';
 
-// Base URL for dashboard API endpoints
-const DASHBOARD_API_BASE = "/api/dashboard";
+// Dashboard API endpoints
+const DASHBOARD_API = {
+  CONFIG: '/api/dashboard',
+  WIDGET: '/api/dashboard/widgets',
+  STATS: '/api/dashboard/data/stats',
+  CHART: '/api/dashboard/data',
+  ACTIVITIES: '/api/dashboard/data/activities',
+  QUICK_ACTIONS: '/api/dashboard/data/quickActions'
+};
 
-/**
- * Fetch dashboard configuration for the current user
- * Creates default configuration if none exists
- */
-export async function fetchDashboardConfig(): Promise<DashboardConfig> {
-  try {
-    const response = await apiRequest("GET", DASHBOARD_API_BASE);
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching dashboard config:", error);
-    throw new Error("Failed to load dashboard configuration");
-  }
-}
+// Dashboard query keys
+export const dashboardQueryKeys = {
+  config: ['dashboard', 'config'],
+  statsData: ['dashboard', 'data', 'stats'],
+  chartData: (source: string) => ['dashboard', 'data', 'chart', source],
+  activityData: ['dashboard', 'data', 'activities'],
+  quickActionsData: ['dashboard', 'data', 'quickActions']
+};
 
-/**
- * Save dashboard configuration
- */
-export async function saveDashboardConfig(config: DashboardConfig): Promise<void> {
-  try {
-    await apiRequest("POST", DASHBOARD_API_BASE, config);
-    // Invalidate cached dashboard config
-    queryClient.invalidateQueries({ queryKey: [DASHBOARD_API_BASE] });
-  } catch (error) {
-    console.error("Error saving dashboard config:", error);
-    throw new Error("Failed to save dashboard configuration");
-  }
-}
-
-/**
- * Update a specific widget
- */
-export async function updateWidget(widgetId: string, updates: Partial<Widget>): Promise<void> {
-  try {
-    await apiRequest("PATCH", `${DASHBOARD_API_BASE}/widgets/${widgetId}`, updates);
-    // Invalidate cached dashboard config
-    queryClient.invalidateQueries({ queryKey: [DASHBOARD_API_BASE] });
-  } catch (error) {
-    console.error(`Error updating widget ${widgetId}:`, error);
-    throw new Error("Failed to update widget");
-  }
-}
-
-/**
- * Remove a widget from the dashboard
- */
-export async function removeWidget(widgetId: string): Promise<void> {
-  try {
-    await apiRequest("DELETE", `${DASHBOARD_API_BASE}/widgets/${widgetId}`);
-    // Invalidate cached dashboard config
-    queryClient.invalidateQueries({ queryKey: [DASHBOARD_API_BASE] });
-  } catch (error) {
-    console.error(`Error removing widget ${widgetId}:`, error);
-    throw new Error("Failed to remove widget");
-  }
-}
-
-/**
- * Add a new widget to the dashboard
- */
-export async function addWidget(widget: Omit<Widget, 'id'>): Promise<void> {
-  try {
-    // Fetch current config
-    const config = await fetchDashboardConfig();
-    
-    // Create a new widget with a unique ID
-    const newWidget: Widget = {
-      ...widget,
-      id: `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    };
-    
-    // Add the widget to the config
-    config.widgets.push(newWidget);
-    
-    // Save the updated config
-    await saveDashboardConfig(config);
-  } catch (error) {
-    console.error("Error adding widget:", error);
-    throw new Error("Failed to add widget");
-  }
-}
-
-/**
- * Reorder widgets by updating positions
- */
-export async function reorderWidgets(widgetIds: string[]): Promise<void> {
-  try {
-    // Fetch current config
-    const config = await fetchDashboardConfig();
-    
-    // Create a map of widget IDs to their new positions
-    const positionMap = new Map<string, number>();
-    widgetIds.forEach((id, index) => {
-      positionMap.set(id, index);
-    });
-    
-    // Update widget positions
-    config.widgets.forEach(widget => {
-      if (positionMap.has(widget.id)) {
-        widget.position = positionMap.get(widget.id) as number;
-      }
-    });
-    
-    // Sort widgets by position
-    config.widgets.sort((a, b) => a.position - b.position);
-    
-    // Save the updated config
-    await saveDashboardConfig(config);
-  } catch (error) {
-    console.error("Error reordering widgets:", error);
-    throw new Error("Failed to reorder widgets");
-  }
-}
-
-/**
- * Fetch stats data for the stats widget
- */
-export async function fetchStatsData(): Promise<StatsData> {
-  try {
-    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/stats`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching stats data:", error);
-    throw new Error("Failed to load stats data");
-  }
-}
-
-/**
- * Fetch chart data for the chart widget
- */
-export async function fetchChartData(dataSource: string): Promise<ChartData> {
-  try {
-    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/${dataSource}`);
-    return await response.json();
-  } catch (error) {
-    console.error(`Error fetching chart data for ${dataSource}:`, error);
-    throw new Error(`Failed to load chart data for ${dataSource}`);
-  }
-}
-
-/**
- * Fetch activity data for the activity widget
- */
-export async function fetchActivityData(): Promise<ActivityData> {
-  try {
-    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/activities`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching activity data:", error);
-    throw new Error("Failed to load activity data");
-  }
-}
-
-/**
- * Fetch quick actions data for the quick actions widget
- */
-export async function fetchQuickActionsData(): Promise<QuickActionsData> {
-  try {
-    const response = await apiRequest("GET", `${DASHBOARD_API_BASE}/data/quickActions`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching quick actions data:", error);
-    throw new Error("Failed to load quick actions data");
-  }
-}
-
-/**
- * Fetch widget data based on widget type and settings
- */
-export async function fetchWidgetData(widget: Widget): Promise<any> {
-  try {
-    switch (widget.type) {
-      case 'stats':
-        return fetchStatsData();
-      case 'chart':
-        return fetchChartData(widget.settings?.dataSource || 'default');
-      case 'activity':
-        return fetchActivityData();
-      case 'quickActions':
-        return fetchQuickActionsData();
-      default:
-        throw new Error(`Unsupported widget type: ${widget.type}`);
-    }
-  } catch (error) {
-    console.error(`Error fetching data for widget ${widget.id}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Hook data fetchers for TanStack Query
- */
+// Dashboard query options
 export const dashboardQueryOptions = {
-  dashboardConfig: {
-    queryKey: [DASHBOARD_API_BASE],
-    queryFn: fetchDashboardConfig,
+  config: {
+    queryKey: dashboardQueryKeys.config,
+    queryFn: async (): Promise<DashboardConfig> => {
+      const res = await apiRequest('GET', DASHBOARD_API.CONFIG);
+      return await res.json();
+    }
   },
   statsData: {
-    queryKey: [`${DASHBOARD_API_BASE}/data/stats`],
-    queryFn: fetchStatsData,
+    queryKey: dashboardQueryKeys.statsData,
+    queryFn: async (): Promise<StatsData> => {
+      const res = await apiRequest('GET', DASHBOARD_API.STATS);
+      return await res.json();
+    }
   },
+  chartData: (source: string) => ({
+    queryKey: dashboardQueryKeys.chartData(source),
+    queryFn: async (): Promise<ChartData> => {
+      const res = await apiRequest('GET', `${DASHBOARD_API.CHART}/${source}`);
+      return await res.json();
+    }
+  }),
   activityData: {
-    queryKey: [`${DASHBOARD_API_BASE}/data/activities`],
-    queryFn: fetchActivityData,
+    queryKey: dashboardQueryKeys.activityData,
+    queryFn: async (): Promise<ActivityData> => {
+      const res = await apiRequest('GET', DASHBOARD_API.ACTIVITIES);
+      return await res.json();
+    }
   },
   quickActionsData: {
-    queryKey: [`${DASHBOARD_API_BASE}/data/quickActions`],
-    queryFn: fetchQuickActionsData,
-  },
-  chartData: (dataSource: string) => ({
-    queryKey: [`${DASHBOARD_API_BASE}/data/${dataSource}`],
-    queryFn: () => fetchChartData(dataSource),
-  }),
+    queryKey: dashboardQueryKeys.quickActionsData,
+    queryFn: async (): Promise<QuickActionsData> => {
+      const res = await apiRequest('GET', DASHBOARD_API.QUICK_ACTIONS);
+      return await res.json();
+    }
+  }
 };
+
+// Get dashboard configuration
+export async function getDashboardConfig(): Promise<DashboardConfig> {
+  const res = await apiRequest('GET', DASHBOARD_API.CONFIG);
+  return await res.json();
+}
+
+// Save full dashboard configuration
+export async function saveDashboardConfig(config: DashboardConfig): Promise<void> {
+  await apiRequest('POST', DASHBOARD_API.CONFIG, config);
+  
+  // Invalidate dashboard configuration query
+  queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.config });
+}
+
+// Update specific widget
+export async function updateWidget(
+  widgetId: string, 
+  updates: Partial<any>
+): Promise<void> {
+  await apiRequest('PATCH', `${DASHBOARD_API.WIDGET}/${widgetId}`, updates);
+  
+  // Invalidate dashboard configuration query
+  queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.config });
+}
+
+// Remove widget
+export async function removeWidget(widgetId: string): Promise<void> {
+  await apiRequest('DELETE', `${DASHBOARD_API.WIDGET}/${widgetId}`);
+  
+  // Invalidate dashboard configuration query
+  queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.config });
+}
+
+// Add widget
+export async function addWidget(widgetType: string): Promise<void> {
+  // Note: This is implemented on the server-side to create a new widget
+  // and add it to the user's dashboard configuration
+  await apiRequest('POST', `${DASHBOARD_API.WIDGET}/add`, { type: widgetType });
+  
+  // Invalidate dashboard configuration query
+  queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.config });
+}
+
+// Get default dashboard configuration for current user
+export async function getDefaultDashboardConfig(): Promise<DashboardConfig> {
+  const res = await apiRequest('GET', `${DASHBOARD_API.CONFIG}/default`);
+  return await res.json();
+}
+
+// Reset dashboard to defaults
+export async function resetDashboard(): Promise<void> {
+  await apiRequest('POST', `${DASHBOARD_API.CONFIG}/reset`);
+  
+  // Invalidate dashboard configuration query
+  queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.config });
+}
+
+// Reorder widgets
+export async function reorderWidgets(widgetIds: string[]): Promise<void> {
+  await apiRequest('POST', `${DASHBOARD_API.CONFIG}/reorder`, { widgetIds });
+  
+  // Invalidate dashboard configuration query
+  queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.config });
+}
