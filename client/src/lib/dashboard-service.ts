@@ -1,183 +1,181 @@
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { 
-  DashboardConfig, 
-  Widget, 
-  StatItem,
-  ActivityItem,
-  ChartData,
-  QuickActionItem
-} from '../../shared/dashboard-schema';
+import { DashboardConfig, Widget, StatItem, ChartData, ActivityItem, QuickActionItem } from "@shared/dashboard-schema";
+import { apiRequest, queryClient } from "./queryClient";
 
-// Health check function to test API connectivity
+// Base URL for dashboard API
+const API_BASE_URL = '/api/dashboard';
+
+// Check dashboard health
 export async function checkDashboardHealth(): Promise<boolean> {
   try {
-    console.log('[Dashboard] Checking dashboard API health...');
-    const response = await fetch('/api/dashboard/health');
-    
-    console.log('[Dashboard] Health check status:', response.status);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('[Dashboard] Health check response:', data);
-      return true;
-    }
-    
-    return false;
+    const response = await fetch(`${API_BASE_URL}/health`);
+    const data = await response.json();
+    return data.status === 'healthy';
   } catch (error) {
-    console.error('[Dashboard] Health check failed:', error);
+    console.error('Dashboard health check failed:', error);
     return false;
   }
 }
 
-// Store auth info in localStorage
+// Auth info storage for cached dashboard data
 export function storeAuthInfo(userId: string, token: string, role: string = 'athlete'): void {
-  console.log(`[Dashboard] Storing auth info for user ${userId} with role ${role}`);
-  localStorage.setItem('userId', userId);
-  localStorage.setItem('userRole', role);
-  localStorage.setItem('authToken', token);
-  // Set timestamp for token
-  localStorage.setItem('authTimestamp', Date.now().toString());
+  localStorage.setItem('dashboard_user_id', userId);
+  localStorage.setItem('dashboard_user_role', role);
+  localStorage.setItem('dashboard_auth_token', token);
 }
 
 // Clear auth info
 export function clearAuthInfo(): void {
-  console.log('[Dashboard] Clearing auth info');
-  localStorage.removeItem('userId');
-  localStorage.removeItem('userRole');
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('authTimestamp');
+  localStorage.removeItem('dashboard_user_id');
+  localStorage.removeItem('dashboard_user_role');
+  localStorage.removeItem('dashboard_auth_token');
+  
+  // Also clear dashboard cache
+  DashboardLocalStorageCache.clearCache();
 }
 
-// API functions for dashboard data
+// Fetch dashboard config
 export async function fetchDashboardConfig(): Promise<DashboardConfig> {
   try {
-    console.log('[Dashboard] Fetching dashboard configuration...');
-    // First check if we have a user ID in localStorage
-    const userId = localStorage.getItem('userId');
-    const userRole = localStorage.getItem('userRole') || 'athlete';
-    const authToken = localStorage.getItem('authToken');
+    const response = await apiRequest('GET', `${API_BASE_URL}/config`);
+    const data = await response.json();
     
-    console.log(`[Dashboard] Auth state check: userId=${!!userId}, authToken=${!!authToken}, userRole=${userRole}`);
+    // Cache the config
+    DashboardLocalStorageCache.saveConfig(data);
     
-    if (!userId) {
-      console.warn('[Dashboard] No user ID found in localStorage, cannot fetch dashboard config');
-      // Create default config for unauthenticated users to avoid breaking UI
-      return {
-        userId: 'guest-user',
-        lastUpdated: new Date().toISOString(),
-        widgets: []
-      };
-    }
-    
-    console.log(`[Dashboard] Fetching config for user ${userId} with role ${userRole}`);
-    
-    // Start by checking if API is accessible
-    const isHealthy = await checkDashboardHealth();
-    if (!isHealthy) {
-      console.warn('[Dashboard] Dashboard API is not responding, using fallback config');
-      return {
-        userId: userId,
-        lastUpdated: new Date().toISOString(),
-        widgets: []
-      };
-    }
-    
-    try {
-      console.log('[Dashboard] Making authenticated request to dashboard API...');
-      const response = await apiRequest('GET', '/api/dashboard/config');
-      
-      console.log('[Dashboard] API response status:', response.status);
-      
-      const data = await response.json();
-      console.log('[Dashboard] Dashboard config received:', data);
-      
-      // Cache the data in localStorage
-      DashboardLocalStorageCache.saveConfig(data);
-      
-      return data;
-    } catch (apiError) {
-      console.error('[Dashboard] API error:', apiError);
-      
-      // Try getting from cache if API fails
-      const cachedConfig = DashboardLocalStorageCache.loadConfig();
-      if (cachedConfig && cachedConfig.userId === userId) {
-        console.log('[Dashboard] Using cached dashboard config');
-        return cachedConfig;
-      }
-      
-      // If no cache or cache is for different user, return a minimal configuration
-      console.log('[Dashboard] Creating fallback dashboard config');
-      return {
-        userId: userId,
-        lastUpdated: new Date().toISOString(),
-        widgets: []
-      };
-    }
+    return data;
   } catch (error) {
-    console.error('[Dashboard] Error in fetchDashboardConfig:', error);
-    // Return empty dashboard rather than breaking completely
-    return {
-      userId: 'error-state',
-      lastUpdated: new Date().toISOString(),
-      widgets: []
-    };
+    console.error('Error fetching dashboard config:', error);
+    
+    // Try to load from cache
+    const cachedConfig = DashboardLocalStorageCache.loadConfig();
+    if (cachedConfig) {
+      console.log('Using cached dashboard config');
+      return cachedConfig;
+    }
+    
+    throw error;
   }
 }
 
+// Save dashboard config
 export async function saveDashboardConfig(config: DashboardConfig): Promise<void> {
-  await apiRequest('POST', '/api/dashboard/config', config);
-  // Invalidate the dashboard config in the cache
-  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/config'] });
+  try {
+    await apiRequest('POST', `${API_BASE_URL}/config`, config);
+    
+    // Invalidate cache
+    queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/config`] });
+    
+    // Update cache
+    DashboardLocalStorageCache.saveConfig(config);
+  } catch (error) {
+    console.error('Error saving dashboard config:', error);
+    throw error;
+  }
 }
 
+// Add a new widget
 export async function addWidget(widget: Omit<Widget, 'id'>): Promise<Widget> {
-  const response = await apiRequest('POST', '/api/dashboard/widgets', widget);
-  // Invalidate the dashboard config in the cache
-  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/config'] });
-  return response.json();
+  try {
+    const response = await apiRequest('POST', `${API_BASE_URL}/widgets`, widget);
+    const newWidget = await response.json();
+    
+    // Invalidate cache
+    queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/config`] });
+    
+    return newWidget;
+  } catch (error) {
+    console.error('Error adding widget:', error);
+    throw error;
+  }
 }
 
+// Update a widget
 export async function updateWidget(widgetId: string, data: Partial<Widget>): Promise<Widget> {
-  const response = await apiRequest('PATCH', `/api/dashboard/widgets/${widgetId}`, data);
-  // Invalidate the dashboard config in the cache
-  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/config'] });
-  return response.json();
+  try {
+    const response = await apiRequest('PATCH', `${API_BASE_URL}/widgets/${widgetId}`, data);
+    const updatedWidget = await response.json();
+    
+    // Invalidate cache
+    queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/config`] });
+    
+    return updatedWidget;
+  } catch (error) {
+    console.error('Error updating widget:', error);
+    throw error;
+  }
 }
 
+// Remove a widget
 export async function removeWidget(widgetId: string): Promise<void> {
-  await apiRequest('DELETE', `/api/dashboard/widgets/${widgetId}`);
-  // Invalidate the dashboard config in the cache
-  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/config'] });
+  try {
+    await apiRequest('DELETE', `${API_BASE_URL}/widgets/${widgetId}`);
+    
+    // Invalidate cache
+    queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/config`] });
+  } catch (error) {
+    console.error('Error removing widget:', error);
+    throw error;
+  }
 }
 
+// Reorder widgets
 export async function reorderWidgets(widgetIds: string[]): Promise<void> {
-  await apiRequest('POST', '/api/dashboard/widgets/reorder', { widgetIds });
-  // Invalidate the dashboard config in the cache
-  queryClient.invalidateQueries({ queryKey: ['/api/dashboard/config'] });
+  try {
+    await apiRequest('POST', `${API_BASE_URL}/widgets/reorder`, { widgetIds });
+    
+    // Invalidate cache
+    queryClient.invalidateQueries({ queryKey: [`${API_BASE_URL}/config`] });
+  } catch (error) {
+    console.error('Error reordering widgets:', error);
+    throw error;
+  }
 }
 
-// Data fetching functions for specific widget types
+// Fetch stats data
 export async function fetchStatsData(): Promise<{ items: StatItem[] }> {
-  const response = await apiRequest('GET', '/api/dashboard/stats');
-  return response.json();
+  try {
+    const response = await apiRequest('GET', `${API_BASE_URL}/stats`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching stats data:', error);
+    throw error;
+  }
 }
 
+// Fetch chart data
 export async function fetchChartData(source: string = 'default'): Promise<ChartData> {
-  const response = await apiRequest('GET', `/api/dashboard/charts/${source}`);
-  return response.json();
+  try {
+    const response = await apiRequest('GET', `${API_BASE_URL}/charts/${source}`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching chart data:', error);
+    throw error;
+  }
 }
 
+// Fetch activity data
 export async function fetchActivityData(): Promise<ActivityItem[]> {
-  const response = await apiRequest('GET', '/api/dashboard/activity');
-  return response.json();
+  try {
+    const response = await apiRequest('GET', `${API_BASE_URL}/activity`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching activity data:', error);
+    throw error;
+  }
 }
 
+// Fetch quick actions data
 export async function fetchQuickActionsData(): Promise<QuickActionItem[]> {
-  const response = await apiRequest('GET', '/api/dashboard/quick-actions');
-  return response.json();
+  try {
+    const response = await apiRequest('GET', `${API_BASE_URL}/quick-actions`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching quick actions data:', error);
+    throw error;
+  }
 }
 
-// WebSocket integration for real-time dashboard updates
+// Dashboard manager for polling updates and communication
 export class DashboardManager {
   private pollingInterval: NodeJS.Timeout | null = null;
   private reconnectAttempts = 0;
@@ -190,196 +188,215 @@ export class DashboardManager {
   private userRole: string | null = null;
   
   constructor() {
-    // Try to initialize with stored user details
-    this.userId = localStorage.getItem('userId');
-    this.userRole = localStorage.getItem('userRole') || 'athlete';
+    // Look for auth info in local storage
+    const userId = localStorage.getItem('dashboard_user_id');
+    const userRole = localStorage.getItem('dashboard_user_role');
     
-    // Set up auto-reconnect on visibility change (when user returns to tab)
-    if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && !this.isConnected) {
-          this.connect();
-        }
-      });
+    if (userId && userRole) {
+      this.userId = userId;
+      this.userRole = userRole;
     }
+    
+    // Try to reconnect when window gets focus
+    window.addEventListener('focus', () => {
+      if (!this.isConnected && !this.isConnecting) {
+        this.connect();
+      }
+    });
   }
   
   public setUser(userId: string, userRole: string) {
     this.userId = userId;
     this.userRole = userRole;
-    localStorage.setItem('userId', userId);
-    localStorage.setItem('userRole', userRole);
     
-    // Reconnect with new user details if we're already connected
-    if (this.isConnected) {
-      this.disconnect();
+    // Store in local storage
+    localStorage.setItem('dashboard_user_id', userId);
+    localStorage.setItem('dashboard_user_role', userRole);
+    
+    // If not already connected, connect now
+    if (!this.isConnected && !this.isConnecting) {
       this.connect();
     }
   }
   
   public connect(): void {
-    // Don't try to connect if we're already connecting or connected
-    if (this.isConnecting || this.isConnected) return;
-    this.isConnecting = true;
-    
-    console.log('[Dashboard] Setting up real-time connection...');
-    
-    try {
-      // Set up polling mechanism for dashboard updates
-      this.startPolling();
-      
-      // Simulate connection for UI purposes
-      setTimeout(() => {
-        console.log('[Dashboard] Real-time connection established');
-        this.isConnecting = false;
-        this.isConnected = true;
-        this.reconnectAttempts = 0;
-        this.reconnectDelay = 2000;
-        
-        // Notify listeners
-        this.notifyListeners('connection', { status: 'connected' });
-        
-        // If we have user ID, request dashboard data
-        if (this.userId) {
-          this.fetchDashboardData();
-        }
-      }, 1000);
-    } catch (err) {
-      console.error('[Dashboard] Error setting up dashboard updates:', err);
-      this.isConnecting = false;
-      this.scheduleReconnect();
+    if (this.isConnecting || this.isConnected) {
+      return;
     }
+    
+    this.isConnecting = true;
+    console.log('Connecting to dashboard service...');
+    
+    // Verify health before connecting
+    checkDashboardHealth()
+      .then(isHealthy => {
+        if (isHealthy) {
+          console.log('Dashboard service is healthy, starting polling');
+          this.isConnected = true;
+          this.startPolling();
+          this.notifyListeners('connect', { connected: true });
+        } else {
+          console.error('Dashboard service is unhealthy, will retry');
+          this.scheduleReconnect();
+        }
+      })
+      .catch(error => {
+        console.error('Error checking dashboard health:', error);
+        this.scheduleReconnect();
+      })
+      .finally(() => {
+        this.isConnecting = false;
+      });
   }
-
+  
   /**
    * Set up polling for dashboard updates
    */
   private startPolling(): void {
-    // Clear any existing polling interval
+    // Clear any existing interval
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
     }
     
-    // Set up polling interval (every 30 seconds)
+    // Start polling every 30 seconds
     this.pollingInterval = setInterval(() => {
-      if (this.userId) {
-        this.fetchDashboardData();
-      }
+      this.fetchDashboardData();
     }, 30000); // 30 seconds
     
-    console.log('[Dashboard] Started polling for updates every 30 seconds');
+    // Fetch immediately
+    this.fetchDashboardData();
   }
   
   /**
    * Fetch dashboard data from the API
    */
   private async fetchDashboardData(): Promise<void> {
-    if (!this.userId) return;
-    
     try {
-      console.log('[Dashboard] Fetching dashboard data for user:', this.userId);
+      // Fetch dashboard config
+      const config = await fetchDashboardConfig();
+      this.notifyListeners('config', config);
       
-      // Fetch dashboard configuration
-      const configResponse = await fetch('/api/dashboard/config');
-      if (configResponse.ok) {
-        const configData = await configResponse.json();
-        this.notifyListeners('dashboard_update', { config: configData });
-        console.log('[Dashboard] Dashboard config updated');
-      }
-      
-      // Fetch widget-specific data based on what widgets the user has
-      const statsResponse = await fetch('/api/dashboard/stats');
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        this.notifyListeners('widget_data_update', { 
-          widgetType: 'stats', 
-          widgetData: statsData 
-        });
-      }
-      
-      // We could do the same for other widget types here
-      
+      // Reset reconnect attempts on successful fetch
+      this.reconnectAttempts = 0;
     } catch (error) {
-      console.error('[Dashboard] Error fetching dashboard data:', error);
+      console.error('Error fetching dashboard data:', error);
+      
+      if (error instanceof Response && error.status === 401) {
+        // Authentication error
+        this.isConnected = false;
+        this.notifyListeners('auth_error', { error: 'Authentication failed' });
+      } else {
+        // Other error, try to reconnect
+        this.scheduleReconnect();
+      }
     }
   }
   
   public disconnect(): void {
-    console.log('[Dashboard] Disconnecting real-time updates');
-    
-    // Clear polling interval
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
     }
     
     this.isConnected = false;
-    
-    // Notify listeners
-    this.notifyListeners('connection', { status: 'disconnected' });
+    this.notifyListeners('disconnect', { connected: false });
   }
   
   public on(event: string, callback: (data: any) => void): () => void {
+    // Get or create listener set for this event
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
     
-    this.eventListeners.get(event)?.add(callback);
+    const listeners = this.eventListeners.get(event)!;
+    listeners.add(callback);
     
-    // Return function to remove this listener
+    // Return unsubscribe function
     return () => {
-      this.eventListeners.get(event)?.delete(callback);
+      const listenerSet = this.eventListeners.get(event);
+      if (listenerSet) {
+        listenerSet.delete(callback);
+      }
     };
   }
   
   public send(type: string, data: any): void {
-    if (!this.isConnected) {
-      console.warn('[Dashboard] Tried to send message while disconnected');
-      this.connect(); // Try to reconnect
-      return;
+    // In a WebSocket implementation, this would send a message
+    // For HTTP polling, we'll use this to trigger specific calls
+    switch (type) {
+      case 'add_widget':
+        addWidget(data).then(widget => {
+          this.notifyListeners('widget_added', widget);
+        });
+        break;
+        
+      case 'update_widget':
+        if (data.id) {
+          updateWidget(data.id, data).then(widget => {
+            this.notifyListeners('widget_updated', widget);
+          });
+        }
+        break;
+        
+      case 'remove_widget':
+        if (data.id) {
+          removeWidget(data.id).then(() => {
+            this.notifyListeners('widget_removed', { id: data.id });
+          });
+        }
+        break;
+        
+      case 'reorder_widgets':
+        if (Array.isArray(data.widgetIds)) {
+          reorderWidgets(data.widgetIds).then(() => {
+            this.notifyListeners('widgets_reordered', { widgetIds: data.widgetIds });
+          });
+        }
+        break;
+        
+      default:
+        console.warn('Unknown message type:', type);
     }
-    
-    console.log(`[Dashboard] Sending ${type} request:`, data);
-    
-    // For polling-based system, this triggers an immediate data fetch
-    this.fetchDashboardData();
   }
   
   private notifyListeners(event: string, data: any): void {
-    this.eventListeners.get(event)?.forEach(callback => {
-      try {
-        callback(data);
-      } catch (err) {
-        console.error(`[Dashboard] Error in listener for '${event}':`, err);
-      }
-    });
+    const listeners = this.eventListeners.get(event);
+    if (listeners) {
+      listeners.forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in event listener for ${event}:`, error);
+        }
+      });
+    }
   }
   
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('[Dashboard] Max reconnect attempts reached, giving up');
+      console.error('Maximum reconnect attempts reached');
+      this.notifyListeners('error', { message: 'Failed to connect to dashboard service after multiple attempts' });
       return;
     }
     
-    this.reconnectAttempts++;
-    const delay = Math.min(30000, this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1));
-    
-    console.log(`[Dashboard] Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    // Exponential backoff
+    const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts);
+    console.log(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
     
     setTimeout(() => {
-      if (!this.isConnected && !this.isConnecting) {
-        this.connect();
-      }
+      this.reconnectAttempts++;
+      this.connect();
     }, delay);
   }
 }
 
 // Create a singleton instance
 export const dashboardManager = new DashboardManager();
-// Export as dashboardWs for backward compatibility with existing code
+
+// Export dashboardWs for backward compatibility
 export const dashboardWs = dashboardManager;
 
-// Local storage dashboard cache
+// Cache implementation for dashboard data
 export class DashboardLocalStorageCache {
   private static DASHBOARD_CACHE_KEY = 'dashboard_config_cache';
   private static CACHE_EXPIRY_TIME = 24 * 60 * 60 * 1000; // 24 hours
@@ -390,30 +407,35 @@ export class DashboardLocalStorageCache {
         config,
         timestamp: Date.now()
       };
-      localStorage.setItem(this.DASHBOARD_CACHE_KEY, JSON.stringify(cacheData));
-      console.log('[Dashboard Cache] Config saved to local storage');
-    } catch (err) {
-      console.error('[Dashboard Cache] Error saving config to local storage:', err);
+      
+      localStorage.setItem(
+        this.DASHBOARD_CACHE_KEY,
+        JSON.stringify(cacheData)
+      );
+    } catch (error) {
+      console.error('Error saving dashboard config to cache:', error);
     }
   }
   
   public static loadConfig(): DashboardConfig | null {
     try {
-      const cacheData = localStorage.getItem(this.DASHBOARD_CACHE_KEY);
-      if (!cacheData) return null;
-      
-      const { config, timestamp } = JSON.parse(cacheData);
-      
-      // Check if cache is expired
-      if (Date.now() - timestamp > this.CACHE_EXPIRY_TIME) {
-        console.log('[Dashboard Cache] Cache expired, returning null');
+      const cacheJson = localStorage.getItem(this.DASHBOARD_CACHE_KEY);
+      if (!cacheJson) {
         return null;
       }
       
-      console.log('[Dashboard Cache] Loaded config from local storage');
-      return config;
-    } catch (err) {
-      console.error('[Dashboard Cache] Error loading config from local storage:', err);
+      const cacheData = JSON.parse(cacheJson);
+      const cacheAge = Date.now() - cacheData.timestamp;
+      
+      // Check if cache is expired
+      if (cacheAge > this.CACHE_EXPIRY_TIME) {
+        this.clearCache();
+        return null;
+      }
+      
+      return cacheData.config;
+    } catch (error) {
+      console.error('Error loading dashboard config from cache:', error);
       return null;
     }
   }
@@ -423,26 +445,27 @@ export class DashboardLocalStorageCache {
   }
 }
 
-// TanStack Query options for dashboard data
+// Query options for React Query
 export const dashboardQueryOptions = {
   config: {
-    queryKey: ['/api/dashboard/config'],
+    queryKey: [`${API_BASE_URL}/config`],
     queryFn: fetchDashboardConfig,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 60 * 60 * 1000, // 1 hour
   },
-  statsData: {
-    queryKey: ['/api/dashboard/stats'],
+  stats: {
+    queryKey: [`${API_BASE_URL}/stats`],
     queryFn: fetchStatsData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   },
-  chartData: (source: string = 'default') => ({
-    queryKey: ['/api/dashboard/charts', source],
-    queryFn: () => fetchChartData(source),
-  }),
-  activityData: {
-    queryKey: ['/api/dashboard/activity'],
+  activity: {
+    queryKey: [`${API_BASE_URL}/activity`],
     queryFn: fetchActivityData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   },
-  quickActionsData: {
-    queryKey: ['/api/dashboard/quick-actions'],
+  quickActions: {
+    queryKey: [`${API_BASE_URL}/quick-actions`],
     queryFn: fetchQuickActionsData,
-  },
+    staleTime: 15 * 60 * 1000, // 15 minutes
+  }
 };
