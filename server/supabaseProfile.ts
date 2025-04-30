@@ -104,7 +104,21 @@ export async function getBusinessByUserId(userId: string) {
   try {
     console.log('Looking up business profile for user:', userId);
     
-    // First try to find user record by auth_id (UUID from Supabase Auth)
+    // Try to get business profile directly by the ID field (new schema)
+    const { data: directProfileMatch, error: directError } = await supabase
+      .from('business_profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+      
+    if (directProfileMatch) {
+      console.log('Found business profile directly with id match:', directProfileMatch);
+      return directProfileMatch;
+    } else if (directError) {
+      console.error('Error finding business profile with direct id:', directError);
+    }
+    
+    // If direct match fails, try to find user record by auth_id (UUID from Supabase Auth)
     const { data: userByAuthId, error: authIdError } = await supabase
       .from('users')
       .select('id, email, auth_id')
@@ -112,20 +126,20 @@ export async function getBusinessByUserId(userId: string) {
       .maybeSingle();
     
     if (userByAuthId) {
-      console.log('Found user record by auth_id:', userByAuthId);
+      console.log('Found matching user by auth_id search:', userByAuthId);
       
-      // Look up business profile using this user ID
+      // Look up business profile using this user ID as the id field (not user_id)
       const { data: profileByUserId, error: profileError } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('user_id', userByAuthId.id)
+        .eq('id', userByAuthId.id)
         .maybeSingle();
         
       if (profileByUserId) {
         console.log('Found business profile through user record:', profileByUserId);
         return profileByUserId;
       } else if (profileError) {
-        console.log('Error finding business profile with user ID:', profileError);
+        console.error('Error finding business profile with direct user_id:', profileError);
       } else {
         console.log('No business profile found for user ID:', userByAuthId.id);
       }
@@ -133,19 +147,8 @@ export async function getBusinessByUserId(userId: string) {
       console.log('Error finding user by auth_id:', authIdError);
     }
     
-    // Try direct lookup by user_id as UUID
-    const { data, error } = await supabase
-      .from('business_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (!error && data) {
-      console.log('Found business profile by direct user_id match:', userId);
-      return data;
-    } else if (error) {
-      console.log('Error finding business profile with direct user_id:', error);
-    }
+    // No need to try direct user_id lookup, the field name has changed to 'id'
+    // Skip this section
     
     // Try by email as fallback
     // First get all users to find our target user
@@ -165,11 +168,11 @@ export async function getBusinessByUserId(userId: string) {
       if (matchingUser) {
         console.log('Found matching user by id/auth_id search:', matchingUser);
         
-        // Look up business profile using this user ID
+        // Look up business profile using this user ID as the ID field
         const { data: profileData } = await supabase
           .from('business_profiles')
           .select('*')
-          .eq('user_id', matchingUser.id)
+          .eq('id', matchingUser.id)
           .maybeSingle();
           
         if (profileData) {
