@@ -4,10 +4,10 @@ import { dashboardQueryOptions } from '@/lib/dashboard-service';
 import DashboardWidget from './DashboardWidget';
 import { Widget, QuickActionItem } from '../../../shared/dashboard-schema';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import * as Icons from 'lucide-react';
-import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
+import { Link } from 'wouter';
+import { Badge } from '@/components/ui/badge';
 
 // Dynamic icon component
 const getDynamicIcon = (iconName: string) => {
@@ -15,52 +15,46 @@ const getDynamicIcon = (iconName: string) => {
   return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
 };
 
-// Quick action button component
-const QuickActionButton = ({ item }: { item: QuickActionItem }) => {
-  // Color mapping
-  const colorMap: Record<string, string> = {
-    'blue': 'bg-blue-50 text-blue-600 hover:bg-blue-100',
-    'green': 'bg-green-50 text-green-600 hover:bg-green-100',
-    'red': 'bg-red-50 text-red-600 hover:bg-red-100',
-    'purple': 'bg-purple-50 text-purple-600 hover:bg-purple-100',
-    'amber': 'bg-amber-50 text-amber-600 hover:bg-amber-100',
-    'indigo': 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
-    'pink': 'bg-pink-50 text-pink-600 hover:bg-pink-100',
-    'teal': 'bg-teal-50 text-teal-600 hover:bg-teal-100',
-    'cyan': 'bg-cyan-50 text-cyan-600 hover:bg-cyan-100',
-    'gray': 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-  };
-  
-  // Get color class or use default
-  const colorClass = item.color ? colorMap[item.color] || colorMap.gray : colorMap.gray;
-  
+// Single action item component
+const ActionItem = ({ item }: { item: QuickActionItem }) => {
   return (
     <Link href={item.link}>
-      <Button
-        variant="outline"
-        className={cn(
-          "h-auto w-full justify-start gap-2 p-3 flex flex-col items-center border rounded-lg hover:shadow-sm transition-all duration-200",
-          colorClass
+      <div className="p-4 bg-card border rounded-md flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer group">
+        {item.icon && (
+          <div className={cn(
+            "p-2 rounded-full",
+            item.color ? `bg-${item.color}-100 text-${item.color}-600` : "bg-primary/10 text-primary"
+          )}>
+            {getDynamicIcon(item.icon)}
+          </div>
         )}
-      >
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white">
-          {item.icon ? getDynamicIcon(item.icon) : null}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-sm group-hover:text-primary transition-colors truncate">
+            {item.label}
+          </h4>
+          {item.description && (
+            <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+          )}
         </div>
-        <div className="text-sm font-medium mt-1">{item.label}</div>
-        {item.description && <div className="text-xs text-muted-foreground text-center mt-1">{item.description}</div>}
-      </Button>
+        <div className="text-muted-foreground">
+          <Icons.ArrowRight className="h-4 w-4" />
+        </div>
+      </div>
     </Link>
   );
 };
 
-// Loading skeleton for quick actions
-const QuickActionsLoadingSkeleton = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-    {[1, 2, 3, 4, 5, 6].map(index => (
-      <div key={index} className="flex flex-col items-center p-3 border rounded-lg">
-        <Skeleton className="w-10 h-10 rounded-full" />
-        <Skeleton className="h-4 w-20 mt-2" />
-        <Skeleton className="h-3 w-full mt-1" />
+// Loading skeleton for action items
+const ActionsLoadingSkeleton = () => (
+  <div className="grid gap-3">
+    {[1, 2, 3, 4].map(index => (
+      <div key={index} className="p-4 border rounded-md flex items-center gap-3">
+        <Skeleton className="h-9 w-9 rounded-full" />
+        <div className="flex-1">
+          <Skeleton className="h-4 w-28 mb-1" />
+          <Skeleton className="h-3 w-40" />
+        </div>
+        <Skeleton className="h-4 w-4" />
       </div>
     ))}
   </div>
@@ -81,14 +75,11 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({
   
   // Fetch quick actions data
   const { 
-    data: quickActionsData, 
+    data: actionData, 
     isLoading,
     isError,
     refetch
   } = useQuery(dashboardQueryOptions.quickActionsData);
-  
-  // Columns for the grid layout
-  const columns = widget.settings?.columns || 3;
   
   // Handle refresh
   const handleRefresh = async () => {
@@ -106,15 +97,15 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({
       isEditing={isEditing}
     >
       {isLoading || isRefreshing ? (
-        <QuickActionsLoadingSkeleton />
+        <ActionsLoadingSkeleton />
       ) : isError ? (
         <div className="p-4 text-center text-red-500">
           Failed to load quick actions. Please try refreshing.
         </div>
-      ) : quickActionsData && quickActionsData.length > 0 ? (
-        <div className={`grid grid-cols-2 sm:grid-cols-${Math.min(columns, 4)} gap-4`}>
-          {quickActionsData.map(action => (
-            <QuickActionButton key={action.id} item={action} />
+      ) : actionData && actionData.length > 0 ? (
+        <div className="grid gap-3 max-h-[400px] overflow-y-auto">
+          {actionData.map((action) => (
+            <ActionItem key={action.id} item={action} />
           ))}
         </div>
       ) : (

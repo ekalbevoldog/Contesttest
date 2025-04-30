@@ -132,6 +132,82 @@ export class SupabaseStorage implements IStorage {
       this.sessionStore = new session.MemoryStore();
     }
   }
+  
+  // Dashboard operations
+  async getDashboardConfig(userId: string): Promise<DashboardConfig | null> {
+    try {
+      // Fetch the user's dashboard configuration
+      const { data, error } = await supabase
+        .from('user_dashboard_configs')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+        
+      if (error) {
+        if (error.code === 'PGRST116') { // Record not found
+          return null;
+        }
+        console.error('Error fetching dashboard config:', error);
+        throw new Error(`Failed to fetch dashboard config: ${error.message}`);
+      }
+      
+      // Convert stored format to DashboardConfig
+      return {
+        userId: data.user_id,
+        widgets: data.widgets || [],
+        lastUpdated: data.last_updated || new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Exception fetching dashboard config:', error);
+      return null;
+    }
+  }
+  
+  async saveDashboardConfig(userId: string, config: DashboardConfig): Promise<void> {
+    try {
+      // Check if config already exists
+      const { data: existingConfig } = await supabase
+        .from('user_dashboard_configs')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      
+      const now = new Date().toISOString();
+      
+      if (existingConfig) {
+        // Update existing config
+        const { error } = await supabase
+          .from('user_dashboard_configs')
+          .update({
+            widgets: config.widgets,
+            last_updated: now,
+          })
+          .eq('user_id', userId);
+          
+        if (error) {
+          console.error('Error updating dashboard config:', error);
+          throw new Error(`Failed to update dashboard config: ${error.message}`);
+        }
+      } else {
+        // Create new config
+        const { error } = await supabase
+          .from('user_dashboard_configs')
+          .insert({
+            user_id: userId,
+            widgets: config.widgets,
+            last_updated: now,
+          });
+          
+        if (error) {
+          console.error('Error creating dashboard config:', error);
+          throw new Error(`Failed to create dashboard config: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      console.error('Exception saving dashboard config:', error);
+      throw new Error('Failed to save dashboard configuration');
+    }
+  }
 
   // Session operations
   async getSession(sessionId: string): Promise<Session | undefined> {

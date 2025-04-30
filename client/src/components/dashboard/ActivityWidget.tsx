@@ -4,77 +4,85 @@ import { dashboardQueryOptions } from '@/lib/dashboard-service';
 import DashboardWidget from './DashboardWidget';
 import { Widget, ActivityItem } from '../../../shared/dashboard-schema';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import * as Icons from 'lucide-react';
 import { Link } from 'wouter';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
 
-// Dynamic icon rendering based on icon name string
+// Dynamic icon component
 const getDynamicIcon = (iconName: string) => {
   const IconComponent = Icons[iconName as keyof typeof Icons];
-  return IconComponent ? <IconComponent className="h-4 w-4" /> : null;
+  return IconComponent ? <IconComponent className="h-5 w-5" /> : null;
 };
 
-// Status badge component with appropriate color
-const StatusBadge = ({ status }: { status: string }) => {
-  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
-  
-  switch (status) {
-    case 'success':
-      variant = 'default';
-      break;
-    case 'pending':
-    case 'warning':
-      variant = 'secondary';
-      break;
-    case 'error':
-      variant = 'destructive';
-      break;
-    default:
-      variant = 'outline';
+// Format date for activity items
+const formatActivityDate = (dateStr: string) => {
+  try {
+    const date = new Date(dateStr);
+    if (isToday(date)) {
+      return formatDistanceToNow(date, { addSuffix: true });
+    } else if (isYesterday(date)) {
+      return 'Yesterday';
+    } else {
+      return format(date, 'MMM d, yyyy');
+    }
+  } catch (e) {
+    return dateStr;
   }
-  
-  return (
-    <Badge variant={variant} className="text-xs">
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </Badge>
-  );
 };
 
-// Activity item component
+// Status indicator component
+const StatusIndicator = ({ status }: { status?: string }) => {
+  if (!status) return null;
+  
+  const statusColorMap: Record<string, string> = {
+    success: 'bg-green-500',
+    pending: 'bg-yellow-500',
+    warning: 'bg-orange-500',
+    error: 'bg-red-500'
+  };
+  
+  const colorClass = statusColorMap[status] || 'bg-gray-500';
+  
+  return <div className={cn('h-2 w-2 rounded-full', colorClass)} />;
+};
+
+// Single activity item component
 const ActivityItemComponent = ({ item }: { item: ActivityItem }) => {
-  // Format timestamp to relative time (e.g., "2 hours ago")
-  const timeAgo = formatDistanceToNow(new Date(item.timestamp), { addSuffix: true });
+  const statusColorMap: Record<string, string> = {
+    success: 'text-green-600',
+    pending: 'text-yellow-600',
+    warning: 'text-orange-600',
+    error: 'text-red-600'
+  };
+  
+  const iconColorClass = item.status ? statusColorMap[item.status] : 'text-gray-600';
   
   return (
-    <div className="py-3">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 bg-muted rounded-full p-1.5">
-          {item.icon && getDynamicIcon(item.icon)}
+    <div className="flex items-start gap-3 py-3 border-b last:border-0">
+      {item.icon && (
+        <div className={cn('p-2 rounded-full bg-gray-100', iconColorClass)}>
+          {getDynamicIcon(item.icon)}
         </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <div className="font-medium">{item.title}</div>
-            {item.status && <StatusBadge status={item.status} />}
-          </div>
-          
-          <p className="text-sm text-muted-foreground">{item.description}</p>
-          
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-muted-foreground">{timeAgo}</span>
-            
-            {item.link && (
-              <Link href={item.link}>
-                <span className="text-xs text-primary hover:underline cursor-pointer">
-                  View Details
-                </span>
-              </Link>
-            )}
-          </div>
+      )}
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium text-sm truncate">{item.title}</h4>
+          <StatusIndicator status={item.status} />
         </div>
+        <p className="text-muted-foreground text-xs mt-1">{item.description}</p>
+        {item.link && (
+          <Link href={item.link}>
+            <span className="text-xs text-primary hover:underline cursor-pointer mt-1 inline-block">
+              View details
+            </span>
+          </Link>
+        )}
+      </div>
+      
+      <div className="text-muted-foreground text-xs whitespace-nowrap">
+        {formatActivityDate(item.timestamp)}
       </div>
     </div>
   );
@@ -83,22 +91,15 @@ const ActivityItemComponent = ({ item }: { item: ActivityItem }) => {
 // Loading skeleton for activity items
 const ActivityLoadingSkeleton = () => (
   <div className="space-y-4">
-    {[1, 2, 3].map(index => (
-      <div key={index} className="py-3">
-        <div className="flex items-start gap-3">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-5 w-16" />
-            </div>
-            <Skeleton className="h-4 w-full mb-2" />
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
+    {[1, 2, 3, 4].map(index => (
+      <div key={index} className="flex items-start gap-3 py-3 border-b last:border-0">
+        <Skeleton className="h-9 w-9 rounded-full" />
+        <div className="flex-1">
+          <Skeleton className="h-4 w-40 mb-2" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-20 mt-1" />
         </div>
+        <Skeleton className="h-3 w-16" />
       </div>
     ))}
   </div>
@@ -117,9 +118,6 @@ const ActivityWidget: React.FC<ActivityWidgetProps> = ({
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Maximum activity items to display
-  const maxItems = widget.settings?.maxItems || 5;
-  
   // Fetch activity data
   const { 
     data: activityData, 
@@ -128,7 +126,7 @@ const ActivityWidget: React.FC<ActivityWidgetProps> = ({
     refetch
   } = useQuery(dashboardQueryOptions.activityData);
   
-  // Handle manual refresh
+  // Handle refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await refetch();
@@ -143,25 +141,23 @@ const ActivityWidget: React.FC<ActivityWidgetProps> = ({
       isLoading={isLoading || isRefreshing}
       isEditing={isEditing}
     >
-      <ScrollArea className="h-[300px] pr-4">
-        {isLoading || isRefreshing ? (
-          <ActivityLoadingSkeleton />
-        ) : isError ? (
-          <div className="p-4 text-center text-red-500">
-            Failed to load activity data. Please try refreshing.
-          </div>
-        ) : activityData && activityData.length > 0 ? (
-          <div className="divide-y">
-            {activityData.slice(0, maxItems).map((item, index) => (
-              <ActivityItemComponent key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="p-4 text-center text-gray-500">
-            No recent activity to display.
-          </div>
-        )}
-      </ScrollArea>
+      {isLoading || isRefreshing ? (
+        <ActivityLoadingSkeleton />
+      ) : isError ? (
+        <div className="p-4 text-center text-red-500">
+          Failed to load activity data. Please try refreshing.
+        </div>
+      ) : activityData && activityData.length > 0 ? (
+        <div className="max-h-[400px] overflow-y-auto">
+          {activityData.map((activity) => (
+            <ActivityItemComponent key={activity.id} item={activity} />
+          ))}
+        </div>
+      ) : (
+        <div className="p-4 text-center text-gray-500">
+          No recent activity.
+        </div>
+      )}
     </DashboardWidget>
   );
 };

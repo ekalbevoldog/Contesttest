@@ -1,41 +1,24 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Widget } from '../../../shared/dashboard-schema';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Settings, RefreshCw, X, Pencil, Check, GripVertical, Maximize, Minimize } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Widget } from '../../../shared/dashboard-schema';
-import { 
-  MoreHorizontal, 
-  RefreshCw, 
-  Maximize2, 
-  Minimize2, 
-  X, 
-  Edit, 
-  Eye, 
-  EyeOff 
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger, 
-  DialogClose
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 import { updateWidget, removeWidget } from '@/lib/dashboard-service';
-import { useToast } from '@/hooks/use-toast';
 
 interface DashboardWidgetProps {
   widget: Widget;
@@ -43,46 +26,39 @@ interface DashboardWidgetProps {
   onRefresh?: () => void;
   isLoading?: boolean;
   isEditing?: boolean;
+  isDragging?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onResize?: (size: Widget['size']) => void;
+  dragHandleProps?: any;
 }
 
-// Helper function to get column span based on widget size
-const getSizeClass = (size: string): string => {
-  switch (size) {
-    case 'sm':
-      return 'col-span-12 sm:col-span-6 lg:col-span-3';
-    case 'md':
-      return 'col-span-12 sm:col-span-6';
-    case 'lg':
-      return 'col-span-12 lg:col-span-8';
-    case 'xl':
-      return 'col-span-12 lg:col-span-9';
-    case 'full':
-      return 'col-span-12';
-    default:
-      return 'col-span-12 sm:col-span-6';
-  }
+const sizeMap = {
+  'sm': 'col-span-1',
+  'md': 'col-span-1 md:col-span-2',
+  'lg': 'col-span-1 md:col-span-3',
+  'xl': 'col-span-1 md:col-span-3 lg:col-span-4',
+  'full': 'col-span-full',
 };
 
-const DashboardWidget: React.FC<DashboardWidgetProps> = ({ 
-  widget, 
-  children, 
-  onRefresh, 
+const DashboardWidget: React.FC<DashboardWidgetProps> = ({
+  widget,
+  children,
+  onRefresh,
   isLoading = false,
-  isEditing = false
+  isEditing = false,
+  isDragging = false,
+  onEdit,
+  onDelete,
+  onResize,
+  dragHandleProps
 }) => {
-  const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [openSettingsDialog, setOpenSettingsDialog] = useState(false);
-  const [widgetTitle, setWidgetTitle] = useState(widget.title);
-  const [widgetDescription, setWidgetDescription] = useState(widget.description || '');
-  const [isVisible, setIsVisible] = useState(widget.visible);
-  const [size, setSize] = useState(widget.size);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [newTitle, setNewTitle] = useState(widget.title);
+  const [isResizing, setIsResizing] = useState(false);
   
-  // Get column span class based on widget size
-  const sizeClass = getSizeClass(size);
-  
-  // Handle refresh click
+  // Handle refresh
   const handleRefresh = async () => {
     if (onRefresh) {
       setIsRefreshing(true);
@@ -91,243 +67,193 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
     }
   };
   
-  // Handle size toggle
-  const handleSizeChange = async (newSize: 'sm' | 'md' | 'lg' | 'xl' | 'full') => {
-    setSize(newSize);
-    
-    if (isEditing) {
+  // Handle delete
+  const handleDelete = async () => {
+    try {
+      if (window.confirm(`Are you sure you want to remove the "${widget.title}" widget?`)) {
+        if (onDelete) {
+          onDelete();
+        } else {
+          await removeWidget(widget.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error removing widget:', error);
+    }
+  };
+  
+  // Handle title update
+  const handleTitleUpdate = async () => {
+    if (newTitle !== widget.title) {
       try {
-        await updateWidget(widget.id, { size: newSize });
+        await updateWidget(widget.id, { title: newTitle });
       } catch (error) {
-        console.error('Failed to update widget size:', error);
-        toast({
-          title: 'Failed to update widget size',
-          description: 'There was an error saving your changes.',
-          variant: 'destructive',
-        });
+        console.error('Error updating widget title:', error);
       }
     }
+    setIsEditingTitle(false);
   };
   
-  // Handle visibility toggle
-  const handleVisibilityToggle = async () => {
-    const newVisibility = !isVisible;
-    setIsVisible(newVisibility);
-    
-    if (isEditing) {
+  // Handle size update
+  const handleSizeUpdate = async (size: Widget['size']) => {
+    if (size !== widget.size) {
       try {
-        await updateWidget(widget.id, { visible: newVisibility });
-        toast({
-          title: newVisibility ? 'Widget visible' : 'Widget hidden',
-          description: newVisibility ? 'Widget is now visible on the dashboard.' : 'Widget is now hidden from the dashboard.',
-        });
+        if (onResize) {
+          onResize(size);
+        } else {
+          await updateWidget(widget.id, { size });
+        }
       } catch (error) {
-        console.error('Failed to update widget visibility:', error);
-        toast({
-          title: 'Failed to update widget visibility',
-          description: 'There was an error saving your changes.',
-          variant: 'destructive',
-        });
-        // Revert state change on error
-        setIsVisible(!newVisibility);
+        console.error('Error updating widget size:', error);
       }
     }
-  };
-  
-  // Handle widget removal
-  const handleRemoveWidget = async () => {
-    try {
-      await removeWidget(widget.id);
-      toast({
-        title: 'Widget removed',
-        description: 'The widget has been removed from your dashboard.',
-      });
-    } catch (error) {
-      console.error('Failed to remove widget:', error);
-      toast({
-        title: 'Failed to remove widget',
-        description: 'There was an error removing the widget.',
-        variant: 'destructive',
-      });
-    }
-  };
-  
-  // Handle widget settings save
-  const handleSaveSettings = async () => {
-    try {
-      await updateWidget(widget.id, {
-        title: widgetTitle,
-        description: widgetDescription || undefined
-      });
-      
-      toast({
-        title: 'Settings saved',
-        description: 'Widget settings have been updated successfully.',
-      });
-      
-      setOpenSettingsDialog(false);
-    } catch (error) {
-      console.error('Failed to save widget settings:', error);
-      toast({
-        title: 'Failed to save settings',
-        description: 'There was an error saving your changes.',
-        variant: 'destructive',
-      });
-    }
+    setIsResizing(false);
   };
   
   return (
-    <div className={sizeClass}>
-      <Card 
-        className={`h-full transition-all duration-200 ${isEditing ? 'border-dashed border-2' : ''}`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <CardHeader className="p-4 pb-0">
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle>{widget.title}</CardTitle>
-              {widget.description && <CardDescription>{widget.description}</CardDescription>}
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              {(isHovered || isEditing) && !isLoading && onRefresh && (
+    <Card className={`
+      h-full flex flex-col relative 
+      ${isDragging ? 'ring-2 ring-primary ring-opacity-60 shadow-lg' : ''}
+    `}>
+      {isEditing && (
+        <div 
+          className="absolute top-0 left-0 h-full w-full cursor-move z-10 opacity-0"
+          {...dragHandleProps}
+        />
+      )}
+      
+      <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
+        {isEditing && (
+          <div className="mr-1 cursor-grab" {...dragHandleProps}>
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
+        
+        {isEditingTitle ? (
+          <div className="flex-1 flex gap-2">
+            <input
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className="flex-1 p-1 border rounded"
+              autoFocus
+            />
+            <Button size="icon" variant="ghost" onClick={handleTitleUpdate}>
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => {
+              setNewTitle(widget.title);
+              setIsEditingTitle(false);
+            }}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex-1">
+            <CardTitle className="text-lg flex items-center gap-2">
+              {widget.title}
+              {isEditing && (
+                <Button size="icon" variant="ghost" onClick={() => setIsEditingTitle(true)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </CardTitle>
+            {widget.description && (
+              <CardDescription>{widget.description}</CardDescription>
+            )}
+          </div>
+        )}
+        
+        <div className="flex items-center gap-1">
+          {onRefresh && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={handleRefresh} 
+                    disabled={isLoading || isRefreshing}
+                  >
+                    {(isLoading || isRefreshing) ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh data</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          {isEditing && (
+            <>
+              <DropdownMenu>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={handleRefresh}
-                        disabled={isRefreshing}
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                      </Button>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost">
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Refresh</p>
+                      <p>Widget settings</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setIsResizing(true)}>
+                    Resize
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onSelect={handleDelete}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    Remove
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
-              {isEditing && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+              {isResizing && (
+                <DropdownMenu open={isResizing} onOpenChange={setIsResizing}>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Widget Options</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem onClick={() => setOpenSettingsDialog(true)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Settings
+                    <DropdownMenuItem onSelect={() => handleSizeUpdate('sm')}>
+                      Small (1x1)
                     </DropdownMenuItem>
-                    
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuLabel>Widget Size</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => handleSizeChange('sm')}>
-                      <Minimize2 className="h-4 w-4 mr-2" />
-                      Small
+                    <DropdownMenuItem onSelect={() => handleSizeUpdate('md')}>
+                      Medium (2x1)
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleSizeChange('md')}>
-                      <Minimize2 className="h-4 w-4 mr-2" />
-                      Medium
+                    <DropdownMenuItem onSelect={() => handleSizeUpdate('lg')}>
+                      Large (3x1)
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleSizeChange('lg')}>
-                      <Maximize2 className="h-4 w-4 mr-2" />
-                      Large
+                    <DropdownMenuItem onSelect={() => handleSizeUpdate('xl')}>
+                      Extra Large (4x1)
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleSizeChange('full')}>
-                      <Maximize2 className="h-4 w-4 mr-2" />
+                    <DropdownMenuItem onSelect={() => handleSizeUpdate('full')}>
                       Full Width
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem onClick={handleVisibilityToggle}>
-                      {isVisible ? (
-                        <>
-                          <EyeOff className="h-4 w-4 mr-2" />
-                          Hide Widget
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Show Widget
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem 
-                      onClick={handleRemoveWidget}
-                      className="text-red-600 focus:text-red-500"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Remove Widget
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4">
-          {children}
-        </CardContent>
-      </Card>
+            </>
+          )}
+        </div>
+      </CardHeader>
       
-      {/* Widget Settings Dialog */}
-      <Dialog open={openSettingsDialog} onOpenChange={setOpenSettingsDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Widget Settings</DialogTitle>
-            <DialogDescription>
-              Customize how this widget appears on your dashboard.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Title
-              </Label>
-              <Input
-                id="title"
-                value={widgetTitle}
-                onChange={(e) => setWidgetTitle(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Input
-                id="description"
-                value={widgetDescription}
-                onChange={(e) => setWidgetDescription(e.target.value)}
-                className="col-span-3"
-                placeholder="Optional widget description"
-              />
-            </div>
+      <CardContent className="pt-2 flex-1 overflow-hidden">
+        {isRefreshing && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-          
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleSaveSettings}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        )}
+        {children}
+      </CardContent>
+    </Card>
   );
 };
 
