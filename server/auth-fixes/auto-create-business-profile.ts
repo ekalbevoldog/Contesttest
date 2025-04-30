@@ -18,7 +18,7 @@ export async function ensureBusinessProfile(userId: string, role: string): Promi
     const { data: existingProfile, error: profileError } = await supabase
       .from('business_profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .maybeSingle();
     
     if (profileError && profileError.code !== 'PGRST116') {
@@ -84,7 +84,7 @@ async function createBusinessProfile(userId: string, email: string): Promise<boo
       const { data, error } = await supabase
         .from('business_profiles')
         .insert({
-          id: userId, // Use id instead of user_id
+          user_id: userId, // Use user_id as per the error message
           name: 'My Business',
           session_id: sessionId,
           email: email,
