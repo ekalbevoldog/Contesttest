@@ -1082,7 +1082,7 @@ export default function AthleteDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="bg-muted/50">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium">Instagram</CardTitle>
+                        <CardTitle className="text-base font-medium font-heading">Instagram</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
@@ -1104,7 +1104,7 @@ export default function AthleteDashboard() {
 
                     <Card className="bg-muted/50">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium">TikTok</CardTitle>
+                        <CardTitle className="text-base font-medium font-heading">TikTok</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
@@ -1126,7 +1126,7 @@ export default function AthleteDashboard() {
 
                     <Card className="bg-muted/50">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium">Twitter</CardTitle>
+                        <CardTitle className="text-base font-medium font-heading">Twitter</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
@@ -1216,7 +1216,7 @@ export default function AthleteDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-blue-700">Total Earnings</CardTitle>
+                      <CardTitle className="text-sm font-medium text-blue-700 font-heading">Total Earnings</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">${earningsData.total}</div>
@@ -1225,7 +1225,7 @@ export default function AthleteDashboard() {
                   </Card>
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-blue-700">Pending</CardTitle>
+                      <CardTitle className="text-sm font-medium text-blue-700 font-heading">Pending</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">${earningsData.pending}</div>
@@ -1234,7 +1234,7 @@ export default function AthleteDashboard() {
                   </Card>
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-blue-700">Received</CardTitle>
+                      <CardTitle className="text-sm font-medium text-blue-700 font-heading">Received</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">${earningsData.completed}</div>
@@ -1243,7 +1243,7 @@ export default function AthleteDashboard() {
                   </Card>
                   <Card className="bg-muted/50">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium text-blue-700">Growth Rate</CardTitle>
+                      <CardTitle className="text-sm font-medium text-blue-700 font-heading">Growth Rate</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold">{earningsData.change}</div>
