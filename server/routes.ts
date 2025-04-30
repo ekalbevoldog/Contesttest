@@ -405,12 +405,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`User ${userId} exists:`, !!userData);
       }
       
-      // Get business profile from Supabase
+      // Get business profile from Supabase - NOTE: Using 'id' field, not 'user_id'
       console.log('Querying Supabase for business profile...');
       const { data, error } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .maybeSingle();
         
       if (error) {
