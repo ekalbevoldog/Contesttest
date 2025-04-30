@@ -43,7 +43,7 @@ export function useProfileType() {
         
         // Approach 2: Use metadata from auth session
         console.log("Trying to determine profile type from user metadata");
-        const role = user.role;
+        const role = user?.role;
         
         if (role) {
           console.log("Found role in user:", role);
@@ -54,7 +54,7 @@ export function useProfileType() {
             const { data: businessProfile, error: businessError } = await supabase
               .from('business_profiles')
               .select('id')
-              .eq('user_id', user.id)
+              .eq('user_id', user?.id || '')
               .maybeSingle();
               
             if (businessError) {
@@ -68,12 +68,17 @@ export function useProfileType() {
               console.warn("Business user without business profile, attempting to create one");
               // Call the endpoint to create a business profile
               try {
+                // Get the access token for authentication
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+                
                 const response = await fetch('/api/create-business-profile', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                   },
-                  body: JSON.stringify({ userId: user.id }),
+                  body: JSON.stringify({ userId: user?.id }),
                 });
                 
                 if (response.ok) {
@@ -94,7 +99,7 @@ export function useProfileType() {
             const { data: athleteProfile, error: athleteError } = await supabase
               .from('athlete_profiles')
               .select('id')
-              .eq('user_id', user.id)
+              .eq('user_id', user?.id || '')
               .maybeSingle();
               
             if (athleteError) {
