@@ -479,12 +479,12 @@ export function setupSupabaseAuth(app: Express) {
           return res.status(200).json({ message: "User already exists", user: userData });
         }
         
-        // Prepare user data for insertion
+        // Prepare user data for insertion - removed username field as it doesn't exist in Supabase
         const userToInsert = { 
           email, 
           role: dbRole, 
           auth_id: authUserId,
-          username: email.split('@')[0],  // Generate a basic username
+          // username field removed - it doesn't exist in the Supabase users table
           created_at: new Date() 
         };
         
@@ -504,18 +504,12 @@ export function setupSupabaseAuth(app: Express) {
           
           // Check specific error conditions
           if (insertErr.code === '23505') {
-            // Unique constraint violation - likely duplicate email or username
-            if (insertErr.message?.includes('username')) {
-              return res.status(409).json({ 
-                error: "Username already taken",
-                details: "Please try a different username" 
-              });
-            } else {
-              return res.status(409).json({ 
-                error: "User with this email already exists",
-                details: "This email is already registered" 
-              });
-            }
+            // Unique constraint violation - likely duplicate email
+            // We don't have a username field anymore, so this is likely just the email
+            return res.status(409).json({ 
+              error: "User with this email already exists",
+              details: "This email is already registered" 
+            });
           } else if (insertErr.code === '23503') {
             // Foreign key constraint - likely auth_id issue
             return res.status(500).json({ 
