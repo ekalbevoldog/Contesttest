@@ -1,173 +1,132 @@
 import React from 'react';
-import { DashboardWidget, WidgetSize } from './DashboardWidget';
-import { LucideIcon, Zap, Plus, ArrowRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'wouter';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
+import { ArrowRight } from 'lucide-react';
+import DashboardWidget from './DashboardWidget';
+import * as LucideIcons from 'lucide-react';
+import type { 
+  QuickActionsWidget as QuickActionsWidgetType, 
+  QuickActionsData 
+} from '../../../shared/dashboard-schema';
+import { fetchQuickActionsData } from '@/lib/dashboard-service';
 
-export interface QuickAction {
-  id: string;
-  label: string;
-  description?: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-  href?: string;
-  color?: string;
-  variant?: 'default' | 'outline' | 'ghost';
-  disabled?: boolean;
+interface QuickActionsWidgetProps {
+  widget: QuickActionsWidgetType;
+  className?: string;
 }
 
-export interface QuickActionsWidgetProps {
-  id: string;
-  title: string;
-  description?: string;
-  size?: WidgetSize;
-  loading?: boolean;
-  error?: boolean;
-  onRefresh?: () => void;
-  onRemove?: () => void;
-  onResize?: (size: WidgetSize) => void;
-  actions: QuickAction[];
-  columns?: 1 | 2 | 3 | 4;
-  layout?: 'grid' | 'list';
-  actionLabel?: string;
-  actionLink?: string;
-}
+// Dynamic icon component
+const DynamicIcon: React.FC<{ iconName: string, className?: string }> = ({ iconName, className }) => {
+  // @ts-ignore - Using dynamic import from lucide-react
+  const LucideIcon = LucideIcons[iconName] || LucideIcons.Sparkles;
+  return <LucideIcon className={className || "h-5 w-5"} />;
+};
 
-export function QuickActionsWidget({
-  id,
-  title,
-  description,
-  size = 'md',
-  loading = false,
-  error = false,
-  onRefresh,
-  onRemove,
-  onResize,
-  actions,
-  columns = 2,
-  layout = 'grid',
-  actionLabel,
-  actionLink,
-}: QuickActionsWidgetProps) {
-  const renderGridLayout = () => (
-    <div className={`grid grid-cols-1 ${
-      columns === 1 ? 'md:grid-cols-1' : 
-      columns === 3 ? 'md:grid-cols-3' : 
-      columns === 4 ? 'md:grid-cols-4' : 
-      'md:grid-cols-2'
-    } gap-4`}>
-      {actions.map(action => (
-        <Button
-          key={action.id}
-          variant={action.variant || "outline"}
-          className={cn(
-            "h-auto flex flex-col items-center justify-center p-4 space-y-2 border border-zinc-800 bg-black/40 hover:bg-black/60 text-white",
-            action.disabled && "opacity-50 cursor-not-allowed"
-          )}
-          onClick={action.onClick}
-          asChild={!!action.href}
-          disabled={action.disabled}
-        >
-          {action.href ? (
-            <a href={action.href}>
-              <div className={cn(
-                "p-2 rounded-full mb-2",
-                action.color ? `bg-${action.color}-900/20 text-${action.color}-500` : "bg-amber-900/20 text-amber-500"
-              )}>
-                {action.icon || <Zap className="h-5 w-5" />}
-              </div>
-              <span className="font-medium">{action.label}</span>
-              {action.description && (
-                <span className="text-xs text-gray-400 text-center">{action.description}</span>
-              )}
-            </a>
-          ) : (
-            <>
-              <div className={cn(
-                "p-2 rounded-full mb-2",
-                action.color ? `bg-${action.color}-900/20 text-${action.color}-500` : "bg-amber-900/20 text-amber-500"
-              )}>
-                {action.icon || <Zap className="h-5 w-5" />}
-              </div>
-              <span className="font-medium">{action.label}</span>
-              {action.description && (
-                <span className="text-xs text-gray-400 text-center">{action.description}</span>
-              )}
-            </>
-          )}
-        </Button>
+// Loading skeleton for quick actions
+const QuickActionsSkeletonLoader: React.FC = () => {
+  return (
+    <div className="grid grid-cols-1 gap-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex items-center space-x-3 p-3 rounded-lg bg-white/5 border border-gray-800">
+          <Skeleton className="h-8 w-8 rounded-md bg-gray-700" />
+          <div className="space-y-1 flex-1">
+            <Skeleton className="h-4 w-24 bg-gray-700" />
+            <Skeleton className="h-3 w-32 bg-gray-700" />
+          </div>
+          <Skeleton className="h-8 w-8 rounded-md bg-gray-700" />
+        </div>
       ))}
     </div>
   );
+};
 
-  const renderListLayout = () => (
-    <div className="space-y-2">
-      {actions.map(action => (
-        <Button
-          key={action.id}
-          variant={action.variant || "ghost"}
-          className={cn(
-            "w-full justify-start border border-zinc-800 bg-black/20 hover:bg-black/40 text-white h-auto py-3",
-            action.disabled && "opacity-50 cursor-not-allowed"
-          )}
-          onClick={action.onClick}
-          asChild={!!action.href}
-          disabled={action.disabled}
-        >
-          {action.href ? (
-            <a href={action.href} className="flex items-center">
-              <div className={cn(
-                "p-1.5 rounded-full mr-3",
-                action.color ? `bg-${action.color}-900/20 text-${action.color}-500` : "bg-amber-900/20 text-amber-500"
-              )}>
-                {action.icon || <Zap className="h-4 w-4" />}
-              </div>
-              <div className="flex flex-col items-start">
-                <span className="font-medium">{action.label}</span>
-                {action.description && (
-                  <span className="text-xs text-gray-400">{action.description}</span>
-                )}
-              </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-gray-500" />
-            </a>
-          ) : (
-            <>
-              <div className={cn(
-                "p-1.5 rounded-full mr-3",
-                action.color ? `bg-${action.color}-900/20 text-${action.color}-500` : "bg-amber-900/20 text-amber-500"
-              )}>
-                {action.icon || <Zap className="h-4 w-4" />}
-              </div>
-              <div className="flex flex-col items-start">
-                <span className="font-medium">{action.label}</span>
-                {action.description && (
-                  <span className="text-xs text-gray-400">{action.description}</span>
-                )}
-              </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-gray-500" />
-            </>
-          )}
-        </Button>
-      ))}
-    </div>
-  );
+const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ widget, className }) => {
+  // Fetch quick actions data from API
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/dashboard/data/quickActions'],
+    queryFn: fetchQuickActionsData,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+
+  // When there's an error, display a message
+  if (error) {
+    return (
+      <DashboardWidget widget={widget} className={className} onRefresh={() => refetch()}>
+        <div className="h-full flex items-center justify-center text-red-400 text-sm">
+          Error loading quick actions: {error instanceof Error ? error.message : 'Unknown error'}
+        </div>
+      </DashboardWidget>
+    );
+  }
 
   return (
-    <DashboardWidget
-      id={id}
-      title={title}
-      description={description}
-      size={size}
-      loading={loading}
-      error={error}
-      onRefresh={onRefresh}
-      onRemove={onRemove}
-      onResize={onResize}
-      icon={<Zap className="h-5 w-5" />}
-      actionLabel={actionLabel}
-      actionLink={actionLink}
-    >
-      {layout === 'grid' ? renderGridLayout() : renderListLayout()}
+    <DashboardWidget widget={widget} className={className} isLoading={isLoading} onRefresh={() => refetch()}>
+      <div className="pb-4">
+        {isLoading ? (
+          <QuickActionsSkeletonLoader />
+        ) : data && data.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3">
+            {data.map((action) => (
+              <Card 
+                key={action.id} 
+                className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 
+                  transition-colors cursor-pointer border-gray-800"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`flex-shrink-0 p-2 rounded-md bg-${action.color || 'indigo'}-500/20 
+                    text-${action.color || 'indigo'}-500`}
+                  >
+                    {action.icon ? (
+                      <DynamicIcon iconName={action.icon} />
+                    ) : (
+                      <LucideIcons.Sparkles className="h-5 w-5" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">{action.label}</h4>
+                    {action.description && (
+                      <p className="text-xs text-gray-400">{action.description}</p>
+                    )}
+                  </div>
+                </div>
+                {action.link ? (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800"
+                    asChild
+                  >
+                    <Link to={action.link}>
+                      <ArrowRight className="h-4 w-4" />
+                      <span className="sr-only">Go to {action.label}</span>
+                    </Link>
+                  </Button>
+                ) : action.action ? (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-800"
+                    // Action would be implemented via a custom callback handler in a real application
+                    onClick={() => console.log(`Action triggered: ${action.action}`)}
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                    <span className="sr-only">Execute {action.label}</span>
+                  </Button>
+                ) : null}
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+            No quick actions available
+          </div>
+        )}
+      </div>
     </DashboardWidget>
   );
-}
+};
+
+export default QuickActionsWidget;

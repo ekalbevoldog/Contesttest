@@ -3,6 +3,7 @@ import {
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
 } from "@shared/schema.js";
+import { DashboardPreferences } from "../shared/dashboard-schema.js";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
@@ -95,6 +96,11 @@ export interface IStorage {
   updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback>;
   addAdminResponse(feedbackId: number, response: string): Promise<Feedback>;
 
+  // User Preferences operations
+  getUserPreferences(userId: string, preferenceType: string): Promise<{ user_id: string; preference_type: string; data: any } | undefined>;
+  saveUserPreferences(preferences: { user_id: string; preference_type: string; data: any }): Promise<{ user_id: string; preference_type: string; data: any }>;
+  deleteUserPreferences(userId: string, preferenceType: string): Promise<void>;
+  
   // Session Store for Express Session
   sessionStore: session.Store;
 }

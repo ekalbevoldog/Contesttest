@@ -1,469 +1,280 @@
-// Dashboard services for fetching personalized widget data
-import { supabase } from './supabase-client';
+import { apiRequest } from './queryClient';
+import { 
+  DashboardConfig, 
+  StatsData, 
+  ChartData, 
+  ActivityData, 
+  QuickActionsData 
+} from '../../shared/dashboard-schema';
+import { v4 as uuidv4 } from 'uuid';
 
-export type WidgetType = 'stats' | 'chart' | 'activity' | 'quickActions' | 'custom';
+/**
+ * Dashboard service that handles all dashboard-related API calls
+ */
 
-export interface WidgetConfig {
-  id: string;
-  type: WidgetType;
-  title: string;
-  description?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  position?: number;
-  settings?: Record<string, any>;
-  visible?: boolean;
-}
-
-export interface DashboardConfig {
-  widgets: WidgetConfig[];
-  layout?: 'grid' | 'list';
-  theme?: 'dark' | 'light';
-}
-
-// Get default dashboard configuration for different user types
-export function getDefaultDashboardConfig(userType: string): DashboardConfig {
-  switch(userType) {
-    case 'business':
-      return {
-        widgets: [
-          {
-            id: 'business-stats',
-            type: 'stats',
-            title: 'Overview',
-            description: 'Key metrics for your business',
-            size: 'full',
-            position: 0,
-            visible: true
-          },
-          {
-            id: 'campaign-performance',
-            type: 'chart',
-            title: 'Campaign Performance',
-            description: 'Monitor campaign metrics over time',
-            size: 'lg',
-            position: 1,
-            settings: {
-              chartType: 'area',
-              dataSource: 'campaigns',
-              period: 'month'
-            },
-            visible: true
-          },
-          {
-            id: 'budget-allocation',
-            type: 'chart',
-            title: 'Budget Allocation',
-            description: 'Campaign spending breakdown',
-            size: 'md',
-            position: 2,
-            settings: {
-              chartType: 'pie',
-              dataSource: 'budget'
-            },
-            visible: true
-          },
-          {
-            id: 'recent-activity',
-            type: 'activity',
-            title: 'Recent Activity',
-            description: 'Latest updates and notifications',
-            size: 'md',
-            position: 3,
-            settings: {
-              maxItems: 5
-            },
-            visible: true
-          },
-          {
-            id: 'quick-actions',
-            type: 'quickActions',
-            title: 'Quick Actions',
-            size: 'md',
-            position: 4,
-            visible: true
-          }
-        ],
-        layout: 'grid',
-        theme: 'dark'
-      };
-    
-    case 'athlete':
-      return {
-        widgets: [
-          {
-            id: 'athlete-stats',
-            type: 'stats',
-            title: 'Performance',
-            description: 'Your key metrics at a glance',
-            size: 'full',
-            position: 0,
-            visible: true
-          },
-          {
-            id: 'engagement-trends',
-            type: 'chart',
-            title: 'Engagement Trends',
-            description: 'Track your engagement metrics over time',
-            size: 'lg',
-            position: 1,
-            settings: {
-              chartType: 'line',
-              dataSource: 'engagement',
-              period: 'week'
-            },
-            visible: true
-          },
-          {
-            id: 'sponsor-distribution',
-            type: 'chart',
-            title: 'Sponsorship Breakdown',
-            description: 'Distribution of sponsorship types',
-            size: 'md',
-            position: 2,
-            settings: {
-              chartType: 'pie',
-              dataSource: 'sponsors'
-            },
-            visible: true
-          },
-          {
-            id: 'recent-activity',
-            type: 'activity',
-            title: 'Recent Activity',
-            description: 'Latest updates and messages',
-            size: 'md',
-            position: 3,
-            settings: {
-              maxItems: 5
-            },
-            visible: true
-          },
-          {
-            id: 'quick-actions',
-            type: 'quickActions',
-            title: 'Quick Actions',
-            size: 'md',
-            position: 4,
-            visible: true
-          }
-        ],
-        layout: 'grid',
-        theme: 'dark'
-      };
-    
-    case 'admin':
-      return {
-        widgets: [
-          {
-            id: 'platform-stats',
-            type: 'stats',
-            title: 'Platform Metrics',
-            description: 'Overall platform performance',
-            size: 'full',
-            position: 0,
-            visible: true
-          },
-          {
-            id: 'user-growth',
-            type: 'chart',
-            title: 'User Growth',
-            description: 'Track new users over time',
-            size: 'lg',
-            position: 1,
-            settings: {
-              chartType: 'line',
-              dataSource: 'users',
-              period: 'month'
-            },
-            visible: true
-          },
-          {
-            id: 'business-athlete-ratio',
-            type: 'chart',
-            title: 'User Distribution',
-            description: 'Ratio of businesses to athletes',
-            size: 'md',
-            position: 2,
-            settings: {
-              chartType: 'pie',
-              dataSource: 'userTypes'
-            },
-            visible: true
-          },
-          {
-            id: 'system-activity',
-            type: 'activity',
-            title: 'System Activity',
-            description: 'Recent platform events',
-            size: 'md',
-            position: 3,
-            settings: {
-              maxItems: 10
-            },
-            visible: true
-          },
-          {
-            id: 'admin-actions',
-            type: 'quickActions',
-            title: 'Administration',
-            size: 'md',
-            position: 4,
-            visible: true
-          }
-        ],
-        layout: 'grid',
-        theme: 'dark'
-      };
-      
-    case 'compliance':
-      return {
-        widgets: [
-          {
-            id: 'compliance-stats',
-            type: 'stats',
-            title: 'Compliance Overview',
-            description: 'Key compliance metrics',
-            size: 'full',
-            position: 0,
-            visible: true
-          },
-          {
-            id: 'review-queue',
-            type: 'activity',
-            title: 'Review Queue',
-            description: 'Pending reviews and approvals',
-            size: 'lg',
-            position: 1,
-            settings: {
-              maxItems: 10,
-              filter: 'pending'
-            },
-            visible: true
-          },
-          {
-            id: 'compliance-actions',
-            type: 'quickActions',
-            title: 'Compliance Tools',
-            size: 'md',
-            position: 2,
-            visible: true
-          }
-        ],
-        layout: 'grid',
-        theme: 'dark'
-      };
-
-    default:
-      return {
-        widgets: [
-          {
-            id: 'default-stats',
-            type: 'stats',
-            title: 'Overview',
-            size: 'full',
-            position: 0,
-            visible: true
-          },
-          {
-            id: 'quick-actions',
-            type: 'quickActions',
-            title: 'Quick Actions',
-            size: 'md',
-            position: 1,
-            visible: true
-          }
-        ],
-        layout: 'grid',
-        theme: 'dark'
-      };
+// Fetch the user's dashboard configuration
+export async function fetchDashboardConfig(): Promise<DashboardConfig> {
+  try {
+    const response = await apiRequest('GET', '/api/dashboard');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching dashboard config:', error);
+    // Return default configuration if there's an error
+    return getDefaultDashboardConfig('unknown');
   }
 }
 
-// Save dashboard configuration for a user
-export async function saveDashboardConfig(userId: string, config: DashboardConfig): Promise<boolean> {
+// Save the user's dashboard configuration
+export async function saveDashboardConfig(config: DashboardConfig): Promise<{ success: boolean }> {
   try {
-    // First, look for an existing dashboard config
-    const { data: existingConfig, error: fetchError } = await supabase
-      .from('user_preferences')
-      .select('id, data')
-      .eq('user_id', userId)
-      .eq('preference_type', 'dashboard_config')
-      .single();
-    
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-      console.error('Error fetching dashboard config:', fetchError);
-      return false;
-    }
-    
-    // If config exists, update it
-    if (existingConfig) {
-      const { error: updateError } = await supabase
-        .from('user_preferences')
-        .update({
-          data: config,
-          updated_at: new Date()
-        })
-        .eq('id', existingConfig.id);
-      
-      if (updateError) {
-        console.error('Error updating dashboard config:', updateError);
-        return false;
-      }
-      
-      return true;
-    }
-    
-    // Otherwise, create a new config
-    const { error: insertError } = await supabase
-      .from('user_preferences')
-      .insert({
-        user_id: userId,
-        preference_type: 'dashboard_config',
-        data: config
-      });
-    
-    if (insertError) {
-      console.error('Error saving dashboard config:', insertError);
-      return false;
-    }
-    
-    return true;
+    const response = await apiRequest('POST', '/api/dashboard', config);
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('Unexpected error saving dashboard config:', error);
-    return false;
+    console.error('Error saving dashboard config:', error);
+    throw error;
   }
 }
 
-// Load dashboard configuration for a user
-export async function loadDashboardConfig(userId: string, userType: string): Promise<DashboardConfig> {
+// Update a specific widget
+export async function updateWidget(widgetId: string, updates: Partial<any>): Promise<{ success: boolean }> {
   try {
-    // Try to fetch user's custom dashboard config
-    const { data: userPreference, error } = await supabase
-      .from('user_preferences')
-      .select('data')
-      .eq('user_id', userId)
-      .eq('preference_type', 'dashboard_config')
-      .single();
-    
-    // If there's a valid config, return it
-    if (!error && userPreference && userPreference.data) {
-      return userPreference.data as DashboardConfig;
-    }
-    
-    // Otherwise, return the default config for this user type
-    return getDefaultDashboardConfig(userType);
+    const response = await apiRequest('PATCH', `/api/dashboard/widgets/${widgetId}`, updates);
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('Error loading dashboard config:', error);
-    return getDefaultDashboardConfig(userType);
-  }
-}
-
-// Update a specific widget configuration
-export async function updateWidgetConfig(
-  userId: string, 
-  widgetId: string, 
-  updates: Partial<WidgetConfig>
-): Promise<boolean> {
-  try {
-    // Get current dashboard config
-    const currentConfig = await loadDashboardConfig(userId, ''); // Empty string as fallback
-    
-    // Find and update the specific widget
-    const updatedWidgets = currentConfig.widgets.map(widget => {
-      if (widget.id === widgetId) {
-        return { ...widget, ...updates };
-      }
-      return widget;
-    });
-    
-    // Save the updated config
-    return await saveDashboardConfig(userId, {
-      ...currentConfig,
-      widgets: updatedWidgets
-    });
-  } catch (error) {
-    console.error('Error updating widget config:', error);
-    return false;
-  }
-}
-
-// Add a new widget to the dashboard
-export async function addWidget(
-  userId: string, 
-  widget: WidgetConfig
-): Promise<boolean> {
-  try {
-    // Get current dashboard config
-    const currentConfig = await loadDashboardConfig(userId, '');
-    
-    // Add the new widget
-    const updatedWidgets = [...currentConfig.widgets, widget];
-    
-    // Save the updated config
-    return await saveDashboardConfig(userId, {
-      ...currentConfig,
-      widgets: updatedWidgets
-    });
-  } catch (error) {
-    console.error('Error adding widget:', error);
-    return false;
+    console.error('Error updating widget:', error);
+    throw error;
   }
 }
 
 // Remove a widget from the dashboard
-export async function removeWidget(
-  userId: string, 
-  widgetId: string
-): Promise<boolean> {
+export async function removeWidget(widgetId: string): Promise<{ success: boolean }> {
   try {
-    // Get current dashboard config
-    const currentConfig = await loadDashboardConfig(userId, '');
-    
-    // Filter out the widget to remove
-    const updatedWidgets = currentConfig.widgets.filter(widget => widget.id !== widgetId);
-    
-    // Save the updated config
-    return await saveDashboardConfig(userId, {
-      ...currentConfig,
-      widgets: updatedWidgets
-    });
+    const response = await apiRequest('DELETE', `/api/dashboard/widgets/${widgetId}`);
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error removing widget:', error);
-    return false;
+    throw error;
   }
 }
 
-// Reorder widgets on the dashboard
-export async function reorderWidgets(
-  userId: string, 
-  newOrder: { id: string, position: number }[]
-): Promise<boolean> {
+// Fetch stats data for stats widget
+export async function fetchStatsData(): Promise<StatsData> {
   try {
-    // Get current dashboard config
-    const currentConfig = await loadDashboardConfig(userId, '');
-    
-    // Create a map for the new positions
-    const positionMap = new Map(newOrder.map(item => [item.id, item.position]));
-    
-    // Update positions for each widget
-    const updatedWidgets = currentConfig.widgets.map(widget => {
-      const newPosition = positionMap.get(widget.id);
-      if (newPosition !== undefined) {
-        return { ...widget, position: newPosition };
-      }
-      return widget;
-    });
-    
-    // Sort widgets by position
-    updatedWidgets.sort((a, b) => (a.position || 0) - (b.position || 0));
-    
-    // Save the updated config
-    return await saveDashboardConfig(userId, {
-      ...currentConfig,
-      widgets: updatedWidgets
-    });
+    const response = await apiRequest('GET', '/api/dashboard/data/stats');
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('Error reordering widgets:', error);
-    return false;
+    console.error('Error fetching stats data:', error);
+    throw error;
+  }
+}
+
+// Fetch chart data for chart widget
+export async function fetchChartData(dataSource: string): Promise<ChartData> {
+  try {
+    const response = await apiRequest('GET', `/api/dashboard/data/${dataSource}`);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`Error fetching chart data for source ${dataSource}:`, error);
+    throw error;
+  }
+}
+
+// Fetch activity data for activity widget
+export async function fetchActivityData(): Promise<ActivityData> {
+  try {
+    const response = await apiRequest('GET', '/api/dashboard/data/activities');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching activity data:', error);
+    throw error;
+  }
+}
+
+// Fetch quick actions data for quick actions widget
+export async function fetchQuickActionsData(): Promise<QuickActionsData> {
+  try {
+    const response = await apiRequest('GET', '/api/dashboard/data/quickActions');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching quick actions data:', error);
+    throw error;
+  }
+}
+
+// Default dashboard config based on user type
+export function getDefaultDashboardConfig(userType: string): DashboardConfig {
+  // Create default dashboard configuration based on user type
+  return {
+    widgets: [
+      {
+        id: `stats-${uuidv4().substring(0, 8)}`,
+        type: 'stats',
+        title: 'Key Metrics',
+        description: 'Overview of your performance metrics',
+        size: 'lg',
+        position: 0,
+        visible: true
+      },
+      {
+        id: `chart-${uuidv4().substring(0, 8)}`,
+        type: 'chart',
+        title: 'Performance Trends',
+        description: 'Visualize your data over time',
+        size: 'md',
+        position: 1,
+        settings: {
+          chartType: 'line',
+          dataSource: userType === 'business' ? 'campaigns' : 'engagement',
+          showLegend: true
+        },
+        visible: true
+      },
+      {
+        id: `activity-${uuidv4().substring(0, 8)}`,
+        type: 'activity',
+        title: 'Recent Activity',
+        description: 'Latest updates and notifications',
+        size: 'md',
+        position: 2,
+        settings: {
+          maxItems: 5
+        },
+        visible: true
+      },
+      {
+        id: `quick-actions-${uuidv4().substring(0, 8)}`,
+        type: 'quickActions',
+        title: 'Quick Actions',
+        description: 'Common tasks and shortcuts',
+        size: 'sm',
+        position: 3,
+        visible: true
+      }
+    ],
+    layout: 'grid'
+  };
+}
+
+// Default quick actions based on user type
+export function getDefaultQuickActions(userType: string): QuickActionsData {
+  switch (userType) {
+    case 'business':
+      return [
+        {
+          id: 'create-campaign',
+          label: 'Create Campaign',
+          description: 'Start a new marketing campaign',
+          icon: 'FilePlus',
+          color: 'blue',
+          link: '/business/campaigns/new'
+        },
+        {
+          id: 'browse-athletes',
+          label: 'Browse Athletes',
+          description: 'Discover potential partnerships',
+          icon: 'Users',
+          color: 'indigo',
+          link: '/business/athletes'
+        },
+        {
+          id: 'manage-offers',
+          label: 'Manage Offers',
+          description: 'View and edit your active offers',
+          icon: 'ClipboardList',
+          color: 'amber',
+          link: '/business/offers'
+        }
+      ];
+    case 'athlete':
+      return [
+        {
+          id: 'view-offers',
+          label: 'View Offers',
+          description: 'See your partnership opportunities',
+          icon: 'Mail',
+          color: 'blue',
+          link: '/athlete/offers'
+        },
+        {
+          id: 'update-profile',
+          label: 'Update Profile',
+          description: 'Keep your information current',
+          icon: 'UserCircle',
+          color: 'indigo',
+          link: '/athlete/profile'
+        },
+        {
+          id: 'view-partnerships',
+          label: 'View Partnerships',
+          description: 'Manage your active partnerships',
+          icon: 'Handshake',
+          color: 'emerald',
+          link: '/athlete/partnerships'
+        }
+      ];
+    case 'admin':
+      return [
+        {
+          id: 'user-management',
+          label: 'User Management',
+          description: 'Manage user accounts and access',
+          icon: 'Users',
+          color: 'blue',
+          link: '/admin/users'
+        },
+        {
+          id: 'content-moderation',
+          label: 'Content Moderation',
+          description: 'Review reported content',
+          icon: 'Shield',
+          color: 'red',
+          link: '/admin/moderation'
+        },
+        {
+          id: 'system-settings',
+          label: 'System Settings',
+          description: 'Configure application settings',
+          icon: 'Settings',
+          color: 'gray',
+          link: '/admin/settings'
+        }
+      ];
+    case 'compliance':
+      return [
+        {
+          id: 'pending-reviews',
+          label: 'Pending Reviews',
+          description: 'Review partnerships awaiting approval',
+          icon: 'ClipboardCheck',
+          color: 'amber',
+          link: '/compliance/reviews'
+        },
+        {
+          id: 'content-reports',
+          label: 'Content Reports',
+          description: 'Investigate reported content',
+          icon: 'Flag',
+          color: 'red',
+          link: '/compliance/reports'
+        },
+        {
+          id: 'audit-log',
+          label: 'Audit Log',
+          description: 'View system activity history',
+          icon: 'History',
+          color: 'blue',
+          link: '/compliance/audit'
+        }
+      ];
+    default:
+      return [];
   }
 }

@@ -1,98 +1,134 @@
 import React from 'react';
-import { DashboardWidget, WidgetSize } from './DashboardWidget';
-import { BarChart3, Users, TrendingUp, DollarSign, Eye, ShoppingBag } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  ArrowUpIcon, 
+  ArrowDownIcon, 
+  ArrowRightIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
+  BarChart
+} from 'lucide-react';
+import DashboardWidget from './DashboardWidget';
+import type { StatsWidget as StatsWidgetType, StatsData, StatsDataItem } from '../../../shared/dashboard-schema';
+import { fetchStatsData } from '@/lib/dashboard-service';
+import { cn } from '@/lib/utils';
 
-export type StatItem = {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  change?: number;
-  changeLabel?: string;
-};
-
-export interface StatsWidgetProps {
-  id: string;
-  title: string;
-  description?: string;
-  size?: WidgetSize;
-  loading?: boolean;
-  error?: boolean;
-  onRefresh?: () => void;
-  onRemove?: () => void;
-  onResize?: (size: WidgetSize) => void;
-  stats: StatItem[];
-  columns?: 1 | 2 | 3 | 4;
+interface StatsWidgetProps {
+  widget: StatsWidgetType;
+  className?: string;
 }
 
-// Map of common stat icons
-export const StatIcons = {
-  campaigns: <BarChart3 className="h-6 w-6 text-amber-500" />,
-  athletes: <Users className="h-6 w-6 text-amber-500" />,
-  engagement: <TrendingUp className="h-6 w-6 text-amber-500" />,
-  revenue: <DollarSign className="h-6 w-6 text-amber-500" />,
-  views: <Eye className="h-6 w-6 text-amber-500" />,
-  products: <ShoppingBag className="h-6 w-6 text-amber-500" />,
+// Renders individual stat items
+const StatItem: React.FC<{ item: StatsDataItem }> = ({ item }) => {
+  // Determine trend indicator
+  const getTrendIndicator = () => {
+    if (!item.trend) return null;
+    
+    const trendIcons = {
+      up: <ArrowUpIcon className="h-4 w-4 text-emerald-500" />,
+      down: <ArrowDownIcon className="h-4 w-4 text-red-500" />,
+      neutral: <ArrowRightIcon className="h-4 w-4 text-gray-400" />
+    };
+    
+    return trendIcons[item.trend];
+  };
+
+  // Format the change value
+  const formatChange = () => {
+    if (item.change === undefined) return null;
+    
+    const isPositive = item.change > 0;
+    const color = isPositive ? 'text-emerald-500' : item.change < 0 ? 'text-red-500' : 'text-gray-400';
+    const value = `${isPositive ? '+' : ''}${item.change}%`;
+    
+    return <span className={color}>{value}</span>;
+  };
+
+  return (
+    <div className="flex flex-col px-3 py-2 rounded-lg backdrop-blur-sm bg-white/5 border border-gray-800">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs text-gray-400">{item.label}</span>
+        <div className="flex items-center space-x-1">
+          {getTrendIndicator()}
+          <span className="text-xs">{formatChange()}</span>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        {item.icon && (
+          <div className={cn(
+            "w-8 h-8 rounded-md flex items-center justify-center",
+            item.color ? `bg-${item.color}-500/20 text-${item.color}-500` : "bg-primary/20 text-primary"
+          )}>
+            {item.icon === 'trending-up' && <TrendingUpIcon className="h-4 w-4" />}
+            {item.icon === 'trending-down' && <TrendingDownIcon className="h-4 w-4" />}
+            {item.icon === 'bar-chart' && <BarChart className="h-4 w-4" />}
+          </div>
+        )}
+        <div className={cn("text-lg font-semibold", !item.icon && "ml-1")}>
+          {item.value}
+        </div>
+      </div>
+    </div>
+  );
 };
 
-export function StatsWidget({
-  id,
-  title,
-  description,
-  size = 'full',
-  loading = false,
-  error = false,
-  onRefresh,
-  onRemove,
-  onResize,
-  stats,
-  columns = 3,
-}: StatsWidgetProps) {
+// Loading skeleton for stats
+const StatsSkeletonLoader: React.FC = () => {
   return (
-    <DashboardWidget
-      id={id}
-      title={title}
-      description={description}
-      size={size}
-      loading={loading}
-      error={error}
-      onRefresh={onRefresh}
-      onRemove={onRemove}
-      onResize={onResize}
-      icon={<BarChart3 className="h-5 w-5" />}
-    >
-      <div className={`grid grid-cols-1 ${
-        columns === 1 ? 'md:grid-cols-1' : 
-        columns === 2 ? 'md:grid-cols-2' : 
-        columns === 4 ? 'md:grid-cols-4' : 
-        'md:grid-cols-3'
-      } gap-4`}>
-        {stats.map((stat, index) => (
-          <div 
-            key={`${id}-stat-${index}`}
-            className="flex items-center p-4 border border-zinc-800 rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 group"
-          >
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-red-500/20 flex items-center justify-center mr-4 group-hover:from-amber-500/30 group-hover:to-red-500/30 transition-all duration-300">
-              {stat.icon}
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">{stat.label}</p>
-              <div className="flex items-end gap-2">
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                {stat.change !== undefined && (
-                  <span className={`text-xs pb-1 ${
-                    stat.change > 0 ? 'text-green-500' : 
-                    stat.change < 0 ? 'text-red-500' : 
-                    'text-gray-500'
-                  }`}>
-                    {stat.change > 0 ? '↑' : stat.change < 0 ? '↓' : '•'} 
-                    {Math.abs(stat.change)}% {stat.changeLabel || ''}
-                  </span>
-                )}
-              </div>
-            </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="flex flex-col p-3 rounded-lg backdrop-blur-sm bg-white/5 border border-gray-800">
+          <div className="flex items-center justify-between mb-1">
+            <Skeleton className="h-3 w-16 bg-gray-700" />
+            <Skeleton className="h-3 w-8 bg-gray-700" />
           </div>
-        ))}
-      </div>
+          <div className="flex items-center space-x-2 mt-1">
+            <Skeleton className="h-8 w-8 rounded-md bg-gray-700" />
+            <Skeleton className="h-6 w-16 bg-gray-700" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const StatsWidget: React.FC<StatsWidgetProps> = ({ widget, className }) => {
+  // Fetch stats data from the API
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/dashboard/data/stats', widget.id],
+    queryFn: fetchStatsData,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // When there's an error, display a message
+  if (error) {
+    return (
+      <DashboardWidget widget={widget} className={className} onRefresh={() => refetch()}>
+        <div className="h-full flex items-center justify-center text-red-400 text-sm">
+          Error loading stats: {error instanceof Error ? error.message : 'Unknown error'}
+        </div>
+      </DashboardWidget>
+    );
+  }
+
+  return (
+    <DashboardWidget widget={widget} className={className} isLoading={isLoading} onRefresh={() => refetch()}>
+      {isLoading ? (
+        <StatsSkeletonLoader />
+      ) : data && data.items && data.items.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {data.items.map((item) => (
+            <StatItem key={item.key} item={item} />
+          ))}
+        </div>
+      ) : (
+        <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+          No stats data available
+        </div>
+      )}
     </DashboardWidget>
   );
-}
+};
+
+export default StatsWidget;

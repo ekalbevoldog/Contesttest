@@ -1,221 +1,187 @@
 import React from 'react';
-import { DashboardWidget, WidgetSize } from './DashboardWidget';
-import { Activity, MessageSquare, User, Briefcase, DollarSign, Award, Clock, CalendarClock } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { formatDistanceToNow } from 'date-fns';
+import { 
+  MessageSquare, 
+  Bell, 
+  Calendar, 
+  Check, 
+  X, 
+  AlertCircle,
+  Award,
+  FileText,
+  User,
+  Users,
+  Clock,
+  Activity
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import DashboardWidget from './DashboardWidget';
+import type { ActivityWidget as ActivityWidgetType, ActivityItem } from '../../../shared/dashboard-schema';
+import { fetchActivityData } from '@/lib/dashboard-service';
 
-export type ActivityItemType = 'message' | 'athlete' | 'campaign' | 'payment' | 'match' | 'system';
-
-export interface ActivityItem {
-  id: string;
-  type: ActivityItemType;
-  title: string;
-  description?: string;
-  timestamp: string | Date;
-  user?: {
-    id: string;
-    name: string;
-    avatar?: string;
-    role?: string;
-  };
-  status?: 'pending' | 'completed' | 'error';
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-  link?: string;
+interface ActivityWidgetProps {
+  widget: ActivityWidgetType;
+  className?: string;
 }
 
-export interface ActivityWidgetProps {
-  id: string;
-  title: string;
-  description?: string;
-  size?: WidgetSize;
-  loading?: boolean;
-  error?: boolean;
-  onRefresh?: () => void;
-  onRemove?: () => void;
-  onResize?: (size: WidgetSize) => void;
-  activities: ActivityItem[];
-  maxItems?: number;
-  showViewAll?: boolean;
-  viewAllLink?: string;
-  emptyMessage?: string;
-  actionLabel?: string;
-  actionLink?: string;
-}
-
-export function ActivityWidget({
-  id,
-  title,
-  description,
-  size = 'md',
-  loading = false,
-  error = false,
-  onRefresh,
-  onRemove,
-  onResize,
-  activities,
-  maxItems = 5,
-  showViewAll = true,
-  viewAllLink = '/activities',
-  emptyMessage = 'No recent activity',
-  actionLabel,
-  actionLink,
-}: ActivityWidgetProps) {
-  // Get appropriate icon based on activity type
-  const getActivityIcon = (type: ActivityItemType) => {
-    switch (type) {
-      case 'message':
-        return <MessageSquare className="h-4 w-4 text-blue-400" />;
-      case 'athlete':
-        return <User className="h-4 w-4 text-green-400" />;
-      case 'campaign':
-        return <Award className="h-4 w-4 text-amber-400" />;
-      case 'payment':
-        return <DollarSign className="h-4 w-4 text-emerald-400" />;
-      case 'match':
-        return <Briefcase className="h-4 w-4 text-purple-400" />;
-      case 'system':
-      default:
-        return <Activity className="h-4 w-4 text-gray-400" />;
-    }
-  };
-
-  // Format a timestamp (can be string or Date)
-  const formatTimestamp = (timestamp: string | Date) => {
-    if (!timestamp) return '';
-    
+// Activity item component
+const ActivityItemComponent: React.FC<{ item: ActivityItem }> = ({ item }) => {
+  // Format timestamp to relative time (e.g. "2 hours ago")
+  const getRelativeTime = (timestamp: Date | string) => {
     const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-    
-    // For recent activity (less than 24 hours), show relative time
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-    
-    if (diffHours < 24) {
-      if (diffHours < 1) {
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        return diffMinutes <= 0 ? 'Just now' : `${diffMinutes}m ago`;
-      }
-      return `${Math.floor(diffHours)}h ago`;
-    }
-    
-    // For older activity, show the date
-    return date.toLocaleDateString('en-US', {
-      month: 'short', 
-      day: 'numeric'
-    });
+    return formatDistanceToNow(date, { addSuffix: true });
   };
 
-  // Limit the number of activities to display
-  const displayActivities = activities.slice(0, maxItems);
+  // Select icon based on activity type
+  const getIcon = () => {
+    const iconMap: Record<string, React.ReactNode> = {
+      message: <MessageSquare className="h-4 w-4" />,
+      notification: <Bell className="h-4 w-4" />,
+      event: <Calendar className="h-4 w-4" />,
+      completion: <Check className="h-4 w-4" />,
+      error: <X className="h-4 w-4" />,
+      warning: <AlertCircle className="h-4 w-4" />,
+      achievement: <Award className="h-4 w-4" />,
+      document: <FileText className="h-4 w-4" />,
+      user: <User className="h-4 w-4" />,
+      team: <Users className="h-4 w-4" />,
+      reminder: <Clock className="h-4 w-4" />,
+      activity: <Activity className="h-4 w-4" />
+    };
+
+    return item.icon ? 
+      iconMap[item.icon] || <Activity className="h-4 w-4" /> : 
+      iconMap[item.type] || <Activity className="h-4 w-4" />;
+  };
+
+  // Select color based on status
+  const getStatusColor = () => {
+    if (!item.status) return '';
+    
+    const statusColorMap: Record<string, string> = {
+      success: 'bg-emerald-400/20 text-emerald-400',
+      error: 'bg-red-400/20 text-red-400',
+      warning: 'bg-amber-400/20 text-amber-400',
+      info: 'bg-blue-400/20 text-blue-400',
+      pending: 'bg-gray-400/20 text-gray-400'
+    };
+
+    return statusColorMap[item.status] || '';
+  };
 
   return (
-    <DashboardWidget
-      id={id}
-      title={title}
-      description={description}
-      size={size}
-      loading={loading}
-      error={error}
-      onRefresh={onRefresh}
-      onRemove={onRemove}
-      onResize={onResize}
-      icon={<Activity className="h-5 w-5" />}
-      actionLabel={actionLabel}
-      actionLink={actionLink}
-      contentClassName="p-0"
-    >
-      {displayActivities.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 text-center">
-          <div className="rounded-full bg-zinc-800/50 p-3 text-gray-400 mb-4">
-            <CalendarClock className="h-6 w-6" />
-          </div>
-          <p className="text-gray-400">{emptyMessage}</p>
+    <div className="flex items-start space-x-3 py-3 hover:bg-white/5 px-2 rounded-md transition-colors">
+      <div className={cn(
+        "mt-0.5 rounded-full p-1.5 flex-shrink-0",
+        getStatusColor() || "bg-gray-700 text-gray-300"
+      )}>
+        {getIcon()}
+      </div>
+      <div className="flex-1 space-y-1">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium leading-none">{item.title}</p>
+          <span className="text-xs text-gray-400">{getRelativeTime(item.timestamp)}</span>
         </div>
-      ) : (
-        <ScrollArea className="h-[340px]">
-          <div className="p-4 pt-2">
-            {displayActivities.map((activity, index) => (
-              <React.Fragment key={activity.id}>
-                {index > 0 && <Separator className="my-3 bg-zinc-800" />}
-                <div className="flex items-start space-x-4">
-                  {activity.user ? (
-                    <Avatar className="h-8 w-8 border border-zinc-700">
-                      <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
-                      <AvatarFallback className="bg-amber-900/20 text-amber-500">
-                        {activity.user.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                  )}
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white">
-                        {activity.title}
-                      </p>
-                      <div className="flex items-center">
-                        {activity.status && (
-                          <Badge 
-                            className={cn(
-                              "mr-2 px-1 text-xs", 
-                              activity.status === 'completed' ? "bg-green-900/20 text-green-500" : 
-                              activity.status === 'error' ? "bg-red-900/20 text-red-500" : 
-                              "bg-amber-900/20 text-amber-500"
-                            )}
-                          >
-                            {activity.status}
-                          </Badge>
-                        )}
-                        <span className="text-xs text-gray-500 flex items-center">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {formatTimestamp(activity.timestamp)}
-                        </span>
-                      </div>
-                    </div>
-                    {activity.description && (
-                      <p className="text-sm text-gray-400">
-                        {activity.description}
-                      </p>
-                    )}
-                    {activity.action && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={activity.action.onClick}
-                        className="mt-2 h-7 text-xs border-zinc-700 bg-black/40"
-                      >
-                        {activity.action.label}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </React.Fragment>
+        <p className="text-xs text-gray-400">{item.description}</p>
+        {item.user && (
+          <div className="flex items-center mt-1">
+            {item.user.avatar && (
+              <div className="h-5 w-5 rounded-full overflow-hidden mr-1.5">
+                <img src={item.user.avatar} alt={item.user.name || 'User'} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <span className="text-xs text-gray-300">{item.user.name}</span>
+          </div>
+        )}
+        {item.link && (
+          <a 
+            href={item.link} 
+            className="text-xs text-blue-400 hover:text-blue-300 inline-block mt-1"
+          >
+            View details
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Loading skeleton for activities
+const ActivitySkeletonLoader: React.FC = () => {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="flex items-start space-x-3 py-3">
+          <Skeleton className="h-8 w-8 rounded-full bg-gray-700" />
+          <div className="space-y-2 flex-1">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24 bg-gray-700" />
+              <Skeleton className="h-3 w-12 bg-gray-700" />
+            </div>
+            <Skeleton className="h-3 w-full bg-gray-700" />
+            <Skeleton className="h-3 w-2/3 bg-gray-700" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const ActivityWidget: React.FC<ActivityWidgetProps> = ({ widget, className }) => {
+  // Get settings from widget
+  const maxItems = widget.settings?.maxItems || 5;
+  const filter = widget.settings?.filter;
+  
+  // Fetch activity data from API
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/dashboard/data/activities', filter],
+    queryFn: fetchActivityData,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+  // Filter activities if needed
+  const getFilteredActivities = () => {
+    if (!data) return [];
+    if (!filter) return data.slice(0, maxItems);
+    
+    return data
+      .filter(item => item.status === filter || item.type === filter)
+      .slice(0, maxItems);
+  };
+
+  // When there's an error, display a message
+  if (error) {
+    return (
+      <DashboardWidget widget={widget} className={className} onRefresh={() => refetch()}>
+        <div className="h-full flex items-center justify-center text-red-400 text-sm">
+          Error loading activities: {error instanceof Error ? error.message : 'Unknown error'}
+        </div>
+      </DashboardWidget>
+    );
+  }
+
+  return (
+    <DashboardWidget widget={widget} className={className} isLoading={isLoading} onRefresh={() => refetch()}>
+      <ScrollArea className="h-[300px] pr-3 -mr-3">
+        {isLoading ? (
+          <ActivitySkeletonLoader />
+        ) : data && data.length > 0 ? (
+          <div className="space-y-1 divide-y divide-gray-800/50">
+            {getFilteredActivities().map((item) => (
+              <ActivityItemComponent key={item.id} item={item} />
             ))}
           </div>
-        </ScrollArea>
-      )}
-      
-      {showViewAll && activities.length > 0 && (
-        <div className="p-3 bg-zinc-900/80 border-t border-zinc-800">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full text-amber-500 hover:text-amber-400 hover:bg-zinc-800/50"
-            asChild
-          >
-            <a href={viewAllLink}>View all activity</a>
-          </Button>
-        </div>
-      )}
+        ) : (
+          <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+            No activity data available
+          </div>
+        )}
+      </ScrollArea>
     </DashboardWidget>
   );
-}
+};
+
+export default ActivityWidget;

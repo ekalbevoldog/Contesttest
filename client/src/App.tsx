@@ -12,6 +12,7 @@ import BusinessInfo from "@/pages/BusinessInfo";
 import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
+import Dashboard from "@/pages/Dashboard";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -114,7 +115,14 @@ function Router() {
             <UnifiedProtectedRoute path="/profile" component={ProfilePage} />
 
             {/* Main dashboard redirect - user will be redirected based on role */}
-            <UnifiedProtectedRoute path="/dashboard" component={ProfilePage} />
+            <UnifiedProtectedRoute path="/dashboard" component={Dashboard} />
+            
+            {/* New personalized dashboard (Widgets-based) */}
+            <UnifiedProfileRequiredRoute 
+              path="/personalized-dashboard" 
+              component={Dashboard} 
+              redirectPath="/onboarding"
+            />
 
             {/* All other routes redirect to home */}
             <Route component={Home} />
