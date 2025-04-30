@@ -309,7 +309,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Setup authentication with Supabase
+  // Setup both authentication methods
+  // 1. Traditional passport-local authentication
+  setupAuth(app);
+  
+  // 2. Supabase authentication (JWT)
   setupSupabaseAuth(app);
   
   // Register the business profile auto-creation endpoint
