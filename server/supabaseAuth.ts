@@ -267,7 +267,7 @@ export function setupSupabaseAuth(app: Express) {
           console.error("[Auth] Profile fetch error:", error);
           
           // If no user record found but we have authenticated user, return minimal info
-          if (error.code === 'PGRST116') {
+          if (error && error.code === 'PGRST116') {
             // Extract role from user metadata or default to 'visitor'
             const role = req.user.user_metadata?.role || req.user.role || 'visitor';
             console.log(`[Auth] No user record found, returning minimal info with role: ${role}`);
@@ -291,7 +291,7 @@ export function setupSupabaseAuth(app: Express) {
         if (data.role === 'business') {
           console.log(`[Auth] Business user profile check, ensuring business profile exists`);
           try {
-            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile');
+            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile.js');
             await ensureBusinessProfile(data.id.toString(), data.role);
           } catch (err) {
             console.error('[Auth] Error ensuring business profile:', err);
@@ -311,13 +311,13 @@ export function setupSupabaseAuth(app: Express) {
         if (data.role === 'business') {
           console.log(`[Auth] Business user profile check, ensuring business profile exists`);
           try {
-            // Import the function to avoid circular dependencies
-            const { ensureBusinessProfile } = require('./auth-fixes/auto-create-business-profile');
+            // Import the function dynamically to avoid circular dependencies
+            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile.js');
             // This will create a profile if one doesn't exist
             await ensureBusinessProfile(data.id.toString(), data.role);
             
             // Now fetch the profile to return it
-            const { getBusinessByUserId } = require('./supabaseProfile');
+            const { getBusinessByUserId } = await import('./supabaseProfile.js');
             const businessProfile = await getBusinessByUserId(data.id.toString());
             
             if (businessProfile) {
@@ -467,7 +467,7 @@ export function setupSupabaseAuth(app: Express) {
         if (dbRole === 'business') {
           console.log(`[Auth] Business user detected, ensuring business profile exists`);
           try {
-            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile');
+            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile.js');
             await ensureBusinessProfile(updatedUser.id.toString(), dbRole);
           } catch (err) {
             console.error('[Auth] Error ensuring business profile:', err);
@@ -566,7 +566,7 @@ export function setupSupabaseAuth(app: Express) {
         if (dbRole === 'business') {
           console.log(`[Auth] New business user detected, creating business profile`);
           try {
-            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile');
+            const { ensureBusinessProfile } = await import('./auth-fixes/auto-create-business-profile.js');
             await ensureBusinessProfile(data.id.toString(), dbRole);
           } catch (err) {
             console.error('[Auth] Error creating business profile:', err);
