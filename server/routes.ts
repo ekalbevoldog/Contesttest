@@ -82,6 +82,7 @@ import { insertFeedbackSchema, Feedback } from "../shared/schema.js";
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';
 import subscriptionRoutes from './routes/subscriptionRoutes';
+import webhookRoutes from './routes/webhooks';
 import * as stripeService from './services/stripeService';
 
 // Map to store connected WebSocket clients (legacy approach)
@@ -3237,6 +3238,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount the subscription routes (for Stripe integration)
   console.log('[API] Registering subscription routes');
   app.use('/api/subscription', subscriptionRoutes);
+  
+  // Register webhook routes
+  app.use('/api/stripe', webhookRoutes);
   
   // Add Stripe plan listing endpoint
   app.get('/api/subscription/plans', async (req: Request, res: Response) => {

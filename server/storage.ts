@@ -1637,6 +1637,190 @@ export class MemStorage implements IStorage {
   async storeFeedback(feedback: InsertFeedback): Promise<Feedback> { return { id: 1, ...feedback, status: 'pending' } as Feedback; }
   async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> { return { id: feedbackId, status } as Feedback; }
   async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> { return { id: feedbackId } as Feedback; }
+
+  // Subscription operations
+  async updateUserSubscription(userId: string, data: {
+    stripe_customer_id?: string;
+    stripe_subscription_id?: string;
+    subscription_status?: string;
+    subscription_plan?: string;
+    subscription_current_period_end?: Date;
+  }): Promise<any> {
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .update({
+          stripe_customer_id: data.stripe_customer_id,
+          stripe_subscription_id: data.stripe_subscription_id,
+          subscription_status: data.subscription_status,
+          subscription_plan: data.subscription_plan,
+          subscription_current_period_end: data.subscription_current_period_end
+        })
+        .eq('auth_id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating user subscription:', error);
+        throw error;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error in updateUserSubscription:', error);
+      throw error;
+    }
+  }
+
+  async getUserSubscription(userId: string): Promise<any> {
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_current_period_end')
+        .eq('auth_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error getting user subscription:', error);
+        throw error;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error in getUserSubscription:', error);
+      throw error;
+    }
+  }
+
+  async createSubscriptionHistory(data: {
+    user_id: string;
+    stripe_subscription_id: string;
+    plan_id: string;
+    price_id: string;
+    status: string;
+    amount: number;
+    currency: string;
+    interval: string;
+    current_period_start: Date;
+    current_period_end: Date;
+    cancel_at_period_end: boolean;
+    canceled_at?: Date;
+  }): Promise<any> {
+    try {
+      // First get the user's internal id from auth_id
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', data.user_id)
+        .single();
+
+      if (userError) {
+        console.error('Error finding user for subscription history:', userError);
+        throw userError;
+      }
+
+      const { data: history, error } = await supabase
+        .from('subscription_history')
+        .insert({
+          user_id: user.id,
+          stripe_subscription_id: data.stripe_subscription_id,
+          plan_id: data.plan_id,
+          price_id: data.price_id,
+          status: data.status,
+          amount: data.amount,
+          currency: data.currency,
+          interval: data.interval,
+          current_period_start: data.current_period_start,
+          current_period_end: data.current_period_end,
+          cancel_at_period_end: data.cancel_at_period_end,
+          canceled_at: data.canceled_at
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating subscription history:', error);
+        throw error;
+      }
+
+      return history;
+    } catch (error) {
+      console.error('Error in createSubscriptionHistory:', error);
+      throw error;
+    }
+  }
+
+  async getSubscriptionHistory(userId: string): Promise<any[]> {
+    try {
+      // First get the user's internal id from auth_id
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', userId)
+        .single();
+
+      if (userError) {
+        console.error('Error finding user for subscription history:', userError);
+        throw userError;
+      }
+
+      const { data: history, error } = await supabase
+        .from('subscription_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error getting subscription history:', error);
+        throw error;
+      }
+
+      return history || [];
+    } catch (error) {
+      console.error('Error in getSubscriptionHistory:', error);
+      throw error;
+    }
+  }
+
+  async getUserByStripeCustomerId(customerId: string): Promise<any> {
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('stripe_customer_id', customerId)
+        .single();
+
+      if (error) {
+        console.error('Error getting user by Stripe customer ID:', error);
+        throw error;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error in getUserByStripeCustomerId:', error);
+      throw error;
+    }
+  }
+
+  async getUserByStripeSubscriptionId(subscriptionId: string): Promise<any> {
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('stripe_subscription_id', subscriptionId)
+        .single();
+
+      if (error) {
+        console.error('Error getting user by Stripe subscription ID:', error);
+        throw error;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error in getUserByStripeSubscriptionId:', error);
+      throw error;
+    }
+  }
 }
 
 // Import the object storage
