@@ -6,6 +6,26 @@ export class SessionPersistenceUtil {
   private static readonly STORAGE_KEY = 'contested-auth';
   private static readonly SESSION_TIMEOUT = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+  static async persistSession(session: any, userData?: any) {
+    try {
+      if (!session) {
+        logger.warn('[SessionPersistence]', 'Attempted to store null session');
+        return;
+      }
+
+      const sessionData = {
+        session,
+        userData,
+        timestamp: new Date().toISOString()
+      };
+
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
+      logger.log('[SessionPersistence]', 'Session persisted successfully');
+    } catch (error) {
+      logger.error('[SessionPersistence]', 'Error persisting session:', error);
+    }
+  }
+
   static async restoreSession() {
     try {
       logger.log('[SessionPersistence]', 'Restoring session from storage');
@@ -18,7 +38,6 @@ export class SessionPersistenceUtil {
       const data = JSON.parse(storedData);
       const { session, timestamp } = data;
 
-      // Check session expiry
       if (timestamp && (Date.now() - new Date(timestamp).getTime() > this.SESSION_TIMEOUT)) {
         logger.log('[SessionPersistence]', 'Stored session expired');
         this.clearSession();
@@ -38,8 +57,7 @@ export class SessionPersistenceUtil {
             return null;
           }
 
-          // Store the refreshed session
-          this.storeSession(refreshedSession.session);
+          this.persistSession(refreshedSession.session);
           logger.log('[SessionPersistence]', 'Session successfully restored and refreshed');
           return refreshedSession.session;
         } catch (refreshError) {
@@ -55,28 +73,6 @@ export class SessionPersistenceUtil {
     return null;
   }
 
-  static storeSession(session: any) {
-    try {
-      if (!session) {
-        logger.warn('[SessionPersistence]', 'Attempted to store null session');
-        return;
-      }
-
-      const sessionData = {
-        session,
-        timestamp: new Date().toISOString()
-      };
-
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
-      logger.log('[SessionPersistence]', 'Session stored successfully');
-
-      // Also update auth status flag
-      localStorage.setItem('auth-status', 'authenticated');
-    } catch (error) {
-      logger.error('[SessionPersistence]', 'Error storing session:', error);
-    }
-  }
-
   static clearSession() {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
@@ -84,7 +80,6 @@ export class SessionPersistenceUtil {
       localStorage.removeItem('contestedUserData');
       localStorage.removeItem('supabase-auth');
       
-      // Clear any Supabase-specific items
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sb-') || key.includes('supabase')) {
           localStorage.removeItem(key);
@@ -97,10 +92,6 @@ export class SessionPersistenceUtil {
     }
   }
 
-  static clearSessionData() {
-    return this.clearSession();
-  }
-
   static isAuthenticated(): boolean {
     try {
       const storedData = localStorage.getItem(this.STORAGE_KEY);
@@ -109,7 +100,6 @@ export class SessionPersistenceUtil {
       const data = JSON.parse(storedData);
       const { timestamp } = data;
 
-      // Check if session is expired
       if (timestamp && (Date.now() - new Date(timestamp).getTime() > this.SESSION_TIMEOUT)) {
         this.clearSession();
         return false;
@@ -123,4 +113,4 @@ export class SessionPersistenceUtil {
   }
 }
 
-export const { restoreSession, storeSession, clearSession, clearSessionData, isAuthenticated } = SessionPersistenceUtil;
+export const { persistSession, restoreSession, clearSession, isAuthenticated } = SessionPersistenceUtil;
