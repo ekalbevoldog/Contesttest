@@ -81,6 +81,8 @@ import { insertFeedbackSchema, Feedback } from "../shared/schema.js";
 
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';
+import subscriptionRoutes from './routes/subscriptionRoutes';
+import * as stripeService from './services/stripeService';
 
 // Map to store connected WebSocket clients (legacy approach)
 // Store WebSocket connections - old method (legacy)
@@ -3232,5 +3234,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  return httpServer;
+  // Mount the subscription routes (for Stripe integration)
+  console.log('[API] Registering subscription routes');
+  app.use('/api/subscription', subscriptionRoutes);
+  
+  // Add Stripe plan listing endpoint
+  app.get('/api/subscription/plans', async (req: Request, res: Response) => {
+    try {
+      // Return the available subscription plans
+      res.json({
+        plans: Object.values(stripeService.SUBSCRIPTION_PLANS)
+      });
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch subscription plans',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  const httpServer = createServer(app);
 }
