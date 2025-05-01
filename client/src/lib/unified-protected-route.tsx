@@ -189,6 +189,38 @@ export function UnifiedProtectedRoute({
       return;
     }
     
+    // Check localStorage as a last resort
+    try {
+      const cachedUserData = localStorage.getItem('contestedUserData');
+      if (cachedUserData) {
+        const parsedData = JSON.parse(cachedUserData);
+        if (parsedData && parsedData.id) {
+          console.log('[UnifiedProtectedRoute] Using cached user data as fallback');
+          const cachedRole = parsedData.userType || parsedData.role || 'visitor';
+          
+          // Check role requirement if applicable
+          if (requiredRole) {
+            const hasRequiredRole = Array.isArray(requiredRole)
+              ? requiredRole.includes(cachedRole)
+              : cachedRole === requiredRole;
+            
+            if (!hasRequiredRole) {
+              redirectBasedOnRole(cachedRole);
+              setIsLoading(false);
+              return;
+            }
+          }
+          
+          setIsAuthorized(true);
+          setUserData(parsedData);
+          setIsLoading(false);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('[UnifiedProtectedRoute] Error reading cached user data:', error);
+    }
+    
     console.log('[UnifiedProtectedRoute] No authenticated user found, redirecting to auth page');
     // Not authenticated with any method, redirect to auth page
     navigate(redirectPath || '/auth');

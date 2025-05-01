@@ -54,37 +54,102 @@ export default function AuthPage() {
   
   // Redirect if already logged in based on role
   useEffect(() => {
+    console.log('[AuthPage] Auth check for redirection...');
+    
+    // If we're still loading auth data, don't redirect yet
+    if (isLoading) {
+      console.log('[AuthPage] Auth data still loading, waiting...');
+      return;
+    }
+    
     // First check using simple auth
     const isLoggedIn = isAuthenticated();
     console.log('[AuthPage] Simple auth check:', isLoggedIn);
     
     if (isLoggedIn) {
       console.log('[AuthPage] User is authenticated via simple auth, redirecting...');
+      // Get the stored role if available
+      const authData = localStorage.getItem('contestedUserData');
+      if (authData) {
+        try {
+          const userData = JSON.parse(authData);
+          const role = userData.userType || userData.role;
+          
+          // Direct redirect based on role if we have it
+          if (role === 'athlete') {
+            navigate('/athlete/dashboard');
+          } else if (role === 'business') {
+            navigate('/business/dashboard');
+          } else if (role === 'compliance') {
+            navigate('/compliance/dashboard');
+          } else if (role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/profile');
+          }
+          return;
+        } catch (e) {
+          console.error('[AuthPage] Error parsing stored user data:', e);
+        }
+      }
+      
+      // Fallback to profile redirect if no specific role found
       navigate('/profile');
       return;
     }
     
     // Fallback to Supabase auth
-    if (!user) return;
-    
-    // We have a logged-in user, redirect based on role
-    // Check for both role and userType properties since the API returns userType
-    const userRole = user.role || user.userType || 'visitor';
-    console.log('[AuthPage] Detected user role/type:', userRole);
-    
-    if (userRole === 'athlete') {
-      navigate('/athlete/dashboard');
-    } else if (userRole === 'business') {
-      navigate('/business/dashboard');
-    } else if (userRole === 'compliance') {
-      navigate('/compliance/dashboard');
-    } else if (userRole === 'admin') {
-      navigate('/admin/dashboard');
-    } else {
-      // If still no valid role, navigate to profile page which will handle further redirects
-      navigate('/profile');
+    if (user) {
+      // We have a logged-in user, redirect based on role
+      // Check for both role and userType properties since the API returns userType
+      const userRole = user.role || user.userType || 'visitor';
+      console.log('[AuthPage] Detected user role/type:', userRole);
+      
+      if (userRole === 'athlete') {
+        navigate('/athlete/dashboard');
+      } else if (userRole === 'business') {
+        navigate('/business/dashboard');
+      } else if (userRole === 'compliance') {
+        navigate('/compliance/dashboard');
+      } else if (userRole === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        // If still no valid role, navigate to profile page which will handle further redirects
+        navigate('/profile');
+      }
+      return;
     }
-  }, [user, navigate]);
+    
+    // Last resort: check localStorage directly
+    try {
+      const cachedData = localStorage.getItem('contestedUserData');
+      if (cachedData) {
+        const parsedData = JSON.parse(cachedData);
+        if (parsedData && parsedData.id) {
+          console.log('[AuthPage] Found cached user data, redirecting accordingly');
+          const cachedRole = parsedData.userType || parsedData.role;
+          
+          if (cachedRole === 'athlete') {
+            navigate('/athlete/dashboard');
+          } else if (cachedRole === 'business') {
+            navigate('/business/dashboard');
+          } else if (cachedRole === 'compliance') {
+            navigate('/compliance/dashboard');
+          } else if (cachedRole === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/profile');
+          }
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('[AuthPage] Error checking localStorage:', error);
+    }
+    
+    // User is not authenticated, stay on auth page
+    console.log('[AuthPage] No authentication found, staying on auth page');
+  }, [user, navigate, isLoading]);
   
   // Login form
   const loginForm = useForm<LoginFormValues>({

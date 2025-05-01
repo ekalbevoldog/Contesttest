@@ -40,26 +40,48 @@ export default function ProfilePage() {
         return;
       }
       
-      // If no user is logged in, redirect to auth page
-      if (!user) {
+      // Try to get user data from localStorage as fallback
+      let userData = user;
+      let effectiveRole = userType || user?.role || user?.user_metadata?.role;
+      
+      // If no user is logged in, check localStorage as fallback
+      if (!userData) {
+        try {
+          const cachedUserData = localStorage.getItem('contestedUserData');
+          if (cachedUserData) {
+            const parsedData = JSON.parse(cachedUserData);
+            if (parsedData && parsedData.id) {
+              console.log('[ProfilePage] Using cached user data as fallback');
+              userData = parsedData;
+              effectiveRole = parsedData.userType || parsedData.role || null;
+            }
+          }
+        } catch (error) {
+          console.error('[ProfilePage] Error reading cached user data:', error);
+        }
+      }
+      
+      // If we still don't have user data, redirect to auth
+      if (!userData) {
         console.log('[ProfilePage] No authenticated user found, redirecting to login');
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to view your profile",
-          variant: "destructive"
-        });
+        // Only show toast message once
+        if (!redirecting) {
+          toast({
+            title: "Authentication Required",
+            description: "Please sign in to view your profile",
+            variant: "destructive"
+          });
+        }
         navigate('/auth');
         return;
       }
       
       setRedirecting(true);
       
-      // Get user role from multiple possible sources to handle different auth response formats
-      const effectiveRole = userType || user.role || user.user_metadata?.role;
-      console.log('[ProfilePage] Determined user role/type:', effectiveRole);
-      
       // Redirect based on user role
       try {
+        console.log('[ProfilePage] Determined user role/type:', effectiveRole);
+        
         if (effectiveRole === 'athlete') {
           console.log('[ProfilePage] Redirecting to athlete dashboard');
           navigate('/athlete/dashboard');
@@ -93,11 +115,33 @@ export default function ProfilePage() {
       }
     };
     
-    // Use a delayed redirect to ensure auth state is fully loaded
-    const timer = setTimeout(redirectToCorrectDashboard, 1000);
+    // Check if we've already tried to redirect
+    if (redirecting) {
+      console.log('[ProfilePage] Already attempting redirect, not starting new timer');
+      return () => {}; // No cleanup needed
+    }
+    
+    // Try immediate redirect if cached data is available
+    const cachedUserData = localStorage.getItem('contestedUserData');
+    if (cachedUserData && !isLoading) {
+      try {
+        const parsedData = JSON.parse(cachedUserData);
+        if (parsedData && parsedData.id) {
+          console.log('[ProfilePage] Found cached user data, attempting immediate redirect');
+          redirectToCorrectDashboard();
+          return () => {};
+        }
+      } catch (error) {
+        console.error('[ProfilePage] Error reading cached user data:', error);
+      }
+    }
+    
+    // Use a longer delay to ensure auth state is fully loaded - 2 seconds should be sufficient
+    console.log('[ProfilePage] Setting up delayed redirect');
+    const timer = setTimeout(redirectToCorrectDashboard, 2000);
     return () => clearTimeout(timer);
     
-  }, [user, isLoading, profile, userType, navigate, toast]);
+  }, [user, isLoading, profile, userType, navigate, toast, redirecting]);
 
   // Show a loading spinner while determining where to redirect
   return (
