@@ -3,7 +3,6 @@ import {
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
 } from "@shared/schema.js";
-import { DashboardConfig } from "../shared/dashboard-schema.js";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
@@ -28,10 +27,6 @@ export interface IStorage {
   getSessionByUserId(userId: string): Promise<Session | undefined>;
   createSession(session: InsertSession): Promise<Session>;
   updateSession(sessionId: string, data: Partial<Session>): Promise<Session>;
-  
-  // Dashboard operations
-  getDashboardConfig(userId: string): Promise<DashboardConfig | null>;
-  saveDashboardConfig(userId: string, config: DashboardConfig): Promise<void>;
   deleteSession(sessionId: string): Promise<void>;
 
   // Athlete operations
@@ -100,11 +95,6 @@ export interface IStorage {
   updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback>;
   addAdminResponse(feedbackId: number, response: string): Promise<Feedback>;
 
-  // User Preferences operations
-  getUserPreferences(userId: string, preferenceType: string): Promise<{ user_id: string; preference_type: string; data: any } | undefined>;
-  saveUserPreferences(preferences: { user_id: string; preference_type: string; data: any }): Promise<{ user_id: string; preference_type: string; data: any }>;
-  deleteUserPreferences(userId: string, preferenceType: string): Promise<void>;
-  
   // Session Store for Express Session
   sessionStore: session.Store;
 }
@@ -130,98 +120,6 @@ export class SupabaseStorage implements IStorage {
       // Fallback to in-memory session if PostgreSQL store fails
       console.log("Falling back to in-memory session store");
       this.sessionStore = new session.MemoryStore();
-    }
-  }
-  
-  // Dashboard operations
-  async getDashboardConfig(userId: string): Promise<DashboardConfig | null> {
-    try {
-      console.log(`Fetching dashboard config for user ID: ${userId}`);
-      
-      // Fetch the user's dashboard configuration
-      const { data, error } = await supabase
-        .from('user_dashboard_configs')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error fetching dashboard config:', error);
-        throw new Error(`Failed to fetch dashboard config: ${error.message}`);
-      }
-      
-      if (!data) {
-        console.log(`No dashboard config found for user ${userId}, returning null`);
-        return null;
-      }
-      
-      console.log(`Found dashboard config for user ${userId}:`, data);
-      
-      // Convert stored format to DashboardConfig
-      return {
-        userId: data.user_id,
-        widgets: data.widgets || [],
-        lastUpdated: data.last_updated || new Date().toISOString(),
-      };
-    } catch (error) {
-      console.error('Exception fetching dashboard config:', error);
-      return null;
-    }
-  }
-  
-  async saveDashboardConfig(userId: string, config: DashboardConfig): Promise<void> {
-    try {
-      console.log(`Saving dashboard config for user ID: ${userId}`);
-      
-      // Check if config already exists
-      const { data: existingConfig, error: checkError } = await supabase
-        .from('user_dashboard_configs')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (checkError) {
-        console.error('Error checking for existing dashboard config:', checkError);
-      }
-      
-      const now = new Date().toISOString();
-      
-      if (existingConfig) {
-        console.log(`Updating existing dashboard config for user ${userId}`);
-        // Update existing config
-        const { error } = await supabase
-          .from('user_dashboard_configs')
-          .update({
-            widgets: config.widgets,
-            last_updated: now,
-          })
-          .eq('user_id', userId);
-          
-        if (error) {
-          console.error('Error updating dashboard config:', error);
-          throw new Error(`Failed to update dashboard config: ${error.message}`);
-        }
-      } else {
-        console.log(`Creating new dashboard config for user ${userId}`);
-        // Create new config
-        const { error } = await supabase
-          .from('user_dashboard_configs')
-          .insert({
-            user_id: userId,
-            widgets: config.widgets,
-            last_updated: now,
-          });
-          
-        if (error) {
-          console.error('Error creating dashboard config:', error);
-          throw new Error(`Failed to create dashboard config: ${error.message}`);
-        }
-      }
-      
-      console.log(`Successfully saved dashboard config for user ${userId}`);
-    } catch (error) {
-      console.error('Exception saving dashboard config:', error);
-      throw new Error('Failed to save dashboard configuration');
     }
   }
 
@@ -1624,98 +1522,6 @@ export class SupabaseStorage implements IStorage {
       created_at: new Date()
     };
   }
-
-  // User Preferences operations
-  async getUserPreferences(userId: string, preferenceType: string): Promise<{ user_id: string; preference_type: string; data: any } | undefined> {
-    try {
-      console.log(`Getting user preferences for userId ${userId} and type ${preferenceType}`);
-      
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('preference_type', preferenceType)
-        .maybeSingle();
-        
-      if (error) {
-        console.error(`Error getting user preferences for type ${preferenceType}:`, error);
-        return undefined;
-      }
-      
-      return data;
-    } catch (error) {
-      console.error(`Exception getting user preferences for type ${preferenceType}:`, error);
-      return undefined;
-    }
-  }
-  
-  async saveUserPreferences(preferences: { user_id: string; preference_type: string; data: any }): Promise<{ user_id: string; preference_type: string; data: any }> {
-    try {
-      console.log(`Saving user preferences for userId ${preferences.user_id} and type ${preferences.preference_type}`);
-      
-      // Check if preferences already exist for this user and type
-      const existingPrefs = await this.getUserPreferences(preferences.user_id, preferences.preference_type);
-      
-      let data, error;
-      
-      if (existingPrefs) {
-        // Update existing preferences
-        ({ data, error } = await supabase
-          .from('user_preferences')
-          .update({
-            data: preferences.data,
-            updated_at: new Date()
-          })
-          .eq('user_id', preferences.user_id)
-          .eq('preference_type', preferences.preference_type)
-          .select()
-          .single());
-      } else {
-        // Insert new preferences
-        ({ data, error } = await supabase
-          .from('user_preferences')
-          .insert({
-            user_id: preferences.user_id,
-            preference_type: preferences.preference_type,
-            data: preferences.data,
-            created_at: new Date(),
-            updated_at: new Date()
-          })
-          .select()
-          .single());
-      }
-      
-      if (error) {
-        console.error('Error saving user preferences:', error);
-        throw new Error(`Failed to save user preferences: ${error.message}`);
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Exception saving user preferences:', error);
-      throw new Error('Failed to save user preferences');
-    }
-  }
-  
-  async deleteUserPreferences(userId: string, preferenceType: string): Promise<void> {
-    try {
-      console.log(`Deleting user preferences for userId ${userId} and type ${preferenceType}`);
-      
-      const { error } = await supabase
-        .from('user_preferences')
-        .delete()
-        .eq('user_id', userId)
-        .eq('preference_type', preferenceType);
-        
-      if (error) {
-        console.error('Error deleting user preferences:', error);
-        throw new Error(`Failed to delete user preferences: ${error.message}`);
-      }
-    } catch (error) {
-      console.error('Exception deleting user preferences:', error);
-      throw new Error(`Failed to delete user preferences for user ${userId} and type ${preferenceType}`);
-    }
-  }
 }
 
 // Memory storage implementation (simplified version)
@@ -1810,25 +1616,6 @@ export class MemStorage implements IStorage {
   async storeFeedback(feedback: InsertFeedback): Promise<Feedback> { return { id: 1, ...feedback, status: 'pending' } as Feedback; }
   async updateFeedbackStatus(feedbackId: number, status: string): Promise<Feedback> { return { id: feedbackId, status } as Feedback; }
   async addAdminResponse(feedbackId: number, response: string): Promise<Feedback> { return { id: feedbackId } as Feedback; }
-
-  // User Preferences operations
-  async getUserPreferences(userId: string, preferenceType: string): Promise<{ user_id: string; preference_type: string; data: any } | undefined> {
-    console.log(`MemStorage.getUserPreferences called with userId: ${userId}, preferenceType: ${preferenceType}`);
-    return {
-      user_id: userId,
-      preference_type: preferenceType,
-      data: {}
-    };
-  }
-  
-  async saveUserPreferences(preferences: { user_id: string; preference_type: string; data: any }): Promise<{ user_id: string; preference_type: string; data: any }> {
-    console.log(`MemStorage.saveUserPreferences called`, preferences);
-    return preferences;
-  }
-  
-  async deleteUserPreferences(userId: string, preferenceType: string): Promise<void> {
-    console.log(`MemStorage.deleteUserPreferences called with userId: ${userId}, preferenceType: ${preferenceType}`);
-  }
 }
 
 // Import the object storage

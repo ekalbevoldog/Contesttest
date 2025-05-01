@@ -212,15 +212,13 @@ export default function Header() {
 
     // --- App Navigation (Logged In) ---
     // Dashboard Links (Conditional)
-    { label: "Personalized Dashboard", href: "/personalized-dashboard", icon: BarChart, condition: (user) => !!user },
-    { label: "Athlete Dashboard", href: "/athlete/dashboard", icon: Trophy, condition: (_, userType) => userType === 'athlete' },
-    { label: "Business Dashboard", href: "/business/dashboard", icon: Briefcase, condition: (_, userType) => userType === 'business' },
+    { label: "Athlete Dashboard", href: "/athlete/dashboard", icon: BarChart, condition: (_, userType) => userType === 'athlete' },
+    { label: "Business Dashboard", href: "/business/dashboard", icon: BarChart, condition: (_, userType) => userType === 'business' },
     { label: "Compliance Dashboard", href: "/compliance", icon: Shield, condition: (_, userType) => userType === 'compliance' },
     // Admin Dashboard Dropdown
     {
       label: "Dashboards", icon: BarChart, isDropdown: true, condition: (_, userType) => userType === 'admin',
       dropdownItems: [
-        { label: "Personalized Dashboard", href: "/personalized-dashboard", icon: BarChart },
         { label: "Admin Dashboard", href: "/admin/dashboard", icon: Settings },
         { label: "Athlete Dashboard", href: "/athlete/dashboard", icon: Trophy },
         { label: "Business Dashboard", href: "/business/dashboard", icon: Briefcase },

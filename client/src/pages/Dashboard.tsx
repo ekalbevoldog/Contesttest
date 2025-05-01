@@ -1,660 +1,242 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  dashboardQueryOptions, 
-  addWidget, 
-  reorderWidgets, 
-  dashboardWs,
-  DashboardLocalStorageCache
-} from '@/lib/dashboard-service';
-import { Widget, WidgetType, DashboardConfig } from '../../shared/dashboard-schema';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, RefreshCw, AlertTriangle, WifiOff } from 'lucide-react';
-import StatsWidget from '@/components/dashboard/StatsWidget';
-import ChartWidget from '@/components/dashboard/ChartWidget';
-import ActivityWidget from '@/components/dashboard/ActivityWidget';
-import QuickActionsWidget from '@/components/dashboard/QuickActionsWidget';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { v4 as uuidv4 } from 'uuid';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import MatchResults from "@/components/MatchResults";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Function to get widget component by type
-const getWidgetComponent = (widget: Widget, isEditing: boolean = false) => {
-  if (!widget || !widget.type) {
-    console.error("Invalid widget data:", widget);
-    return <div>Invalid widget data</div>;
-  }
-  
-  try {
-    switch (widget.type) {
-      case 'stats':
-        return <StatsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-      case 'chart':
-        return <ChartWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-      case 'activity':
-        return <ActivityWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-      case 'quickActions':
-        return <QuickActionsWidget key={widget.id} widget={widget} isEditing={isEditing} />;
-      default:
-        console.warn(`Unknown widget type: ${widget.type}`);
-        return <div>Unknown widget type: {widget.type}</div>;
-    }
-  } catch (error) {
-    console.error("Error rendering widget:", error, widget);
-    return <div>Error rendering widget</div>;
-  }
-};
+// Define interfaces for our profile and match data
+interface ProfileData {
+  userType: string;
+  name?: string;
+  sport?: string;
+  school?: string;
+  followerCount?: string;
+  productType?: string;
+  audienceGoals?: string;
+  values?: string;
+}
 
-// Widget size CSS classes
-const sizeClasses = {
-  'sm': 'col-span-1',
-  'md': 'col-span-1 md:col-span-2',
-  'lg': 'col-span-1 md:col-span-3',
-  'xl': 'col-span-1 md:col-span-3 lg:col-span-4',
-  'full': 'col-span-full',
-};
-
-const Dashboard: React.FC = () => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [isEditing, setIsEditing] = useState(false);
-  const [addWidgetOpen, setAddWidgetOpen] = useState(false);
-  const [newWidgetType, setNewWidgetType] = useState<WidgetType>('stats');
-  const [newWidgetTitle, setNewWidgetTitle] = useState('');
-  const [wsConnected, setWsConnected] = useState(false);
-  const [useOfflineMode, setUseOfflineMode] = useState(false);
-  const [localDashboardConfig, setLocalDashboardConfig] = useState<DashboardConfig | null>(null);
-  
-  // Generate default widgets based on user role
-  const generateDefaultWidgets = useCallback((userId: string, role: string): Widget[] => {
-    const defaultWidgets: Widget[] = [];
-    
-    // Stats widget for all roles
-    defaultWidgets.push({
-      id: `stats-${uuidv4()}`,
-      type: 'stats',
-      title: 'Key Metrics',
-      position: 0,
-      size: 'md',
-      visible: true,
-      settings: {
-        refreshInterval: 300,
-      }
-    });
-    
-    // Different widgets based on role
-    if (role === 'athlete') {
-      defaultWidgets.push({
-        id: `activity-${uuidv4()}`,
-        type: 'activity',
-        title: 'Recent Activity',
-        position: 1,
-        size: 'md',
-        visible: true,
-        settings: {}
-      });
-      
-      defaultWidgets.push({
-        id: `opportunities-${uuidv4()}`,
-        type: 'quickActions',
-        title: 'Available Opportunities',
-        position: 2,
-        size: 'md',
-        visible: true,
-        settings: {
-          maxItems: 5,
-          showIcons: true
-        }
-      });
-    } else if (role === 'business') {
-      defaultWidgets.push({
-        id: `chart-${uuidv4()}`,
-        type: 'chart',
-        title: 'Campaign Performance',
-        position: 1,
-        size: 'lg',
-        visible: true,
-        settings: {
-          chartType: 'bar',
-          dataKey: 'campaigns'
-        }
-      });
-      
-      defaultWidgets.push({
-        id: `actions-${uuidv4()}`,
-        type: 'quickActions',
-        title: 'Campaign Actions',
-        position: 2,
-        size: 'sm',
-        visible: true,
-        settings: {}
-      });
-    } else {
-      // Admin or compliance officer
-      defaultWidgets.push({
-        id: `chart-${uuidv4()}`,
-        type: 'chart',
-        title: 'Platform Analytics',
-        position: 1,
-        size: 'lg', 
-        visible: true,
-        settings: {
-          chartType: 'line',
-          dataKey: 'analytics'
-        }
-      });
-    }
-    
-    return defaultWidgets;
-  }, []);
-  
-  // Create local cache in case API fails
-  const createLocalDashboardConfig = useCallback(() => {
-    if (!user) return null;
-    
-    const userId = user.id || localStorage.getItem('userId') || 'anonymous';
-    const role = user.role || localStorage.getItem('userRole') || 'athlete';
-    
-    // Store the user ID and role for reference
-    localStorage.setItem('userId', userId);
-    localStorage.setItem('userRole', role);
-    
-    // Generate default widgets for this user
-    const widgets = generateDefaultWidgets(userId, role);
-    
-    const dashboardConfig: DashboardConfig = {
-      userId: userId,
-      lastUpdated: new Date().toISOString(),
-      widgets
-    };
-    
-    // Save to localStorage
-    DashboardLocalStorageCache.saveConfig(dashboardConfig);
-    
-    return dashboardConfig;
-  }, [user, generateDefaultWidgets]);
-  
-  // Fetch dashboard configuration
-  const { 
-    data: dashboardConfig, 
-    isLoading, 
-    isError,
-    error,
-    refetch 
-  } = useQuery({
-    ...dashboardQueryOptions.config,
-    retry: 1, // Don't retry too many times
-    refetchOnWindowFocus: false, // Disable automatic refetches on window focus
-    onSettled: (data, error) => {
-      // Always check if we should use fallback config
-      if (error || !data || (data && data.widgets && data.widgets.length === 0)) {
-        console.log('[Dashboard] API response invalid or empty, checking for local cache');
-        // First try to use cached config
-        const cachedConfig = DashboardLocalStorageCache.loadConfig();
-        if (cachedConfig) {
-          console.log('[Dashboard] Using cached config:', cachedConfig);
-          setLocalDashboardConfig(cachedConfig);
-          setUseOfflineMode(true);
-          toast({
-            title: "Using offline dashboard",
-            description: "Using locally cached dashboard configuration.",
-            variant: "warning"
-          });
-        } else {
-          // If no cached config, create a default one
-          console.log('[Dashboard] No cached config, creating default config');
-          const newConfig = createLocalDashboardConfig();
-          if (newConfig) {
-            console.log('[Dashboard] Created default config:', newConfig);
-            setLocalDashboardConfig(newConfig);
-            setUseOfflineMode(true);
-            toast({
-              title: "Using default dashboard",
-              description: "Created a default dashboard configuration.",
-              variant: "warning"
-            });
-          }
-        }
-      } else if (data) {
-        // On success with valid data, update the local cache
-        console.log('[Dashboard] Received valid config from API, caching');
-        DashboardLocalStorageCache.saveConfig(data);
-        setUseOfflineMode(false);
-      }
-    }
-  });
-  
-  // Set up WebSocket connection for real-time dashboard updates
-  useEffect(() => {
-    if (user?.id) {
-      // Set user info in the WebSocket manager
-      dashboardWs.setUser(user.id, user.role || 'athlete');
-      
-      // Connect to WebSocket for real-time updates
-      dashboardWs.connect();
-      
-      // Listen for connection status
-      const connectionUnsubscribe = dashboardWs.on('connection', (data) => {
-        setWsConnected(data.status === 'connected');
-        if (data.status === 'connected') {
-          console.log('[Dashboard Page] WebSocket connected');
-          // Request latest dashboard data via WebSocket
-          dashboardWs.send('get_dashboard', { userId: user.id });
-        }
-      });
-      
-      // Listen for dashboard updates
-      const dashboardUnsubscribe = dashboardWs.on('dashboard_update', (data) => {
-        console.log('[Dashboard Page] Received dashboard update via WebSocket:', data);
-        // Update the react-query cache with the new data
-        queryClient.setQueryData(['/api/dashboard/config'], data.config);
-        toast({
-          title: "Dashboard updated",
-          description: "Your dashboard has been updated in real-time.",
-        });
-      });
-      
-      return () => {
-        // Clean up event listeners and close connection when component unmounts
-        connectionUnsubscribe();
-        dashboardUnsubscribe();
-        dashboardWs.disconnect();
-      };
-    }
-  }, [user, queryClient, toast]);
-  
-  // Log dashboard configuration for debugging
-  useEffect(() => {
-    console.log('[Dashboard Page] Auth user:', user);
-    console.log('[Dashboard Page] Dashboard config fetch status:', { 
-      isLoading, 
-      isError, 
-      hasData: !!dashboardConfig,
-      usingOfflineMode: useOfflineMode,
-      localCache: !!localDashboardConfig,
-      wsConnected
-    });
-    if (error) {
-      console.error('[Dashboard Page] Error fetching dashboard config:', error);
-    }
-    if (dashboardConfig) {
-      console.log('[Dashboard Page] Dashboard config loaded:', dashboardConfig);
-    }
-    if (localDashboardConfig) {
-      console.log('[Dashboard Page] Local dashboard config:', localDashboardConfig);
-    }
-  }, [dashboardConfig, isLoading, isError, error, user, useOfflineMode, localDashboardConfig, wsConnected]);
-
-  // Handle adding a new widget
-  const addWidgetMutation = useMutation({
-    mutationFn: addWidget,
-    onSuccess: () => {
-      toast({
-        title: 'Widget added',
-        description: 'The widget has been added to your dashboard.',
-      });
-      refetch();
-      setAddWidgetOpen(false);
-      setNewWidgetTitle('');
-    },
-    onError: (error) => {
-      toast({
-        title: 'Failed to add widget',
-        description: 'There was an error adding the widget. Please try again.',
-        variant: 'destructive',
-      });
-      console.error('Error adding widget:', error);
-    },
-  });
-  
-  // Handle reordering widgets
-  const reorderWidgetsMutation = useMutation({
-    mutationFn: reorderWidgets,
-    onSuccess: () => {
-      refetch();
-    },
-    onError: (error) => {
-      toast({
-        title: 'Failed to reorder widgets',
-        description: 'There was an error reordering widgets. Please try again.',
-        variant: 'destructive',
-      });
-      console.error('Error reordering widgets:', error);
-    },
-  });
-  
-  // Handle adding a new widget
-  const handleAddWidget = () => {
-    if (!newWidgetTitle.trim()) {
-      toast({
-        title: 'Widget title required',
-        description: 'Please provide a title for the new widget.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    addWidgetMutation.mutate({
-      type: newWidgetType,
-      title: newWidgetTitle,
-      position: dashboardConfig?.widgets?.length || 0,
-      size: 'md',
-      visible: true,
-    });
+interface MatchData {
+  id: string;
+  score: number;
+  brand?: string;
+  athleteName?: string;
+  campaign: {
+    title: string;
+    description: string;
+    deliverables: string[];
   };
+  reason: string;
+  business: {
+    name: string;
+  };
+  athlete: {
+    name: string;
+  };
+}
+
+export default function Dashboard() {
+  const [selectedTab, setSelectedTab] = useState<string>("matches");
+  const [userType, setUserType] = useState<string | null>(null);
   
-  // Helper function to handle automatic dashboard initialization
-  const handleDashboardInit = useCallback(() => {
-    // If we're in offline mode and have a local config, use that
-    if (useOfflineMode && localDashboardConfig) {
-      // Use the cached dashboard configuration
-      return localDashboardConfig;
+  // Get profile info 
+  const { data: profileData, isLoading: isLoadingProfile } = useQuery<ProfileData>({
+    queryKey: ['/api/profile'],
+  });
+  
+  // Get matches
+  const { data: matchesData, isLoading: isLoadingMatches } = useQuery<{ matches: MatchData[] }>({
+    queryKey: ['/api/matches'],
+  });
+  
+  useEffect(() => {
+    if (profileData?.userType) {
+      setUserType(profileData.userType);
     }
-    
-    // If still loading, show loading state
-    if (isLoading) {
-      return null;
-    }
-    
-    // Use the fetched dashboard configuration if available
-    if (dashboardConfig) {
-      return dashboardConfig;
-    }
-    
-    // As a last resort, create a new local dashboard config
-    const newConfig = createLocalDashboardConfig();
-    if (newConfig) {
-      return newConfig;
-    }
-    
-    // If all else fails, return empty config
-    return {
-      userId: user?.id || 'anonymous',
-      lastUpdated: new Date().toISOString(),
-      widgets: []
-    };
-  }, [isLoading, dashboardConfig, useOfflineMode, localDashboardConfig, createLocalDashboardConfig, user]);
-  
-  // Get the active dashboard config
-  const activeDashboardConfig = handleDashboardInit();
-  
-  // Show loading state
-  if (isLoading && !useOfflineMode && !localDashboardConfig) {
-    return (
-      <div className="container mx-auto py-8 flex items-center justify-center min-h-[300px]">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // If we have a critical error and no fallback
-  if ((isError || !activeDashboardConfig) && !useOfflineMode && !localDashboardConfig) {
-    return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive" className="mb-6">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error loading dashboard</AlertTitle>
-          <AlertDescription>
-            We couldn't load your dashboard data. This could be due to a network issue or a server problem.
-          </AlertDescription>
-        </Alert>
-        
-        <div className="flex flex-col gap-4 items-center justify-center">
-          <p>Please try one of the following:</p>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => refetch()} 
-              variant="outline"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry Connection
-            </Button>
-            
-            <Button 
-              onClick={() => {
-                const newConfig = createLocalDashboardConfig();
-                if (newConfig) {
-                  setLocalDashboardConfig(newConfig);
-                  setUseOfflineMode(true);
-                  toast({
-                    title: "Using offline mode",
-                    description: "Created a default dashboard for offline use.",
-                  });
-                }
-              }}
-            >
-              <WifiOff className="h-4 w-4 mr-2" />
-              Use Offline Mode
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // If we have no dashboard config at all (very unlikely)
-  if (!activeDashboardConfig) {
-    return (
-      <div className="container mx-auto py-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Dashboard Unavailable</h2>
-        <p className="mb-4">We couldn't initialize your dashboard. Please try again later.</p>
-        <Button onClick={() => window.location.reload()}>Refresh Page</Button>
-      </div>
-    );
-  }
-  
-  // Sort widgets by position
-  const sortedWidgets = [...activeDashboardConfig.widgets].sort((a, b) => a.position - b.position);
-  
-  // Filter visible widgets
-  const visibleWidgets = sortedWidgets.filter(widget => widget.visible);
+  }, [profileData]);
   
   return (
-    <div className="container mx-auto py-6 px-4">
-      {useOfflineMode && (
-        <Alert variant="warning" className="mb-4">
-          <WifiOff className="h-4 w-4" />
-          <AlertTitle>Offline Mode Active</AlertTitle>
-          <AlertDescription>
-            You're currently using a locally cached version of your dashboard. 
-            Some features may be limited.
-            <Button 
-              variant="link" 
-              className="p-0 h-auto font-semibold text-primary ml-2"
-              onClick={() => {
-                setUseOfflineMode(false);
-                refetch();
-              }}
-            >
-              Try reconnecting
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            {wsConnected && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                Live
-              </Badge>
-            )}
+    <div className="flex flex-col">
+      <main className="flex-1 py-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400">
+                Contested Dashboard
+              </span>
+            </h1>
+            <p className="text-gray-500">Connect, collaborate, and grow your brand partnerships</p>
           </div>
-          <p className="text-muted-foreground">
-            Welcome back, {user?.username || 'User'}. Here's your personalized dashboard.
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant={isEditing ? "default" : "outline"}
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? 'Done Editing' : 'Edit Dashboard'}
-          </Button>
           
-          {isEditing && (
-            <Dialog open={addWidgetOpen} onOpenChange={setAddWidgetOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Widget
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add a new widget</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="widget-title">Widget Title</Label>
-                    <Input
-                      id="widget-title"
-                      value={newWidgetTitle}
-                      onChange={(e) => setNewWidgetTitle(e.target.value)}
-                      placeholder="Enter widget title"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="widget-type">Widget Type</Label>
-                    <Select
-                      value={newWidgetType}
-                      onValueChange={(value) => setNewWidgetType(value as WidgetType)}
-                    >
-                      <SelectTrigger id="widget-type">
-                        <SelectValue placeholder="Select widget type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="stats">Statistics</SelectItem>
-                        <SelectItem value="chart">Chart</SelectItem>
-                        <SelectItem value="activity">Activity Feed</SelectItem>
-                        <SelectItem value="quickActions">Quick Actions</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+          <Tabs defaultValue="matches" value={selectedTab} onValueChange={setSelectedTab}>
+            <TabsList>
+              <TabsTrigger value="matches">Matches</TabsTrigger>
+              <TabsTrigger value="profile">My Profile</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="matches" className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-1">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Match Results</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {isLoadingMatches ? (
+                        <div className="space-y-4">
+                          <Skeleton className="h-12 w-full" />
+                          <Skeleton className="h-12 w-full" />
+                          <Skeleton className="h-12 w-full" />
+                        </div>
+                      ) : (
+                        <ScrollArea className="h-[400px]">
+                          <div className="space-y-4">
+                            {matchesData?.matches?.map((match: any) => (
+                              <div key={match.id} className="p-3 rounded-md border hover:bg-gray-50 cursor-pointer">
+                                <div className="flex justify-between items-center">
+                                  <div>
+                                    <p className="font-medium">{userType === 'athlete' ? match.business.name : match.athlete.name}</p>
+                                    <p className="text-sm text-gray-500">{match.campaign?.title}</p>
+                                  </div>
+                                  <Badge>{match.score}%</Badge>
+                                </div>
+                              </div>
+                            ))}
+                            {matchesData?.matches?.length === 0 && (
+                              <div className="text-center p-4">
+                                <p className="text-gray-500">No matches found yet.</p>
+                                <Button className="mt-2" variant="outline" size="sm">Start a new chat</Button>
+                              </div>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button 
-                    onClick={handleAddWidget}
-                    disabled={addWidgetMutation.isPending}
-                  >
-                    {addWidgetMutation.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Add Widget
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
-      
-      {visibleWidgets.length === 0 ? (
-        <div className="py-12">
-          <Card className="p-8 text-center">
-            <h2 className="text-xl font-semibold mb-2">No widgets added yet</h2>
-            <p className="text-muted-foreground mb-4">
-              Your dashboard is empty. Add widgets to personalize your experience.
-            </p>
-            <Dialog open={addWidgetOpen} onOpenChange={setAddWidgetOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Widget
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add a new widget</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="widget-title">Widget Title</Label>
-                    <Input
-                      id="widget-title"
-                      value={newWidgetTitle}
-                      onChange={(e) => setNewWidgetTitle(e.target.value)}
-                      placeholder="Enter widget title"
+                
+                <div className="md:col-span-2">
+                  {isLoadingMatches ? (
+                    <Card>
+                      <CardContent className="pt-6">
+                        <Skeleton className="h-8 w-1/3 mb-4" />
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-2/3" />
+                        <Separator className="my-6" />
+                        <Skeleton className="h-32 w-full" />
+                      </CardContent>
+                    </Card>
+                  ) : matchesData?.matches && matchesData.matches.length > 0 ? (
+                    <MatchResults 
+                      match={{
+                        ...matchesData.matches[0],
+                        // Ensure required campaign object exists
+                        campaign: matchesData.matches[0].campaign || {
+                          title: "Campaign",
+                          description: "Campaign description",
+                          deliverables: []
+                        },
+                        // Ensure reason field exists
+                        reason: matchesData.matches[0].reason || "This match is based on compatibility between your profile and the campaign requirements."
+                      }} 
+                      userType={userType || undefined} 
                     />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="widget-type">Widget Type</Label>
-                    <Select
-                      value={newWidgetType}
-                      onValueChange={(value) => setNewWidgetType(value as WidgetType)}
-                    >
-                      <SelectTrigger id="widget-type">
-                        <SelectValue placeholder="Select widget type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="stats">Statistics</SelectItem>
-                        <SelectItem value="chart">Chart</SelectItem>
-                        <SelectItem value="activity">Activity Feed</SelectItem>
-                        <SelectItem value="quickActions">Quick Actions</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  ) : (
+                    <Card>
+                      <CardContent className="pt-6 text-center">
+                        <h3 className="text-xl font-semibold mb-2">No Matches Yet</h3>
+                        <p className="text-gray-500 mb-4">Complete your profile to get matched with {userType === 'athlete' ? 'businesses' : 'athletes'}.</p>
+                        <Button>Complete Your Profile</Button>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button 
-                    onClick={handleAddWidget}
-                    disabled={addWidgetMutation.isPending}
-                  >
-                    {addWidgetMutation.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Add Widget
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="profile" className="pt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>My Profile</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingProfile ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-12 w-1/3" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  ) : (
+                    <div>
+                      <h3 className="text-lg font-medium">{profileData?.name || 'Your Profile'}</h3>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Type: {userType === 'athlete' ? 'Mid-Tier Athlete' : 'Small/Medium Business'}
+                      </p>
+                      
+                      <div className="space-y-4">
+                        {userType === 'athlete' && (
+                          <>
+                            <div>
+                              <p className="text-sm font-medium">Sport</p>
+                              <p>{profileData?.sport || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">School</p>
+                              <p>{profileData?.school || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Follower Count</p>
+                              <p>{profileData?.followerCount || 'Not specified'}</p>
+                            </div>
+                          </>
+                        )}
+                        
+                        {userType === 'business' && (
+                          <>
+                            <div>
+                              <p className="text-sm font-medium">Product Type</p>
+                              <p>{profileData?.productType || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Target Audience</p>
+                              <p>{profileData?.audienceGoals || 'Not specified'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Brand Values</p>
+                              <p>{profileData?.values || 'Not specified'}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      <Button className="mt-6">Edit Profile</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="analytics" className="pt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Analytics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-500">Analytics coming soon. Check back later for insights about your profile and matches.</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {visibleWidgets.map((widget) => (
-            <div key={widget.id} className={sizeClasses[widget.size]}>
-              {getWidgetComponent(widget, isEditing)}
-            </div>
-          ))}
-        </div>
-      )}
+      </main>
     </div>
   );
-};
-
-export default Dashboard;
+}

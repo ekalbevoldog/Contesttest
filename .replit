@@ -10,10 +10,6 @@ deploymentTarget = "autoscale"
 run = ["sh", "-c", "NODE_ENV=production node server.js"]
 build = ["sh", "-c", "node scripts/fix-schema.js && NODE_ENV=production npm run build && node scripts/verify-build.js"]
 
-[[deployment.rewrites]]
-from = "/*"
-to = "/index.html"
-
 [workflows]
 runButton = "Dev"
 
@@ -70,28 +66,15 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm install"
+args = "pkill -f \"tsx server/index.ts\" || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx tsx server/index.ts"
+args = "npm run dev"
 
-[[workflows.workflow]]
-name = "Build"
-author = 40767941
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node scripts/fix-schema.js"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "NODE_ENV=production npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node scripts/verify-build.js"
+[[deployment.rewrites]]
+from = "/*"
+to = "/index.html"
 
 [[ports]]
 localPort = 3000

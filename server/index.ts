@@ -6,7 +6,6 @@ import { registerRoutes } from './routes.js'
 import { registerPublicRoutes } from './routes-public.js'
 import { setupSupabaseAuth } from './supabaseAuth.js'
 import { setupProfileEndpoints } from './supabaseProfile.js'
-import { initializeDashboardTables } from './dashboard-init.js'
 
 // Load environment variables (including SUPABASE_URL, SUPABASE_ANON_KEY)
 dotenv.config()
@@ -68,10 +67,7 @@ if (isDev) {
   const clientDist = path.join(__dirname, '../client/dist')
   app.use(express.static(clientDist))
   app.get('*', (_req, res) => {
-    if (req.originalUrl.startsWith('/api')) {
-      return res.status(404).json({ error: 'API endpoint not found' });
-    }
-    res.sendFile(path.join(clientDist, 'index.html'));
+    res.sendFile(path.join(clientDist, 'index.html'))
   })
 }
 
@@ -103,15 +99,4 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Start server
 const port = parseInt(process.env.PORT || '5000', 10)
-httpServer.listen(port, '0.0.0.0', async () => {
-  console.log(`Server listening on port ${port} (${process.env.NODE_ENV} mode)`)
-  
-  // Initialize database tables for the dashboard after server starts
-  console.log("Initializing dashboard tables...")
-  try {
-    await initializeDashboardTables()
-    console.log("Dashboard tables initialized successfully")
-  } catch (error) {
-    console.error("Error initializing dashboard tables:", error)
-  }
-})
+httpServer.listen(port, '0.0.0.0', () => console.log(`Server listening on port ${port}`))

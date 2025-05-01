@@ -191,15 +191,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data) => {
       console.log('[Auth Provider] Login mutation: Processing successful login');
-      
-      // Import dashboard service for auth token storage
-      const { storeAuthInfo } = require('@/lib/dashboard-service');
-      
       // Extract relevant data, handling different response formats
       let userData = null;
       let profileData = null;
       let roleValue = null;
-      let authToken = null;
 
       // Handle different response structures from the API
       if (data.user) {
@@ -211,11 +206,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                    userData.user_metadata?.user_type || 
                    profileData?.role || 
                    'user';
-        // Extract session token if available
-        if (data.session) {
-          authToken = data.session.access_token;
-          console.log('[Auth Provider] Found access token in data.session');
-        }
       } else if (data.auth) {
         // Alternative format
         userData = data.auth;
@@ -224,11 +214,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                    userData.role || 
                    profileData?.role || 
                    'user';
-        // Extract session token if available
-        if (data.session) {
-          authToken = data.session.access_token;
-          console.log('[Auth Provider] Found access token in data.session');
-        }
       } else if (data.session && data.data?.user) {
         // Direct Supabase response format
         userData = data.data.user;
@@ -237,21 +222,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                    userData.role || 
                    profileData?.role || 
                    'user';
-        // Extract session token from session
-        authToken = data.session.access_token;
-        console.log('[Auth Provider] Found access token in data.session (Supabase format)');
-      }
-      
-      // Store auth token if we found one
-      if (authToken && userData) {
-        console.log('[Auth Provider] Storing auth token in localStorage');
-        try {
-          storeAuthInfo(userData.id, authToken, roleValue);
-        } catch (err) {
-          console.error('[Auth Provider] Error storing auth info:', err);
-        }
-      } else {
-        console.warn('[Auth Provider] No auth token found in login response');
       }
 
       console.log('[Auth Provider] Login mutation: User role identified as', roleValue);
@@ -354,15 +324,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (data) => {
       console.log('[Auth Provider] Register mutation: Processing successful registration');
-      
-      // Import dashboard service for auth token storage
-      const { storeAuthInfo } = require('@/lib/dashboard-service');
-      
+
       // Extract relevant data, handling different response formats
       let userData = null;
       let profileData = null;
       let roleValue = null;
-      let authToken = null;
 
       // Handle different response structures from the API
       if (data.user) {
@@ -372,11 +338,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
                    'user';
-        // Extract token if available
-        if (data.session) {
-          authToken = data.session.access_token;
-          console.log('[Auth Provider] Register: Found access token in data.session');
-        }
       } else if (data.auth) {
         // Alternative format
         userData = data.auth;
@@ -384,11 +345,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
                    'user';
-        // Extract token if available
-        if (data.session) {
-          authToken = data.session.access_token;
-          console.log('[Auth Provider] Register: Found access token in data.session');
-        }
       } else if (data.session && data.data?.user) {
         // Direct Supabase response format
         userData = data.data.user;
@@ -397,21 +353,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                    userData.role || 
                    profileData?.role || 
                    'user';
-        // Extract token if available
-        authToken = data.session.access_token;
-        console.log('[Auth Provider] Register: Found access token in data.session (Supabase format)');
-      }
-      
-      // Store auth token if we found one
-      if (authToken && userData) {
-        console.log('[Auth Provider] Register: Storing auth token in localStorage');
-        try {
-          storeAuthInfo(userData.id, authToken, roleValue);
-        } catch (err) {
-          console.error('[Auth Provider] Register: Error storing auth info:', err);
-        }
-      } else {
-        console.warn('[Auth Provider] Register: No auth token found in registration response');
       }
 
       if (userData) {
@@ -503,28 +444,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await logoutUser();
     },
     onSuccess: () => {
-      console.log('[Auth Provider] Logout successful, clearing data');
       // Clear user state
       setUser(null);
       setProfile(null);
 
-      // Import our dashboard auth helpers
-      const { clearAuthInfo } = require('@/lib/dashboard-service');
-
       // Clear localStorage completely
       if (typeof window !== 'undefined') {
-        // Clear standard auth data
         localStorage.removeItem('contestedUserData');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
-        localStorage.removeItem('authToken');
-        
-        // Use our helper to ensure all auth tokens are cleared
-        try {
-          clearAuthInfo();
-        } catch (err) {
-          console.error('[Auth Provider] Error clearing auth info:', err);
-        }
         localStorage.removeItem('contested-auth');
         localStorage.removeItem('supabase.auth.token');
         localStorage.removeItem('sb-auth-token');

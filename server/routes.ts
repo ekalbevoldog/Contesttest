@@ -13,8 +13,6 @@ import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
 import { pool, db as supabaseAdmin } from "./db.js";
 // Import auth fixes
 import { ensureBusinessProfile } from "./auth-fixes/auto-create-business-profile.js";
-// Import dashboard API router
-import { dashboardApiRouter } from "./dashboard-api.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -260,9 +258,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 2. Supabase authentication (JWT)
   setupSupabaseAuth(app);
   
-  // Register dashboard API endpoints
-  app.use('/api/dashboard', dashboardApiRouter);
-  
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', async (req: Request, res: Response) => {
     try {
@@ -358,7 +353,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Diagnostic API health check');
       
       // Check Supabase connection
-      const { rows: health, error: healthError } = await supabase.query('SELECT id FROM users LIMIT 1');
+      const { data: health, error: healthError } = await supabase
+        .from('users')
+        .select('id')
+        .limit(1);
       
       if (healthError) {
         console.error('Supabase connection error:', healthError);
@@ -370,7 +368,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check business_profiles table structure
-      const { rows: profilesCheck, error: profilesError } = await supabase.query('SELECT * FROM business_profiles LIMIT 1');
+      const { data: profilesCheck, error: profilesError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .limit(1);
       
       return res.status(200).json({
         status: 'ok',
@@ -397,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check Supabase connection
       let supabaseHealth = { status: "unknown", error: null };
       try {
-        const { rows, error } = await supabase.query('SELECT id FROM users LIMIT 1');
+        const { data, error } = await supabase.from('users').select('*').limit(1);
         supabaseHealth = {
           status: error ? "error" : "ok",
           error: error ? error.message : null,
@@ -2393,90 +2394,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Session refresh endpoint to match client calls to /api/auth/refresh-session
-  app.post("/api/auth/refresh-session", async (req: Request, res: Response) => {
-    try {
-      console.log('[Auth] Session refresh request received');
-      
-      // Extract the token from Authorization header
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.log('[Auth] No bearer token in Authorization header');
-        return res.status(401).json({ error: 'No token provided' });
-      }
-      
-      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-      
-      // Verify the token with Supabase
-      try {
-        const { data: authData, error: verifyError } = await supabase.auth.getUser(token);
-        
-        if (verifyError || !authData?.user) {
-          console.error('[Auth] Token verification failed:', verifyError);
-          return res.status(401).json({ error: 'Invalid token' });
-        }
-        
-        // Get user info from database to include role and other metadata
-        const userId = authData.user.id;
-        const { rows, error: userError } = await supabase.query(
-          'SELECT * FROM users WHERE auth_id = $1',
-          [userId]
-        );
-        
-        const user = rows && rows.length > 0 ? rows[0] : null;
-        
-        if (userError || !user) {
-          console.error('[Auth] User lookup failed:', userError || 'User not found');
-          
-          // Extract information from the JWT token for fallback
-          try {
-            const decodedToken = authData.user;
-            console.log('[Auth] Creating fallback user from token data');
-            
-            // Create a minimal user object from the token data
-            const fallbackUser = {
-              id: decodedToken.id || decodedToken.sub,
-              auth_id: decodedToken.id || decodedToken.sub,
-              email: decodedToken.email,
-              role: (decodedToken.user_metadata && decodedToken.user_metadata.role) || 'user',
-              created_at: new Date().toISOString(),
-              metadata: decodedToken.user_metadata || {}
-            };
-            
-            console.log('[Auth] Using fallback user data for session:', fallbackUser);
-            
-            // Return this fallback user data - the client will handle the rest
-            return res.status(200).json({ 
-              message: 'Session refreshed with fallback user data',
-              authenticated: true,
-              user: fallbackUser
-            });
-          } catch (fallbackError) {
-            console.error('[Auth] Failed to create fallback user:', fallbackError);
-            // If fallback fails, still return 200 as the auth token is valid
-            return res.status(200).json({ 
-              message: 'Session refreshed, but user data not available',
-              authenticated: true
-            });
-          }
-        }
-        
-        console.log('[Auth] Session refreshed successfully for user:', user.id);
-        return res.status(200).json({ 
-          message: 'Session refreshed successfully',
-          authenticated: true,
-          user
-        });
-      } catch (tokenError) {
-        console.error('[Auth] Error verifying token:', tokenError);
-        return res.status(401).json({ error: 'Token verification failed' });
-      }
-    } catch (error) {
-      console.error('[Auth] Session refresh error:', error);
-      return res.status(500).json({ error: 'Server error during session refresh' });
-    }
-  });
-
   // Logout endpoint
   app.post("/api/auth/logout", async (req: Request, res: Response) => {
     try {
@@ -2511,11 +2428,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR
   // Updated WebSocket server path to match client-side configuration
-  // WebSockets have been disabled for compatibility with Supabase
-  // Instead we use HTTP polling for real-time updates
-  console.log('[Server] WebSocket server disabled - using HTTP polling for real-time updates');
-  
-  /* WEBSOCKET CODE DISABLED
   const wss = new WebSocketServer({ server: httpServer, path: '/api/contested-ws' });
 
   // Using the globally defined wsConnections Map (defined at the top of the file)
@@ -2523,9 +2435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   wss.on('connection', (ws: CustomWebSocket) => {
     console.log('WebSocket client connected - waiting for registration');
-  */
 
-    /* WEBSOCKET CODE DISABLED
     // Handle incoming messages
     ws.on('message', async (message: string) => {
       try {
@@ -2690,7 +2600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     });
-  }); */
+  });
 
   // Helper function to send a WebSocket message to a client
   const sendWebSocketMessage = (sessionId: string, data: any) => {

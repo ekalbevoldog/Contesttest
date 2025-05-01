@@ -125,28 +125,11 @@ export async function initializeSupabase(): Promise<boolean> {
 
     console.log('[Client] Supabase initialized with realtime DISABLED');
 
-    // Test the connection using /api/health-check instead of direct Supabase query
-    try {
-      const response = await fetch('/api/health-check');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.supabase?.status === 'error') {
-          console.error('[Client] Health check shows Supabase connection issues:', data.supabase.error);
-          throw new Error(`Supabase connection issue: ${data.supabase.error || 'Unknown error'}`);
-        }
-        console.log('[Client] Health check confirms Supabase connection is working');
-      } else {
-        console.warn('[Client] Health check endpoint failed, falling back to direct check');
-        // Fallback to direct check
-        const { error } = await supabase.from('users').select('count').limit(1);
-        if (error) {
-          console.error('[Client] Could not connect to Supabase:', error);
-          throw new Error(`Supabase connection failed: ${error.message}`);
-        }
-      }
-    } catch (healthCheckError) {
-      console.error('[Client] Health check error:', healthCheckError);
-      throw new Error(`Supabase connection check failed: ${healthCheckError instanceof Error ? healthCheckError.message : String(healthCheckError)}`);
+    // Test the connection
+    const { error } = await supabase.from('users').select('count').limit(1);
+    if (error) {
+      console.error('[Client] Could not connect to Supabase:', error);
+      throw new Error(`Supabase connection failed: ${error.message}`);
     }
 
     console.log('[Client] Supabase initialized successfully');

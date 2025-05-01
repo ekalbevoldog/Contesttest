@@ -61,7 +61,7 @@ router.post('/create-business-profile', async (req, res) => {
         user_id: userId,
         name: 'My Business',
         session_id: sessionId,
-        email: user.email,
+        email: user.email,,
         values: 'Default values',
         product_type: 'Default product',
         target_schools_sports: 'All'
