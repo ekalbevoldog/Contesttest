@@ -429,6 +429,46 @@ export class UnifiedAuthService {
         error: "Invalid authentication data" 
       };
     }
+
+    // Always ensure we have a user record
+    const { data: userRecord, error: userError } = await this.supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (userError || !userRecord) {
+      // Create user record if it doesn't exist
+      const { data: newUser, error: createError } = await this.supabaseAdmin
+        .from("users")
+        .insert({
+          email,
+          auth_id: authData.user.id,
+          role: authData.user.user_metadata?.role || "user",
+          created_at: new Date()
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Failed to create user record:", createError);
+        return {
+          success: true,
+          user: {
+            id: authData.user.id,
+            email,
+            role: authData.user.user_metadata?.role || "user"
+          },
+          session: authData.session
+        };
+      }
+
+      return {
+        success: true,
+        user: newUser,
+        session: authData.session
+      };
+    }
     
     // Update last_login
     await this.supabase
