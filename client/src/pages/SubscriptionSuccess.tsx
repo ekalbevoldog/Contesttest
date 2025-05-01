@@ -1,237 +1,166 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
-import { useStripe } from '@stripe/react-stripe-js';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Calendar, Zap, Award } from 'lucide-react';
+import { useLocation, Link } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader2, CheckCircle, Calendar, CreditCard } from 'lucide-react';
 
 export default function SubscriptionSuccess() {
-  const [, setLocation] = useLocation();
-  const stripe = useStripe();
+  const [isLoading, setIsLoading] = useState(true);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [subscriptionStatus, setSubscriptionStatus] = useState<{
-    status: 'loading' | 'success' | 'error';
-    message?: string;
-    subscriptionId?: string;
-    planId?: string;
-    planName?: string;
-    nextBillingDate?: string;
-  }>({
-    status: 'loading',
-  });
+  const [, navigate] = useLocation();
 
   useEffect(() => {
-    if (!stripe) {
-      return;
-    }
-
-    const clientSecret = new URLSearchParams(window.location.search).get(
-      'payment_intent_client_secret'
-    );
-    
-    const planId = new URLSearchParams(window.location.search).get('plan') || '';
-
-    if (!clientSecret) {
-      setSubscriptionStatus({
-        status: 'error',
-        message: 'No subscription information found. Please try again or contact support.',
-      });
-      return;
-    }
-
-    stripe
-      .retrievePaymentIntent(clientSecret)
-      .then(({ paymentIntent }) => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        // Get the payment_intent and payment_intent_client_secret from URL
+        const searchParams = new URLSearchParams(window.location.search);
+        const paymentIntent = searchParams.get('payment_intent');
+        
         if (!paymentIntent) {
-          setSubscriptionStatus({
-            status: 'error',
-            message: 'Subscription information could not be retrieved.',
-          });
+          setError('No payment information found. Your subscription may not have been completed.');
+          setIsLoading(false);
           return;
         }
 
-        switch (paymentIntent.status) {
-          case 'succeeded':
-            // Get subscription details from our backend
-            apiRequest('GET', `/api/subscription-status?payment_intent=${paymentIntent.id}`)
-              .then(res => res.json())
-              .then(data => {
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-                
-                const planMap: Record<string, string> = {
-                  'basic': 'Basic',
-                  'pro': 'Professional',
-                  'enterprise': 'Enterprise'
-                };
-                
-                setSubscriptionStatus({
-                  status: 'success',
-                  message: 'Your subscription is now active!',
-                  subscriptionId: data.subscriptionId || paymentIntent.id,
-                  planId: planId,
-                  planName: planMap[planId] || 'Subscription',
-                  nextBillingDate: data.nextBillingDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                });
-              })
-              .catch(err => {
-                console.error('Error fetching subscription details:', err);
-                // Still mark as success even if we can't get details
-                setSubscriptionStatus({
-                  status: 'success',
-                  message: 'Your subscription has been processed successfully!',
-                  subscriptionId: paymentIntent.id,
-                  planId: planId,
-                  planName: {
-                    'basic': 'Basic',
-                    'pro': 'Professional',
-                    'enterprise': 'Enterprise'
-                  }[planId] || 'Subscription',
-                });
-              });
-            break;
-            
-          case 'processing':
-            setSubscriptionStatus({
-              status: 'success',
-              message: 'Your subscription is processing. You will have access shortly.',
-              subscriptionId: paymentIntent.id,
-              planId: planId,
-              planName: {
-                'basic': 'Basic',
-                'pro': 'Professional',
-                'enterprise': 'Enterprise'
-              }[planId] || 'Subscription',
-            });
-            break;
-            
-          case 'requires_payment_method':
-            setSubscriptionStatus({
-              status: 'error',
-              message: 'Your payment method was declined. Please update your payment information.',
-            });
-            break;
-            
-          default:
-            setSubscriptionStatus({
-              status: 'error',
-              message: 'Something went wrong with your subscription payment.',
-            });
-            break;
+        // Fetch subscription status using the payment intent
+        const response = await apiRequest('GET', `/api/subscription/subscription-status?payment_intent=${paymentIntent}`);
+        
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || 'Failed to verify subscription status');
         }
-      })
-      .catch((err) => {
-        console.error('Error retrieving payment intent:', err);
-        setSubscriptionStatus({
-          status: 'error',
-          message: 'An unexpected error occurred. Please contact support.',
+        
+        const data = await response.json();
+        setSubscription(data);
+      } catch (err) {
+        console.error('Error fetching subscription status:', err);
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        toast({
+          title: "Verification Error",
+          description: "We couldn't verify your subscription status. Please contact support.",
+          variant: "destructive"
         });
-      });
-  }, [stripe, toast]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleViewDashboard = () => {
-    setLocation('/business-dashboard');  // Or the appropriate dashboard for their role
+    fetchSubscriptionStatus();
+  }, [toast]);
+
+  // Format a date string
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
-  const handleViewSubscription = () => {
-    setLocation('/account/subscription');
-  };
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-slate-500">Verifying your subscription...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container max-w-md mx-auto py-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Subscription Verification Failed</CardTitle>
+            <CardDescription>We couldn't verify your subscription</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-500 mb-4">{error}</p>
+            <p className="text-slate-500 text-sm">
+              If you believe this is an error, please contact our support team
+              for assistance or try again.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-2">
+            <Button 
+              onClick={() => navigate('/subscription-plans')} 
+              variant="outline" 
+              className="w-full"
+            >
+              Return to Plans
+            </Button>
+            <Button 
+              onClick={() => navigate('/account/subscription')} 
+              className="w-full"
+            >
+              View My Subscriptions
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="container flex items-center justify-center min-h-[80vh] px-4 py-12">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle className="text-center">Subscription Status</CardTitle>
-          <CardDescription className="text-center">
-            {subscriptionStatus.status === 'loading' ? 'Verifying your subscription...' : ''}
-          </CardDescription>
+    <div className="container max-w-md mx-auto py-10">
+      <Card>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <CheckCircle className="h-16 w-16 text-green-500" />
+          </div>
+          <CardTitle>Subscription Confirmed!</CardTitle>
+          <CardDescription>Your subscription has been successfully activated</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center text-center">
-          {subscriptionStatus.status === 'loading' && (
-            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full my-8" aria-label="Loading" />
-          )}
-
-          {subscriptionStatus.status === 'success' && (
-            <>
-              <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Welcome Aboard!</h2>
-              <p className="mb-6">{subscriptionStatus.message}</p>
-              
-              <div className="w-full space-y-4 mb-6">
-                {subscriptionStatus.planName && (
-                  <div className="flex items-center border rounded-lg p-3 bg-zinc-900">
-                    <Award className="h-5 w-5 mr-3 text-amber-500" />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-sm">Plan</h3>
-                      <p className="text-base">{subscriptionStatus.planName}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {subscriptionStatus.nextBillingDate && (
-                  <div className="flex items-center border rounded-lg p-3 bg-zinc-900">
-                    <Calendar className="h-5 w-5 mr-3 text-amber-500" />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-sm">Next Billing Date</h3>
-                      <p className="text-base">{subscriptionStatus.nextBillingDate}</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center border rounded-lg p-3 bg-zinc-900">
-                  <Zap className="h-5 w-5 mr-3 text-amber-500" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-sm">Status</h3>
-                    <p className="text-base text-green-500">Active</p>
-                  </div>
+        <CardContent>
+          <div className="space-y-4">
+            {subscription?.status === 'success' && (
+              <>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <span>Subscription ID: </span>
+                  <span className="font-mono text-sm bg-slate-100 px-2 py-0.5 rounded">
+                    {subscription.subscriptionId}
+                  </span>
                 </div>
-              </div>
-              
-              {subscriptionStatus.subscriptionId && (
-                <p className="text-xs text-muted-foreground mb-6">
-                  Subscription ID: {subscriptionStatus.subscriptionId}
-                </p>
-              )}
-            </>
-          )}
-
-          {subscriptionStatus.status === 'error' && (
-            <>
-              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <span className="text-2xl text-red-500">✗</span>
-              </div>
-              <h2 className="text-2xl font-bold text-red-600 mb-2">Subscription Failed</h2>
-              <p className="mb-6">{subscriptionStatus.message}</p>
-              <Button 
-                variant="outline" 
-                onClick={() => setLocation('/checkout')}
-                className="mb-4"
-              >
-                Try Again
-              </Button>
-            </>
-          )}
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <span>Next billing date: </span>
+                  <span className="font-medium">
+                    {subscription.nextBillingDate || formatDate(subscription?.subscription?.currentPeriodEnd)}
+                  </span>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-md mt-4">
+                  <p className="text-sm text-slate-600">
+                    Thank you for subscribing! You now have full access to all features 
+                    included in your subscription plan. You can manage your subscription 
+                    from your account settings at any time.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         </CardContent>
-        <CardFooter className="flex justify-center gap-4">
-          {subscriptionStatus.status === 'success' && (
-            <>
-              <Button onClick={handleViewDashboard}>
-                Go to Dashboard
-              </Button>
-              <Button variant="outline" onClick={handleViewSubscription}>
-                Manage Subscription
-              </Button>
-            </>
-          )}
-          
-          {subscriptionStatus.status === 'error' && (
-            <Button onClick={() => setLocation('/')}>
-              Return Home
-            </Button>
-          )}
+        <CardFooter className="flex flex-col gap-2">
+          <Button asChild className="w-full">
+            <Link to="/business/dashboard">Go to Dashboard</Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/account/subscription">Manage Subscription</Link>
+          </Button>
         </CardFooter>
       </Card>
     </div>

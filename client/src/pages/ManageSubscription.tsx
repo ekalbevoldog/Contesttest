@@ -1,27 +1,33 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { useLocation, Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, CreditCard, AlertTriangle, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
-type SubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'unpaid' | 'trialing' | 'incomplete' | 'incomplete_expired' | 'paused' | 'loading' | 'error';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, AlertCircle, CheckCircle, CreditCard, Calendar, ArrowUpCircle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from '@/components/ui/badge';
+import { SUBSCRIPTION_PLANS } from '../data/subscription-plans';
 
 interface Subscription {
   id: string;
-  status: SubscriptionStatus;
+  status: string;
   planType: string;
   planName: string;
-  startDate: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
-  priceId: string;
   amount: number;
-  lastPaymentDate?: string;
-  nextPaymentDate?: string;
   paymentMethod?: {
     brand: string;
     last4: string;
@@ -31,397 +37,497 @@ interface Subscription {
 }
 
 export default function ManageSubscription() {
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [cancelationInProgress, setCancelationInProgress] = useState(false);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [processingAction, setProcessingAction] = useState(false);
+  const [isCreatingPortal, setIsCreatingPortal] = useState(false);
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   useEffect(() => {
-    loadSubscriptionDetails();
-  }, []);
-
-  const loadSubscriptionDetails = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await apiRequest('GET', '/api/subscription');
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
+    const fetchSubscription = async () => {
+      if (!user) {
+        setIsLoading(false);
+        setError('You must be logged in to view subscription details');
+        return;
       }
 
-      if (!data.subscription) {
-        setError('No active subscription found.');
-        setSubscription(null);
-      } else {
+      try {
+        const response = await apiRequest('GET', '/api/subscription/subscription');
+        
+        if (!response.ok) {
+          const data = await response.json();
+          if (response.status === 404) {
+            // Not an error - just no subscription yet
+            setSubscription(null);
+            setIsLoading(false);
+            return;
+          }
+          throw new Error(data.message || 'Failed to fetch subscription details');
+        }
+        
+        const data = await response.json();
         setSubscription(data.subscription);
+      } catch (err) {
+        console.error('Error fetching subscription:', err);
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        toast({
+          title: "Failed to load subscription",
+          description: "We couldn't load your subscription details. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error('Error loading subscription details:', err);
-      setError('Failed to load subscription details. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchSubscription();
+  }, [user, toast]);
 
   const handleCancelSubscription = async () => {
-    setCancelationInProgress(true);
-
+    if (!subscription) return;
+    
+    setProcessingAction(true);
     try {
-      const response = await apiRequest('POST', '/api/cancel-subscription', {
-        subscriptionId: subscription?.id
+      const response = await apiRequest('POST', '/api/subscription/cancel-subscription', {
+        subscriptionId: subscription.id
       });
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to cancel subscription');
       }
-
+      
+      const data = await response.json();
+      
       toast({
-        title: 'Subscription Cancelled',
-        description: 'Your subscription has been cancelled and will end on your current billing period.',
+        title: "Subscription Canceled",
+        description: "Your subscription will remain active until the end of the current billing period.",
       });
-
-      // Update the subscription status
+      
+      // Refresh subscription data
       setSubscription(prev => prev ? {
         ...prev,
         cancelAtPeriodEnd: true
       } : null);
-
-      setCancelDialogOpen(false);
+      
     } catch (err) {
-      console.error('Error cancelling subscription:', err);
+      console.error('Error canceling subscription:', err);
       toast({
-        title: 'Error',
-        description: 'Failed to cancel subscription. Please try again later.',
-        variant: 'destructive'
+        title: "Cancellation Failed",
+        description: err instanceof Error ? err.message : 'Failed to cancel your subscription',
+        variant: "destructive"
       });
     } finally {
-      setCancelationInProgress(false);
+      setProcessingAction(false);
+      setCancelDialogOpen(false);
     }
   };
 
   const handleResumeSubscription = async () => {
-    setLoading(true);
+    if (!subscription) return;
     
+    setProcessingAction(true);
     try {
-      const response = await apiRequest('POST', '/api/resume-subscription', {
-        subscriptionId: subscription?.id
+      const response = await apiRequest('POST', '/api/subscription/resume-subscription', {
+        subscriptionId: subscription.id
       });
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to resume subscription');
       }
-
+      
       toast({
-        title: 'Subscription Resumed',
-        description: 'Your subscription has been resumed successfully.',
+        title: "Subscription Resumed",
+        description: "Your subscription has been resumed and will continue automatically.",
       });
-
-      // Update the subscription status
+      
+      // Refresh subscription data
       setSubscription(prev => prev ? {
         ...prev,
         cancelAtPeriodEnd: false
       } : null);
+      
     } catch (err) {
       console.error('Error resuming subscription:', err);
       toast({
-        title: 'Error',
-        description: 'Failed to resume subscription. Please try again later.',
-        variant: 'destructive'
+        title: "Resume Failed",
+        description: err instanceof Error ? err.message : 'Failed to resume your subscription',
+        variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setProcessingAction(false);
     }
   };
 
-  const handleUpdatePayment = () => {
-    setLocation('/update-payment-method');
+  const handleUpgradeSubscription = async (planId: string) => {
+    if (!subscription) return;
+    
+    setProcessingAction(true);
+    try {
+      const response = await apiRequest('POST', '/api/subscription/change-plan', {
+        planId
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to change subscription plan');
+      }
+      
+      const data = await response.json();
+      
+      toast({
+        title: "Plan Changed",
+        description: data.message || "Your subscription plan has been updated successfully.",
+      });
+      
+      // Refresh the subscription data
+      const refreshResponse = await apiRequest('GET', '/api/subscription/subscription');
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        setSubscription(refreshData.subscription);
+      }
+      
+    } catch (err) {
+      console.error('Error changing subscription plan:', err);
+      toast({
+        title: "Plan Change Failed",
+        description: err instanceof Error ? err.message : 'Failed to change your subscription plan',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingAction(false);
+      setUpgradeDialogOpen(false);
+    }
   };
 
-  const handleChangePlan = () => {
-    setLocation('/checkout');
+  const openStripePortal = async () => {
+    setIsCreatingPortal(true);
+    try {
+      const response = await apiRequest('POST', '/api/subscription/create-portal-session', {
+        return_url: window.location.href
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to create portal session');
+      }
+      
+      const { url } = await response.json();
+      
+      // Redirect to Stripe portal
+      window.location.href = url;
+    } catch (err) {
+      console.error('Error creating portal session:', err);
+      toast({
+        title: "Portal Access Failed",
+        description: err instanceof Error ? err.message : 'Failed to access the payment portal',
+        variant: "destructive"
+      });
+      setIsCreatingPortal(false);
+    }
   };
 
-  const getStatusColor = (status: SubscriptionStatus) => {
+  // Format a date string
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getStatusBadge = (status: string, cancelAtPeriodEnd: boolean) => {
+    if (cancelAtPeriodEnd) {
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Canceling</Badge>;
+    }
+    
     switch (status) {
       case 'active':
-        return 'text-green-500';
-      case 'trialing':
-        return 'text-blue-500';
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>;
       case 'past_due':
-      case 'unpaid':
-      case 'incomplete':
-        return 'text-amber-500';
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Past Due</Badge>;
       case 'canceled':
-      case 'incomplete_expired':
-        return 'text-red-500';
+        return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">Canceled</Badge>;
+      case 'trialing':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Trial</Badge>;
       default:
-        return 'text-gray-500';
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
-  const getStatusIcon = (status: SubscriptionStatus) => {
-    switch (status) {
-      case 'active':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'trialing':
-        return <Calendar className="h-5 w-5 text-blue-500" />;
-      case 'past_due':
-      case 'unpaid':
-      case 'incomplete':
-        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
-      case 'canceled':
-      case 'incomplete_expired':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="container flex items-center justify-center min-h-[80vh] px-4 py-12">
-        <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4" />
-          <p>Loading subscription details...</p>
+      <div className="h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-slate-500">Loading subscription details...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !subscription) {
+  if (error) {
     return (
-      <div className="container flex items-center justify-center min-h-[80vh] px-4 py-12">
-        <Card className="w-full max-w-lg">
+      <div className="container max-w-3xl mx-auto py-10">
+        <Card>
           <CardHeader>
-            <CardTitle>Subscription Management</CardTitle>
+            <CardTitle>Subscription Details</CardTitle>
             <CardDescription>Manage your subscription plan and billing</CardDescription>
           </CardHeader>
           <CardContent>
-            <Alert variant="destructive" className="mb-6">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>No Active Subscription</AlertTitle>
-              <AlertDescription>
-                {error || "You don't currently have an active subscription."}
-              </AlertDescription>
-            </Alert>
+            <div className="flex flex-col items-center p-6 text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+              <h3 className="text-lg font-medium">Error Loading Subscription</h3>
+              <p className="text-sm text-slate-500 mt-2 mb-4">{error}</p>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={() => setLocation('/checkout')} className="w-full">
-              View Subscription Plans
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     );
   }
 
-  const isActive = subscription.status === 'active' || subscription.status === 'trialing';
-  const formattedAmount = (subscription.amount / 100).toFixed(2);
-
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Subscription Management</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Current Plan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                {getStatusIcon(subscription.status)}
-                <div className="ml-2">
-                  <div className="text-xl font-bold">{subscription.planName}</div>
-                  <div className={`text-sm ${getStatusColor(subscription.status)}`}>
-                    {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-                    {subscription.cancelAtPeriodEnd && " (Cancels soon)"}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Billing Cycle</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div className="ml-2">
-                  <div className="text-xl font-bold">${formattedAmount}/month</div>
-                  <div className="text-sm text-muted-foreground">
-                    Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Payment Method</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {subscription.paymentMethod ? (
-                <div className="flex items-center">
-                  <CreditCard className="h-5 w-5 text-muted-foreground" />
-                  <div className="ml-2">
-                    <div className="text-xl font-bold">
-                      {subscription.paymentMethod.brand.charAt(0).toUpperCase() + subscription.paymentMethod.brand.slice(1)} 
-                      •••• {subscription.paymentMethod.last4}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Expires {subscription.paymentMethod.expiryMonth}/{subscription.paymentMethod.expiryYear}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-muted-foreground">No payment method on file</div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {subscription.cancelAtPeriodEnd && (
-          <Alert className="mb-8 border-amber-500 bg-amber-500/20">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <AlertTitle>Your subscription is scheduled to cancel</AlertTitle>
-            <AlertDescription>
-              Your subscription will end on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}. 
-              You can resume your subscription anytime before this date.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <Card className="mb-8">
+  if (!subscription) {
+    // No active subscription
+    return (
+      <div className="container max-w-3xl mx-auto py-10">
+        <Card>
           <CardHeader>
             <CardTitle>Subscription Details</CardTitle>
-            <CardDescription>Review your plan and billing information</CardDescription>
+            <CardDescription>Subscribe to access premium features</CardDescription>
           </CardHeader>
           <CardContent>
-            <dl className="space-y-4">
-              <div className="flex justify-between border-b pb-2">
-                <dt className="text-muted-foreground">Subscription ID</dt>
-                <dd className="font-mono text-sm">{subscription.id}</dd>
+            <div className="flex flex-col items-center py-8 text-center">
+              <div className="p-3 bg-slate-100 rounded-full mb-4">
+                <CreditCard className="h-8 w-8 text-slate-600" />
               </div>
-              <div className="flex justify-between border-b pb-2">
-                <dt className="text-muted-foreground">Plan Type</dt>
-                <dd>{subscription.planType}</dd>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <dt className="text-muted-foreground">Start Date</dt>
-                <dd>{new Date(subscription.startDate).toLocaleDateString()}</dd>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <dt className="text-muted-foreground">Current Period Ends</dt>
-                <dd>{new Date(subscription.currentPeriodEnd).toLocaleDateString()}</dd>
-              </div>
-              {subscription.lastPaymentDate && (
-                <div className="flex justify-between border-b pb-2">
-                  <dt className="text-muted-foreground">Last Payment</dt>
-                  <dd>{new Date(subscription.lastPaymentDate).toLocaleDateString()}</dd>
-                </div>
-              )}
-              {subscription.nextPaymentDate && !subscription.cancelAtPeriodEnd && (
-                <div className="flex justify-between border-b pb-2">
-                  <dt className="text-muted-foreground">Next Payment</dt>
-                  <dd>{new Date(subscription.nextPaymentDate).toLocaleDateString()}</dd>
-                </div>
-              )}
-              <div className="flex justify-between pb-2">
-                <dt className="text-muted-foreground">Monthly Amount</dt>
-                <dd className="font-semibold">${formattedAmount}</dd>
-              </div>
-            </dl>
+              <h3 className="text-lg font-medium mb-2">No Active Subscription</h3>
+              <p className="text-sm text-slate-500 max-w-md mb-6">
+                You don't have an active subscription. Subscribe to a plan to access premium features 
+                and enhance your experience.
+              </p>
+              <Button asChild>
+                <Link to="/subscription-plans">View Subscription Plans</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
 
-        <div className="flex flex-col md:flex-row gap-4 justify-between">
-          <div className="space-y-4">
-            <Button onClick={handleChangePlan}>
-              Change Plan
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={handleUpdatePayment}
-              className="ml-0 md:ml-4"
-            >
-              Update Payment Method
-            </Button>
+  // Active subscription view
+  return (
+    <div className="container max-w-3xl mx-auto py-10">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>Subscription Details</CardTitle>
+              <CardDescription>Manage your subscription plan and billing</CardDescription>
+            </div>
+            <div>
+              {getStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)}
+            </div>
           </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Current plan details */}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 p-4 bg-slate-50 rounded-md">
+              <div>
+                <h3 className="text-lg font-semibold">{subscription.planName} Plan</h3>
+                <p className="text-sm text-slate-500">
+                  ${(subscription.amount / 100).toFixed(2)}/month
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                {!subscription.cancelAtPeriodEnd && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUpgradeDialogOpen(true)}
+                    disabled={processingAction}
+                  >
+                    Change Plan
+                  </Button>
+                )}
+                <Button
+                  variant={subscription.cancelAtPeriodEnd ? "default" : "outline"}
+                  size="sm"
+                  onClick={subscription.cancelAtPeriodEnd ? handleResumeSubscription : () => setCancelDialogOpen(true)}
+                  disabled={processingAction}
+                >
+                  {processingAction ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing
+                    </>
+                  ) : subscription.cancelAtPeriodEnd ? (
+                    "Resume Subscription"
+                  ) : (
+                    "Cancel Subscription"
+                  )}
+                </Button>
+              </div>
+            </div>
 
-          {subscription.cancelAtPeriodEnd ? (
-            <Button 
-              variant="default" 
-              onClick={handleResumeSubscription}
-              disabled={loading}
+            <Separator />
+
+            {/* Billing details */}
+            <div>
+              <h3 className="text-md font-medium mb-3">Billing Information</h3>
+              <dl className="space-y-2">
+                <div className="flex justify-between py-1">
+                  <dt className="text-sm text-slate-500">Billing period:</dt>
+                  <dd className="text-sm font-medium">Monthly</dd>
+                </div>
+                <div className="flex justify-between py-1">
+                  <dt className="text-sm text-slate-500">Next payment:</dt>
+                  <dd className="text-sm font-medium">
+                    {subscription.cancelAtPeriodEnd ? (
+                      <span className="text-amber-600">No future payments</span>
+                    ) : (
+                      formatDate(subscription.currentPeriodEnd)
+                    )}
+                  </dd>
+                </div>
+                {subscription.paymentMethod && (
+                  <div className="flex justify-between py-1">
+                    <dt className="text-sm text-slate-500">Payment method:</dt>
+                    <dd className="text-sm font-medium flex items-center">
+                      <CreditCard className="h-4 w-4 mr-1 text-slate-400" />
+                      {subscription.paymentMethod.brand.charAt(0).toUpperCase() + subscription.paymentMethod.brand.slice(1)} •••• {subscription.paymentMethod.last4}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            {subscription.cancelAtPeriodEnd && (
+              <div className="p-4 bg-amber-50 text-amber-800 rounded-md text-sm flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Your subscription is scheduled to cancel</p>
+                  <p className="mt-1">Your access will end on {formatDate(subscription.currentPeriodEnd)}. You can resume your subscription at any time before this date.</p>
+                </div>
+              </div>
+            )}
+
+            {!subscription.cancelAtPeriodEnd && subscription.status === 'active' && (
+              <div className="p-4 bg-green-50 text-green-800 rounded-md text-sm flex items-start space-x-2">
+                <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Your subscription is active</p>
+                  <p className="mt-1">You have full access to all {subscription.planName} plan features.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-2">
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={openStripePortal}
+            disabled={isCreatingPortal}
+          >
+            {isCreatingPortal ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Opening payment portal...
+              </>
+            ) : (
+              <>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Manage Payment Methods
+              </>
+            )}
+          </Button>
+          <div className="text-xs text-center text-slate-500 mt-2">
+            You'll be redirected to a secure Stripe portal to manage your payment methods and billing history.
+          </div>
+        </CardFooter>
+      </Card>
+
+      {/* Cancel Subscription Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel your {subscription.planName} plan subscription? 
+              You'll continue to have access until the current billing period ends on {formatDate(subscription.currentPeriodEnd)}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processingAction}>Keep Subscription</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelSubscription}
+              disabled={processingAction}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {loading ? (
+              {processingAction ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing
+                  Processing...
                 </>
               ) : (
-                'Resume Subscription'
+                "Yes, Cancel"
               )}
-            </Button>
-          ) : (
-            <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="destructive">
-                  Cancel Subscription
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Cancel Your Subscription?</DialogTitle>
-                  <DialogDescription>
-                    Are you sure you want to cancel your subscription? You'll still have access until the end of your current billing period on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <p className="text-sm text-muted-foreground">
-                    If you change your mind, you can resume your subscription anytime before your current billing period ends.
-                  </p>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Upgrade Plan Dialog */}
+      <AlertDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Subscription Plan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Select the plan you'd like to switch to. Your billing will be adjusted immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4 space-y-3">
+            {Object.entries(SUBSCRIPTION_PLANS).map(([id, plan]) => (
+              <div 
+                key={id}
+                className={`p-3 border rounded-lg ${
+                  id === subscription.planType 
+                    ? 'bg-primary/10 border-primary/30' 
+                    : 'hover:bg-slate-50 cursor-pointer'
+                }`}
+                onClick={() => id !== subscription.planType && handleUpgradeSubscription(id)}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{plan.name}</p>
+                    <p className="text-sm text-slate-500">${(plan.price / 100).toFixed(2)}/month</p>
+                  </div>
+                  {id === subscription.planType ? (
+                    <Badge variant="outline" className="bg-primary/20 border-primary/30">
+                      Current
+                    </Badge>
+                  ) : id === 'enterprise' && subscription.planType === 'basic' ? (
+                    <ArrowUpCircle className="h-5 w-5 text-green-500" />
+                  ) : null}
                 </div>
-                <DialogFooter>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setCancelDialogOpen(false)}
-                  >
-                    Keep Subscription
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleCancelSubscription}
-                    disabled={cancelationInProgress}
-                  >
-                    {cancelationInProgress ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing
-                      </>
-                    ) : (
-                      'Cancel Subscription'
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processingAction}>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
