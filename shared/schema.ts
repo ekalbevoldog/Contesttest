@@ -12,7 +12,13 @@ export const userSchema = z.object({
   role: z.enum(["athlete", "business", "compliance", "admin"]),
   created_at: z.date().optional(),
   last_login: z.date().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
+  // Stripe subscription fields
+  stripe_customer_id: z.string().optional(),
+  stripe_subscription_id: z.string().optional(),
+  subscription_status: z.string().optional(),
+  subscription_plan: z.string().optional(),
+  subscription_current_period_end: z.date().optional()
 });
 
 export const insertUserSchema = userSchema.omit({ 
