@@ -176,13 +176,45 @@ export default function AuthPage() {
   const onLoginSubmit = async (values: LoginFormValues) => {
     try {
       // Use the signIn method from useSupabaseAuth hook
-      const { error } = await signIn(values.email, values.password);
+      const { error, user } = await signIn(values.email, values.password);
       
       if (error) {
         toast({
           title: "Login failed",
           description: error.message || "Unable to log in. Please check your credentials and try again.",
           variant: "destructive",
+        });
+        return;
+      }
+      
+      // If login successful, check for role and redirect directly to appropriate dashboard
+      if (user) {
+        console.log('[AuthPage] Login successful, directing to dashboard');
+        
+        // Get user role from metadata or session data
+        const role = user.user_metadata?.role || 
+                     user.role || 
+                     localStorage.getItem('userRole');
+        
+        console.log('[AuthPage] Detected role for direct redirect:', role);
+        
+        // Redirect based on role
+        if (role === 'athlete') {
+          navigate('/athlete/dashboard');
+        } else if (role === 'business') {
+          navigate('/business/dashboard');
+        } else if (role === 'compliance') {
+          navigate('/compliance/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          // Fallback
+          navigate('/profile');
+        }
+        
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
         });
       }
     } catch (error: any) {
@@ -200,7 +232,7 @@ export default function AuthPage() {
     try {
       // Use the signUp method from useSupabaseAuth hook
       // Format the data according to the modified registerUser function in supabase-client.ts
-      const { error } = await signUp(values.email, values.password, {
+      const { error, user } = await signUp(values.email, values.password, {
         fullName: `${values.firstName} ${values.lastName}`,
         role: values.role
       });
@@ -211,7 +243,36 @@ export default function AuthPage() {
           description: error.message || "Unable to create account. Please try again.",
           variant: "destructive",
         });
+        return;
+      } 
+      
+      // If we get confirmation, redirect to the appropriate dashboard
+      if (user) {
+        console.log('[AuthPage] Registration successful, directing to dashboard');
+        
+        // Store the user role in localStorage for persistence
+        localStorage.setItem('userRole', values.role);
+        
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created. Welcome!",
+        });
+        
+        // Redirect based on role
+        if (values.role === 'athlete') {
+          navigate('/athlete/dashboard');
+        } else if (values.role === 'business') {
+          navigate('/business/dashboard');
+        } else if (values.role === 'compliance') {
+          navigate('/compliance/dashboard');
+        } else if (values.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          // Fallback
+          navigate('/profile');
+        }
       } else {
+        // If auto-login isn't working, show success and direct to login
         toast({
           title: "Registration successful",
           description: "We've created your account. You can now log in.",
