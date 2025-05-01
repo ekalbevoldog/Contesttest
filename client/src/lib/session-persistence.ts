@@ -1,3 +1,4 @@
+
 import { supabase } from './supabase-client';
 import { logger } from './logger';
 
@@ -65,4 +66,11 @@ export class SessionPersistenceUtil {
       logger.error('[SessionPersistence]', 'Error clearing session:', error);
     }
   }
+
+  // Added clearSessionData as an alias for clearSession
+  static clearSessionData() {
+    return this.clearSession();
+  }
 }
+
+export const { restoreSession, storeSession, clearSession, clearSessionData } = SessionPersistenceUtil;
