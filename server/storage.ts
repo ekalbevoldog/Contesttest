@@ -605,6 +605,14 @@ export class SupabaseStorage implements IStorage {
       if (userData.username !== undefined) dbUser.username = userData.username;
       if (userData.role !== undefined) dbUser.role = userData.role;
       
+      // Map Stripe subscription fields
+      if (userData.stripe_customer_id !== undefined) dbUser.stripe_customer_id = userData.stripe_customer_id;
+      if (userData.stripe_subscription_id !== undefined) dbUser.stripe_subscription_id = userData.stripe_subscription_id;
+      if (userData.subscription_status !== undefined) dbUser.subscription_status = userData.subscription_status;
+      if (userData.subscription_plan !== undefined) dbUser.subscription_plan = userData.subscription_plan;
+      if (userData.subscription_current_period_end !== undefined) 
+        dbUser.subscription_current_period_end = userData.subscription_current_period_end;
+      
       // Create the user record
       const { data, error } = await supabase
         .from('users')
@@ -646,14 +654,27 @@ export class SupabaseStorage implements IStorage {
     }
   }
   
-  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> {
+  async updateUserStripeInfo(userId: string, data: { 
+    customerId: string, 
+    subscriptionId: string, 
+    status?: string, 
+    plan?: string,
+    currentPeriodEnd?: Date
+  }): Promise<User> {
     try {
+      const updateData: any = {
+        stripe_customer_id: data.customerId,
+        stripe_subscription_id: data.subscriptionId
+      };
+      
+      // Add optional fields if provided
+      if (data.status) updateData.subscription_status = data.status;
+      if (data.plan) updateData.subscription_plan = data.plan;
+      if (data.currentPeriodEnd) updateData.subscription_current_period_end = data.currentPeriodEnd;
+      
       const { data: userData, error } = await supabase
         .from('users')
-        .update({ 
-          stripe_customer_id: data.customerId,
-          stripe_subscription_id: data.subscriptionId
-        })
+        .update(updateData)
         .eq('id', userId)
         .select()
         .single();
