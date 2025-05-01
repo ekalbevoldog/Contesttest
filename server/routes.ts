@@ -2419,7 +2419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get user info from database to include role and other metadata
         const userId = authData.user.id;
         const { rows, error: userError } = await supabase.query(
-          'SELECT id, email, role, username, auth_id FROM users WHERE auth_id = $1',
+          'SELECT * FROM users WHERE auth_id = $1',
           [userId]
         );
         
