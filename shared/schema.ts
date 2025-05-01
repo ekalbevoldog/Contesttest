@@ -219,24 +219,28 @@ export const insertBusinessSchema = businessSchema.omit({
 
 // Campaign type definitions
 export const campaignSchema = z.object({
-  id: z.number(),
-  business_id: z.number(),
+  id: z.string().uuid(),
+  business_id: z.string().uuid(),
   
-  title: z.string(),
-  description: z.string(),
+  name: z.string().min(3, "Campaign name must be at least 3 characters"),
+  description: z.string().optional(),
   campaign_brief: z.string().optional(),
   campaign_type: z.string().optional(),
+  opportunity_type: z.string().optional(),
   
+  // Deliverables and content requirements
   deliverables: z.array(z.string()),
   content_requirements: z.record(z.any()).optional(),
   brand_mention_requirements: z.string().optional(),
   hashtag_requirements: z.array(z.string()).optional(),
   exclusivity_clause: z.string().optional(),
   
+  // Timeline
   start_date: z.date().optional(),
   end_date: z.date().optional(),
   submission_deadlines: z.record(z.any()).optional(),
   
+  // Targeting
   target_audience: z.record(z.any()).optional(),
   target_sports: z.array(z.string()).optional(),
   target_divisions: z.array(z.string()).optional(),
@@ -244,22 +248,98 @@ export const campaignSchema = z.object({
   target_follower_counts: z.record(z.any()).optional(),
   target_engagement_rates: z.record(z.any()).optional(),
   
-  budget: z.string().optional(),
+  // Budget and compensation
+  budget: z.number().positive("Budget must be greater than zero"),
   compensation_details: z.record(z.any()).optional(),
+  compensation_type: z.enum(['monetary', 'product', 'affiliate', 'hybrid']).optional(),
+  payment_schedule: z.string().optional(),
   
+  // Campaign goals and KPIs
   kpis: z.record(z.any()).optional(),
-  goals: z.array(z.string()).optional(),
+  goals: z.record(z.any()).optional(),
+  requirements: z.record(z.any()).optional(),
   
-  status: z.enum(["draft", "active", "completed", "cancelled"]).default("draft"),
+  // Campaign status
+  status: z.enum(["draft", "active", "paused", "completed", "cancelled"]).default("draft"),
+  
+  // Subscription related fields
+  requires_subscription: z.boolean().default(false),
+  available_to_tier: z.string().optional(),
   
   created_at: z.date().optional(),
-  updated_at: z.date().optional()
+  updated_at: z.date().optional(),
+  is_deleted: z.boolean().default(false)
 });
 
 export const insertCampaignSchema = campaignSchema.omit({
   id: true,
   created_at: true,
   updated_at: true,
+  status: true,
+  is_deleted: true
+}).extend({
+  // Extend with required validation
+  target_audience: z.object({
+    age_range: z.object({
+      min: z.number().min(0).optional(),
+      max: z.number().min(0).optional(),
+    }).optional(),
+    demographics: z.array(z.string()).optional(),
+    interests: z.array(z.string()).optional(),
+    locations: z.array(z.string()).optional(),
+  }).optional(),
+  goals: z.object({
+    primary: z.string().optional(),
+    secondary: z.array(z.string()).optional(),
+    kpis: z.array(z.string()).optional(),
+  }).optional(),
+  requirements: z.object({
+    platform: z.array(z.string()).optional(),
+    content_type: z.array(z.string()).optional(),
+    deliverables: z.array(z.string()).optional(),
+    timeline: z.string().optional(),
+  }).optional(),
+});
+
+// Campaign metrics schema for tracking campaign performance
+export const campaignMetricsSchema = z.object({
+  id: z.string().uuid(),
+  campaign_id: z.string().uuid(),
+  views: z.number().default(0),
+  applications: z.number().default(0),
+  approvals: z.number().default(0),
+  rejections: z.number().default(0),
+  completions: z.number().default(0),
+  roi: z.number().optional(),
+  updated_at: z.date().optional()
+});
+
+export const insertCampaignMetricsSchema = campaignMetricsSchema.omit({
+  id: true,
+  updated_at: true
+});
+
+// Campaign application schema for athlete applications to campaigns
+export const campaignApplicationSchema = z.object({
+  id: z.string().uuid(),
+  campaign_id: z.string().uuid(),
+  athlete_id: z.string().uuid(),
+  status: z.enum(["pending", "approved", "rejected", "completed"]).default("pending"),
+  application_date: z.date().optional(),
+  decision_date: z.date().optional(),
+  notes: z.string().optional(),
+  proposal: z.record(z.any()).optional(),
+  completion_date: z.date().optional(),
+  compensation: z.number().optional(),
+  rating: z.number().min(1).max(5).optional(),
+  feedback: z.string().optional()
+});
+
+export const insertCampaignApplicationSchema = campaignApplicationSchema.omit({
+  id: true,
+  application_date: true,
+  decision_date: true,
+  completion_date: true,
   status: true
 });
 
