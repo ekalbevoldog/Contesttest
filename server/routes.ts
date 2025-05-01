@@ -2427,11 +2427,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (userError || !user) {
           console.error('[Auth] User lookup failed:', userError || 'User not found');
-          // Still return 200 as the auth token is valid, even if we couldn't find the user in our DB
-          return res.status(200).json({ 
-            message: 'Session refreshed, but user data not available',
-            authenticated: true
-          });
+          
+          // Extract information from the JWT token for fallback
+          try {
+            const decodedToken = authData.user;
+            console.log('[Auth] Creating fallback user from token data');
+            
+            // Create a minimal user object from the token data
+            const fallbackUser = {
+              id: decodedToken.id || decodedToken.sub,
+              auth_id: decodedToken.id || decodedToken.sub,
+              email: decodedToken.email,
+              role: (decodedToken.user_metadata && decodedToken.user_metadata.role) || 'user',
+              created_at: new Date().toISOString(),
+              metadata: decodedToken.user_metadata || {}
+            };
+            
+            console.log('[Auth] Using fallback user data for session:', fallbackUser);
+            
+            // Return this fallback user data - the client will handle the rest
+            return res.status(200).json({ 
+              message: 'Session refreshed with fallback user data',
+              authenticated: true,
+              user: fallbackUser
+            });
+          } catch (fallbackError) {
+            console.error('[Auth] Failed to create fallback user:', fallbackError);
+            // If fallback fails, still return 200 as the auth token is valid
+            return res.status(200).json({ 
+              message: 'Session refreshed, but user data not available',
+              authenticated: true
+            });
+          }
         }
         
         console.log('[Auth] Session refreshed successfully for user:', user.id);
