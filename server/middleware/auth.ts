@@ -11,11 +11,16 @@ export const requireAuth = async (
   res: Response,
   next: NextFunction
 ) => {
-  // Check if the user is authenticated via express-session
-  if (req.session && req.session.passport && req.session.passport.user) {
-    req.user = req.session.passport.user;
-    req.isAuthenticated = () => true;
-    return next();
+  // Check if the user is authenticated via express-session (safely checking each property)
+  try {
+    if (req.session && req.session.passport && req.session.passport.user) {
+      req.user = req.session.passport.user;
+      req.isAuthenticated = () => true;
+      return next();
+    }
+  } catch (sessionError) {
+    console.error('Error accessing session:', sessionError);
+    // Continue to JWT auth as fallback
   }
   
   // Otherwise check for supabase JWT

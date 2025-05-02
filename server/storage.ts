@@ -109,17 +109,101 @@ export class SupabaseStorage implements IStorage {
     try {
       // Set up PostgreSQL session store with the correct table name
       const PgStore = connectPgSimple(session);
-      this.sessionStore = new PgStore({
-        pool,
-        tableName: 'session', // Use singular form (standard for connect-pg-simple)
-        createTableIfMissing: false // We've already created the table
-      });
-      console.log("PostgreSQL session store initialized successfully");
+      
+      // Use a memory store first to avoid startup errors
+      this.sessionStore = new session.MemoryStore();
+      console.log("Using in-memory session store initially");
+      
+      // Attempt to create PG session store asynchronously
+      this.initPgSessionStore();
+    } catch (err) {
+      console.error("Failed to initialize session store:", err);
+      // Ensure we have a memory store as fallback
+      this.sessionStore = new session.MemoryStore();
+      console.log("Using in-memory session store as fallback");
+    }
+  }
+  
+  // Async initialization of PostgreSQL session store
+  private async initPgSessionStore() {
+    try {
+      console.log("Checking if session table exists...");
+      
+      // Try direct SQL query to safely check if the table exists
+      let tableExists = false;
+      
+      try {
+        const tableCheckResult = await pool.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            AND table_name = 'session'
+          );
+        `);
+        
+        tableExists = tableCheckResult.rows[0]?.exists;
+        console.log(`Session table exists check result: ${tableExists}`);
+      } catch (sqlError) {
+        console.error("Error checking if session table exists with SQL:", sqlError);
+        // Continue with fallback check
+      }
+      
+      // If SQL query failed, fallback to Supabase API check
+      if (!tableExists) {
+        try {
+          const { error: tableCheckError } = await supabase.from('session').select('count').limit(1);
+          tableExists = !tableCheckError;
+        } catch (supabaseError) {
+          console.error("Error checking if session table exists with Supabase:", supabaseError);
+        }
+      }
+      
+      // Setup the session store based on table existence check results
+      if (!tableExists) {
+        console.log("Session table does not exist, creating it directly");
+        
+        try {
+          // Try to create the table manually first
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS "session" (
+              "sid" varchar NOT NULL COLLATE "default",
+              "sess" json NOT NULL,
+              "expire" timestamp(6) NOT NULL,
+              CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+            );
+            CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+          `);
+          console.log("Session table created successfully");
+        } catch (createError) {
+          console.error("Error creating session table manually:", createError);
+          // Continue and let PgStore try to create it
+        }
+        
+        // Use PgStore with createTableIfMissing
+        const PgStore = connectPgSimple(session);
+        this.sessionStore = new PgStore({
+          pool,
+          tableName: 'session',
+          createTableIfMissing: true // Still set this as a fallback
+        });
+        
+        console.log("PostgreSQL session store initialized with table creation");
+      } else {
+        console.log("Session table exists, connecting to it");
+        
+        // Table exists, connect normally
+        const PgStore = connectPgSimple(session);
+        this.sessionStore = new PgStore({
+          pool,
+          tableName: 'session'
+        });
+        
+        console.log("PostgreSQL session store initialized successfully");
+      }
     } catch (err) {
       console.error("Failed to initialize PostgreSQL session store:", err);
-      // Fallback to in-memory session if PostgreSQL store fails
-      console.log("Falling back to in-memory session store");
-      this.sessionStore = new session.MemoryStore();
+      // Keep using memory store if PG store fails
+      console.log("Continuing with in-memory session store");
     }
   }
 

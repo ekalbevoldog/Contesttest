@@ -29,27 +29,54 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Now we can use the properly configured PostgreSQL session store
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'nil-connect-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore, // Restored to use the proper configured session store
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    }
-  };
+  try {
+    // Now we can use the properly configured PostgreSQL session store or fallback
+    const sessionSettings: session.SessionOptions = {
+      secret: process.env.SESSION_SECRET || 'nil-connect-secret-key',
+      resave: false,
+      saveUninitialized: false,
+      store: storage.sessionStore, // Using our memory store fallback if PostgreSQL fails
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      }
+    };
 
-  // Set trust proxy when in production
-  if (process.env.NODE_ENV === 'production') {
-    app.set("trust proxy", 1);
+    // Set trust proxy when in production
+    if (process.env.NODE_ENV === 'production') {
+      app.set("trust proxy", 1);
+    }
+    
+    console.log("[Auth] Setting up Express session middleware");
+    app.use(session(sessionSettings));
+    
+    console.log("[Auth] Initializing Passport authentication");
+    app.use(passport.initialize());
+    app.use(passport.session());
+    
+    console.log("[Auth] Auth middleware setup completed");
+  } catch (error) {
+    console.error("[Auth] Error setting up auth middleware:", error);
+    
+    // Fallback to a basic memory session store if the main setup fails
+    console.log("[Auth] Using fallback memory session store");
+    
+    const fallbackSessionSettings: session.SessionOptions = {
+      secret: process.env.SESSION_SECRET || 'nil-connect-fallback-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000, // 1 day (shorter for fallback)
+      }
+    };
+    
+    app.use(session(fallbackSessionSettings));
+    app.use(passport.initialize());
+    app.use(passport.session());
   }
-  
-  app.use(session(sessionSettings));
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
