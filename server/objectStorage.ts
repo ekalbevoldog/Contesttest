@@ -1,4 +1,3 @@
-
 import { Client } from '@replit/object-storage';
 
 // Define interfaces for storage results and client
@@ -68,10 +67,7 @@ const createMockClient = (): StorageClientInterface => ({
 // Create a real client implementation
 const createRealClient = (): StorageClientInterface => {
   try {
-    const bucketName = 'replit-objstore-baee183f-e7a0-49ac-88ce-a1512085d204';
-    const client = new Client({
-      bucketName: bucketName
-    });
+    const client = new Client(); // Removed bucketName
 
     return {
       async uploadFromText(key: string, content: string): Promise<UploadResult> {
@@ -83,7 +79,7 @@ const createRealClient = (): StorageClientInterface => {
           return { ok: false, error: error instanceof Error ? error.message : String(error) };
         }
       },
-      
+
       async uploadFromBuffer(key: string, buffer: Buffer): Promise<UploadResult> {
         try {
           await client.uploadBuffer(key, buffer);
@@ -93,7 +89,7 @@ const createRealClient = (): StorageClientInterface => {
           return { ok: false, error: error instanceof Error ? error.message : String(error) };
         }
       },
-      
+
       async downloadAsText(key: string): Promise<DownloadTextResult> {
         try {
           const text = await client.downloadText(key);
@@ -103,7 +99,7 @@ const createRealClient = (): StorageClientInterface => {
           return { ok: false, value: '', error: error instanceof Error ? error.message : String(error) };
         }
       },
-      
+
       async downloadAsBuffer(key: string): Promise<DownloadBufferResult> {
         try {
           const buffer = await client.downloadBuffer(key);
@@ -113,7 +109,7 @@ const createRealClient = (): StorageClientInterface => {
           return { ok: false, value: Buffer.from(''), error: error instanceof Error ? error.message : String(error) };
         }
       },
-      
+
       async list(): Promise<ListResult> {
         try {
           const objects = await client.list();
@@ -124,7 +120,7 @@ const createRealClient = (): StorageClientInterface => {
           return { ok: false, value: [], error: error instanceof Error ? error.message : String(error) };
         }
       },
-      
+
       async delete(key: string): Promise<DeleteResult> {
         try {
           await client.delete(key);
