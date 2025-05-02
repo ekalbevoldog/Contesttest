@@ -563,7 +563,7 @@ export default function BusinessDashboard() {
         <div className="flex flex-col gap-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-white font-heading">DASHBOARD</h1>
+              <h1 className="text-3xl font-bold text-white font-heading">Business Dashboard</h1>
               <p className="text-gray-300 mt-1">Manage your campaigns, athlete partnerships, and ROI</p>
               {process.env.NODE_ENV === 'development' && (
                 <div className="text-xs text-gray-500 mt-1">
