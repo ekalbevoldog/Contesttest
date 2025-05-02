@@ -64,9 +64,32 @@ export function UnifiedProtectedRoute({
       
       // Check role requirement if specified
       if (requiredRole) {
-        const hasRequiredRole = Array.isArray(requiredRole)
-          ? requiredRole.includes(effectiveRole)
-          : effectiveRole === requiredRole;
+        let hasRequiredRole = false;
+        
+        // Special handling for business role - check multiple ways the role could be stored
+        if (requiredRole === 'business' || (Array.isArray(requiredRole) && requiredRole.includes('business'))) {
+          // More flexible check for business users
+          const isBusinessUser = 
+            effectiveRole === 'business' || 
+            user.role === 'business' || 
+            user.userType === 'business' ||
+            (user.user_metadata?.role === 'business') ||
+            (typeof user.email === 'string' && (user.email.includes('@business') || user.email.includes('business@')));
+            
+          console.log('[UnifiedProtectedRoute] Business role check:', { 
+            isBusinessUser, 
+            effectiveRole, 
+            userRole: user.role, 
+            userMetaRole: user.user_metadata?.role 
+          });
+            
+          hasRequiredRole = !!isBusinessUser; // Convert to boolean
+        } else {
+          // Standard role check for other roles
+          hasRequiredRole = Array.isArray(requiredRole)
+            ? requiredRole.includes(effectiveRole)
+            : effectiveRole === requiredRole;
+        }
         
         if (!hasRequiredRole) {
           console.log('[UnifiedProtectedRoute] User does not have required role. Has:', effectiveRole, 'Required:', requiredRole);
@@ -133,11 +156,34 @@ export function UnifiedProtectedRoute({
       
       // Check role requirement if specified
       if (requiredRole) {
-        const hasRequiredRole = Array.isArray(requiredRole)
-          ? requiredRole.includes(userRole)
-          : userRole === requiredRole;
+        let hasRequiredRole = false;
+        
+        // Special handling for business role - check multiple ways the role could be stored
+        if (requiredRole === 'business' || (Array.isArray(requiredRole) && requiredRole.includes('business'))) {
+          // More flexible check for business users
+          const isBusinessUser = 
+            userRole === 'business' || 
+            supabaseUser.role === 'business' || 
+            supabaseUser.userType === 'business' ||
+            (supabaseUser.user_metadata?.role === 'business') ||
+            (typeof supabaseUser.email === 'string' && (supabaseUser.email.includes('@business') || supabaseUser.email.includes('business@')));
+            
+          console.log('[UnifiedProtectedRoute] Supabase business role check:', { 
+            isBusinessUser, 
+            userRole, 
+            userMetaRole: supabaseUser.user_metadata?.role 
+          });
+            
+          hasRequiredRole = !!isBusinessUser; // Convert to boolean
+        } else {
+          // Standard role check for other roles
+          hasRequiredRole = Array.isArray(requiredRole)
+            ? requiredRole.includes(userRole)
+            : userRole === requiredRole;
+        }
         
         if (!hasRequiredRole) {
+          console.log('[UnifiedProtectedRoute] Supabase user does not have required role. Has:', userRole, 'Required:', requiredRole);
           // User does not have the required role, redirect to appropriate dashboard
           redirectBasedOnRole(userRole);
           setIsLoading(false);
