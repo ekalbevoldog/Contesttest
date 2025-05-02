@@ -1531,19 +1531,28 @@ export class SupabaseStorage implements IStorage {
   private mapAthleteFromDb(data: any): Athlete {
     return {
       id: data.id,
-      userId: data.user_id,
-      sessionId: data.session_id,
+      auth_id: data.auth_id,
+      session_id: data.session_id,
       name: data.name,
       email: data.email,
       phone: data.phone,
       school: data.school,
       division: data.division,
       sport: data.sport,
+      follower_count: data.follower_count,
+      content_style: data.content_style,
+      compensation_goals: data.compensation_goals,
+      // Include both snake_case and camelCase for compatibility
+      userId: data.user_id,
+      sessionId: data.session_id,
       followerCount: data.follower_count,
       contentStyle: data.content_style,
       compensationGoals: data.compensation_goals,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      // Add DateFields format as well
+      createdAt: data.created_at ? new Date(data.created_at) : undefined,
+      updatedAt: data.updated_at ? new Date(data.updated_at) : undefined
     };
   }
 
@@ -1567,17 +1576,27 @@ export class SupabaseStorage implements IStorage {
   private mapBusinessFromDb(data: any): Business {
     return {
       id: data.id,
-      userId: data.user_id,
-      sessionId: data.session_id,
+      auth_id: data.auth_id,
+      session_id: data.session_id,
       name: data.name,
       email: data.email,
+      product_type: data.product_type,
+      audience_goals: data.audience_goals,
+      campaign_vibe: data.campaign_vibe,
+      values: data.values,
+      target_schools_sports: data.target_schools_sports,
+      // Include camelCase alternatives for compatibility
+      userId: data.user_id,
+      sessionId: data.session_id,
       productType: data.product_type,
       audienceGoals: data.audience_goals,
       campaignVibe: data.campaign_vibe,
-      values: data.values,
       targetSchoolsSports: data.target_schools_sports,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      // DateFields format
+      createdAt: data.created_at ? new Date(data.created_at) : undefined,
+      updatedAt: data.updated_at ? new Date(data.updated_at) : undefined
     };
   }
 
@@ -1599,13 +1618,18 @@ export class SupabaseStorage implements IStorage {
   private mapCampaignFromDb(data: any): Campaign {
     return {
       id: data.id,
-      businessId: data.business_id,
+      business_id: data.business_id,
       title: data.title,
       description: data.description,
       deliverables: data.deliverables,
       status: data.status,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      // Include camelCase alternatives
+      businessId: data.business_id,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      // DateFields format
+      createdAt: data.created_at ? new Date(data.created_at) : undefined,
+      updatedAt: data.updated_at ? new Date(data.updated_at) : undefined
     };
   }
 
@@ -1624,13 +1648,20 @@ export class SupabaseStorage implements IStorage {
   private mapMatchFromDb(data: any): Match {
     return {
       id: data.id,
-      athleteId: data.athlete_id,
-      businessId: data.business_id,
-      campaignId: data.campaign_id,
+      athlete_id: data.athlete_id,
+      business_id: data.business_id,
+      campaign_id: data.campaign_id,
       score: data.score,
       reason: data.reason,
       status: data.status,
-      createdAt: new Date(data.created_at)
+      compliance_status: data.compliance_status || 'pending',
+      // Include camelCase alternatives
+      athleteId: data.athlete_id,
+      businessId: data.business_id,
+      campaignId: data.campaign_id,
+      created_at: data.created_at,
+      // DateFields format
+      createdAt: data.created_at ? new Date(data.created_at) : undefined
     };
   }
 
@@ -1649,17 +1680,33 @@ export class SupabaseStorage implements IStorage {
   private mapMessageFromDb(data: any): Message {
     return {
       id: data.id,
-      sessionId: data.session_id,
+      session_id: data.session_id,
       role: data.role,
       content: data.content,
       metadata: data.metadata,
-      createdAt: new Date(data.created_at)
+      // Include camelCase alternatives
+      sessionId: data.session_id,
+      created_at: data.created_at,
+      // DateFields format
+      createdAt: data.created_at ? new Date(data.created_at) : undefined
     };
   }
 
   private mapPartnershipOfferFromDb(data: any): PartnershipOffer {
     return {
       id: data.id,
+      business_id: data.business_id,
+      athlete_id: data.athlete_id,
+      campaign_id: data.campaign_id,
+      match_id: data.match_id,
+      status: data.status,
+      deliverables: data.deliverables || [],
+      compliance_status: data.compliance_status || 'pending',
+      compensation_type: data.compensation_type, 
+      offer_amount: data.offer_amount,
+      usage_rights: data.usage_rights,
+      term: data.term,
+      // Include camelCase alternatives
       matchId: data.match_id,
       businessId: data.business_id,
       athleteId: data.athlete_id,
@@ -1667,10 +1714,11 @@ export class SupabaseStorage implements IStorage {
       compensationType: data.compensation_type,
       offerAmount: data.offer_amount,
       usageRights: data.usage_rights,
-      term: data.term,
-      status: data.status,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      // DateFields format
+      createdAt: data.created_at ? new Date(data.created_at) : undefined,
+      updatedAt: data.updated_at ? new Date(data.updated_at) : undefined
     };
   }
 
@@ -1693,13 +1741,22 @@ export class SupabaseStorage implements IStorage {
   private mapFeedbackFromDb(data: any): Feedback {
     return {
       id: data.id,
+      user_type: data.user_type,
+      match_id: data.match_id,
+      status: data.status,
+      title: data.title || '',
+      content: data.content || '',
+      rating: data.rating || 0,
+      category: data.category || '',
+      public: data.public || false,
+      // Include camelCase alternatives
       userId: data.user_id,
       userType: data.user_type,
       matchId: data.match_id,
       feedbackType: data.feedback_type,
-      content: data.content,
-      status: data.status,
-      createdAt: new Date(data.created_at)
+      created_at: data.created_at,
+      // DateFields format
+      createdAt: data.created_at ? new Date(data.created_at) : undefined
     };
   }
 
@@ -1806,7 +1863,12 @@ export class MemStorage implements IStorage {
       session_id: sessionId, 
       role, 
       content, 
-      metadata 
+      metadata,
+      // Add camelCase alternatives
+      sessionId: sessionId,
+      // Add date fields
+      created_at: new Date(),
+      createdAt: new Date()
     }; 
   }
   async getUnreadMessageCounts(sessionId: string): Promise<number> { return 0; }
