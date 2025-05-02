@@ -2578,15 +2578,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const userId = req.user.id;
       
-      // Get user's subscription details from database
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('stripe_subscription_id, stripe_customer_id, subscription_status, subscription_plan, subscription_current_period_end, subscription_cancel_at_period_end')
-        .eq('auth_id', userId)
-        .maybeSingle();
-      
-      if (userError) {
-        console.error('[API] Error fetching user subscription data:', userError);
+      // Get user's subscription details from database - safely handle missing columns
+      let userData;
+      try {
+        // Try with all fields including subscription_cancel_at_period_end
+        const { data, error } = await supabase
+          .from('users')
+          .select('stripe_subscription_id, stripe_customer_id, subscription_status, subscription_plan, subscription_current_period_end, subscription_cancel_at_period_end')
+          .eq('auth_id', userId)
+          .maybeSingle();
+          
+        userData = data;
+        
+        if (error) {
+          // If there's an error about missing columns, try without the problematic column
+          if (error.message && error.message.includes('does not exist')) {
+            console.log('[API] Falling back to query without subscription_cancel_at_period_end column');
+            const fallbackResult = await supabase
+              .from('users')
+              .select('stripe_subscription_id, stripe_customer_id, subscription_status, subscription_plan, subscription_current_period_end')
+              .eq('auth_id', userId)
+              .maybeSingle();
+              
+            if (fallbackResult.error) {
+              console.error('[API] Error in fallback subscription query:', fallbackResult.error);
+              return res.status(500).json({ error: 'Failed to fetch subscription status' });
+            }
+            
+            userData = fallbackResult.data;
+          } else {
+            console.error('[API] Error fetching user subscription data:', error);
+            return res.status(500).json({ error: 'Failed to fetch subscription status' });
+          }
+        }
+      } catch (queryError) {
+        console.error('[API] Exception in subscription query:', queryError);
         return res.status(500).json({ error: 'Failed to fetch subscription status' });
       }
       
@@ -2987,16 +3013,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { cancel_at_period_end: true }
       );
       
-      // Update user record
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          subscription_cancel_at_period_end: true,
-        })
-        .eq('auth_id', userId);
-      
-      if (updateError) {
-        console.error('[API] Error updating user for subscription cancellation:', updateError);
+      // Update user record - handle missing column gracefully
+      try {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            subscription_cancel_at_period_end: true,
+          })
+          .eq('auth_id', userId);
+        
+        if (updateError) {
+          // If there's an error about missing columns, log it but don't fail
+          if (updateError.message && updateError.message.includes('does not exist')) {
+            console.warn('[API] Column subscription_cancel_at_period_end does not exist, but we can continue');
+            // The frontend will still show cancellation based on Stripe's response
+          } else {
+            console.error('[API] Error updating user for subscription cancellation:', updateError);
+          }
+        }
+      } catch (updateErr) {
+        console.error('[API] Exception updating cancel_at_period_end flag:', updateErr);
+        // Don't fail the request, since the Stripe update succeeded
       }
       
       return res.status(200).json({
@@ -3044,16 +3081,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { cancel_at_period_end: false }
       );
       
-      // Update user record
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          subscription_cancel_at_period_end: false,
-        })
-        .eq('auth_id', userId);
-      
-      if (updateError) {
-        console.error('[API] Error updating user for subscription resumption:', updateError);
+      // Update user record - handle missing column gracefully
+      try {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            subscription_cancel_at_period_end: false,
+          })
+          .eq('auth_id', userId);
+        
+        if (updateError) {
+          // If there's an error about missing columns, log it but don't fail
+          if (updateError.message && updateError.message.includes('does not exist')) {
+            console.warn('[API] Column subscription_cancel_at_period_end does not exist, but we can continue');
+            // The frontend will still show resumed subscription based on Stripe's response
+          } else {
+            console.error('[API] Error updating user for subscription resumption:', updateError);
+          }
+        }
+      } catch (updateErr) {
+        console.error('[API] Exception updating cancel_at_period_end flag:', updateErr);
+        // Don't fail the request, since the Stripe update succeeded
       }
       
       return res.status(200).json({
