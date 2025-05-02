@@ -33,13 +33,21 @@ export async function apiRequest(
       
       // Try to get token from localStorage as fallback
       try {
-        const storedAuth = localStorage.getItem('supabase-auth');
+        // Try both storage keys - the one used by the app and the one used by Supabase
+        let storedAuth = localStorage.getItem('contested-auth');
+        if (!storedAuth) {
+          // Try the alternative key if the first one doesn't exist
+          storedAuth = localStorage.getItem('supabase-auth');
+        }
+        
         if (storedAuth) {
           const authData = JSON.parse(storedAuth);
           if (authData.access_token) {
             headers["Authorization"] = `Bearer ${authData.access_token}`;
             console.log('[queryClient] Using token from localStorage');
           }
+        } else {
+          console.log('[queryClient] No auth token found in localStorage');
         }
       } catch (localStorageError) {
         console.error('[queryClient] Error accessing localStorage:', localStorageError);
@@ -80,12 +88,21 @@ export const getQueryFn: <T>(options: {
       } else {
         // Try to get token from localStorage as fallback
         try {
-          const storedAuth = localStorage.getItem('supabase-auth');
+          // Try both storage keys - the one used by the app and the one used by Supabase
+          let storedAuth = localStorage.getItem('contested-auth');
+          if (!storedAuth) {
+            // Try the alternative key if the first one doesn't exist
+            storedAuth = localStorage.getItem('supabase-auth');
+          }
+          
           if (storedAuth) {
             const authData = JSON.parse(storedAuth);
             if (authData.access_token) {
               headers["Authorization"] = `Bearer ${authData.access_token}`;
+              console.log('[queryClient] Using token from localStorage for GET request');
             }
+          } else {
+            console.log('[queryClient] No auth token found in localStorage for GET request');
           }
         } catch (localStorageError) {
           console.error('[queryClient] Error accessing localStorage:', localStorageError);
