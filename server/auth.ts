@@ -10,7 +10,28 @@ import { User, User as SchemaUser } from "../shared/schema.js";
 
 declare global {
   namespace Express {
-    interface User extends SchemaUser {}
+    // Define User interface ensuring id is non-optional
+    interface User {
+      id: string;
+      email: string;
+      username: string;
+      password: string;
+      role: "athlete" | "business" | "compliance" | "admin";
+      created_at: Date;
+      metadata: Record<string, any>;
+      // Optional fields
+      auth_id?: string;
+      last_login?: Date;
+      stripe_customer_id?: string;
+      stripe_subscription_id?: string;
+      subscription_status?: string;
+      subscription_plan?: string;
+      subscription_current_period_end?: Date;
+      subscription_cancel_at_period_end?: boolean;
+      // DateFields compatibility
+      createdAt?: Date;
+      updatedAt?: Date;
+    }
   }
 }
 
@@ -115,8 +136,11 @@ export function setupAuth(app: Express) {
           subscription_status: user.subscription_status,
           subscription_plan: user.subscription_plan,
           subscription_current_period_end: user.subscription_current_period_end,
-          subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
-        } as User;
+          subscription_cancel_at_period_end: user.subscription_cancel_at_period_end,
+          // Add DateFields compatibility properties
+          createdAt: user.created_at || new Date(),
+          updatedAt: new Date()
+        };
         return done(null, validUser);
       } catch (error) {
         return done(error);
@@ -153,8 +177,11 @@ export function setupAuth(app: Express) {
         subscription_status: user.subscription_status,
         subscription_plan: user.subscription_plan,
         subscription_current_period_end: user.subscription_current_period_end,
-        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
-      } as User;
+        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end,
+        // Add DateFields compatibility properties
+        createdAt: user.created_at || new Date(),
+        updatedAt: new Date()
+      };
       
       done(null, validUser);
     } catch (error) {
@@ -219,8 +246,11 @@ export function setupAuth(app: Express) {
         subscription_status: user.subscription_status,
         subscription_plan: user.subscription_plan,
         subscription_current_period_end: user.subscription_current_period_end,
-        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
-      } as User;
+        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end,
+        // Add DateFields compatibility properties
+        createdAt: user.created_at || new Date(),
+        updatedAt: new Date()
+      };
       
       // Log the user in
       req.login(validUser, (err) => {
@@ -259,8 +289,11 @@ export function setupAuth(app: Express) {
         subscription_status: user.subscription_status,
         subscription_plan: user.subscription_plan,
         subscription_current_period_end: user.subscription_current_period_end,
-        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
-      } as User;
+        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end,
+        // Add DateFields compatibility properties
+        createdAt: user.created_at || new Date(),
+        updatedAt: new Date()
+      };
       
       req.login(validUser, (loginErr) => {
         if (loginErr) return next(loginErr);
