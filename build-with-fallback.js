@@ -24,6 +24,14 @@ try {
     console.log('⚠️ SQL migration file not found, skipping copy operation');
   }
   
+  // Copy vite.config.ts file to dist directory
+  if (fs.existsSync('vite.config.ts')) {
+    execSync('cp vite.config.ts dist/vite.config.js', { stdio: 'inherit' });
+    console.log('✅ vite.config.ts copied to dist/vite.config.js');
+  } else {
+    console.log('⚠️ vite.config.ts file not found, skipping copy');
+  }
+  
   serverBuildSuccess = true;
   
 } catch (error) {
@@ -68,6 +76,14 @@ try {
       console.log('✅ SQL migration file copied');
     } else {
       console.log('⚠️ SQL migration file not found, skipping copy operation');
+    }
+    
+    // Copy vite.config.ts file to dist directory
+    if (fs.existsSync('vite.config.ts')) {
+      execSync('cp vite.config.ts dist/vite.config.js', { stdio: 'inherit' });
+      console.log('✅ vite.config.ts copied to dist/vite.config.js');
+    } else {
+      console.log('⚠️ vite.config.ts file not found, skipping copy');
     }
     
     console.log('⚠️ Build completed with fallback strategy. TypeScript errors should be fixed for future builds.');
