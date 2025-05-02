@@ -868,12 +868,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           budget_max: profileData.budgetMax || 5000,
           zipcode: profileData.zipCode || "",
           budget: profileData.budget || `$${profileData.budgetMin || 0}-$${profileData.budgetMax || 5000}`,
-          // Additional data in preferences JSON
-          preferences: JSON.stringify({
+          // Additional data in preferences 
+          preferences: {
             contactName: profileData.contactName || "",
             contactTitle: profileData.contactTitle || "",
             businessSize: profileData.businessSize || ""
-          })
+          }
         };
 
         // Store in local storage
@@ -1362,12 +1362,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phone: profileData.basicInfo?.phone || null,
           social_handles: JSON.stringify(profileData.basicInfo?.socialHandles) || "",
           // Store the complete wizard data and AI insights in preferences
-          preferences: JSON.stringify({
+          preferences: {
             aiInsights: processedProfile.enrichedData,
             recommendations: processedProfile.recommendations,
             brandCompatibility: processedProfile.enrichedData.brandCompatibility,
             wizardData: profileData
-          })
+          }
         };
 
         // Store in local storage
@@ -1415,12 +1415,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phone: profileData.basicInfo?.phone || null,
           website: profileData.basicInfo?.website || null,
           // Store the complete wizard data and AI insights in preferences
-          preferences: JSON.stringify({
+          preferences: {
             aiInsights: processedProfile.enrichedData,
             recommendations: processedProfile.recommendations,
             idealAthleteTraits: processedProfile.enrichedData.idealPartnerTraits,
             wizardData: profileData
-          })
+          }
         };
 
         // Store in local storage

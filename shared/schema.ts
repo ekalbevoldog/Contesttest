@@ -57,7 +57,7 @@ export const insertSessionSchema = sessionSchema.omit({
 // Athlete profile type definitions
 export const athleteSchema = z.object({
   id: z.number(),
-  user_id: z.number(),
+  user_id: z.number().optional(),
   session_id: z.string(),
   
   // Basic Information
@@ -84,7 +84,7 @@ export const athleteSchema = z.object({
   stats: z.record(z.any()).optional(),
   
   // Social Media
-  social_handles: z.record(z.any()).optional(),
+  social_handles: z.union([z.record(z.any()).optional(), z.string().optional()]),
   follower_count: z.number().default(0),
   average_engagement_rate: z.number().optional(),
   
@@ -144,7 +144,7 @@ export const insertAthleteSchema = athleteSchema.omit({
 // Business profile type definitions
 export const businessSchema = z.object({
   id: z.number(),
-  user_id: z.number(),
+  user_id: z.number().optional(),
   session_id: z.string(),
   
   // Basic Information
