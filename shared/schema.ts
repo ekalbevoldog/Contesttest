@@ -2,6 +2,439 @@
 // schema.ts - Type definitions for the data model
 
 import { z } from "zod";
+import { createInsertSchema } from "drizzle-zod";
+import { pgTable, text, uuid, timestamp, serial, integer, boolean, json } from "drizzle-orm/pg-core";
+
+// =========== DRIZZLE SCHEMA DEFINITIONS ===========
+
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  auth_id: uuid("auth_id"),
+  email: text("email").notNull(),
+  username: text("username").notNull(),
+  password: text("password"),
+  role: text("role", { enum: ["athlete", "business", "compliance", "admin"] }).notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+  last_login: timestamp("last_login"),
+  metadata: json("metadata"),
+  // Stripe subscription fields
+  stripe_customer_id: text("stripe_customer_id"),
+  stripe_subscription_id: text("stripe_subscription_id"),
+  subscription_status: text("subscription_status"),
+  subscription_plan: text("subscription_plan"),
+  subscription_current_period_end: timestamp("subscription_current_period_end"),
+  subscription_cancel_at_period_end: boolean("subscription_cancel_at_period_end")
+});
+
+// Sessions table
+export const sessions = pgTable("sessions", {
+  id: serial("id").primaryKey(),
+  session_id: text("session_id").notNull(),
+  user_id: integer("user_id").references(() => users.id),
+  user_type: text("user_type"),
+  data: json("data"),
+  profile_completed: boolean("profile_completed").default(false),
+  last_login: timestamp("last_login"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+// Athlete profiles table
+export const athleteProfiles = pgTable("athlete_profiles", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id),
+  session_id: text("session_id").notNull(),
+  
+  // Basic Information
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  birthdate: timestamp("birthdate"),
+  gender: text("gender"),
+  bio: text("bio"),
+  zipcode: text("zipcode"),
+  
+  // Academic Information
+  school: text("school").notNull(),
+  division: text("division").notNull(),
+  graduation_year: integer("graduation_year"),
+  major: text("major"),
+  gpa: integer("gpa"),
+  academic_honors: text("academic_honors"),
+  
+  // Athletic Information
+  sport: text("sport").notNull(),
+  position: text("position"),
+  sport_achievements: text("sport_achievements"),
+  stats: json("stats"),
+  
+  // Social Media
+  social_handles: json("social_handles"),
+  follower_count: integer("follower_count").default(0),
+  average_engagement_rate: integer("average_engagement_rate"),
+  
+  // Social Media OAuth Connections
+  social_connections: json("social_connections"),
+  instagram_metrics: json("instagram_metrics"),
+  twitter_metrics: json("twitter_metrics"),
+  tiktok_metrics: json("tiktok_metrics"),
+  last_metrics_update: timestamp("last_metrics_update"),
+  
+  // Profile Link Settings
+  profile_link_enabled: boolean("profile_link_enabled"),
+  profile_link_id: text("profile_link_id"),
+  profile_link_theme: text("profile_link_theme"),
+  profile_link_background_color: text("profile_link_background_color"),
+  profile_link_text_color: text("profile_link_text_color"),
+  profile_link_accent_color: text("profile_link_accent_color"),
+  profile_link_bio: text("profile_link_bio"),
+  profile_link_photo_url: text("profile_link_photo_url"),
+  profile_link_buttons: json("profile_link_buttons"),
+  
+  // Content Creation
+  content_style: text("content_style").notNull(),
+  content_types: json("content_types"),
+  top_performing_content_themes: json("top_performing_content_themes"),
+  media_kit_url: text("media_kit_url"),
+  
+  // Brand Preferences
+  compensation_goals: text("compensation_goals").notNull(),
+  preferred_product_categories: json("preferred_product_categories"),
+  previous_brand_deals: json("previous_brand_deals"),
+  available_for_travel: boolean("available_for_travel"),
+  exclusivity_requirements: text("exclusivity_requirements"),
+  
+  // Personal Brand
+  personal_values: json("personal_values"),
+  causes: json("causes"),
+  brand_personality: json("brand_personality"),
+  
+  // Availability & Requirements
+  availability_timeframe: text("availability_timeframe"),
+  minimum_compensation: text("minimum_compensation"),
+  
+  // Preferences and Algorithm Data
+  preferences: json("preferences"),
+  
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+// Business profiles table
+export const businessProfiles = pgTable("business_profiles", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").references(() => users.id),
+  session_id: text("session_id").notNull(),
+  
+  // Basic Information
+  name: text("name").notNull(),
+  email: text("email"),
+  industry: text("industry"),
+  business_type: text("business_type"),
+  company_size: text("company_size"),
+  founded_year: integer("founded_year"),
+  website: text("website"),
+  logo: text("logo"),
+  zipcode: text("zipcode"),
+  
+  // Product Information
+  product_type: text("product_type").notNull(),
+  product_description: text("product_description"),
+  product_images: json("product_images"),
+  pricing_tier: text("pricing_tier"),
+  
+  // Marketing Information
+  audience_goals: text("audience_goals").notNull(),
+  audience_demographics: json("audience_demographics"),
+  primary_audience_age_range: text("primary_audience_age_range"),
+  secondary_audience_age_range: text("secondary_audience_age_range"),
+  
+  // Campaign Details
+  campaign_vibe: text("campaign_vibe").notNull(),
+  campaign_goals: json("campaign_goals"),
+  campaign_frequency: text("campaign_frequency"),
+  campaign_duration: text("campaign_duration"),
+  campaign_seasonality: text("campaign_seasonality"),
+  campaign_timeline: text("campaign_timeline"),
+  
+  // Brand Information
+  values: text("values").notNull(),
+  brand_voice: text("brand_voice"),
+  brand_colors: json("brand_colors"),
+  brand_guidelines: text("brand_guidelines"),
+  sustainability_focus: boolean("sustainability_focus"),
+  
+  // Athletic Targeting
+  target_schools_sports: text("target_schools_sports").notNull(),
+  preferred_sports: json("preferred_sports"),
+  preferred_divisions: json("preferred_divisions"),
+  preferred_regions: json("preferred_regions"),
+  
+  // Budget and Compensation
+  budget: text("budget"),
+  budget_min: integer("budget_min"),
+  budget_max: integer("budget_max"),
+  compensation_model: text("compensation_model"),
+  budget_per_athlete: text("budget_per_athlete"),
+  
+  // Previous Experience
+  has_previous_partnerships: boolean("has_previous_partnerships"),
+  previous_influencer_campaigns: json("previous_influencer_campaigns"),
+  campaign_success_metrics: json("campaign_success_metrics"),
+  
+  // Goals
+  goals: json("goals"),
+  
+  // Preferences and Algorithm Data
+  preferences: json("preferences"),
+  
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+// Campaigns table
+export const campaigns = pgTable("campaigns", {
+  id: serial("id").primaryKey(),
+  business_id: integer("business_id").notNull().references(() => businessProfiles.id),
+  
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  campaign_brief: text("campaign_brief"),
+  campaign_type: text("campaign_type"),
+  
+  deliverables: json("deliverables").notNull(),
+  content_requirements: json("content_requirements"),
+  brand_mention_requirements: text("brand_mention_requirements"),
+  hashtag_requirements: json("hashtag_requirements"),
+  exclusivity_clause: text("exclusivity_clause"),
+  
+  start_date: timestamp("start_date"),
+  end_date: timestamp("end_date"),
+  submission_deadlines: json("submission_deadlines"),
+  
+  target_audience: json("target_audience"),
+  target_sports: json("target_sports"),
+  target_divisions: json("target_divisions"),
+  target_regions: json("target_regions"),
+  target_follower_counts: json("target_follower_counts"),
+  target_engagement_rates: json("target_engagement_rates"),
+  
+  budget: text("budget"),
+  compensation_details: json("compensation_details"),
+  
+  kpis: json("kpis"),
+  goals: json("goals"),
+  
+  status: text("status", { enum: ["draft", "active", "completed", "cancelled"] }).default("draft"),
+  
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+// Matches table
+export const matches = pgTable("matches", {
+  id: serial("id").primaryKey(),
+  athlete_id: integer("athlete_id").notNull().references(() => athleteProfiles.id),
+  business_id: integer("business_id").notNull().references(() => businessProfiles.id),
+  campaign_id: integer("campaign_id").notNull().references(() => campaigns.id),
+  
+  score: integer("score").notNull(),
+  reason: text("reason").notNull(),
+  strength_areas: json("strength_areas"),
+  weakness_areas: json("weakness_areas"),
+  
+  audience_fit_score: integer("audience_fit_score"),
+  content_style_fit_score: integer("content_style_fit_score"),
+  brand_value_alignment_score: integer("brand_value_alignment_score"),
+  engagement_potential_score: integer("engagement_potential_score"),
+  compensation_fit_score: integer("compensation_fit_score"),
+  academic_alignment_score: integer("academic_alignment_score"),
+  geographic_fit_score: integer("geographic_fit_score"),
+  timing_compatibility_score: integer("timing_compatibility_score"),
+  platform_specialization_score: integer("platform_specialization_score"),
+  
+  status: text("status", { enum: ["pending", "accepted", "declined", "completed"] }).default("pending"),
+  athlete_response: text("athlete_response"),
+  business_response: text("business_response"),
+  compliance_status: text("compliance_status", { enum: ["pending", "approved", "rejected"] }).default("pending"),
+  compliance_officer_id: integer("compliance_officer_id"),
+  compliance_notes: text("compliance_notes"),
+  
+  matched_at: timestamp("matched_at"),
+  responded_at: timestamp("responded_at"),
+  approved_at: timestamp("approved_at"),
+  completed_at: timestamp("completed_at"),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+// Messages table
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  session_id: text("session_id").notNull(),
+  user_id: integer("user_id").references(() => users.id),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  metadata: json("metadata"),
+  created_at: timestamp("created_at").defaultNow()
+});
+
+// Partnership Offers table
+export const partnershipOffers = pgTable("partnership_offers", {
+  id: serial("id").primaryKey(),
+  match_id: integer("match_id").notNull().references(() => matches.id),
+  business_id: integer("business_id").notNull().references(() => businessProfiles.id),
+  athlete_id: integer("athlete_id").notNull().references(() => athleteProfiles.id),
+  campaign_id: integer("campaign_id").notNull().references(() => campaigns.id),
+  
+  compensation_type: text("compensation_type", { enum: ['monetary', 'product', 'affiliate', 'hybrid'] }).notNull(),
+  offer_amount: text("offer_amount").notNull(),
+  payment_schedule: text("payment_schedule"),
+  bonus_structure: text("bonus_structure"),
+  
+  deliverables: json("deliverables").notNull(),
+  content_specifications: text("content_specifications"),
+  post_frequency: text("post_frequency"),
+  approval_process: text("approval_process"),
+  
+  usage_rights: text("usage_rights").notNull(),
+  term: text("term").notNull(),
+  exclusivity: text("exclusivity"),
+  geographic_restrictions: text("geographic_restrictions"),
+  
+  status: text("status", { enum: ["pending", "accepted", "declined", "expired"] }).default("pending"),
+  athlete_viewed_at: timestamp("athlete_viewed_at"),
+  athlete_responded_at: timestamp("athlete_responded_at"),
+  business_updated_at: timestamp("business_updated_at"),
+  
+  compliance_status: text("compliance_status", { enum: ["pending", "approved", "rejected"] }).default("pending"),
+  compliance_notes: text("compliance_notes"),
+  compliance_reviewed_at: timestamp("compliance_reviewed_at"),
+  
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+  expires_at: timestamp("expires_at")
+});
+
+// Feedback table
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id").notNull().references(() => users.id),
+  user_type: text("user_type", { enum: ["athlete", "business", "compliance", "admin"] }).notNull(),
+  match_id: integer("match_id").references(() => matches.id),
+  partnership_id: integer("partnership_id").references(() => partnershipOffers.id),
+  rating: integer("rating").notNull(),
+  category: text("category").notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  response: text("response"),
+  status: text("status", { enum: ["pending", "resolved", "rejected"] }).default("pending"),
+  public: boolean("public").default(false),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+  response_by: integer("response_by").references(() => users.id)
+});
+
+// Define relations
+export const relations = {
+  users: {
+    athlete: {
+      relation: '1:1',
+      source: users.id,
+      target: athleteProfiles.user_id
+    },
+    business: {
+      relation: '1:1',
+      source: users.id,
+      target: businessProfiles.user_id
+    },
+    sessions: {
+      relation: '1:m',
+      source: users.id,
+      target: sessions.user_id
+    },
+    messages: {
+      relation: '1:m',
+      source: users.id,
+      target: messages.user_id
+    }
+  },
+  athleteProfiles: {
+    user: {
+      relation: '1:1',
+      source: athleteProfiles.user_id,
+      target: users.id
+    },
+    matches: {
+      relation: '1:m',
+      source: athleteProfiles.id,
+      target: matches.athlete_id
+    },
+    offers: {
+      relation: '1:m',
+      source: athleteProfiles.id,
+      target: partnershipOffers.athlete_id
+    }
+  },
+  businessProfiles: {
+    user: {
+      relation: '1:1',
+      source: businessProfiles.user_id,
+      target: users.id
+    },
+    campaigns: {
+      relation: '1:m',
+      source: businessProfiles.id,
+      target: campaigns.business_id
+    },
+    matches: {
+      relation: '1:m',
+      source: businessProfiles.id,
+      target: matches.business_id
+    },
+    offers: {
+      relation: '1:m',
+      source: businessProfiles.id,
+      target: partnershipOffers.business_id
+    }
+  },
+  campaigns: {
+    business: {
+      relation: '1:1',
+      source: campaigns.business_id,
+      target: businessProfiles.id
+    },
+    matches: {
+      relation: '1:m',
+      source: campaigns.id,
+      target: matches.campaign_id
+    }
+  },
+  matches: {
+    athlete: {
+      relation: '1:1',
+      source: matches.athlete_id,
+      target: athleteProfiles.id
+    },
+    business: {
+      relation: '1:1',
+      source: matches.business_id,
+      target: businessProfiles.id
+    },
+    campaign: {
+      relation: '1:1',
+      source: matches.campaign_id,
+      target: campaigns.id
+    },
+    offers: {
+      relation: '1:m',
+      source: matches.id,
+      target: partnershipOffers.match_id
+    }
+  }
+};
+
+// =========== ZOD SCHEMA DEFINITIONS ===========
 
 // User type definitions
 export const userSchema = z.object({
