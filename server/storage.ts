@@ -6,9 +6,7 @@ import {
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
-import { pool } from "./db.js";
-import { supabase } from "./supabase.js";
+import { supabase, supabaseAdmin } from "./supabase.js";
 
 // Helper for password hashing
 const scryptAsync = promisify(scrypt);
@@ -107,15 +105,12 @@ export class SupabaseStorage implements IStorage {
 
   constructor() {
     try {
-      // Set up PostgreSQL session store with the correct table name
-      const PgStore = connectPgSimple(session);
-      
-      // Use a memory store first to avoid startup errors
+      // Initialize in-memory session store by default
       this.sessionStore = new session.MemoryStore();
       console.log("Using in-memory session store initially");
       
-      // Attempt to create PG session store asynchronously
-      this.initPgSessionStore();
+      // Attempt to create Supabase-based session store asynchronously
+      this.initSupabaseSessionStore();
     } catch (err) {
       console.error("Failed to initialize session store:", err);
       // Ensure we have a memory store as fallback
@@ -124,86 +119,157 @@ export class SupabaseStorage implements IStorage {
     }
   }
   
-  // Async initialization of PostgreSQL session store
-  private async initPgSessionStore() {
-    try {
-      console.log("Checking if session table exists...");
+  // Create a custom session store that uses Supabase
+  private async initSupabaseSessionStore() {
+    // Define a custom session store class that uses Supabase
+    const SupabaseSessionStore = class extends session.Store {
+      // Get a session by ID
+      async get(sid: string, callback: (err: any, session?: any) => void) {
+        try {
+          const { data, error } = await supabase
+            .from('session')
+            .select('sess, expire')
+            .eq('sid', sid)
+            .single();
+          
+          if (error || !data) {
+            return callback(null);
+          }
+          
+          // Check if session is expired
+          if (new Date(data.expire) < new Date()) {
+            await this.destroy(sid, () => {});
+            return callback(null);
+          }
+          
+          return callback(null, data.sess);
+        } catch (err) {
+          return callback(err);
+        }
+      }
       
-      // Try direct SQL query to safely check if the table exists
+      // Set/update a session
+      async set(sid: string, session: any, callback?: (err?: any) => void) {
+        try {
+          // Calculate expiration
+          const expire = new Date(Date.now() + (session.cookie.maxAge || 86400000));
+          
+          const { error } = await supabaseAdmin.from('session').upsert({
+            sid,
+            sess: session,
+            expire
+          }, { onConflict: 'sid' });
+          
+          if (error) {
+            console.error("Error saving session:", error);
+            return callback?.(error);
+          }
+          
+          return callback?.();
+        } catch (err) {
+          return callback?.(err);
+        }
+      }
+      
+      // Destroy a session
+      async destroy(sid: string, callback?: (err?: any) => void) {
+        try {
+          const { error } = await supabaseAdmin
+            .from('session')
+            .delete()
+            .eq('sid', sid);
+          
+          if (error) {
+            console.error("Error destroying session:", error);
+            return callback?.(error);
+          }
+          
+          return callback?.();
+        } catch (err) {
+          return callback?.(err);
+        }
+      }
+      
+      // Touch/update a session's expiration
+      async touch(sid: string, session: any, callback?: (err?: any) => void) {
+        try {
+          const expire = new Date(Date.now() + (session.cookie.maxAge || 86400000));
+          
+          const { error } = await supabaseAdmin
+            .from('session')
+            .update({ expire })
+            .eq('sid', sid);
+          
+          if (error) {
+            console.error("Error touching session:", error);
+            return callback?.(error);
+          }
+          
+          return callback?.();
+        } catch (err) {
+          return callback?.(err);
+        }
+      }
+    };
+    
+    try {
+      console.log("Checking if session table exists in Supabase...");
+      
       let tableExists = false;
       
       try {
-        const tableCheckResult = await pool.query(`
-          SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public'
-            AND table_name = 'session'
-          );
-        `);
-        
-        tableExists = tableCheckResult.rows[0]?.exists;
+        // Check if the session table exists using Supabase API
+        const { error: tableCheckError } = await supabase.from('session').select('count').limit(1);
+        tableExists = !tableCheckError;
         console.log(`Session table exists check result: ${tableExists}`);
-      } catch (sqlError) {
-        console.error("Error checking if session table exists with SQL:", sqlError);
-        // Continue with fallback check
+      } catch (supabaseError) {
+        console.error("Error checking if session table exists with Supabase:", supabaseError);
       }
       
-      // If SQL query failed, fallback to Supabase API check
       if (!tableExists) {
-        try {
-          const { error: tableCheckError } = await supabase.from('session').select('count').limit(1);
-          tableExists = !tableCheckError;
-        } catch (supabaseError) {
-          console.error("Error checking if session table exists with Supabase:", supabaseError);
-        }
-      }
-      
-      // Setup the session store based on table existence check results
-      if (!tableExists) {
-        console.log("Session table does not exist, creating it directly");
+        console.log("Session table does not exist, creating it via Supabase RPC...");
         
         try {
-          // Try to create the table manually first
-          await pool.query(`
-            CREATE TABLE IF NOT EXISTS "session" (
-              "sid" varchar NOT NULL COLLATE "default",
-              "sess" json NOT NULL,
-              "expire" timestamp(6) NOT NULL,
-              CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
-            );
-            CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
-          `);
-          console.log("Session table created successfully");
-        } catch (createError) {
-          console.error("Error creating session table manually:", createError);
-          // Continue and let PgStore try to create it
+          // Try to create the table using Supabase RPC (admin access)
+          const { error: createError } = await supabaseAdmin.rpc('exec_sql', { 
+            sql: `
+              CREATE TABLE IF NOT EXISTS "session" (
+                "sid" varchar NOT NULL,
+                "sess" json NOT NULL,
+                "expire" timestamp(6) NOT NULL,
+                CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+              );
+              CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+            `
+          });
+          
+          if (createError) {
+            console.error("Error creating session table:", createError);
+            // Continue using memory store
+            return;
+          }
+          
+          console.log("Session table created successfully via Supabase");
+          
+          // Now that table exists, create the custom session store
+          this.sessionStore = new SupabaseSessionStore();
+          console.log("Supabase session store initialized with table creation");
+        } catch (err) {
+          console.error("Exception creating session table:", err);
+          // Continue using memory store
+          return; 
         }
-        
-        // Use PgStore with createTableIfMissing
-        const PgStore = connectPgSimple(session);
-        this.sessionStore = new PgStore({
-          pool,
-          tableName: 'session',
-          createTableIfMissing: true // Still set this as a fallback
-        });
-        
-        console.log("PostgreSQL session store initialized with table creation");
       } else {
-        console.log("Session table exists, connecting to it");
+        console.log("Session table exists in Supabase, connecting to it");
         
-        // Table exists, connect normally
-        const PgStore = connectPgSimple(session);
-        this.sessionStore = new PgStore({
-          pool,
-          tableName: 'session'
-        });
-        
-        console.log("PostgreSQL session store initialized successfully");
+        // Table exists, use the custom session store
+        this.sessionStore = new SupabaseSessionStore();
+        console.log("Supabase session store initialized successfully");
       }
     } catch (err) {
-      console.error("Failed to initialize PostgreSQL session store:", err);
-      // Keep using memory store if PG store fails
+      console.error("Failed to initialize Supabase session store:", err);
       console.log("Continuing with in-memory session store");
+      // Memory store continues to be used (already set in constructor)
     }
   }
 
