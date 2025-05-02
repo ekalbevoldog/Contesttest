@@ -2565,7 +2565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Stripe subscription endpoints
   // Get current user's subscription status
-  app.get('/api/subscription/status', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+  app.get('/api/subscription/status', verifySupabaseToken, async (req: Request, res: Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -2697,7 +2697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create or get subscription
-  app.post('/api/get-or-create-subscription', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/get-or-create-subscription', verifySupabaseToken, async (req: Request, res: Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -2975,7 +2975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cancel subscription
-  app.post('/api/subscription/cancel', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/subscription/cancel', verifySupabaseToken, async (req: Request, res: Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -3043,7 +3043,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Resume canceled subscription
-  app.post('/api/subscription/resume', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+  app.post('/api/subscription/resume', verifySupabaseToken, async (req: Request, res: Response) => {
     try {
       if (!req.user) {
         return res.status(401).json({ error: 'Unauthorized' });

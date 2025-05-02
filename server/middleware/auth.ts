@@ -164,7 +164,7 @@ export const requireAuth = async (
     }
     
     // Set authentication flag using a standard function
-    req.isAuthenticated = function() { return true; };
+    (req as any).isAuthenticated = function() { return true; };
     
     next();
   } catch (err) {
