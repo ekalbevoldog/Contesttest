@@ -793,15 +793,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store profile in appropriate collection
       if (userType === "athlete") {
         const athleteData = {
-          sessionId,
+          session_id: sessionId,
           name: profileData.name,
           sport: profileData.sport,
           division: profileData.division,
           school: profileData.school,
-          socialHandles: profileData.socialHandles || "",
-          followerCount: profileData.followerCount,
-          contentStyle: profileData.contentStyle,
-          compensationGoals: profileData.compensationGoals,
+          social_handles: profileData.socialHandles || "",
+          follower_count: profileData.followerCount,
+          content_style: profileData.contentStyle,
+          compensation_goals: profileData.compensationGoals,
         };
 
         // Store in local storage
@@ -852,22 +852,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (userType === "business") {
         // Create business profile from form data with backward compatibility
         const businessData = {
-          sessionId,
+          session_id: sessionId,
           name: profileData.name,
-          // New fields from our form
-          businessType: profileData.businessType || "product", // "product" or "service"
+          // Old fields converted to snake_case
+          product_type: profileData.productType || profileData.businessType || "product",
+          audience_goals: profileData.audienceGoals || (Array.isArray(profileData.goals) ? profileData.goals.join(", ") : String(profileData.goals || "")),
+          campaign_vibe: profileData.campaignVibe || "Professional",
+          values: profileData.values || "Quality, Authenticity",
+          target_schools_sports: profileData.targetSchoolsSports || "All schools",
+          // Store new fields in appropriate format
           industry: profileData.industry || "",
           goals: profileData.goals || [],
-          hasPreviousPartnerships: profileData.hasPreviousPartnerships || false,
-          budgetMin: profileData.budgetMin || 0,
-          budgetMax: profileData.budgetMax || 5000,
-          zipCode: profileData.zipCode || "",
-          // Old fields for compatibility
-          productType: profileData.productType || profileData.businessType || "product",
-          audienceGoals: profileData.audienceGoals || (Array.isArray(profileData.goals) ? profileData.goals.join(", ") : String(profileData.goals || "")),
-          campaignVibe: profileData.campaignVibe || "Professional",
-          values: profileData.values || "Quality, Authenticity",
-          targetSchoolsSports: profileData.targetSchoolsSports || "All schools",
+          has_previous_partnerships: profileData.hasPreviousPartnerships || false,
+          budget_min: profileData.budgetMin || 0,
+          budget_max: profileData.budgetMax || 5000,
+          zipcode: profileData.zipCode || "",
           budget: profileData.budget || `$${profileData.budgetMin || 0}-$${profileData.budgetMax || 5000}`,
           // Additional data in preferences JSON
           preferences: JSON.stringify({
@@ -888,7 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Store campaign
         const campaignData = {
-          businessId: business.id,
+          business_id: business.id,
           title: campaignResponse.title,
           description: campaignResponse.description,
           deliverables: campaignResponse.deliverables,
@@ -899,7 +898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Store in BigQuery
         await bigQueryService.insertCampaign({
           ...campaignData,
-          businessId: business.id,
+          business_id: business.id,
         });
 
         // Update session
