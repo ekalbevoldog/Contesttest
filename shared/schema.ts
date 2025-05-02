@@ -23,6 +23,9 @@ export const userSchema = z.object({
   subscription_cancel_at_period_end: z.boolean().optional()
 });
 
+// Create User type from schema
+export type User = z.infer<typeof userSchema>;
+
 export const insertUserSchema = userSchema.omit({ 
   id: true, 
   created_at: true, 

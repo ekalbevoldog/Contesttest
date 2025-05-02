@@ -342,19 +342,24 @@ export class SupabaseStorage implements IStorage {
 
   async createSession(sessionData: InsertSession): Promise<Session> {
     try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .insert({
+      // Build object with only properties that exist in the schema
+      const insertData: any = {
           session_id: sessionData.session_id,
           user_type: sessionData.user_type,
           data: sessionData.data,
           profile_completed: sessionData.profile_completed,
-          athlete_id: sessionData.athlete_id,
-          business_id: sessionData.business_id,
           created_at: new Date(),
           updated_at: new Date(),
           last_login: new Date()
-        })
+      };
+      
+      // Only add these if they exist in the schema
+      if ('athlete_id' in sessionData) insertData.athlete_id = sessionData.athlete_id;
+      if ('business_id' in sessionData) insertData.business_id = sessionData.business_id;
+      
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert(insertData)
         .select()
         .single();
         
@@ -370,16 +375,18 @@ export class SupabaseStorage implements IStorage {
     }
   }
 
-  async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> {
+  async updateSession(sessionId: string, data: Partial<Session> & { athlete_id?: number, business_id?: number }): Promise<Session> {
     try {
       // Map to DB column names
       const dbData: any = {};
-      if (data.userType !== undefined) dbData.user_type = data.userType;
+      if (data.user_type !== undefined) dbData.user_type = data.user_type;
       if (data.data !== undefined) dbData.data = data.data;
-      if (data.profileCompleted !== undefined) dbData.profile_completed = data.profileCompleted;
-      if (data.athleteId !== undefined) dbData.athlete_id = data.athleteId;
-      if (data.businessId !== undefined) dbData.business_id = data.businessId;
-      if (data.lastLogin !== undefined) dbData.last_login = data.lastLogin;
+      if (data.profile_completed !== undefined) dbData.profile_completed = data.profile_completed;
+      if (data.last_login !== undefined) dbData.last_login = data.last_login;
+      
+      // Handle extended fields that may not be in the Session type but are in the DB
+      if (data.athlete_id !== undefined) dbData.athlete_id = data.athlete_id;
+      if (data.business_id !== undefined) dbData.business_id = data.business_id;
       
       dbData.updated_at = new Date();
       
@@ -1482,15 +1489,19 @@ export class SupabaseStorage implements IStorage {
   private mapSessionFromDb(data: any): Session {
     return {
       id: data.id,
-      sessionId: data.session_id,
-      userType: data.user_type,
+      session_id: data.session_id,
+      user_type: data.user_type,
       data: data.data,
-      profileCompleted: data.profile_completed,
-      athleteId: data.athlete_id,
-      businessId: data.business_id,
-      lastLogin: new Date(data.last_login),
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      profile_completed: data.profile_completed,
+      // Include these if they exist in the schema
+      user_id: data.user_id,
+      // Only add these conditionally if they exist in the database object
+      ...(data.athlete_id && { athlete_id: data.athlete_id }),
+      ...(data.business_id && { business_id: data.business_id }),
+      // Date fields
+      last_login: data.last_login ? new Date(data.last_login) : undefined,
+      created_at: data.created_at ? new Date(data.created_at) : undefined,
+      updated_at: data.updated_at ? new Date(data.updated_at) : undefined
     };
   }
 
@@ -1728,8 +1739,27 @@ export class MemStorage implements IStorage {
   // Simplified no-op implementations that return empty values
   async getSession(sessionId: string): Promise<Session | undefined> { return undefined; }
   async getSessionByUserId(userId: string): Promise<Session | undefined> { return undefined; }
-  async createSession(session: InsertSession): Promise<Session> { return { id: 1, sessionId: session.sessionId } as Session; }
-  async updateSession(sessionId: string, data: Partial<Session>): Promise<Session> { return { id: 1, sessionId } as Session; }
+  async createSession(session: InsertSession): Promise<Session> { 
+    return { 
+      id: 1, 
+      session_id: session.session_id,
+      profile_completed: session.profile_completed,
+      user_type: session.user_type,
+      data: session.data
+    }; 
+  }
+  async updateSession(sessionId: string, data: Partial<Session> & { athlete_id?: number, business_id?: number }): Promise<Session> { 
+    return { 
+      id: 1, 
+      session_id: sessionId,
+      profile_completed: data.profile_completed || true,
+      user_type: data.user_type || 'business',
+      data: data.data,
+      // Include these from extended type if provided
+      ...(data.athlete_id !== undefined && { athlete_id: data.athlete_id }),
+      ...(data.business_id !== undefined && { business_id: data.business_id })
+    }; 
+  }
   async deleteSession(sessionId: string): Promise<void> {}
 
   async getAthlete(id: number): Promise<Athlete | undefined> { return undefined; }
@@ -1770,7 +1800,15 @@ export class MemStorage implements IStorage {
   async updatePartnershipOfferComplianceStatus(id: number, status: string, notes?: string): Promise<PartnershipOffer> { return { id, compliance_status: status } as unknown as PartnershipOffer; }
 
   async getMessages(sessionId: string, limit?: number, offset?: number): Promise<Message[]> { return []; }
-  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> { return { id: 1, sessionId, role, content, metadata } as Message; }
+  async storeMessage(sessionId: string, role: string, content: string, metadata?: any): Promise<Message> { 
+    return { 
+      id: 1, 
+      session_id: sessionId, 
+      role, 
+      content, 
+      metadata 
+    }; 
+  }
   async getUnreadMessageCounts(sessionId: string): Promise<number> { return 0; }
   async markMessagesRead(sessionId: string, messageIds: number[]): Promise<void> {}
 

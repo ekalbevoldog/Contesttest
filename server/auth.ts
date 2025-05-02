@@ -5,8 +5,8 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage.js";
-// Import a renamed version of User to avoid naming conflicts
-import { User as SchemaUser } from "../shared/schema.js";
+// Import User schema
+import { User, User as SchemaUser } from "../shared/schema.js";
 
 declare global {
   namespace Express {
@@ -98,8 +98,26 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username or password" });
         }
         
-        // Cast to SchemaUser to ensure all required properties are present
-        return done(null, user as SchemaUser);
+        // Create a valid SchemaUser object with all required properties
+        const validUser: User = {
+          id: user.id.toString(), // Ensure id is a string
+          email: user.email || '',
+          username: user.username || '',
+          password: user.password || '',
+          role: user.role || 'business',
+          created_at: user.created_at || new Date(),
+          metadata: user.metadata || {},
+          // Include all other fields
+          auth_id: user.auth_id,
+          last_login: user.last_login,
+          stripe_customer_id: user.stripe_customer_id,
+          stripe_subscription_id: user.stripe_subscription_id,
+          subscription_status: user.subscription_status,
+          subscription_plan: user.subscription_plan,
+          subscription_current_period_end: user.subscription_current_period_end,
+          subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
+        } as User;
+        return done(null, validUser);
       } catch (error) {
         return done(error);
       }
@@ -113,7 +131,32 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user as SchemaUser);
+      
+      if (!user) {
+        return done(null, false);
+      }
+      
+      // Create a complete User object with all required properties
+      const validUser: User = {
+        id: user.id.toString(),
+        email: user.email || '',
+        username: user.username || '',
+        password: user.password || '',
+        role: user.role || 'business',
+        created_at: user.created_at || new Date(),
+        metadata: user.metadata || {},
+        // Optional fields
+        auth_id: user.auth_id,
+        last_login: user.last_login,
+        stripe_customer_id: user.stripe_customer_id,
+        stripe_subscription_id: user.stripe_subscription_id,
+        subscription_status: user.subscription_status,
+        subscription_plan: user.subscription_plan,
+        subscription_current_period_end: user.subscription_current_period_end,
+        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
+      } as User;
+      
+      done(null, validUser);
     } catch (error) {
       done(error, null);
     }
@@ -159,10 +202,30 @@ export function setupAuth(app: Express) {
         role
       });
       
+      // Create a valid user object
+      const validUser: User = {
+        id: user.id.toString(),
+        email: user.email || '',
+        username: user.username || '',
+        password: user.password || '',
+        role: user.role || 'business',
+        created_at: user.created_at || new Date(),
+        metadata: user.metadata || {},
+        // Include any other fields
+        auth_id: user.auth_id,
+        last_login: user.last_login,
+        stripe_customer_id: user.stripe_customer_id,
+        stripe_subscription_id: user.stripe_subscription_id,
+        subscription_status: user.subscription_status,
+        subscription_plan: user.subscription_plan,
+        subscription_current_period_end: user.subscription_current_period_end,
+        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
+      } as User;
+      
       // Log the user in
-      req.login(user as SchemaUser, (err) => {
+      req.login(validUser, (err) => {
         if (err) return next(err);
-        return res.status(201).json(user);
+        return res.status(201).json(validUser);
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -172,22 +235,42 @@ export function setupAuth(app: Express) {
 
   // Login endpoint
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error | null, user: SchemaUser | false, info?: IVerifyOptions) => {
+    passport.authenticate("local", (err: Error | null, user: User | false, info?: IVerifyOptions) => {
       if (err) return next(err);
       
       if (!user) {
         return res.status(401).json({ error: info?.message || "Authentication failed" });
       }
       
-      req.login(user as SchemaUser, (loginErr) => {
+      // Create a complete user object for login
+      const validUser: User = {
+        id: user.id.toString(),
+        email: user.email || '',
+        username: user.username || '',
+        password: user.password || '',
+        role: user.role || 'business',
+        created_at: user.created_at || new Date(),
+        metadata: user.metadata || {},
+        // Optional fields
+        auth_id: user.auth_id,
+        last_login: new Date(), // Set the last login to now
+        stripe_customer_id: user.stripe_customer_id,
+        stripe_subscription_id: user.stripe_subscription_id,
+        subscription_status: user.subscription_status,
+        subscription_plan: user.subscription_plan,
+        subscription_current_period_end: user.subscription_current_period_end,
+        subscription_cancel_at_period_end: user.subscription_cancel_at_period_end
+      } as User;
+      
+      req.login(validUser, (loginErr) => {
         if (loginErr) return next(loginErr);
         
         // Update the last login timestamp
-        storage.updateUser(user.id.toString(), { 
+        storage.updateUser(validUser.id, { 
           last_login: new Date() 
         }).catch(err => console.error("Failed to update last login:", err));
         
-        return res.status(200).json(user);
+        return res.status(200).json(validUser);
       });
     })(req, res, next);
   });

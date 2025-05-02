@@ -229,10 +229,12 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
       }
 
       // Attach the user to the request for convenience in route handlers
-      // Convert id to string if it's a number to satisfy type requirements
+      // Ensure all required fields are present with their proper types
       req.user = {
-        ...user,
-        id: user.id.toString() // Convert to string to match expected type
+        id: user.id.toString(), // Convert to string if it's not already
+        email: user.email || '',
+        role: user.role || 'business', // Provide a default role if missing
+        ...user // Spread remaining properties
       };
     } catch (err) {
       console.error("Error checking user role:", err);
