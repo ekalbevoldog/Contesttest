@@ -12,42 +12,77 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  console.log(`[queryClient] Making ${method} request to ${url}`);
+  
   // Always include the Authorization header with the Supabase JWT token if available
   let headers: Record<string, string> = {};
   
   // Add Content-Type for requests with data
   if (data) {
     headers["Content-Type"] = "application/json";
+    console.log('[queryClient] Request has data, adding Content-Type header');
   }
   
   // Try to get the session token from Supabase
   try {
     // Dynamically import supabase to avoid circular dependencies
+    console.log('[queryClient] Importing supabase-client...');
     const { supabase } = await import('./supabase-client');
+    console.log('[queryClient] Getting session from Supabase...');
     const { data: sessionData } = await supabase.auth.getSession();
+    console.log('[queryClient] Session data received:', sessionData ? 'yes' : 'no');
     
     if (sessionData?.session?.access_token) {
       headers["Authorization"] = `Bearer ${sessionData.session.access_token}`;
+      console.log('[queryClient] Added Authorization header with Supabase session token');
     } else {
-      console.warn('[queryClient] No access token available for request to', url);
+      console.warn('[queryClient] No access token available from Supabase session for request to', url);
       
       // Try to get token from localStorage as fallback
       try {
+        console.log('[queryClient] Trying to get token from localStorage...');
         // Try both storage keys - the one used by the app and the one used by Supabase
         let storedAuth = localStorage.getItem('contested-auth');
         if (!storedAuth) {
+          console.log('[queryClient] No token in contested-auth, trying supabase-auth...');
           // Try the alternative key if the first one doesn't exist
           storedAuth = localStorage.getItem('supabase-auth');
         }
         
         if (storedAuth) {
+          console.log('[queryClient] Token found in localStorage, parsing...');
           const authData = JSON.parse(storedAuth);
+          console.log('[queryClient] Auth data parsed, token exists:', !!authData.access_token);
           if (authData.access_token) {
             headers["Authorization"] = `Bearer ${authData.access_token}`;
             console.log('[queryClient] Using token from localStorage');
           }
         } else {
           console.log('[queryClient] No auth token found in localStorage');
+          
+          // As a last resort, check if a token is already set in document cookies
+          console.log('[queryClient] Checking document.cookie for token...');
+          if (document.cookie.includes('sb-auth-token=')) {
+            console.log('[queryClient] Found sb-auth-token in cookies, extracting it...');
+            const cookieValue = document.cookie
+              .split('; ')
+              .find(row => row.startsWith('sb-auth-token='))
+              ?.split('=')[1];
+              
+            if (cookieValue) {
+              try {
+                const cookieData = JSON.parse(decodeURIComponent(cookieValue));
+                if (cookieData.access_token) {
+                  headers["Authorization"] = `Bearer ${cookieData.access_token}`;
+                  console.log('[queryClient] Using token from cookie');
+                }
+              } catch (cookieError) {
+                console.error('[queryClient] Error parsing cookie token:', cookieError);
+              }
+            }
+          } else {
+            console.log('[queryClient] No token found in cookies either');
+          }
         }
       } catch (localStorageError) {
         console.error('[queryClient] Error accessing localStorage:', localStorageError);
