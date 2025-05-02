@@ -121,7 +121,7 @@ function Router() {
 
             {/* Subscription routes */}
             <UnifiedProtectedRoute path="/subscribe" component={Subscribe} />
-            <Route path="/subscription/success" component={SubscriptionSuccess} />
+            <Route path="/subscription-success" component={SubscriptionSuccess} />
             <UnifiedProtectedRoute path="/account/subscription" component={Subscribe} />
 
             {/* All other routes redirect to home */}

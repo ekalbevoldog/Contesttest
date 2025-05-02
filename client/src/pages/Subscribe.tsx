@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '../hooks/use-auth';
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, Crown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLocation } from 'wouter';
+import SubscriptionBadge from '@/components/SubscriptionBadge';
+import { UnifiedProtectedRoute } from '@/lib/unified-protected-route';
 
 // Load the Stripe object outside component render
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
@@ -148,8 +150,8 @@ const PlanCard = ({
 };
 
 // Main subscription management page
-const Subscribe = () => {
-  const { user } = useAuth();
+const SubscribeContent = () => {
+  const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -461,6 +463,14 @@ const Subscribe = () => {
         </>
       )}
     </div>
+  );
+};
+
+const Subscribe = () => {
+  return (
+    <UnifiedProtectedRoute>
+      <SubscribeContent />
+    </UnifiedProtectedRoute>
   );
 };
 
