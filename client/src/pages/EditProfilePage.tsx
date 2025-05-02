@@ -70,7 +70,7 @@ const EditProfilePage = () => {
       school: "",
       content_style: "",
       compensation_goals: "",
-      follower_count: ""
+      follower_count: 0
     }
   });
 
@@ -102,7 +102,7 @@ const EditProfilePage = () => {
         school: profile.school || '',
         content_style: profile.content_style || '',
         compensation_goals: profile.compensation_goals || '',
-        follower_count: profile.follower_count ? profile.follower_count.toString() : ''
+        follower_count: profile.follower_count || 0
       });
     }
   }, [isLoading, profile, user, form]);
