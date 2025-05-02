@@ -16,7 +16,7 @@ const dryRun = args.includes('--dry-run');
 /**
  * Create a database user record for an existing Auth user
  */
-export async function createUserForAuthUser(
+async function createUserForAuthUser(
   authUserId: string, 
   userEmail?: string
 ): Promise<boolean> {

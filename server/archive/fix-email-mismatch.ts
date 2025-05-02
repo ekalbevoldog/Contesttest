@@ -17,7 +17,7 @@ const dryRun = args.includes('--dry-run');
 /**
  * Fix email mismatch for a user
  */
-export async function fixEmailMismatch(
+async function fixEmailMismatch(
   userId: string | number,
   correctEmail?: string,
   authUserId?: string

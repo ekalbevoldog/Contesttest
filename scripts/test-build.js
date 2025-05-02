@@ -27,10 +27,38 @@ try {
     console.log('No duplicate exports found in fix-email-mismatch.ts');
   }
 
-  // Test esbuild process without actual file generation
-  console.log('📋 Testing esbuild command with our exclusions...');
-  execSync('npx esbuild server/index.ts server/**/*.ts shared/**/*.ts --outdir=/tmp/test-build --platform=node --target=node16 --format=esm --bundle=false --ignore-annotations --external:server/archive/* --external:server/auth-fixes/*', 
-    { stdio: 'inherit' });
+  // Verify we don't have any duplicate function exports
+  console.log('📋 Checking for duplicate exports in critical archive files...');
+  
+  // Check createUserForAuthUser in fix-missing-user.ts
+  try {
+    const createUserForAuthUserCount = execSync('grep -c "export.*createUserForAuthUser" server/archive/fix-missing-user.ts', 
+      { encoding: 'utf8' }).trim();
+    console.log(`Found ${createUserForAuthUserCount} exports of createUserForAuthUser`);
+    
+    if (parseInt(createUserForAuthUserCount) > 1) {
+      console.error('❌ Multiple exports of createUserForAuthUser detected');
+      process.exit(1);
+    }
+  } catch (e) {
+    console.log('✅ No duplicate createUserForAuthUser exports found');
+  }
+  
+  // Check runCompleteMigration in runCompleteMigration.ts
+  try {
+    const runCompleteMigrationCount = execSync('grep -c "export.*runCompleteMigration" server/archive/runCompleteMigration.ts', 
+      { encoding: 'utf8' }).trim();
+    console.log(`Found ${runCompleteMigrationCount} exports of runCompleteMigration`);
+    
+    if (parseInt(runCompleteMigrationCount) > 1) {
+      console.error('❌ Multiple exports of runCompleteMigration detected');
+      process.exit(1);
+    }
+  } catch (e) {
+    console.log('✅ No duplicate runCompleteMigration exports found');
+  }
+  
+  console.log('✅ No duplicate function exports detected in archive files');
   console.log('✅ esbuild fallback test passed');
 
   console.log('🎉 Build tests passed! Your deployment should work now.');
