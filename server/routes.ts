@@ -3470,6 +3470,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const feedbackData = feedbackSchema.parse(req.body);
 
       // Add user ID from authenticated session
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
       const userId = req.user.id;
 
       // Process sentiment if sentiment prompt is provided
@@ -3541,7 +3544,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
-
+      
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
       const userId = req.user.id;
       const feedbacks = await storage.getFeedbackByUser(userId);
 

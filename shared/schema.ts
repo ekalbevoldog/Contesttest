@@ -108,7 +108,7 @@ export const athleteSchema = z.object({
   
   // Content Creation
   content_style: z.string(),
-  content_types: z.array(z.string()).optional(),
+  content_types: z.union([z.array(z.string()).optional(), z.string().optional()]),
   top_performing_content_themes: z.array(z.string()).optional(),
   media_kit_url: z.string().optional(),
   
@@ -120,8 +120,8 @@ export const athleteSchema = z.object({
   exclusivity_requirements: z.string().optional(),
   
   // Personal Brand
-  personal_values: z.array(z.string()).optional(),
-  causes: z.array(z.string()).optional(),
+  personal_values: z.union([z.array(z.string()).optional(), z.string().optional()]),
+  causes: z.union([z.array(z.string()).optional(), z.string().optional()]),
   brand_personality: z.record(z.any()).optional(),
   
   // Availability & Requirements
@@ -172,7 +172,7 @@ export const businessSchema = z.object({
   
   // Campaign Details
   campaign_vibe: z.string(),
-  campaign_goals: z.array(z.string()).optional(),
+  campaign_goals: z.union([z.array(z.string()).optional(), z.string().optional()]),
   campaign_frequency: z.string().optional(),
   campaign_duration: z.string().optional(),
   campaign_seasonality: z.string().optional(),
@@ -204,7 +204,7 @@ export const businessSchema = z.object({
   campaign_success_metrics: z.record(z.any()).optional(),
   
   // Goals
-  goals: z.array(z.string()).optional(),
+  goals: z.union([z.array(z.string()).optional(), z.string().optional()]),
   
   // Preferences and Algorithm Data
   preferences: z.record(z.any()).optional(),
@@ -250,7 +250,7 @@ export const campaignSchema = z.object({
   compensation_details: z.record(z.any()).optional(),
   
   kpis: z.record(z.any()).optional(),
-  goals: z.array(z.string()).optional(),
+  goals: z.union([z.array(z.string()).optional(), z.string().optional()]),
   
   status: z.enum(["draft", "active", "completed", "cancelled"]).default("draft"),
   
