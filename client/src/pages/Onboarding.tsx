@@ -2426,7 +2426,7 @@ export default function Onboarding() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  What is your estimated monthly budget?
+                  What is your estimated Campaign budget?
                 </motion.h2>
                 
                 <div className="space-y-6">
@@ -2441,7 +2441,7 @@ export default function Onboarding() {
                       <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-red-500 to-amber-500 bg-clip-text text-transparent">
                         ${formData.budgetMin} - ${formData.budgetMax}
                       </h3>
-                      <p className="text-zinc-400 text-sm">per month</p>
+                      <p className="text-zinc-400 text-sm">per campaign</p>
                     </div>
                     
                     {/* Budget Range Slider with two thumbs */}
@@ -2981,7 +2981,7 @@ export default function Onboarding() {
                       
                       <div>
                         <p className="text-zinc-400 text-sm">Budget Range</p>
-                        <p className="text-zinc-200 font-medium">${formData.budgetMin} - ${formData.budgetMax} per month</p>
+                        <p className="text-zinc-200 font-medium">${formData.budgetMin} - ${formData.budgetMax} per campaign</p>
                       </div>
                       
                       <div>
