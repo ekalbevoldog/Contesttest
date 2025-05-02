@@ -18,7 +18,8 @@ export const userSchema = z.object({
   stripe_subscription_id: z.string().optional(),
   subscription_status: z.string().optional(),
   subscription_plan: z.string().optional(),
-  subscription_current_period_end: z.date().optional()
+  subscription_current_period_end: z.date().optional(),
+  subscription_cancel_at_period_end: z.boolean().optional()
 });
 
 export const insertUserSchema = userSchema.omit({ 
