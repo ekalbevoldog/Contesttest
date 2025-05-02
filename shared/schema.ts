@@ -24,8 +24,9 @@ export const userSchema = z.object({
 });
 
 // Create User type from schema with additional fields for compatibility
-export type User = z.infer<typeof userSchema> & {
+export type User = z.infer<typeof userSchema> & DateFields & {
   stripe_id?: string;  // Additional field
+  sessionId?: string;  // Alternative to session_id
 };
 
 export const insertUserSchema = userSchema.omit({ 
@@ -60,7 +61,14 @@ export const insertSessionSchema = sessionSchema.omit({
 });
 
 // Session types
-export type Session = z.infer<typeof sessionSchema>;
+export type Session = z.infer<typeof sessionSchema> & DateFields & {
+  sessionId?: string; // Alternative to session_id
+  userId?: string | number; // Alternative to user_id
+  userType?: string; // Alternative to user_type
+  profileCompleted?: boolean; // Alternative to profile_completed
+  athleteId?: number; // Additional field
+  businessId?: number; // Additional field
+};
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 
 // Athlete profile type definitions
@@ -151,8 +159,12 @@ export const insertAthleteSchema = athleteSchema.omit({
 });
 
 // Athlete types
-export type Athlete = z.infer<typeof athleteSchema> & {
+export type Athlete = z.infer<typeof athleteSchema> & DateFields & {
   userId?: string | number;  // Additional field for compatibility
+  sessionId?: string;  // Alternative to session_id
+  followerCount?: number;  // Alternative to follower_count
+  contentStyle?: string;  // Alternative to content_style
+  compensationGoals?: string;  // Alternative to compensation_goals
 };
 export type InsertAthlete = z.infer<typeof insertAthleteSchema> & {
   sessionId?: string;
@@ -240,8 +252,13 @@ export const insertBusinessSchema = businessSchema.omit({
 });
 
 // Business types - with camelCase alternatives 
-export type Business = z.infer<typeof businessSchema> & {
+export type Business = z.infer<typeof businessSchema> & DateFields & {
   userId?: string | number;  // Alternative to auth_id
+  sessionId?: string;  // Alternative to session_id
+  productType?: string;  // Alternative to product_type
+  audienceGoals?: string;  // Alternative to audience_goals
+  campaignVibe?: string;  // Alternative to campaign_vibe
+  targetSchoolsSports?: string;  // Alternative to target_schools_sports
 };
 export type InsertBusiness = z.infer<typeof insertBusinessSchema> & {
   sessionId?: string;  // Alternative to session_id
@@ -459,15 +476,17 @@ export const insertFeedbackSchema = feedbackSchema.omit({
 });
 
 // Update Campaign type with camelCase alternative
-export type Campaign = z.infer<typeof campaignSchema> & {
+export type Campaign = z.infer<typeof campaignSchema> & DateFields & {
   businessId?: number;  // Alternative to business_id
+  createdAt?: Date;  // Alternative to created_at
+  updatedAt?: Date;  // Alternative to updated_at
 };
 export type InsertCampaign = z.infer<typeof insertCampaignSchema> & {
   businessId?: number;  // Alternative to business_id
 };
 
 // Update Match type with camelCase alternatives
-export type Match = z.infer<typeof matchSchema> & {
+export type Match = z.infer<typeof matchSchema> & DateFields & {
   athleteId?: number;  // Alternative to athlete_id
   businessId?: number;  // Alternative to business_id
   campaignId?: number;  // Alternative to campaign_id
@@ -479,13 +498,13 @@ export type InsertMatch = z.infer<typeof insertMatchSchema> & {
 };
 
 // Update Message type with camelCase alternative
-export type Message = z.infer<typeof messageSchema> & {
+export type Message = z.infer<typeof messageSchema> & DateFields & {
   sessionId?: string;  // Alternative to session_id
 };
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 // Update PartnershipOffer type with camelCase alternatives
-export type PartnershipOffer = z.infer<typeof partnershipOfferSchema> & {
+export type PartnershipOffer = z.infer<typeof partnershipOfferSchema> & DateFields & {
   matchId?: number;  // Alternative to match_id
   businessId?: number;  // Alternative to business_id
   athleteId?: number;  // Alternative to athlete_id
@@ -505,7 +524,7 @@ export type InsertPartnershipOffer = z.infer<typeof insertPartnershipOfferSchema
 };
 
 // Update Feedback type with camelCase alternatives
-export type Feedback = z.infer<typeof feedbackSchema> & {
+export type Feedback = z.infer<typeof feedbackSchema> & DateFields & {
   userId?: number;  // Additional field
   userType?: string;  // Alternative to user_type
   matchId?: number;  // Alternative to match_id
@@ -525,6 +544,16 @@ export interface StripeInterface {
   object: string;
   [key: string]: any;
 }
+
+// Add generic interface for datetime compatibility
+export interface DateFields {
+  createdAt?: Date;  // camelCase alternative to created_at
+  updatedAt?: Date;  // camelCase alternative to updated_at
+  lastLogin?: Date;  // camelCase alternative to last_login
+}
+
+// Add InsertUser type that was previously removed
+export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export interface MessageMetadata {
   [key: string]: unknown;
