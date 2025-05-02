@@ -7,70 +7,8 @@ channel = "stable-24_05"
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "NODE_ENV=production node server.js"]
-build = ["sh", "-c", "node scripts/fix-schema.js && NODE_ENV=production npm run build && node scripts/verify-build.js"]
-
-[workflows]
-runButton = "Dev"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Start Dev Server"
-author = 40767941
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Dev Server"
-author = 40767941
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm install"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Dev"
-author = 40767941
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"tsx server/index.ts\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
+run = ["sh", "-c", "node server.js"]
+build = ["sh", "-c", "npm run build"]
 
 [[deployment.rewrites]]
 from = "/*"
@@ -84,5 +22,17 @@ externalPort = 3000
 localPort = 5000
 externalPort = 80
 
-[objectStorage]
-defaultBucketID = "replit-objstore-baee183f-e7a0-49ac-88ce-a1512085d204"
+[workflows]
+runButton = "Dev"
+
+[[workflows.workflow]]
+name = "Dev"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"tsx server/index.ts\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
