@@ -92,3 +92,24 @@ declare namespace NodeJS {
     ): Promise<T | TResult>;
   }
 }
+// Add missing type definitions for auth_id and objectStorage
+declare namespace Express {
+  interface User {
+    auth_id?: string;
+    role?: string;
+    email?: string;
+  }
+}
+
+declare module 'stripe' {
+  interface Stripe {
+    customers: any;
+    subscriptions: any;
+    webhooks: any;
+  }
+}
+
+declare const objectStorage: {
+  uploadBuffer: (path: string, buffer: Buffer) => Promise<boolean>;
+  downloadBuffer: (path: string) => Promise<Buffer | null>;
+};
