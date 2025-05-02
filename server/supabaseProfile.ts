@@ -1,6 +1,6 @@
 // services/supabaseProfile.ts
 import { Express, Request, Response } from 'express';
-import { supabase, supabaseAdmin } from './supabase';
+import { supabase, supabaseAdmin } from './supabase.js';
 
 /**
  * Safely update a user record with profile data, handling potential schema mismatches

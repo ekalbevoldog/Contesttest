@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "./supabase.js";
 
 async function checkBusinessesTable() {
   console.log("Checking businesses table structure...");
