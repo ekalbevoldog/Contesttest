@@ -1,0 +1,56 @@
+2025-05-02T17:59:51Z info: Deployment: 044ce5e1-ed73-44f9-ad5c-d4ba557d69e6
+2025-05-02T17:59:51Z info: Build: 8d0f6c77-7eac-4a75-8194-7bb14b9dee89
+2025-05-02T17:59:51Z info: Connecting to builder
+2025-05-02T17:59:54Z info: Builder connected
+2025-05-02T17:59:55Z info: Installing packages
+2025-05-02T17:59:56Z info: Starting Build
+✅ Fixed schema.ts structure
+
+
+> rest-express@1.0.0 build
+> node scripts/build-with-fallback.js
+
+
+🔧 Checking for schema structure issues...
+
+🔍 Attempting standard TypeScript build...
+
+server/archive/auth-diagnostic.ts(8,41): error TS2307: Cannot find module './supabase.js' or its corresponding type declarations.
+
+server/archive/check-users-schema.ts(4,10): error TS2300: Duplicate identifier 'supabase'.
+
+server/archive/fix-missing-user.ts(179,28): error TS2339: Property 'email' does not exist on type 'never'.
+
+⚠️ Falling back to esbuild for error-tolerant compilation...
+
+✘ [ERROR] Multiple exports with the same name "fixEmailMismatch"
+
+    server/archive/fix-email-mismatch.ts:216:9:
+      216 │ export { fixEmailMismatch };
+          ╵          ~~~~~~~~~~~~~~~~
+
+  The name "fixEmailMismatch" was originally exported here:
+
+    server/archive/fix-email-mismatch.ts:20:22:
+      20 │ export async function fixEmailMismatch(
+         ╵                       ~~~~~~~~~~~~~~~~
+
+
+3 errors
+
+❌ Fallback build also failed: Error: Command failed: npx esbuild server/**/*.ts shared/**/*.ts --outdir=dist --platform=node --target=node16 --format=esm --bundle=false --sourcemap --allow-overwrite
+    at genericNodeError (node:internal/errors:984:15)
+    at wrappedFn (node:internal/errors:538:14)
+    at checkExecSyncError (node:child_process:891:11)
+    at execSync (node:child_process:963:15)
+    at file:///home/runner/workspace/scripts/build-with-fallback.js:68:5
+    at ModuleJob.run (node:internal/modules/esm/module_job:234:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:473:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:122:5) {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 91,
+  stdout: null,
+  stderr: null
+}
