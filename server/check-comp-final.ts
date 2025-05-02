@@ -1,17 +1,24 @@
+
 import { supabase } from "./supabase.js";
 import { v4 as uuidv4 } from 'uuid';
+
+interface BusinessRecord {
+  id: string;
+  company_name: string;
+  company_type: string;
+  description: string;
+}
 
 async function tryInsertWithTypes() {
   const commonValues = [
     "service", "agency", "brand", "retailer", "manufacturer", 
     "technology", "other", "saas", "ecommerce", "marketplace", "platform"
-  ];
+  ] as const;
   
   for (const value of commonValues) {
     try {
       console.log(`Testing '${value}'...`);
       
-      // Create a proper UUID for each test
       const testId = uuidv4();
       
       const { data, error } = await supabase
@@ -21,8 +28,8 @@ async function tryInsertWithTypes() {
           company_name: 'Test Company',
           company_type: value,
           description: 'Test record'
-        })
-        .select();
+        } satisfies Omit<BusinessRecord, 'id'>)
+        .select<'*', BusinessRecord>();
         
       if (error) {
         console.log(`Value '${value}' failed: ${error.message}`);
