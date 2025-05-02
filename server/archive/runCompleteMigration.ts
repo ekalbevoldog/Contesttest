@@ -179,7 +179,7 @@ async function executeSql(sql: string): Promise<boolean> {
 // Function to run the complete migration
 // Only keep one function definition - the one at the top of the file
 // This export is commented out to avoid duplicate exports
-// export async function runCompleteMigration() {
+// export async function runCompleteMigration2() {
   try {
     console.log('Starting complete database schema migration...');
     
