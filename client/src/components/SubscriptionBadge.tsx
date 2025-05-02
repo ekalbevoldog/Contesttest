@@ -1,11 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAuth } from '@/hooks/use-auth';
-import { useEffect } from 'react';
-import { Loader2, Crown, AlertCircle } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { useQuery } from "@tanstack/react-query";
+import { Crown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 interface SubscriptionBadgeProps {
   showTooltip?: boolean;
@@ -13,182 +17,211 @@ interface SubscriptionBadgeProps {
   size?: 'sm' | 'default' | 'lg';
 }
 
-const SubscriptionBadge = ({ 
-  showTooltip = true, 
-  redirectToUpgrade = false,
+// This component displays a badge indicating the user's subscription status
+// It includes a tooltip with information about the current plan
+const SubscriptionBadge = ({
+  showTooltip = true,
+  redirectToUpgrade = true,
   size = 'default'
 }: SubscriptionBadgeProps) => {
-  const { user } = useAuth();
-  const [, navigate] = useLocation();
+  const { user } = useSupabaseAuth();
   
-  // Get subscription status
-  const { data: subscription, isLoading } = useQuery({
-    queryKey: ['/api/subscription/status'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/subscription/status');
-      if (!res.ok) {
-        throw new Error('Failed to fetch subscription status');
-      }
-      return res.json();
-    },
+  // Fetch subscription status from backend
+  const { data: subscriptionData, isLoading } = useQuery<{
+    status: {
+      success: boolean;
+      subscription: {
+        id: string;
+        status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'unpaid';
+        planType: string;
+        currentPeriodEnd: number;
+      } | null;
+    };
+  }>({
+    queryKey: ['/api/subscription/subscription'],
+    // Only fetch if user is logged in
     enabled: !!user,
   });
   
-  // Redirect if requested and no active subscription
-  useEffect(() => {
-    if (redirectToUpgrade && 
-        subscription && 
-        subscription.status !== 'active' && 
-        !isLoading) {
-      navigate('/subscribe');
-    }
-  }, [subscription, redirectToUpgrade, navigate, isLoading]);
-  
-  // Formats for different sizes
-  const sizeClasses = {
-    sm: 'text-xs py-0 px-2',
-    default: 'text-sm py-1 px-2',
-    lg: 'text-base py-1.5 px-3',
+  // Extract subscription information or use defaults
+  const subscription = {
+    status: subscriptionData?.status?.subscription?.status || 'none',
+    plan: subscriptionData?.status?.subscription?.planType || 'Free',
+    expiresAt: subscriptionData?.status?.subscription?.currentPeriodEnd 
+      ? new Date(subscriptionData.status.subscription.currentPeriodEnd * 1000).toISOString()
+      : null
   };
-  
-  // For empty state
-  if (!user) {
-    return null;
-  }
-  
-  // Loading state
+
   if (isLoading) {
     return (
-      <Badge variant="outline" className={`${sizeClasses[size]} flex items-center gap-1`}>
-        <Loader2 className="h-3 w-3 animate-spin" />
-        <span>Loading</span>
-      </Badge>
-    );
+      <div className={cn(
+        "animate-pulse rounded-full", 
+        size === 'sm' ? 'h-5 w-5' : size === 'lg' ? 'h-8 w-8' : 'h-6 w-6'
+      )}>
+        <div className="h-full w-full bg-gray-600 rounded-full opacity-30"></div>
+      </div>
+    )
   }
+
+  // Default status when no subscription data is available
+  const status = subscription?.status || 'none';
+  const plan = subscription?.plan || 'Free';
   
-  // No subscription
-  if (!subscription || subscription.status === 'none') {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge 
-              variant="secondary" 
-              className={`${sizeClasses[size]} cursor-pointer`}
-              onClick={() => redirectToUpgrade && navigate('/subscribe')}
-            >
-              Free Plan
-            </Badge>
-          </TooltipTrigger>
-          {showTooltip && (
-            <TooltipContent side="bottom">
-              <p>Upgrade to access premium features</p>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </TooltipProvider>
-    );
+  // Determine badge color based on subscription status
+  let bgColor = "bg-gray-700"; // default non-subscriber color
+  let iconColor = "text-gray-300";
+  let borderColor = "border-gray-600";
+  
+  if (status === 'active' || status === 'trialing') {
+    bgColor = "bg-gradient-to-r from-amber-600 to-amber-800";
+    iconColor = "text-amber-200";
+    borderColor = "border-amber-500";
+  } else if (status === 'past_due' || status === 'incomplete') {
+    bgColor = "bg-orange-800";
+    iconColor = "text-orange-200";
+    borderColor = "border-orange-500";
+  } else if (status === 'canceled' || status === 'unpaid' || status === 'incomplete_expired') {
+    bgColor = "bg-red-900";
+    iconColor = "text-red-200";
+    borderColor = "border-red-500";
   }
-  
-  // Active subscription
-  if (subscription.status === 'active') {
-    const expirationDate = subscription.currentPeriodEnd ? 
-      new Date(subscription.currentPeriodEnd * 1000).toLocaleDateString() : 
-      'Unknown';
-    
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge 
-              variant="default" 
-              className={`${sizeClasses[size]} flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-300 hover:from-amber-600 hover:to-amber-400 cursor-default`}
-            >
-              <Crown className={`${size === 'sm' ? 'h-3 w-3' : 'h-4 w-4'} text-amber-100`} />
-              <span>{subscription.plan || 'Premium'}</span>
-            </Badge>
-          </TooltipTrigger>
-          {showTooltip && (
-            <TooltipContent side="bottom">
-              <p className="text-sm font-medium">
-                {subscription.cancelAtPeriodEnd ? 
-                  `Your subscription will end on ${expirationDate}` : 
-                  `Your subscription renews on ${expirationDate}`}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Manage in account settings
-              </p>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-  
-  // Other subscription states (past_due, canceled, etc.)
-  const getStatusInfo = () => {
-    switch (subscription.status) {
+
+  // Size classes based on the size prop
+  const sizeClasses = {
+    sm: "h-5 w-5 border",
+    default: "h-6 w-6 border-2",
+    lg: "h-8 w-8 border-2"
+  }[size];
+
+  // Icon size based on the size prop
+  const iconSize = {
+    sm: "h-3 w-3",
+    default: "h-4 w-4",
+    lg: "h-5 w-5"
+  }[size];
+
+  // Customize the badge content based on subscription status
+  const Badge = (
+    <div className={cn(
+      "flex items-center justify-center rounded-full", 
+      bgColor, 
+      borderColor,
+      sizeClasses,
+      "hover:opacity-90 transition-opacity duration-200"
+    )}>
+      <Crown className={cn(iconColor, iconSize)} />
+    </div>
+  );
+
+  // Format expiration date for display
+  const formatExpirationDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  // Generate tooltip content based on subscription status
+  const getTooltipContent = () => {
+    switch (status) {
+      case 'active':
+        return (
+          <div className="flex flex-col gap-1 text-xs">
+            <p className="font-semibold text-amber-300">{plan} Plan (Active)</p>
+            <p className="text-gray-300">Your subscription is active and will renew on {formatExpirationDate(subscription?.expiresAt)}.</p>
+          </div>
+        );
+      case 'trialing':
+        return (
+          <div className="flex flex-col gap-1 text-xs">
+            <p className="font-semibold text-amber-300">{plan} Trial</p>
+            <p className="text-gray-300">Your trial ends on {formatExpirationDate(subscription?.expiresAt)}.</p>
+          </div>
+        );
       case 'past_due':
-        return {
-          label: 'Payment Due',
-          tooltip: 'Your payment is past due. Please update your payment method.',
-          variant: 'destructive' as const,
-          icon: <AlertCircle className={`${size === 'sm' ? 'h-3 w-3' : 'h-4 w-4'}`} />,
-        };
+        return (
+          <div className="flex flex-col gap-1 text-xs">
+            <p className="font-semibold text-orange-300">{plan} Plan (Payment Due)</p>
+            <p className="text-gray-300">Your payment is past due. Please update your billing details.</p>
+            {redirectToUpgrade && (
+              <Button variant="outline" size="sm" className="mt-1" asChild>
+                <Link href="/account/subscription">Update Payment</Link>
+              </Button>
+            )}
+          </div>
+        );
       case 'canceled':
-        return {
-          label: 'Canceled',
-          tooltip: `Your subscription has been canceled and will end on ${new Date(subscription.currentPeriodEnd * 1000).toLocaleDateString()}`,
-          variant: 'outline' as const,
-          icon: null,
-        };
       case 'unpaid':
-        return {
-          label: 'Unpaid',
-          tooltip: 'Your subscription is unpaid. Please update your payment method.',
-          variant: 'destructive' as const,
-          icon: <AlertCircle className={`${size === 'sm' ? 'h-3 w-3' : 'h-4 w-4'}`} />,
-        };
-      case 'incomplete':
       case 'incomplete_expired':
-        return {
-          label: 'Incomplete',
-          tooltip: 'Your subscription setup is incomplete. Please complete the payment process.',
-          variant: 'outline' as const,
-          icon: <AlertCircle className={`${size === 'sm' ? 'h-3 w-3' : 'h-4 w-4'}`} />,
-        };
+        return (
+          <div className="flex flex-col gap-1 text-xs">
+            <p className="font-semibold text-red-300">{plan} Plan (Canceled)</p>
+            <p className="text-gray-300">Your subscription has been canceled.</p>
+            {redirectToUpgrade && (
+              <Button variant="outline" size="sm" className="mt-1" asChild>
+                <Link href="/account/subscription">Renew Subscription</Link>
+              </Button>
+            )}
+          </div>
+        );
+      case 'incomplete':
+        return (
+          <div className="flex flex-col gap-1 text-xs">
+            <p className="font-semibold text-orange-300">{plan} Plan (Incomplete)</p>
+            <p className="text-gray-300">Your subscription setup is incomplete.</p>
+            {redirectToUpgrade && (
+              <Button variant="outline" size="sm" className="mt-1" asChild>
+                <Link href="/account/subscription">Complete Setup</Link>
+              </Button>
+            )}
+          </div>
+        );
       default:
-        return {
-          label: subscription.status?.charAt(0).toUpperCase() + subscription.status?.slice(1) || 'Unknown',
-          tooltip: 'Your subscription status is unknown. Please contact support.',
-          variant: 'outline' as const,
-          icon: null,
-        };
+        return (
+          <div className="flex flex-col gap-1 text-xs">
+            <p className="font-semibold text-gray-300">Free Plan</p>
+            <p className="text-gray-400">Upgrade to unlock premium features.</p>
+            {redirectToUpgrade && (
+              <Button variant="outline" size="sm" className="mt-1" asChild>
+                <Link href="/account/subscription">Upgrade Now</Link>
+              </Button>
+            )}
+          </div>
+        );
     }
   };
-  
-  const { label, tooltip, variant, icon } = getStatusInfo();
-  
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge 
-            variant={variant} 
-            className={`${sizeClasses[size]} flex items-center gap-1 cursor-pointer`}
-            onClick={() => navigate('/account/subscription')}
-          >
-            {icon}
-            <span>{label}</span>
-          </Badge>
-        </TooltipTrigger>
-        {showTooltip && (
-          <TooltipContent side="bottom">
-            <p>{tooltip}</p>
+
+  if (showTooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {redirectToUpgrade ? (
+              <Link href="/account/subscription">
+                {Badge}
+              </Link>
+            ) : (
+              Badge
+            )}
+          </TooltipTrigger>
+          <TooltipContent className="w-64">
+            {getTooltipContent()}
           </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // Just the badge without tooltip if showTooltip is false
+  return redirectToUpgrade ? (
+    <Link href="/account/subscription">
+      {Badge}
+    </Link>
+  ) : (
+    Badge
   );
 };
 

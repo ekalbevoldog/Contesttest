@@ -27,6 +27,7 @@ import {
   BookOpen, // Example for Case Studies
   Zap, // Example for Get Started / AI Assistant
   ArrowRight, // For Get Started button
+  Crown, // For subscription management
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -285,6 +286,7 @@ export default function Header() {
       buttonClassName: "mt-2 border-primary bg-transparent hover:bg-primary/15 text-white",
     },
     { label: "My Public Profile", href: "/athlete/profile-link", icon: ExternalLink, condition: (user, userType) => !!user && userType === 'athlete', mobileOnly: true },
+    { label: "Manage Subscription", href: "/account/subscription", icon: Crown, condition: (user) => !!user, mobileOnly: true },
     { label: "Settings", href: "/settings", icon: Settings, condition: (user) => !!user, mobileOnly: true },
     { label: "Sign Out", icon: LogOut, onClick: handleLogout, condition: (user) => !!user, mobileOnly: true },
     // Mobile Account Links (Logged Out)
