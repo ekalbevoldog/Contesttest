@@ -19,27 +19,61 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-// Profile schema for validation
-const profileSchema = z.object({
+// Shared base schema for all profile types
+const baseProfileSchema = {
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   phone: z.string().optional(),
   location: z.string().optional(),
   bio: z.string().optional(),
-  
-  // Business-specific fields
+};
+
+// Business-specific fields
+const businessProfileSchema = {
+  ...baseProfileSchema,
   company: z.string().optional(),
   position: z.string().optional(),
   industry: z.string().optional(),
   company_size: z.string().optional(),
-  
-  // Athlete-specific fields
+};
+
+// Athlete-specific fields 
+const athleteProfileSchema = {
+  ...baseProfileSchema,
   sport: z.string().optional(),
   division: z.string().optional(),
   school: z.string().optional(),
   content_style: z.string().optional(),
   compensation_goals: z.string().optional(),
-  follower_count: z.number().optional()
+  follower_count: z.number().optional(),
+};
+
+// Create the appropriate schema based on user type
+const createProfileSchema = (userType: string | undefined) => {
+  if (userType === 'athlete') {
+    return z.object(athleteProfileSchema);
+  } else if (userType === 'business') {
+    return z.object(businessProfileSchema);
+  } else {
+    return z.object(baseProfileSchema);
+  }
+};
+
+// Create dynamic type based on user role
+const profileSchema = z.object({
+  ...baseProfileSchema,
+  // Optional athlete fields
+  sport: z.string().optional(),
+  division: z.string().optional(),
+  school: z.string().optional(),
+  content_style: z.string().optional(),
+  compensation_goals: z.string().optional(),
+  follower_count: z.number().optional(),
+  // Optional business fields
+  company: z.string().optional(),
+  position: z.string().optional(),
+  industry: z.string().optional(),
+  company_size: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -53,8 +87,14 @@ const EditProfilePage = () => {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+  // Create the form schema based on user type
+  const userProfileSchema = React.useMemo(() => {
+    // Use the universal schema if no userType is provided yet
+    return userType ? createProfileSchema(userType) : profileSchema;
+  }, [userType]);
+
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(userProfileSchema),
     defaultValues: {
       name: "",
       email: "",
