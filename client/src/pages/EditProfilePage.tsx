@@ -122,6 +122,7 @@ const EditProfilePage = () => {
       if (refetchProfile) {
         refetchProfile();
       }
+      setLocation("/profile");
     },
     onError: (error) => {
       toast({
@@ -248,7 +249,7 @@ const EditProfilePage = () => {
   
   // Return to profile page
   const handleCancel = () => {
-    navigate("/profile");
+    setLocation("/profile");
   };
 
   if (isLoading) {
