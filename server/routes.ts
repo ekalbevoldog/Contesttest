@@ -3496,14 +3496,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store feedback
       const feedback = await storage.storeFeedback({
-        userId,
-        userType: req.user.role, // Changed from userType to role
-        feedbackType: feedbackData.feedbackType,
-        matchId: feedbackData.matchId || null,
-        rating: feedbackData.rating || null,
+        user_id: userId,
+        user_type: req.user.role,
+        match_id: feedbackData.match_id || null,
+        rating: feedbackData.rating,
         title: feedbackData.title,
         content: feedbackData.content,
-        isPublic: feedbackData.isPublic || false,
+        public: feedbackData.public || false,
+        category: feedbackData.category,
       });
 
       // Notify administrators via WebSocket if a compliance officer is connected
@@ -3608,6 +3608,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
+      
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
 
       if (req.user.role !== 'compliance') {
         return res.status(403).json({ message: "Not authorized" });
@@ -3644,6 +3648,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
+      
+      if (!req.user) {
+        return res.status(401).json({ message: "User not found" });
+      }
 
       if (req.user.role !== 'compliance') {
         return res.status(403).json({ message: "Not authorized" });
@@ -3663,12 +3671,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Notify the user if they are connected
       const originalFeedback = await storage.getFeedback(feedbackId);
       if (originalFeedback) {
-        // Get the user's session based on userId
-        const userSession = await storage.getSessionByUserId(originalFeedback.userId);
-        if (userSession && userSession.sessionId) {
-          const clientSocket = connectedClients.get(userSession.sessionId);
+        // Get the user's session based on user_id
+        const userSession = await storage.getSessionByUserId(originalFeedback.user_id);
+        if (userSession && userSession.session_id) {
+          const clientSocket = connectedClients.get(userSession.session_id);
           if (clientSocket && clientSocket.readyState === WebSocket.OPEN) {
-            sendWebSocketMessage(userSession.sessionId, {
+            sendWebSocketMessage(userSession.session_id, {
               type: 'feedback_response',
               message: 'Your feedback has received a response',
               data: {
