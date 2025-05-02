@@ -2564,6 +2564,504 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stripe subscription endpoints
+  // Get current user's subscription status
+  app.get('/api/subscription/status', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const userId = req.user.id;
+      
+      // Get user's subscription details from database
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('stripe_subscription_id, stripe_customer_id, subscription_status, subscription_plan, subscription_current_period_end, subscription_cancel_at_period_end')
+        .eq('auth_id', userId)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error('[API] Error fetching user subscription data:', userError);
+        return res.status(500).json({ error: 'Failed to fetch subscription status' });
+      }
+      
+      // If no subscription info found
+      if (!userData?.stripe_subscription_id) {
+        return res.status(200).json({
+          status: 'none',
+          message: 'No active subscription found',
+        });
+      }
+      
+      // If we have a subscription ID, try to get the latest details from Stripe
+      if (process.env.STRIPE_SECRET_KEY) {
+        try {
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            apiVersion: '2023-10-16',
+          });
+          
+          const subscription = await stripe.subscriptions.retrieve(userData.stripe_subscription_id);
+          
+          return res.status(200).json({
+            status: subscription.status,
+            plan: userData.subscription_plan,
+            currentPeriodEnd: subscription.current_period_end,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          });
+        } catch (stripeError) {
+          console.error('[API] Error retrieving subscription from Stripe:', stripeError);
+          // Fall back to database data if Stripe API call fails
+        }
+      }
+      
+      // Return data from database if we couldn't get it from Stripe
+      return res.status(200).json({
+        status: userData.subscription_status || 'unknown',
+        plan: userData.subscription_plan,
+        currentPeriodEnd: userData.subscription_current_period_end 
+          ? new Date(userData.subscription_current_period_end).getTime() / 1000
+          : null,
+        cancelAtPeriodEnd: userData.subscription_cancel_at_period_end || false,
+      });
+    } catch (error) {
+      console.error('[API] Error in subscription status endpoint:', error);
+      return res.status(500).json({ error: 'Failed to retrieve subscription status' });
+    }
+  });
+
+  app.get('/api/subscription/plans', async (req: Request, res: Response) => {
+    try {
+      // This endpoint returns available subscription plans (products) from Stripe
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: 'Stripe configuration missing' });
+      }
+      
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+      });
+      
+      // Retrieve all active products with their prices
+      const products = await stripe.products.list({
+        active: true,
+        expand: ['data.default_price'],
+      });
+      
+      // Format the products for the frontend
+      const plans = products.data.map(product => {
+        const price = product.default_price as Stripe.Price;
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          priceId: price?.id || null,
+          unitAmount: price?.unit_amount || 0,
+          currency: price?.currency || 'usd',
+          interval: price?.type === 'recurring' ? price.recurring?.interval : 'one-time',
+          metadata: product.metadata,
+          features: product.features?.map(f => f.name) || [],
+          images: product.images,
+        };
+      });
+      
+      return res.status(200).json({ plans });
+    } catch (error) {
+      console.error('[API] Error fetching subscription plans:', error);
+      return res.status(500).json({ error: 'Failed to retrieve subscription plans' });
+    }
+  });
+
+  // Create or get subscription
+  app.post('/api/get-or-create-subscription', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const userId = req.user.id;
+      const email = req.user.email;
+      const { priceId } = req.body;
+      
+      if (!priceId) {
+        return res.status(400).json({ error: 'Price ID is required' });
+      }
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: 'Stripe configuration missing' });
+      }
+      
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+      });
+      
+      // Get user from database
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('stripe_customer_id, stripe_subscription_id')
+        .eq('auth_id', userId)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error('[API] Error fetching user data:', userError);
+        return res.status(500).json({ error: 'Failed to fetch user data' });
+      }
+      
+      // Get or create Stripe customer
+      let customerId = userData?.stripe_customer_id;
+      
+      if (!customerId) {
+        // Create a new customer in Stripe
+        const customer = await stripe.customers.create({
+          email,
+          metadata: {
+            userId,
+          },
+        });
+        
+        customerId = customer.id;
+        
+        // Save the customer ID in our database
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ stripe_customer_id: customerId })
+          .eq('auth_id', userId);
+        
+        if (updateError) {
+          console.error('[API] Error updating user with Stripe customer ID:', updateError);
+          return res.status(500).json({ error: 'Failed to update user with Stripe customer ID' });
+        }
+      }
+      
+      // Check if user already has a subscription
+      if (userData?.stripe_subscription_id) {
+        try {
+          // Get the existing subscription
+          const subscription = await stripe.subscriptions.retrieve(userData.stripe_subscription_id);
+          
+          // Return the client secret if the subscription is incomplete
+          if (subscription.status === 'incomplete' || subscription.status === 'incomplete_expired') {
+            // Create a new subscription
+            const newSubscription = await stripe.subscriptions.create({
+              customer: customerId,
+              items: [{ price: priceId }],
+              payment_behavior: 'default_incomplete',
+              expand: ['latest_invoice.payment_intent'],
+            });
+            
+            // Update the subscription ID in our database
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ 
+                stripe_subscription_id: newSubscription.id,
+                subscription_status: newSubscription.status,
+              })
+              .eq('auth_id', userId);
+            
+            if (updateError) {
+              console.error('[API] Error updating user with new subscription ID:', updateError);
+            }
+            
+            // @ts-ignore - We know these exist due to the expand parameter
+            const clientSecret = newSubscription.latest_invoice.payment_intent.client_secret;
+            
+            return res.status(200).json({
+              subscriptionId: newSubscription.id,
+              clientSecret,
+              status: newSubscription.status,
+            });
+          }
+          
+          // If subscription is active, just return the details
+          return res.status(200).json({
+            subscriptionId: subscription.id,
+            status: subscription.status,
+            currentPeriodEnd: subscription.current_period_end,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          });
+        } catch (subsError) {
+          console.error('[API] Error retrieving subscription:', subsError);
+          // If we can't retrieve the subscription, create a new one
+        }
+      }
+      
+      // Create a new subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+      
+      // Update the subscription ID in our database
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          stripe_subscription_id: subscription.id,
+          subscription_status: subscription.status,
+        })
+        .eq('auth_id', userId);
+      
+      if (updateError) {
+        console.error('[API] Error updating user with subscription ID:', updateError);
+      }
+      
+      // @ts-ignore - We know these exist due to the expand parameter
+      const clientSecret = subscription.latest_invoice.payment_intent.client_secret;
+      
+      return res.status(200).json({
+        subscriptionId: subscription.id,
+        clientSecret,
+        status: subscription.status,
+      });
+    } catch (error) {
+      console.error('[API] Error creating subscription:', error);
+      return res.status(500).json({ 
+        error: 'Failed to create subscription',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  // Webhook to handle Stripe events
+  app.post('/api/webhook/stripe', async (req: Request, res: Response) => {
+    const sig = req.headers['stripe-signature'] as string;
+    
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error('[API] Stripe configuration missing');
+      return res.status(500).send('Webhook Error: Stripe configuration missing');
+    }
+    
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16',
+    });
+    
+    let event: Stripe.Event;
+    
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error('[API] Webhook signature verification failed:', err);
+      return res.status(400).send(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+    
+    // Handle different event types
+    switch (event.type) {
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+        const subscription = event.data.object as Stripe.Subscription;
+        
+        // Find the user by customer ID
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('auth_id')
+          .eq('stripe_customer_id', subscription.customer)
+          .maybeSingle();
+        
+        if (userError || !userData) {
+          console.error('[API] Error finding user for subscription update:', userError);
+          break;
+        }
+        
+        // Update subscription details
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            subscription_status: subscription.status,
+            subscription_current_period_end: new Date(subscription.current_period_end * 1000),
+            subscription_cancel_at_period_end: subscription.cancel_at_period_end,
+          })
+          .eq('auth_id', userData.auth_id);
+        
+        if (updateError) {
+          console.error('[API] Error updating user subscription status:', updateError);
+        }
+        
+        // Add to subscription history
+        const { error: historyError } = await supabase
+          .from('subscription_history')
+          .insert({
+            user_id: userData.auth_id,
+            subscription_id: subscription.id,
+            status: subscription.status,
+            event_type: event.type,
+            event_data: subscription,
+          });
+        
+        if (historyError) {
+          console.error('[API] Error adding subscription history:', historyError);
+        }
+        
+        break;
+        
+      case 'customer.subscription.deleted':
+        const deletedSubscription = event.data.object as Stripe.Subscription;
+        
+        // Find the user by customer ID
+        const { data: deletedUserData, error: deletedUserError } = await supabase
+          .from('users')
+          .select('auth_id')
+          .eq('stripe_customer_id', deletedSubscription.customer)
+          .maybeSingle();
+        
+        if (deletedUserError || !deletedUserData) {
+          console.error('[API] Error finding user for subscription deletion:', deletedUserError);
+          break;
+        }
+        
+        // Update user record to reflect canceled subscription
+        const { error: cancelError } = await supabase
+          .from('users')
+          .update({
+            subscription_status: 'canceled',
+            subscription_current_period_end: new Date(deletedSubscription.current_period_end * 1000),
+          })
+          .eq('auth_id', deletedUserData.auth_id);
+        
+        if (cancelError) {
+          console.error('[API] Error updating user for subscription cancellation:', cancelError);
+        }
+        
+        // Add to subscription history
+        const { error: cancelHistoryError } = await supabase
+          .from('subscription_history')
+          .insert({
+            user_id: deletedUserData.auth_id,
+            subscription_id: deletedSubscription.id,
+            status: 'canceled',
+            event_type: event.type,
+            event_data: deletedSubscription,
+          });
+        
+        if (cancelHistoryError) {
+          console.error('[API] Error adding cancellation to subscription history:', cancelHistoryError);
+        }
+        
+        break;
+        
+      default:
+        console.log(`[API] Unhandled Stripe event type: ${event.type}`);
+    }
+    
+    res.status(200).json({ received: true });
+  });
+
+  // Cancel subscription
+  app.post('/api/subscription/cancel', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const userId = req.user.id;
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: 'Stripe configuration missing' });
+      }
+      
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+      });
+      
+      // Get user's subscription ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('stripe_subscription_id')
+        .eq('auth_id', userId)
+        .maybeSingle();
+      
+      if (userError || !userData?.stripe_subscription_id) {
+        return res.status(404).json({ error: 'No active subscription found' });
+      }
+      
+      // Cancel the subscription at period end
+      const subscription = await stripe.subscriptions.update(
+        userData.stripe_subscription_id,
+        { cancel_at_period_end: true }
+      );
+      
+      // Update user record
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          subscription_cancel_at_period_end: true,
+        })
+        .eq('auth_id', userId);
+      
+      if (updateError) {
+        console.error('[API] Error updating user for subscription cancellation:', updateError);
+      }
+      
+      return res.status(200).json({
+        status: 'success',
+        message: 'Subscription will be canceled at the end of the billing period',
+        subscriptionEnd: new Date(subscription.current_period_end * 1000),
+      });
+    } catch (error) {
+      console.error('[API] Error canceling subscription:', error);
+      return res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+  });
+
+  // Resume canceled subscription
+  app.post('/api/subscription/resume', verifySupabaseToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const userId = req.user.id;
+      
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: 'Stripe configuration missing' });
+      }
+      
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+      });
+      
+      // Get user's subscription ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('stripe_subscription_id')
+        .eq('auth_id', userId)
+        .maybeSingle();
+      
+      if (userError || !userData?.stripe_subscription_id) {
+        return res.status(404).json({ error: 'No subscription found' });
+      }
+      
+      // Resume the subscription
+      const subscription = await stripe.subscriptions.update(
+        userData.stripe_subscription_id,
+        { cancel_at_period_end: false }
+      );
+      
+      // Update user record
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          subscription_cancel_at_period_end: false,
+        })
+        .eq('auth_id', userId);
+      
+      if (updateError) {
+        console.error('[API] Error updating user for subscription resumption:', updateError);
+      }
+      
+      return res.status(200).json({
+        status: 'success',
+        message: 'Subscription resumed successfully',
+      });
+    } catch (error) {
+      console.error('[API] Error resuming subscription:', error);
+      return res.status(500).json({ error: 'Failed to resume subscription' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Set up WebSocket server on a distinct path to avoid conflicts with Vite's HMR

@@ -13,9 +13,8 @@ import BusinessDashboard from "@/pages/BusinessDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AthleteDashboard from "@/pages/AthleteDashboard";
 // Import the subscription-related pages
-import Checkout from "@/pages/Checkout";
+import Subscribe from "@/pages/Subscribe";
 import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
-import ManageSubscription from "@/pages/ManageSubscription";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -121,12 +120,9 @@ function Router() {
             <UnifiedProtectedRoute path="/dashboard" component={ProfilePage} />
 
             {/* Subscription routes */}
-            <Route path="/checkout" component={Checkout} />
-            <Route path="/subscription-success" component={SubscriptionSuccess} />
-            <UnifiedProtectedRoute 
-              path="/account/subscription" 
-              component={ManageSubscription} 
-            />
+            <UnifiedProtectedRoute path="/subscribe" component={Subscribe} />
+            <Route path="/subscription/success" component={SubscriptionSuccess} />
+            <UnifiedProtectedRoute path="/account/subscription" component={Subscribe} />
 
             {/* All other routes redirect to home */}
             <Route component={Home} />
