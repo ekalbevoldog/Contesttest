@@ -198,8 +198,16 @@ export default function Header() {
   // Only use Supabase auth
   const { user, userData, signOut } = useSupabaseAuth();
   
-  // Set user type from userData
-  const userType = userData?.role as UserType || null;
+  // Set user type from userData with fallback options
+  const userType = (userData?.role || user?.role || user?.user_metadata?.role) as UserType || null;
+  
+  // Debug user information
+  console.log('Header user info:', { 
+    user: user ? `${user.id} (${user.email})` : 'No user',
+    userData: userData ? `${JSON.stringify(userData)}` : 'No userData',
+    userType,
+    userMetadata: user?.user_metadata,
+  });
 
   const handleLogout = async () => {
     await signOut();
@@ -296,7 +304,20 @@ export default function Header() {
     { label: "Get Started", href: "/onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
     
     // Mobile New Campaign Button for Business Users
-    { label: "New Campaign", href: "/wizard/pro/start", icon: Zap, condition: (_, userType) => userType === 'business', mobileOnly: true, 
+    { label: "New Campaign", href: "/wizard/pro/start", icon: Zap, 
+      condition: (user, userType) => {
+        // More flexible check for business users - same as desktop
+        const isBusinessUser = 
+          userType === 'business' || 
+          user?.role === 'business' || 
+          user?.user_metadata?.role === 'business' ||
+          (user?.email && (user.email.includes('@business') || user.email.includes('business@')));
+        
+        // Log in mobile condition for debugging
+        console.log('Mobile New Campaign button condition:', { isBusinessUser, userType, userRole: user?.role, userMetaRole: user?.user_metadata?.role });
+        return isBusinessUser;
+      }, 
+      mobileOnly: true, 
       isButton: true, buttonVariant: 'default', 
       buttonClassName: "mt-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-black font-medium transition-all duration-300" },
 
@@ -320,7 +341,17 @@ export default function Header() {
       buttonVariant: 'default',
       buttonClassName: "relative overflow-hidden ml-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-black font-medium transition-all duration-300 shadow-lg hover:shadow-xl",
       href: "/wizard/pro/start",
-      condition: (_, userType) => userType === 'business', // Only show for business users
+      condition: (user, userType) => {
+        // More flexible check for business users
+        const isBusinessUser = 
+          userType === 'business' || 
+          user?.role === 'business' || 
+          user?.user_metadata?.role === 'business' ||
+          (user?.email && (user.email.includes('@business') || user.email.includes('business@')));
+        
+        console.log('New Campaign button condition check:', { isBusinessUser, userType, userRole: user?.role, userMetaRole: user?.user_metadata?.role });
+        return isBusinessUser;
+      },
       desktopOnly: true, // Specific styling for desktop button
     },
 
