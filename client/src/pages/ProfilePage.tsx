@@ -423,8 +423,6 @@ const ProfileContent = () => {
 // Protected route wrapper
 export default function ProfilePage() {
   return (
-    <UnifiedProtectedRoute>
-      <ProfileContent />
-    </UnifiedProtectedRoute>
+    <UnifiedProtectedRoute path="/profile" component={ProfileContent} />
   );
 }
