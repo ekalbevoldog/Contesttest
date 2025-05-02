@@ -6,6 +6,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import SubscriptionBadge from "@/components/SubscriptionBadge";
 import {
   Menu,
   BarChart,
@@ -257,6 +258,7 @@ export default function Header() {
         { label: "My Profile", href: "/profile", icon: UserCircle },
         { label: "Messages", href: "/messages", icon: MessageSquare },
         { label: "My Public Profile", href: "/athlete/profile-link", icon: ExternalLink, condition: (_, userType) => userType === 'athlete' },
+        { label: "Manage Subscription", href: "/account/subscription", icon: Crown },
         { label: "Settings", href: "/settings", icon: Settings },
         { label: "Sign Out", icon: LogOut, onClick: handleLogout },
       ]
@@ -331,6 +333,8 @@ export default function Header() {
                   <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto relative z-10" />
                 </div>
               </Link>
+              {/* Subscription badge - display next to logo when user is logged in */}
+              {user && <div className="ml-3"><SubscriptionBadge size="sm" /></div>}
             </div>
           </div>
 
@@ -472,9 +476,12 @@ export default function Header() {
                   {/* Header with subtle gradient background */}
                   <div className="flex items-center mb-6 px-3 relative">
                     <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/30 via-red-500/10 to-black/0 opacity-70"></div>
-                    <Link href="/" onClick={() => setOpen(false)} className="relative z-10">
-                      <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
-                    </Link>
+                    <div className="flex items-center relative z-10">
+                      <Link href="/" onClick={() => setOpen(false)}>
+                        <img src="/contested-logo.png" alt="Contested" className="h-10 w-auto" />
+                      </Link>
+                      {user && <div className="ml-3"><SubscriptionBadge size="sm" /></div>}
+                    </div>
                   </div>
 
                   {/* Scrollable Navigation Area */}
