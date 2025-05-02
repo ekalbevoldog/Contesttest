@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 
 interface AuthenticatedRequest extends Request {
   user?: any;
-  isAuthenticated: () => boolean;
+  isAuthenticated: () => this is AuthenticatedRequest;
 }
 
 export const requireAuth = async (
@@ -15,7 +15,7 @@ export const requireAuth = async (
   try {
     if (req.session && req.session.passport && req.session.passport.user) {
       req.user = req.session.passport.user;
-      req.isAuthenticated = () => true;
+      req.isAuthenticated = function(this: AuthenticatedRequest): this is AuthenticatedRequest { return true; };
       return next();
     }
   } catch (sessionError) {
@@ -137,7 +137,7 @@ export const requireAuth = async (
     }
     
     // Set authentication flag
-    req.isAuthenticated = () => true;
+    req.isAuthenticated = function(this: AuthenticatedRequest): this is AuthenticatedRequest { return true; };
     
     // Log success
     console.log('[Auth] User authenticated:', req.user.id, 'role:', req.user.role);

@@ -264,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Type for authenticated requests
   interface AuthenticatedRequest extends Request {
     user?: any;
-    isAuthenticated(): boolean;
+    isAuthenticated(): this is AuthenticatedRequest;
   }
   
   // Register the business profile auto-creation endpoint
@@ -1837,14 +1837,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       score: matchResponse.score,
       reason: matchResponse.reason,
       // Store all the multi-dimensional scores
-      audience_fit_score: matchResponse.audience_fit_score,
-      content_style_fit_score: matchResponse.content_style_fit_score,
-      brand_value_alignment_score: matchResponse.brand_value_alignment_score,
-      engagement_potential_score: matchResponse.engagement_potential_score,
-      compensation_fit_score: matchResponse.compensation_fit_score,
-      // Store strength and weakness areas as JSON
-      strength_areas: matchResponse.strength_areas ? JSON.stringify(matchResponse.strength_areas) : null,
-      weakness_areas: matchResponse.weakness_areas ? JSON.stringify(matchResponse.weakness_areas) : null
+      audience_fit_score: matchResponse.audienceFitScore,
+      content_style_fit_score: matchResponse.contentStyleFitScore,
+      brand_value_alignment_score: matchResponse.brandValueAlignmentScore,
+      engagement_potential_score: matchResponse.engagementPotentialScore,
+      compensation_fit_score: matchResponse.compensationFitScore,
+      // Use arrays directly instead of converting to JSON
+      strength_areas: matchResponse.strengthAreas || undefined,
+      weakness_areas: matchResponse.weaknessAreas || undefined
     };
 
     const match = await storage.storeMatch(matchData);
