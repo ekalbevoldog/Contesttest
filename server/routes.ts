@@ -14,8 +14,6 @@ import { pool, db as supabaseAdmin } from "./db.js";
 // Import auth fixes
 import { ensureBusinessProfile } from "./auth-fixes/auto-create-business-profile.js";
 // Import routes
-import subscriptionRoutes from "./routes/subscriptionRoutes.js";
-import webhookRoutes from "./routes/webhookRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 
 // Mock service for BigQuery
@@ -85,8 +83,6 @@ import { insertFeedbackSchema, Feedback } from "../shared/schema.js";
 
 // Map to store active WebSocket connections by session ID
 import { websocketService } from './services/websocketService';
-import subscriptionRoutes from './routes/subscriptionRoutes';
-import webhookRoutes from './routes/webhooks';
 import * as stripeService from './services/stripeService';
 
 // Map to store connected WebSocket clients (legacy approach)
@@ -3922,6 +3918,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import route modules
+  const subscriptionRoutes = (await import('./routes/subscriptionRoutes.js')).default;
+  const webhookRoutes = (await import('./routes/webhooks.js')).default;
+  
   // Mount the subscription routes (for Stripe integration)
   console.log('[API] Registering subscription routes');
   app.use('/api/subscription', subscriptionRoutes);

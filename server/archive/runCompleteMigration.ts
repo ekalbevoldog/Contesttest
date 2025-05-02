@@ -172,6 +172,10 @@ async function executeSql(sql: string): Promise<boolean> {
   }
 }
 
+// Commented out second implementation of runCompleteMigration
+// This was causing a syntax error in the file
+// Only the first implementation (at the top of the file) should be active.
+/**
 // Function to run the complete migration
 // Only keep one function definition - the one at the top of the file
 // This export is commented out to avoid duplicate exports
@@ -341,6 +345,7 @@ async function executeSql(sql: string): Promise<boolean> {
     return false;
   }
 }
+**/
 
 // Run the migration if this file is executed directly
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
