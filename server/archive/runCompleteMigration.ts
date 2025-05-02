@@ -1,7 +1,7 @@
 
 // Complete migration script for user schema
 
-import { supabase } from "./supabase.js";
+import { supabase } from "../supabase.js";
 
 async function runCompleteMigration() {
   console.log("Running complete migration...");
@@ -122,7 +122,7 @@ runCompleteMigration().then(success => {
 });
 
 
-import { supabaseAdmin } from './supabase.js';
+import { supabaseAdmin } from '../supabase.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

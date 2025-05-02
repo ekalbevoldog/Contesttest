@@ -5,7 +5,7 @@
  * particularly around the mapping between Supabase Auth users and the application's users table.
  */
 
-import { supabase, supabaseAdmin } from './supabase.js';
+import { supabase, supabaseAdmin } from '../supabase.js';
 
 interface DiagnosticResult {
   ok: boolean;
