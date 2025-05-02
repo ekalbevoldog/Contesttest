@@ -30,12 +30,21 @@ export const requireAuth = async (
   }
 
   try {
+    // Verify the token with Supabase
     const { data, error } = await supabase.auth.getUser(token);
     
     if (error || !data.user) {
       console.error('Auth error:', error);
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication token' });
     }
+    
+    console.log('[Auth] Token verified for user:', data.user.id, '(' + data.user.email + ')');
+    
+    // Extract user role from metadata or direct property
+    const role = data.user.user_metadata?.role || 
+                data.user.role || 
+                data.user.user_metadata?.user_type ||
+                'user';
     
     // Get user details from database
     const { data: userData, error: userError } = await supabase
@@ -44,14 +53,58 @@ export const requireAuth = async (
       .eq('auth_id', data.user.id)
       .single();
       
-    if (userError || !userData) {
-      console.error('User data error:', userError);
-      return res.status(401).json({ error: 'Unauthorized - User not found in database' });
+    if (userError) {
+      // Only log the error, don't fail - try alternative lookup method
+      console.log('User data lookup error with auth_id:', userError);
+      
+      // Try looking up by email instead
+      const { data: userByEmail, error: emailError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', data.user.email)
+        .single();
+        
+      if (emailError || !userByEmail) {
+        console.error('User not found by email either:', emailError || 'No results');
+        
+        // Instead of failing, create a basic user object from the token data
+        req.user = {
+          id: data.user.id,
+          auth_id: data.user.id,
+          email: data.user.email,
+          role: role,
+          created_at: new Date().toISOString()
+        };
+      } else {
+        // Found user by email
+        req.user = userByEmail;
+      }
+    } else if (!userData) {
+      console.warn('No user data found for auth_id:', data.user.id);
+      
+      // Create a basic user object from the token data
+      req.user = {
+        id: data.user.id,
+        auth_id: data.user.id,
+        email: data.user.email,
+        role: role,
+        created_at: new Date().toISOString()
+      };
+    } else {
+      // We found the user record
+      req.user = userData;
     }
     
-    // Attach user to request
-    req.user = userData;
+    // Ensure role is set
+    if (!req.user.role && role) {
+      req.user.role = role;
+    }
+    
+    // Set authentication flag
     req.isAuthenticated = () => true;
+    
+    // Log success
+    console.log('[Auth] User authenticated:', req.user.id, 'role:', req.user.role);
     
     next();
   } catch (err) {
