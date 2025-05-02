@@ -36,3 +36,6 @@ args = "pkill -f \"tsx server/index.ts\" || true"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-baee183f-e7a0-49ac-88ce-a1512085d204"
