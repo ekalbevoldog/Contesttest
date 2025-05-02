@@ -1803,13 +1803,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sport: athlete.sport,
           school: athlete.school,
           division: athlete.division,
-          followerCount: athlete.followerCount,
-          contentStyle: athlete.contentStyle,
+          follower_count: athlete.follower_count,
+          content_style: athlete.content_style,
           email: athlete.email,
           // Parse JSON fields if they exist
-          socialHandles: athlete.socialHandles ? JSON.parse(athlete.socialHandles) : {},
-          personalValues: athlete.personalValues ? JSON.parse(athlete.personalValues) : [],
-          contentTypes: athlete.contentTypes ? JSON.parse(athlete.contentTypes) : [],
+          social_handles: athlete.social_handles ? JSON.parse(athlete.social_handles) : {},
+          personal_values: athlete.personal_values ? JSON.parse(athlete.personal_values) : [],
+          content_types: athlete.content_types ? JSON.parse(athlete.content_types) : [],
         });
       }
 
@@ -1832,20 +1832,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Store the match with enhanced multi-dimensional data
     const matchData = {
-      athleteId: athlete.id,
-      businessId: business.id,
-      campaignId: campaign.id,
+      athlete_id: athlete.id,
+      business_id: business.id,
+      campaign_id: campaign.id,
       score: matchResponse.score,
       reason: matchResponse.reason,
       // Store all the multi-dimensional scores
-      audienceFitScore: matchResponse.audienceFitScore,
-      contentStyleFitScore: matchResponse.contentStyleFitScore,
-      brandValueAlignmentScore: matchResponse.brandValueAlignmentScore,
-      engagementPotentialScore: matchResponse.engagementPotentialScore,
-      compensationFitScore: matchResponse.compensationFitScore,
+      audience_fit_score: matchResponse.audienceFitScore,
+      content_style_fit_score: matchResponse.contentStyleFitScore,
+      brand_value_alignment_score: matchResponse.brandValueAlignmentScore,
+      engagement_potential_score: matchResponse.engagementPotentialScore,
+      compensation_fit_score: matchResponse.compensationFitScore,
       // Store strength and weakness areas as JSON
-      strengthAreas: matchResponse.strengthAreas ? JSON.stringify(matchResponse.strengthAreas) : null,
-      weaknessAreas: matchResponse.weaknessAreas ? JSON.stringify(matchResponse.weaknessAreas) : null
+      strength_areas: matchResponse.strengthAreas ? JSON.stringify(matchResponse.strengthAreas) : null,
+      weakness_areas: matchResponse.weaknessAreas ? JSON.stringify(matchResponse.weaknessAreas) : null
     };
 
     const match = await storage.storeMatch(matchData);
@@ -1857,11 +1857,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           event_type: "match_created",
           timestamp: new Date().toISOString(),
           data: {
-            matchId: match.id,
+            match_id: match.id,
             score: match.score,
-            athleteId: match.athleteId,
-            businessId: match.businessId,
-            campaignId: match.campaignId,
+            athlete_id: match.athlete_id,
+            business_id: match.business_id,
+            campaign_id: match.campaign_id,
             reason: match.reason
           },
           platform: "Contested"

@@ -41,8 +41,12 @@ try {
   console.log('✅ TypeScript build completed successfully');
   
   // Copy any necessary non-TypeScript files
-  execSync('cp server/supabase-migration.sql dist/', { stdio: 'inherit' });
-  console.log('✅ SQL migration file copied');
+  if (fs.existsSync('server/supabase-migration.sql')) {
+    execSync('cp server/supabase-migration.sql dist/', { stdio: 'inherit' });
+    console.log('✅ SQL migration file copied');
+  } else {
+    console.log('⚠️ SQL migration file not found, skipping copy');
+  }
   
 } catch (error) {
   console.error('❌ TypeScript compilation failed with errors');
@@ -68,9 +72,13 @@ try {
     execSync(esbuildCommand, { stdio: 'inherit' });
     console.log('✅ esbuild fallback completed successfully');
     
-    // Copy the SQL migration file
-    execSync('cp server/supabase-migration.sql dist/', { stdio: 'inherit' });
-    console.log('✅ SQL migration file copied');
+    // Copy the SQL migration file if it exists
+    if (fs.existsSync('server/supabase-migration.sql')) {
+      execSync('cp server/supabase-migration.sql dist/', { stdio: 'inherit' });
+      console.log('✅ SQL migration file copied');
+    } else {
+      console.log('⚠️ SQL migration file not found, skipping copy');
+    }
     
     console.log('⚠️ Build completed with fallback strategy. TypeScript errors should be fixed for future builds.');
   } catch (fallbackError) {
