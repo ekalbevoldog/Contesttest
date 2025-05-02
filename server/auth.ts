@@ -8,10 +8,18 @@ import { storage } from "./storage.js";
 // Import User schema
 import { User, User as SchemaUser } from "../shared/schema.js";
 
+// Define DateFields for Express.User compatibility
+interface ExpressDateFields {
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastLogin?: Date;
+}
+
 declare global {
   namespace Express {
-    // Define User interface ensuring id is non-optional
+    // Define User interface compatible with our schema
     interface User {
+      // Required fields
       id: string;
       email: string;
       username: string;
@@ -19,6 +27,7 @@ declare global {
       role: "athlete" | "business" | "compliance" | "admin";
       created_at: Date;
       metadata: Record<string, any>;
+      
       // Optional fields
       auth_id?: string;
       last_login?: Date;
@@ -28,9 +37,15 @@ declare global {
       subscription_plan?: string;
       subscription_current_period_end?: Date;
       subscription_cancel_at_period_end?: boolean;
+      
+      // Additional fields
+      stripe_id?: string;
+      sessionId?: string;
+      
       // DateFields compatibility
       createdAt?: Date;
       updatedAt?: Date;
+      lastLogin?: Date;
     }
   }
 }
@@ -120,7 +135,7 @@ export function setupAuth(app: Express) {
         }
         
         // Create a valid SchemaUser object with all required properties
-        const validUser: User = {
+        const validUser = {
           id: user.id.toString(), // Ensure id is a string
           email: user.email || '',
           username: user.username || '',
@@ -161,7 +176,7 @@ export function setupAuth(app: Express) {
       }
       
       // Create a complete User object with all required properties
-      const validUser: User = {
+      const validUser = {
         id: user.id.toString(),
         email: user.email || '',
         username: user.username || '',
@@ -230,7 +245,7 @@ export function setupAuth(app: Express) {
       });
       
       // Create a valid user object
-      const validUser: User = {
+      const validUser = {
         id: user.id.toString(),
         email: user.email || '',
         username: user.username || '',
@@ -273,7 +288,7 @@ export function setupAuth(app: Express) {
       }
       
       // Create a complete user object for login
-      const validUser: User = {
+      const validUser = {
         id: user.id.toString(),
         email: user.email || '',
         username: user.username || '',
