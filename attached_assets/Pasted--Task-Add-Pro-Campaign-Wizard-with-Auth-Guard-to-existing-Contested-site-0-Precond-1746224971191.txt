@@ -1,0 +1,189 @@
+
+
+## 📋 Task: Add **Pro Campaign Wizard** with Auth Guard to existing Contested site
+
+### 0. Preconditions
+
+* Repo already runs **Next.js ≥13** with Supabase Auth.
+* ENV secrets are set in Replit:
+
+  ```
+  SUPABASE_URL, SUPABASE_ANON_KEY,
+  MATCHING_SVC_URL, DOCUSIGN_INTEGRATOR_KEY
+  ```
+* DB tables `campaigns`, `deliverables`, `bundles`, `offers` are live per migration.
+
+### 1. Install missing dependency
+
+Your project already contains most required libraries. Install **Zustand** only if it’s not listed in `package.json`:
+
+```bash
+npm i zustand
+```
+
+*No other new packages are necessary.*
+
+### 2. Supabase client (reuse or create at `client/client/src/lib/supabase.ts`)
+
+Supabase client (reuse or create at `client/src/lib/supabase.ts`)
+
+```ts
+import { createBrowserClient } from '@supabase/supabase-js';
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+```
+
+Expose envs in `next.config.js`.
+
+### 3. Global **AuthGuard**
+
+Create `client/src/components/AuthGuard.tsx`:
+
+````tsx
+'use client';
+import { useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/useAuth';  // existing unified auth hook
+
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
+  const [location, setLocation] = useLocation();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) setLocation('/login');
+  }, [user, loading, setLocation]);
+
+  if (loading || !user) return null;
+  return <>{children}</>;
+}
+```tsx
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) router.push('/login');
+      else setReady(true);
+    });
+  }, [router]);
+
+  return ready ? <>{children}</> : null;
+}
+````
+
+### 4. Wizard State
+
+`client/src/contexts/ProWizardProvider.tsx`:
+
+```ts
+import { create } from 'zustand';
+export const useProWizard = create<{ campaignId?: string; step: 1|2|3|4|5|6; form: any; set: (p:any)=>void }>((set)=>({ step:1, form:{}, set }));
+```
+
+### 5. Routing & layout
+
+Directory structure (relative to **client/src/**):
+
+```text
+pages/wizard/pro/
+  layout.tsx
+  start.tsx
+  advanced.tsx
+  deliverables.tsx
+  match.tsx
+  bundle.tsx
+  review.tsx
+```
+
+`layout.tsx` (located at `client/src/pages/wizard/pro/layout.tsx`):
+
+```tsx
+import AuthGuard from '@/components/AuthGuard';
+import { redirect } from 'next/navigation';
+import { useProWizard } from '@/contexts/ProWizardProvider';
+
+export default function WizardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGuard>
+      <Inner>{children}</Inner>
+    </AuthGuard>
+  );
+}
+
+function Inner({ children }: { children: React.ReactNode }) {
+  const { campaignId, step } = useProWizard();
+  if (!campaignId && step !== 1) redirect('/wizard/pro/start');
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* ProgressBar component here */}
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
+```
+
+### 6. Quick‑Launch form example (`start/page.tsx`)
+
+```tsx
+'use client';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { supabase } from '@/lib/supabase';
+import { useProWizard } from '@/contexts/ProWizardProvider';
+
+const Schema = z.object({ objective:z.string().min(1), channels:z.array(z.string()).min(1), startDate:z.string(), endDate:z.string() });
+export default function Start() {
+  const { set } = useProWizard();
+  const router = useRouter();
+  const { register, handleSubmit } = useForm({ resolver:zodResolver(Schema) });
+  const onSubmit = async (d:any) => {
+    const { data: row, error } = await supabase.from('campaigns').insert([{ ...d, wizard_type:'PRO', status:'DRAFT' }]).select().single();
+    if (error) return alert(error.message);
+    set({ campaignId:row.id, step:2, form:d });
+    router.push('/wizard/pro/advanced');
+  };
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
+      {/* inputs here */}
+      <button className="btn btn-primary w-full">Save & Continue →</button>
+    </form>
+  );
+}
+```
+
+### 7. API endpoints (Next API routes)
+
+| Path                      | Purpose                                                |
+| ------------------------- | ------------------------------------------------------ |
+| `POST /api/match/run`     | Proxy to `MATCHING_SVC_URL`, store `match_candidates`. |
+| `POST /api/bundle/create` | Write `bundles`, `bundle_members`.                     |
+| `POST /api/offer/send`    | Call DocuSign service, update `offers`.                |
+
+### 8. Sidebar link (business role only)
+
+```tsx
+{session?.user.role === 'business' && <Link href="/wizard/pro/start">New Campaign</Link>}
+```
+
+### 9. QA checklist
+
+* Business user redirected to `/login` if session null.
+* Completing six steps writes rows in all tables.
+* `offers.status='SENT'` after step 6.
+* Athlete role blocked by RLS and no sidebar link.
+
+### ✅ Done when
+
+Wizard works on live Replit domain, behind feature flag `wizard_pro`.
+
+
