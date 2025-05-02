@@ -21,12 +21,12 @@ declare global {
     interface User {
       // Required fields
       id: string;
-      email: string;
-      username: string;
-      password: string;
-      role: "athlete" | "business" | "compliance" | "admin";
-      created_at: Date;
-      metadata: Record<string, any>;
+      email?: string;
+      username?: string;
+      password?: string;
+      role?: string;
+      created_at?: Date;
+      metadata?: Record<string, any>;
       
       // Optional fields
       auth_id?: string;
