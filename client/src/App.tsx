@@ -1,31 +1,31 @@
 import { Switch, Route, useLocation, RouteComponentProps } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import Home from "@/pages/Home";
+import { Toaster } from "./components/ui/toaster";
+import Home from "./pages/Home";
 // SimpleOnboarding and EnhancedOnboarding removed - consolidated to main onboarding
-import Onboarding from "@/pages/Onboarding";
-import AuthPage from "@/pages/auth-page";
-import ProfilePage from "@/pages/ProfilePage";
-import EditProfilePage from "@/pages/EditProfilePage";
-import AthleteInfo from "@/pages/AthleteInfo";
-import BusinessInfo from "@/pages/BusinessInfo";
-import BusinessDashboard from "@/pages/BusinessDashboard";
-import AdminDashboard from "@/pages/AdminDashboard";
-import AthleteDashboard from "@/pages/AthleteDashboard";
+import Onboarding from "./pages/Onboarding";
+import AuthPage from "./pages/auth-page";
+import ProfilePage from "./pages/ProfilePage";
+import EditProfilePage from "./pages/EditProfilePage";
+import AthleteInfo from "./pages/AthleteInfo";
+import BusinessInfo from "./pages/BusinessInfo";
+import BusinessDashboard from "./pages/BusinessDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import AthleteDashboard from "./pages/AthleteDashboard";
 // Import the subscription-related pages
-import Subscribe from "@/pages/Subscribe";
-import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
+import Subscribe from "./pages/Subscribe";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { SupabaseAuthProvider } from "@/hooks/use-supabase-auth";
-import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import { SupabaseAuthProvider } from "./hooks/use-supabase-auth";
+import { AuthProvider, useAuth } from "./hooks/use-auth";
 // Using unified protected route instead of separate components
-import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "@/lib/unified-protected-route";
+import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "./lib/unified-protected-route";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "./hooks/use-toast";
 
 // Define a fallback loading component
 const LoadingFallback = () => (
