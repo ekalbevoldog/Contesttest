@@ -30,8 +30,8 @@ try {
     }
     
     // Build server code with esbuild (more permissive than tsc)
-    // Explicitly exclude the archive directory which contains utility scripts not needed for production
-    const esbuildCommand = 'npx esbuild "server/**/*.ts" "shared/**/*.ts" "!server/archive/**/*" ' +
+    // Explicitly exclude the archive and auth-fixes directories which contain utility scripts not needed for production
+    const esbuildCommand = 'npx esbuild "server/**/*.ts" "shared/**/*.ts" "!server/archive/**/*" "!server/auth-fixes/**/*" ' +
       '--outdir=dist ' +
       '--platform=node ' +
       '--target=node16 ' +
