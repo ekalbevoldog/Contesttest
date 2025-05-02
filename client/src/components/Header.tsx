@@ -273,6 +273,15 @@ export default function Header() {
     // Mobile Account Links (Logged In)
     { label: "My Profile", href: "/profile", icon: UserCircle, condition: (user) => !!user, mobileOnly: true },
     { label: "Messages", href: "/messages", icon: MessageSquare, condition: (user) => !!user, mobileOnly: true },
+    { 
+      label: "Dashboard", 
+      icon: BarChart, 
+      condition: (user) => !!user, 
+      mobileOnly: true,
+      isButton: true,
+      buttonVariant: 'outline',
+      buttonClassName: "mt-2 border-primary bg-transparent hover:bg-primary/15 text-white",
+    },
     { label: "My Public Profile", href: "/athlete/profile-link", icon: ExternalLink, condition: (user, userType) => !!user && userType === 'athlete', mobileOnly: true },
     { label: "Settings", href: "/settings", icon: Settings, condition: (user) => !!user, mobileOnly: true },
     { label: "Sign Out", icon: LogOut, onClick: handleLogout, condition: (user) => !!user, mobileOnly: true },
@@ -526,6 +535,32 @@ export default function Header() {
 
                   {/* Footer Buttons */}
                   <div className="mt-auto pt-4 px-1"> {/* Stick to bottom */}
+                    {/* Dashboard Button (for all logged-in users) */}
+                    {user && (
+                      <Button
+                        key="mobile-dashboard-btn"
+                        size="sm"
+                        variant="outline"
+                        className="w-full justify-center mb-2 border-primary bg-transparent hover:bg-primary/15 text-white"
+                        asChild
+                        onClick={() => setOpen(false)}
+                      >
+                        <Link href={
+                          userType === 'athlete' ? "/athlete/dashboard" : 
+                          userType === 'business' ? "/business/dashboard" : 
+                          userType === 'compliance' ? "/compliance/dashboard" : 
+                          userType === 'admin' ? "/admin/dashboard" : 
+                          "/profile"
+                        }>
+                          <span className="flex items-center">
+                            <BarChart className="h-4 w-4 mr-1" />
+                            Dashboard
+                          </span>
+                        </Link>
+                      </Button>
+                    )}
+                    
+                    {/* Other Mobile Buttons */}
                     {mobileNavItems.filter(item => item.isButton && item.mobileOnly).map((item, index) => (
                        <Button
                          key={`mobile-btn-${index}`}
@@ -535,6 +570,7 @@ export default function Header() {
                          onClick={() => {
                            if(item.onClick) item.onClick();
                            // No need to close sheet here if onClick already does it
+                           setOpen(false);
                          }}
                          asChild={!!item.href}
                        >
