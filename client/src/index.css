@@ -57,11 +57,11 @@
   }
 
   * {
-    @apply border-border;
+    @apply border-zinc-800;
   }
 
   body {
-    @apply antialiased bg-background text-foreground;
+    @apply antialiased bg-black text-white;
     font-family: var(--font-body);
     background-color: #000000;
     background-image: 
