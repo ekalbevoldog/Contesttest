@@ -5,7 +5,7 @@ import { z } from "zod";
 
 // User type definitions
 export const userSchema = z.object({
-  id: z.number(), // Primary key in Supabase is always 'id'
+  id: z.string(), // Changed to string to match usage throughout the app
   auth_id: z.string().uuid().optional(), // Supabase auth id reference
   email: z.string().email(),
   username: z.string(),

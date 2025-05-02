@@ -1495,15 +1495,25 @@ export class SupabaseStorage implements IStorage {
   }
 
   private mapUserFromDb(data: any): User {
+    // Ensure all required fields are present with defaults if needed
     return {
       id: data.id,
-      email: data.email,
-      username: data.username,
+      email: data.email || '',
+      username: data.username || '',
       password: '', // Password is never returned from DB
-      role: data.role,
-      created_at: new Date(data.created_at),
+      role: data.role || 'athlete', // Default role if not provided
+      created_at: data.created_at ? new Date(data.created_at) : new Date(),
       last_login: data.last_login ? new Date(data.last_login) : undefined,
-      auth_id: data.auth_id
+      auth_id: data.auth_id,
+      // Include other required fields from User type with reasonable defaults
+      metadata: data.metadata || {},
+      stripe_customer_id: data.stripe_customer_id,
+      stripe_subscription_id: data.stripe_subscription_id,
+      subscription_status: data.subscription_status,
+      subscription_plan: data.subscription_plan,
+      subscription_current_period_end: data.subscription_current_period_end ? 
+        new Date(data.subscription_current_period_end) : undefined,
+      subscription_cancel_at_period_end: data.subscription_cancel_at_period_end
     };
   }
 
@@ -1771,10 +1781,88 @@ export class MemStorage implements IStorage {
     return undefined; 
   }
   async getAllUsers(): Promise<User[]> { return []; }
-  async createUser(insertUser: Partial<InsertUser>): Promise<User> { return { id: 1, email: insertUser.email || '', username: insertUser.username || '', password: '', role: 'athlete' } as User; }
-  async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> { return { id: Number(userId) } as User; }
-  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> { return { id: Number(userId) } as User; }
-  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> { return { id: Number(userId) } as User; }
+  async createUser(insertUser: Partial<InsertUser>): Promise<User> { 
+    return { 
+      id: '1', // Changed to string to match User schema
+      email: insertUser.email || '', 
+      username: insertUser.username || '', 
+      password: '', 
+      role: insertUser.role || 'athlete',
+      created_at: new Date(),
+      metadata: {},
+      // Include all required fields with defaults
+      auth_id: undefined,
+      last_login: undefined,
+      stripe_customer_id: undefined,
+      stripe_subscription_id: undefined,
+      subscription_status: undefined,
+      subscription_plan: undefined,
+      subscription_current_period_end: undefined,
+      subscription_cancel_at_period_end: undefined
+    }; 
+  }
+  async updateUser(userId: string, userData: Partial<User>): Promise<User | undefined> { 
+    return { 
+      id: userId, // Use string ID directly
+      email: '',
+      username: '',
+      password: '',
+      role: 'athlete',
+      created_at: new Date(),
+      metadata: {},
+      // Include other required fields
+      auth_id: undefined,
+      last_login: undefined,
+      stripe_customer_id: undefined,
+      stripe_subscription_id: undefined,
+      subscription_status: undefined,
+      subscription_plan: undefined,
+      subscription_current_period_end: undefined,
+      subscription_cancel_at_period_end: undefined
+    }; 
+  }
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User> { 
+    return { 
+      id: userId, // Use string ID directly
+      email: '',
+      username: '',
+      password: '',
+      role: 'athlete',
+      created_at: new Date(),
+      metadata: {},
+      stripe_customer_id: customerId,
+      // Include other required fields with reasonable defaults
+      auth_id: undefined,
+      last_login: undefined,
+      stripe_subscription_id: undefined,
+      subscription_status: undefined,
+      subscription_plan: undefined,
+      subscription_current_period_end: undefined,
+      subscription_cancel_at_period_end: undefined
+    }; 
+  }
+  
+  async updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User> { 
+    return { 
+      id: userId, // Use string ID directly
+      email: '',
+      username: '',
+      password: '',
+      role: 'athlete',
+      created_at: new Date(),
+      metadata: {},
+      // Include Stripe fields
+      stripe_customer_id: data.customerId,
+      stripe_subscription_id: data.subscriptionId,
+      // Include other required fields
+      auth_id: undefined,
+      last_login: undefined,
+      subscription_status: undefined,
+      subscription_plan: undefined,
+      subscription_current_period_end: undefined,
+      subscription_cancel_at_period_end: undefined
+    }; 
+  }
   async getPasswordHash(userId: string): Promise<string | null> { return null; }
   async storePasswordHash(userId: string, passwordHash: string): Promise<void> {}
   async verifyPassword(password: string, storedPassword: string): Promise<boolean> { return false; }

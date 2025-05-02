@@ -1,15 +1,16 @@
 import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as LocalStrategy, IVerifyOptions } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage.js";
-import { User as SelectUser } from "../shared/schema.js";
+// Import a renamed version of User to avoid naming conflicts
+import { User as SchemaUser } from "../shared/schema.js";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SchemaUser {}
   }
 }
 
@@ -21,7 +22,9 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+async function comparePasswords(supplied: string, stored: string | undefined): Promise<boolean> {
+  if (!stored) return false;
+  
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -95,7 +98,8 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Incorrect username or password" });
         }
         
-        return done(null, user);
+        // Cast to SchemaUser to ensure all required properties are present
+        return done(null, user as SchemaUser);
       } catch (error) {
         return done(error);
       }
@@ -106,10 +110,10 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (id: string, done) => {
     try {
-      const user = await storage.getUser(id.toString());
-      done(null, user);
+      const user = await storage.getUser(id);
+      done(null, user as SchemaUser);
     } catch (error) {
       done(error, null);
     }
@@ -156,7 +160,7 @@ export function setupAuth(app: Express) {
       });
       
       // Log the user in
-      req.login(user, (err) => {
+      req.login(user as SchemaUser, (err) => {
         if (err) return next(err);
         return res.status(201).json(user);
       });
@@ -168,14 +172,14 @@ export function setupAuth(app: Express) {
 
   // Login endpoint
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: SchemaUser | false, info?: IVerifyOptions) => {
       if (err) return next(err);
       
       if (!user) {
         return res.status(401).json({ error: info?.message || "Authentication failed" });
       }
       
-      req.login(user, (loginErr) => {
+      req.login(user as SchemaUser, (loginErr) => {
         if (loginErr) return next(loginErr);
         
         // Update the last login timestamp
