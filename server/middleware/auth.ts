@@ -1,13 +1,35 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../lib/supabase';
+import { Session } from 'express-session';
 
-interface AuthenticatedRequest extends Request {
-  user?: any;
-  isAuthenticated: () => this is AuthenticatedRequest;
+// Extend Session type to include passport property
+declare module 'express-session' {
+  interface Session {
+    passport?: {
+      user?: any;
+    };
+  }
+}
+
+// Extend the Express namespace to include the user type
+declare global {
+  namespace Express {
+    interface User {
+      id: string | number;
+      role?: string;
+      email?: string;
+      [key: string]: any;
+    }
+    
+    // This forces the isAuthenticated() method to return the correct type
+    interface Request {
+      isAuthenticated(): boolean;
+    }
+  }
 }
 
 export const requireAuth = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -15,7 +37,6 @@ export const requireAuth = async (
   try {
     if (req.session && req.session.passport && req.session.passport.user) {
       req.user = req.session.passport.user;
-      req.isAuthenticated = function(this: AuthenticatedRequest): this is AuthenticatedRequest { return true; };
       return next();
     }
   } catch (sessionError) {
@@ -131,16 +152,19 @@ export const requireAuth = async (
       req.user = userData;
     }
     
-    // Ensure role is set
-    if (!req.user.role && role) {
-      req.user.role = role;
+    // Ensure user object is properly defined
+    if (req.user) {
+      // Ensure role is set
+      if (!req.user.role && role) {
+        req.user.role = role;
+      }
+      
+      // Log success
+      console.log('[Auth] User authenticated:', req.user.id, 'role:', req.user.role || 'unknown');
     }
     
-    // Set authentication flag
-    req.isAuthenticated = function(this: AuthenticatedRequest): this is AuthenticatedRequest { return true; };
-    
-    // Log success
-    console.log('[Auth] User authenticated:', req.user.id, 'role:', req.user.role);
+    // Set authentication flag using a standard function
+    req.isAuthenticated = function() { return true; };
     
     next();
   } catch (err) {
@@ -150,7 +174,7 @@ export const requireAuth = async (
 };
 
 export const requireRole = (roles: string | string[]) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     // First ensure the user is authenticated
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       return res.status(401).json({ error: 'Unauthorized - Authentication required' });

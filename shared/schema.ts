@@ -9,6 +9,7 @@ export const userSchema = z.object({
   auth_id: z.string().uuid().optional(),
   email: z.string().email(),
   username: z.string(),
+  password: z.string().optional(), // Add password field for auth purposes
   role: z.enum(["athlete", "business", "compliance", "admin"]),
   created_at: z.date().optional(),
   last_login: z.date().optional(),
