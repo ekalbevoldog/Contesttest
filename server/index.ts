@@ -98,5 +98,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 })
 
 // Start server
+// Use PORT 5000 for development on Replit, but will use environment PORT in production
 const port = parseInt(process.env.PORT || '5000', 10)
+console.log(`Starting server on port ${port} (NODE_ENV: ${process.env.NODE_ENV || 'development'})`)
 httpServer.listen(port, '0.0.0.0', () => console.log(`Server listening on port ${port}`))

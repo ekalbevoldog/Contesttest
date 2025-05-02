@@ -213,4 +213,6 @@ if (process.argv[1].endsWith('fix-email-mismatch.ts')) {
   main();
 }
 
-export { fixEmailMismatch };
+// Don't export the function in production builds
+// It's only used for development/maintenance
+// export { fixEmailMismatch };

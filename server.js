@@ -55,10 +55,9 @@ try {
 }
 
 // Handle port for various deployment platforms
-const PORT = process.env.PORT || 5000;
-if (PORT !== 5000) {
-  console.log(`Note: Using PORT=${PORT} from environment`);
-}
+// Use PORT 3000 to match the ports configuration in .replit for proper deployment
+const PORT = process.env.PORT || 3000;
+console.log(`Note: Using PORT=${PORT} for deployment`);
 
 // Check for Supabase environment variables
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
