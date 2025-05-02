@@ -77,13 +77,13 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
     return false;
   }
 }
-import { setupAuth } from "./auth";
+import { setupAuth } from "./auth.js";
 // Use local schema import instead of @shared alias to fix production build
 import { insertFeedbackSchema, Feedback } from "../shared/schema.js";
 
 // Map to store active WebSocket connections by session ID
-import { websocketService } from './services/websocketService';
-import * as stripeService from './services/stripeService';
+import { websocketService } from './services/websocketService.js';
+import * as stripeService from './services/stripeService.js';
 
 // Map to store connected WebSocket clients (legacy approach)
 // Store WebSocket connections - old method (legacy)
