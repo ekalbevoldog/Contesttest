@@ -227,6 +227,16 @@ export default function Header() {
     },
     // Messages Link
     { label: "Messages", href: "/messages", icon: MessageSquare, condition: (user) => !!user },
+    
+    // Dashboard Button (for all logged-in users)
+    { 
+      label: "Dashboard", 
+      icon: BarChart, 
+      condition: (user) => !!user,
+      isButton: true,
+      buttonVariant: 'outline',
+      buttonClassName: "ml-2 border-primary bg-transparent hover:bg-primary/15 text-white",
+    },
 
     // --- Admin Section (Admin Only) ---
     {
@@ -321,6 +331,34 @@ export default function Header() {
               const isActive = item.href ? location === item.href : isDropdownActive(item);
 
               if (item.isButton) {
+                // Special handling for Dashboard button - dynamically determine the right URL based on user type
+                if (item.label === "Dashboard" && user) {
+                  // Get the correct dashboard URL based on user type
+                  let dashboardUrl = "/profile"; // Default fallback
+                  if (userType === 'athlete') dashboardUrl = "/athlete/dashboard";
+                  else if (userType === 'business') dashboardUrl = "/business/dashboard";
+                  else if (userType === 'compliance') dashboardUrl = "/compliance/dashboard";
+                  else if (userType === 'admin') dashboardUrl = "/admin/dashboard";
+                  
+                  return (
+                    <Button
+                      key={index}
+                      size="sm"
+                      variant={item.buttonVariant || 'default'}
+                      className={cn(item.buttonClassName)}
+                      asChild
+                    >
+                      <Link href={dashboardUrl}>
+                        <span className="flex items-center">
+                          {item.icon && <item.icon className="h-4 w-4 mr-1" />}
+                          {item.label}
+                        </span>
+                      </Link>
+                    </Button>
+                  );
+                }
+                
+                // Regular button handling
                 return (
                   <Button
                     key={index}
