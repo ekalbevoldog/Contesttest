@@ -97,6 +97,9 @@ const WizardLayout = ({ children }: { children: ReactNode }) => {
 
 // Wrapper component that provides the auth guard and wizard context
 export default function ProWizardLayoutWrapper({ children }: { children: ReactNode }) {
+  // Debug output to troubleshoot layout rendering
+  console.log('ProWizardLayoutWrapper rendering');
+  
   return (
     <AuthGuard requiredRole="business">
       <ProWizardProvider>
