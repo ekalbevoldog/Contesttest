@@ -72,8 +72,12 @@ const createRealClient = (): StorageClientInterface => {
     return {
       async uploadFromText(key: string, content: string): Promise<UploadResult> {
         try {
-          await client.uploadText(key, content);
-          return { ok: true };
+          const result = await client.uploadFromText(key, content);
+          if (result.ok) {
+            return { ok: true };
+          } else {
+            return { ok: false, error: result.error.message };
+          }
         } catch (error) {
           console.error(`Error uploading text to ${key}:`, error);
           return { ok: false, error: error instanceof Error ? error.message : String(error) };
@@ -82,8 +86,12 @@ const createRealClient = (): StorageClientInterface => {
 
       async uploadFromBuffer(key: string, buffer: Buffer): Promise<UploadResult> {
         try {
-          await client.uploadBuffer(key, buffer);
-          return { ok: true };
+          const result = await client.uploadFromBytes(key, buffer);
+          if (result.ok) {
+            return { ok: true };
+          } else {
+            return { ok: false, error: result.error.message };
+          }
         } catch (error) {
           console.error(`Error uploading buffer to ${key}:`, error);
           return { ok: false, error: error instanceof Error ? error.message : String(error) };
@@ -92,8 +100,12 @@ const createRealClient = (): StorageClientInterface => {
 
       async downloadAsText(key: string): Promise<DownloadTextResult> {
         try {
-          const text = await client.downloadText(key);
-          return { ok: true, value: text };
+          const result = await client.downloadAsText(key);
+          if (result.ok) {
+            return { ok: true, value: result.value };
+          } else {
+            return { ok: false, value: '', error: result.error.message };
+          }
         } catch (error) {
           console.error(`Error downloading text from ${key}:`, error);
           return { ok: false, value: '', error: error instanceof Error ? error.message : String(error) };
@@ -102,8 +114,12 @@ const createRealClient = (): StorageClientInterface => {
 
       async downloadAsBuffer(key: string): Promise<DownloadBufferResult> {
         try {
-          const buffer = await client.downloadBuffer(key);
-          return { ok: true, value: buffer };
+          const result = await client.downloadAsBytes(key);
+          if (result.ok) {
+            return { ok: true, value: result.value[0] };
+          } else {
+            return { ok: false, value: Buffer.from(''), error: result.error.message };
+          }
         } catch (error) {
           console.error(`Error downloading buffer from ${key}:`, error);
           return { ok: false, value: Buffer.from(''), error: error instanceof Error ? error.message : String(error) };
@@ -112,9 +128,13 @@ const createRealClient = (): StorageClientInterface => {
 
       async list(): Promise<ListResult> {
         try {
-          const objects = await client.list();
-          const formattedObjects = objects.map(obj => ({ name: obj.key }));
-          return { ok: true, value: formattedObjects };
+          const result = await client.list();
+          if (result.ok) {
+            const formattedObjects = result.value.map((obj: any) => ({ name: obj.name }));
+            return { ok: true, value: formattedObjects };
+          } else {
+            return { ok: false, value: [], error: result.error.message };
+          }
         } catch (error) {
           console.error('Error listing objects:', error);
           return { ok: false, value: [], error: error instanceof Error ? error.message : String(error) };
@@ -123,8 +143,12 @@ const createRealClient = (): StorageClientInterface => {
 
       async delete(key: string): Promise<DeleteResult> {
         try {
-          await client.delete(key);
-          return { ok: true };
+          const result = await client.delete(key);
+          if (result.ok) {
+            return { ok: true };
+          } else {
+            return { ok: false, error: result.error.message };
+          }
         } catch (error) {
           console.error(`Error deleting ${key}:`, error);
           return { ok: false, error: error instanceof Error ? error.message : String(error) };
