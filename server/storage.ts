@@ -345,12 +345,12 @@ export class SupabaseStorage implements IStorage {
       const { data, error } = await supabase
         .from('sessions')
         .insert({
-          session_id: sessionData.sessionId,
-          user_type: sessionData.userType,
+          session_id: sessionData.session_id,
+          user_type: sessionData.user_type,
           data: sessionData.data,
-          profile_completed: sessionData.profileCompleted,
-          athlete_id: sessionData.athleteId,
-          business_id: sessionData.businessId,
+          profile_completed: sessionData.profile_completed,
+          athlete_id: sessionData.athlete_id,
+          business_id: sessionData.business_id,
           created_at: new Date(),
           updated_at: new Date(),
           last_login: new Date()
