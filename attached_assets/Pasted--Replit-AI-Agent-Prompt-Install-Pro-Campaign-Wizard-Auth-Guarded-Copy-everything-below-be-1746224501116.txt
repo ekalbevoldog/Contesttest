@@ -1,0 +1,236 @@
+# Replit AI Agent Prompt – Install Pro Campaign Wizard (Auth‑Guarded)
+
+Copy **everything** below (between the markers) into Replit’s AI agent. It scaffolds the Pro Campaign Wizard inside the existing Contested site **and enforces Supabase login** before any wizard route loads.
+
+\---8<-----------------------------
+
+## 📋 Task: Add **Pro Campaign Wizard** with Auth Guard to existing Contested site
+
+### 0. Preconditions
+
+* Repo already runs **Next.js ≥13** with Supabase Auth.
+* ENV secrets are set in Replit:
+
+  ```
+  SUPABASE_URL, SUPABASE_ANON_KEY,
+  MATCHING_SVC_URL, DOCUSIGN_INTEGRATOR_KEY
+  ```
+* DB tables `campaigns`, `deliverables`, `bundles`, `offers` are live per migration.
+
+### 1. Install/align dependencies
+
+```bash
+npm i @supabase/supabase-js zustand react-query react-hook-form zod \
+      @hookform/resolvers tailwindcss@latest postcss autoprefixer \
+      @shadcn/ui lucide-react
+npx tailwindcss init -p
+npx shadcn-ui@latest init
+```
+
+Add paths to `tailwind.config.js`:
+
+```js
+content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"]
+```
+
+### 2. Supabase client (reuse or create at `src/lib/supabase.ts`)
+
+```ts
+import { createBrowserClient } from '@supabase/supabase-js';
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+```
+
+Expose envs in `next.config.js`.
+
+### 3. Global **AuthGuard**
+
+Create `src/components/AuthGuard.tsx`:
+
+```tsx
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) router.push('/login');
+      else setReady(true);
+    });
+  }, [router]);
+
+  return ready ? <>{children}</> : null;
+}
+```
+
+### 4. Wizard State
+
+`src/contexts/ProWizardProvider.tsx`:
+
+```ts
+import { create } from 'zustand';
+export const useProWizard = create<{ campaignId?: string; step: 1|2|3|4|5|6; form: any; set: (p:any)=>void }>((set)=>({ step:1, form:{}, set }));
+```
+
+### 5. Routing & layout
+
+Directory:
+
+```
+src/app/wizard/pro/
+  layout.tsx
+  start/page.tsx
+  advanced/page.tsx
+  deliverables/page.tsx
+  match/page.tsx
+  bundle/page.tsx
+  review/page.tsx
+```
+
+`layout.tsx`:
+
+```tsx
+import AuthGuard from '@/components/AuthGuard';
+import { redirect } from 'next/navigation';
+import { useProWizard } from '@/contexts/ProWizardProvider';
+
+export default function WizardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGuard>
+      <Inner>{children}</Inner>
+    </AuthGuard>
+  );
+}
+
+function Inner({ children }: { children: React.ReactNode }) {
+  const { campaignId, step } = useProWizard();
+  if (!campaignId && step !== 1) redirect('/wizard/pro/start');
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* ProgressBar component here */}
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
+```
+
+### 6. Quick‑Launch form example (`start/page.tsx`)
+
+```tsx
+'use client';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { supabase } from '@/lib/supabase';
+import { useProWizard } from '@/contexts/ProWizardProvider';
+
+const Schema = z.object({ objective:z.string().min(1), channels:z.array(z.string()).min(1), startDate:z.string(), endDate:z.string() });
+export default function Start() {
+  const { set } = useProWizard();
+  const router = useRouter();
+  const { register, handleSubmit } = useForm({ resolver:zodResolver(Schema) });
+  const onSubmit = async (d:any) => {
+    const { data: row, error } = await supabase.from('campaigns').insert([{ ...d, wizard_type:'PRO', status:'DRAFT' }]).select().single();
+    if (error) return alert(error.message);
+    set({ campaignId:row.id, step:2, form:d });
+    router.push('/wizard/pro/advanced');
+  };
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
+      {/* inputs here */}
+      <button className="btn btn-primary w-full">Save & Continue →</button>
+    </form>
+  );
+}
+```
+
+### 7. API endpoints (Next API routes)
+
+| Path                      | Purpose                                                |
+| ------------------------- | ------------------------------------------------------ |
+| `POST /api/match/run`     | Proxy to `MATCHING_SVC_URL`, store `match_candidates`. |
+| `POST /api/bundle/create` | Write `bundles`, `bundle_members`.                     |
+| `POST /api/offer/send`    | Call DocuSign service, update `offers`.                |
+
+### 8. Sidebar link (business role only)
+
+```tsx
+{session?.user.role === 'business' && <Link href="/wizard/pro/start">New Campaign</Link>}
+```
+
+### 9. QA checklist
+
+* Business user redirected to `/login` if session null.
+* Completing six steps writes rows in all tables.
+* `offers.status='SENT'` after step 6.
+* Athlete role blocked by RLS and no sidebar link.
+
+### ✅ Done when
+
+Wizard works on live Replit domain, behind feature flag `wizard_pro`.
+
+\---8<-----------------------------
+
+## 13. Replit‑Friendly Deployment & Infrastructure Adjustments
+
+*This section **overrides** the earlier GCP/Kubernetes/Prometheus references so the spec is workable inside Replit’s single‑container runtime.*
+
+### 13.1 Runtime Model
+
+| Concern              | Original GCP/K8s plan                | **Replit adaptation**                                                                                                                                                                                            |
+| -------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Process model**    | Multiple Docker microservices on GKE | **Single Node 18 process** running:<br>• Next.js App Router (pages + API routes)<br>• Express middleware (mounted under `/api`) for wizard endpoints (`/api/match/run`, `/api/bundle/create`, `/api/offer/send`) |
+| **Matching service** | Separate FastAPI pod                 | Local Node module (`src/lib/matching.ts`) or Supabase Edge Function if heavy compute.                                                                                                                            |
+| **Event bus**        | Kafka                                | In‑process `EventEmitter` + Supabase Realtime broadcast for offer status updates.                                                                                                                                |
+| **Background jobs**  | Airflow + Kubernetes CronJob         | `@replit/timer` or Supabase scheduled functions (cron) for nightly ML retrain.                                                                                                                                   |
+
+### 13.2 Deployment Workflow in Replit
+
+1. **Git push** to `main` ➜ Replit rebuilds & restarts container automatically.
+2. `package.json`:
+
+   ```json
+   "scripts": {
+     "dev": "next dev",
+     "start": "next start -p $PORT"
+   }
+   ```
+3. Use **Replit Secrets** instead of GCP Secret Manager.
+
+### 13.3 Logging & Monitoring
+
+* Use Replit’s Logs tab (stdout/stderr) for server output.
+* Add `@sentry/nextjs` for error tracking (optional).
+* Supabase dashboard & Logflare handle DB‑side metrics.
+
+### 13.4 Testing & CI
+
+* CI optional; local dev can run `npm test` + Playwright E2E.
+* Skip k6, Prometheus, Grafana; rely on manual perf spot‑checks via `autocannon`.
+
+### 13.5 Database Compatibility Notes
+
+* Supabase Postgres v15 supports `GIN` and `jsonb` indexes—keep them.
+* `pgcrypto` already enabled; UUID generation functions work in Replit.
+
+### 13.6 DocuSign & Secrets
+
+Store these as Replit Secrets:
+
+```
+DOCUSIGN_INTEGRATOR_KEY
+DOCUSIGN_USER_ID
+DOCUSIGN_SECRET
+```
+
+Read via `process.env` in `/api/offer/send`.
+
+> **Summary**: All wizard features run inside the existing Next.js app on Replit; heavy tasks can shift to Supabase Edge Functions. No Docker/Kubernetes/Prometheus required.
