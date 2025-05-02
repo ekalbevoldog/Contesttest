@@ -39,7 +39,7 @@ const profileSchema = z.object({
   school: z.string().optional(),
   content_style: z.string().optional(),
   compensation_goals: z.string().optional(),
-  follower_count: z.string().optional().transform(val => val ? parseInt(val) : undefined)
+  follower_count: z.number().optional()
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -555,7 +555,8 @@ const EditProfilePage = () => {
                               <Input 
                                 type="number" 
                                 placeholder="Total follower count" 
-                                {...field} 
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.valueAsNumber)}
                               />
                             </FormControl>
                             <FormMessage />
