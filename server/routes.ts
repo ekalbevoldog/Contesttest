@@ -13,6 +13,9 @@ import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
 import { pool, db as supabaseAdmin } from "./db.js";
 // Import auth fixes
 import { ensureBusinessProfile } from "./auth-fixes/auto-create-business-profile.js";
+// Import subscription routes
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
 
 // Mock service for BigQuery
 const bigQueryService = {

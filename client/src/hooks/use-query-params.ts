@@ -1,10 +1,24 @@
-import { useLocation } from "wouter";
+import { useState, useEffect } from 'react';
 
-/**
- * A custom hook that parses the current URL's query parameters
- * @returns {URLSearchParams} An instance of URLSearchParams
- */
 export function useQueryParams(): URLSearchParams {
-  const [location] = useLocation();
-  return new URLSearchParams(location.includes("?") ? location.substring(location.indexOf("?")) : "");
+  const [searchParams, setSearchParams] = useState<URLSearchParams>(
+    new URLSearchParams(window.location.search)
+  );
+
+  useEffect(() => {
+    // Update search params when the URL changes
+    const handleUrlChange = () => {
+      setSearchParams(new URLSearchParams(window.location.search));
+    };
+
+    // Listen for URL changes
+    window.addEventListener('popstate', handleUrlChange);
+
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+    };
+  }, []);
+
+  return searchParams;
 }
