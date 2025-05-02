@@ -45,10 +45,22 @@ async function startServer() {
 
     app.use(express.static(clientDist));
 
+    // Add JSON body parser
+    app.use(express.json());
+
     // API endpoint for health checks
     app.get('/api/health', (req, res) => {
       res.json({ status: 'ok', environment: process.env.NODE_ENV });
     });
+
+    // Import and register our API routes
+    try {
+      const apiRoutes = await import('./server/api/index.js');
+      app.use('/api', apiRoutes.default);
+      console.log('API routes registered successfully');
+    } catch (apiError) {
+      console.error('Failed to load API routes:', apiError);
+    }
 
     // Fallback for SPA routing - MUST come after API routes
     app.get('*', (req, res) => {

@@ -578,6 +578,7 @@ export default function BusinessDashboard() {
                 variant="default"
                 size="sm"
                 className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-black font-medium"
+                onClick={() => navigate('/wizard/pro/start')}
               >
                 <Plus className="h-4 w-4" />
                 New Campaign
@@ -838,7 +839,11 @@ export default function BusinessDashboard() {
                 </div>
               </CardContent>
               <CardFooter className="border-t border-zinc-800 mt-2 flex justify-center">
-                <Button variant="link" className="text-amber-500 hover:text-amber-400">
+                <Button 
+                  variant="link" 
+                  className="text-amber-500 hover:text-amber-400"
+                  onClick={() => navigate('/wizard/pro/start')}
+                >
                   Create new campaign
                   <ArrowUpRight className="ml-1 h-4 w-4" />
                 </Button>

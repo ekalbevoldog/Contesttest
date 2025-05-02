@@ -149,6 +149,14 @@ function Router() {
             {/* Main dashboard redirect - user will be redirected based on role */}
             <UnifiedProtectedRoute path="/dashboard" component={DashboardRedirect} />
             
+            {/* Pro Campaign Wizard Routes - Business role protected */}
+            <RoleProtectedRoute path="/wizard/pro/start" component={lazy(() => import('./pages/wizard/pro/start'))} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/advanced" component={lazy(() => import('./pages/wizard/pro/advanced'))} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/deliverables" component={lazy(() => import('./pages/wizard/pro/deliverables'))} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/match" component={lazy(() => import('./pages/wizard/pro/match'))} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/bundle" component={lazy(() => import('./pages/wizard/pro/bundle'))} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/review" component={lazy(() => import('./pages/wizard/pro/review'))} requiredRole="business" />
+            
             {/* Subscription routes */}
             <Route path="/subscribe" component={Subscribe} />
             <Route path="/subscription/success" component={SubscriptionSuccess} />

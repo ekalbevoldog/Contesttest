@@ -294,6 +294,11 @@ export default function Header() {
     // Mobile Account Links (Logged Out)
     { label: "Sign in or Register", href: "/sign-in", icon: UserCircle, condition: (user) => !user, mobileOnly: true },
     { label: "Get Started", href: "/onboarding", icon: Zap, condition: (user) => !user, mobileOnly: true }, // Mobile Get Started
+    
+    // Mobile New Campaign Button for Business Users
+    { label: "New Campaign", href: "/wizard/pro/start", icon: Zap, condition: (_, userType) => userType === 'business', mobileOnly: true, 
+      isButton: true, buttonVariant: 'default', 
+      buttonClassName: "mt-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-black font-medium transition-all duration-300" },
 
     // --- Special Buttons ---
     {
@@ -301,6 +306,15 @@ export default function Header() {
       buttonClassName: "relative overflow-hidden ml-2 bg-gradient-to-r from-red-500 to-amber-500 hover:from-red-600 hover:to-amber-600 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-xl",
       href: "/onboarding",
       condition: (user) => !user, // Only show when not logged in
+      desktopOnly: true, // Specific styling for desktop button
+    },
+    
+    // --- New Campaign Button for Business Users ---
+    {
+      label: "New Campaign", icon: Zap, isButton: true, buttonVariant: 'default',
+      buttonClassName: "relative overflow-hidden ml-2 bg-gradient-to-r from-amber-500 to-red-500 hover:from-amber-600 hover:to-red-600 text-black font-medium transition-all duration-300 shadow-lg hover:shadow-xl",
+      href: "/wizard/pro/start",
+      condition: (_, userType) => userType === 'business', // Only show for business users
       desktopOnly: true, // Specific styling for desktop button
     },
 
