@@ -49,6 +49,34 @@ const RedirectToOnboarding = () => {
   );
 };
 
+// Dashboard redirect component - redirects to the appropriate dashboard based on user role
+const DashboardRedirect = () => {
+  const [, navigate] = useLocation();
+  const { userType } = useAuth();
+  
+  useEffect(() => {
+    // Redirect to the appropriate dashboard based on user type
+    if (userType === 'athlete') {
+      navigate('/athlete/dashboard');
+    } else if (userType === 'business') {
+      navigate('/business/dashboard');
+    } else if (userType === 'compliance') {
+      navigate('/compliance/dashboard');
+    } else if (userType === 'admin') {
+      navigate('/admin/dashboard');
+    } else {
+      // Fallback to profile page if user type is unknown
+      navigate('/profile');
+    }
+  }, [navigate, userType]);
+
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+};
+
 function Router() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -119,7 +147,7 @@ function Router() {
             <UnifiedProtectedRoute path="/edit-profile" component={EditProfilePage} />
 
             {/* Main dashboard redirect - user will be redirected based on role */}
-            <UnifiedProtectedRoute path="/dashboard" component={ProfilePage} />
+            <UnifiedProtectedRoute path="/dashboard" component={DashboardRedirect} />
             
             {/* Subscription routes */}
             <Route path="/subscribe" component={Subscribe} />

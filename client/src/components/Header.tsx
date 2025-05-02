@@ -238,6 +238,7 @@ export default function Header() {
       isButton: true,
       buttonVariant: 'outline',
       buttonClassName: "ml-2 border-primary bg-transparent hover:bg-primary/15 text-white",
+      href: "/dashboard", // Added href to trigger proper routing
     },
 
     // --- Admin Section (Admin Only) ---
@@ -284,6 +285,7 @@ export default function Header() {
       isButton: true,
       buttonVariant: 'outline',
       buttonClassName: "mt-2 border-primary bg-transparent hover:bg-primary/15 text-white",
+      href: "/dashboard", // Added href to trigger proper routing
     },
     { label: "My Public Profile", href: "/athlete/profile-link", icon: ExternalLink, condition: (user, userType) => !!user && userType === 'athlete', mobileOnly: true },
     { label: "Manage Subscription", href: "/account/subscription", icon: Crown, condition: (user) => !!user, mobileOnly: true },
