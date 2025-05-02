@@ -79,23 +79,8 @@ export default defineConfig({
     // Manually identify and build specific files, excluding archive and auth-fixes directories
     const { globSync } = await import('glob');
     
-    // Find all TypeScript files, explicitly excluding problematic directories
-    const serverFiles = globSync('server/**/*.ts', { 
-      ignore: [
-        'server/archive/**', 
-        'server/auth-fixes/**', 
-        '**/runCompleteMigration.ts',
-        '**/supabase-migration.ts',
-        'server/migrate-database.ts',
-        'server/check-comp-final.ts',
-        'server/check-comp-type.ts',
-        'server/check-fk-constraints.ts',
-        'server/check-enum.ts',
-        'server/check-business-schema.ts',
-        'server/check-businesses.ts',
-        'server/check-tables-simple.ts'
-      ] 
-    });
+    // Find all TypeScript files, explicitly excluding archive and auth-fixes directories
+    const serverFiles = globSync('server/**/*.ts', { ignore: ['server/archive/**', 'server/auth-fixes/**'] });
     const serverRootFiles = globSync('server/*.ts');
     const sharedFiles = globSync('shared/**/*.ts');
     
@@ -156,10 +141,9 @@ export default defineConfig({
 });
 `;
     
-    // Write the new files directly to dist directory
-    fs.writeFileSync('dist/vite.config', viteConfigContent);
+    // Write the new file directly to dist directory
     fs.writeFileSync('dist/vite.config.js', viteConfigContent);
-    console.log('✅ Created fixed vite.config files in dist directory');
+    console.log('✅ Created a fixed vite.config.js in dist directory');
     
     
     console.log('⚠️ Build completed with fallback strategy. TypeScript errors should be fixed for future builds.');
