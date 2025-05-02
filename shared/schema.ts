@@ -5,8 +5,8 @@ import { z } from "zod";
 
 // User type definitions
 export const userSchema = z.object({
-  id: z.number(),
-  auth_id: z.string().uuid().optional(),
+  id: z.number(), // Primary key in Supabase is always 'id'
+  auth_id: z.string().uuid().optional(), // Supabase auth id reference
   email: z.string().email(),
   username: z.string(),
   password: z.string().optional(), // Add password field for auth purposes
@@ -57,7 +57,7 @@ export const insertSessionSchema = sessionSchema.omit({
 // Athlete profile type definitions
 export const athleteSchema = z.object({
   id: z.number(),
-  user_id: z.number().optional(),
+  auth_id: z.string().uuid().optional(), // Use auth_id to reference Supabase user
   session_id: z.string(),
   
   // Basic Information
@@ -144,7 +144,7 @@ export const insertAthleteSchema = athleteSchema.omit({
 // Business profile type definitions
 export const businessSchema = z.object({
   id: z.number(),
-  user_id: z.number().optional(),
+  auth_id: z.string().uuid().optional(), // Use auth_id to reference Supabase user
   session_id: z.string(),
   
   // Basic Information
@@ -331,7 +331,7 @@ export const insertMessageSchema = messageSchema.omit({
 // Compliance Officer type definitions
 export const complianceOfficerSchema = z.object({
   id: z.number(),
-  user_id: z.number(),
+  auth_id: z.string().uuid().optional(), // Use auth_id to reference Supabase user
   name: z.string(),
   email: z.string().email(),
   institution: z.string(),
@@ -401,7 +401,7 @@ export const insertPartnershipOfferSchema = partnershipOfferSchema.omit({
 // Feedback type definitions
 export const feedbackSchema = z.object({
   id: z.number(),
-  user_id: z.number(),
+  auth_id: z.string().uuid().optional(), // Use auth_id to reference Supabase user
   user_type: z.enum(["athlete", "business", "compliance", "admin"]),
   match_id: z.number().optional(),
   partnership_id: z.number().optional(),
