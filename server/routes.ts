@@ -261,6 +261,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 2. Supabase authentication (JWT)
   setupSupabaseAuth(app);
   
+  // Type for authenticated requests
+  interface AuthenticatedRequest extends Request {
+    user?: any;
+    isAuthenticated(): boolean;
+  }
+  
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', async (req: Request, res: Response) => {
     try {
@@ -2424,6 +2430,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to log out",
         error: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  });
+
+  // Update profile endpoint with image upload support
+  app.post("/api/profile/update", verifySupabaseToken, async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      const userId = req.user.id;
+      const userRole = req.user.role;
+      const { profileData, imageData } = req.body;
+      
+      console.log(`[API] Updating profile for user ${userId} with role ${userRole}`);
+      
+      // Process image if provided
+      let imageUrl = null;
+      if (imageData) {
+        try {
+          // Convert base64 to buffer
+          const matches = imageData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          
+          if (!matches || matches.length !== 3) {
+            return res.status(400).json({ error: "Invalid image data format" });
+          }
+          
+          const imageBuffer = Buffer.from(matches[2], 'base64');
+          const fileExtension = matches[1].split('/')[1] || 'png';
+          const imageName = `profile-${userId}-${Date.now()}.${fileExtension}`;
+          
+          // Upload to object storage
+          const uploadSuccess = await objectStorage.uploadBuffer(`profiles/${imageName}`, imageBuffer);
+          
+          if (!uploadSuccess) {
+            console.error(`[API] Failed to upload profile image for user ${userId}`);
+            return res.status(500).json({ error: "Failed to upload profile image" });
+          }
+          
+          // Construct URL for the uploaded image
+          imageUrl = `/api/profile/image/${imageName}`;
+          console.log(`[API] Successfully uploaded profile image: ${imageUrl}`);
+        } catch (imageError) {
+          console.error(`[API] Error processing profile image:`, imageError);
+          return res.status(500).json({ error: "Error processing profile image" });
+        }
+      }
+      
+      // Update profile in database
+      let profileTable = userRole === 'athlete' ? 'athlete_profiles' : 'business_profiles';
+      let updateData = { ...profileData };
+      
+      // Add image URL if we uploaded an image
+      if (imageUrl) {
+        updateData.profile_image = imageUrl;
+      }
+      
+      // Find user's database ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', userId)
+        .maybeSingle();
+      
+      if (userError || !userData) {
+        console.error(`[API] Error finding user with auth_id ${userId}:`, userError);
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Update the profile
+      const { data, error } = await supabase
+        .from(profileTable)
+        .update(updateData)
+        .eq('user_id', userData.id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error(`[API] Error updating ${profileTable}:`, error);
+        return res.status(500).json({ error: `Failed to update profile: ${error.message}` });
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        profile: data,
+        message: "Profile updated successfully"
+      });
+    } catch (error) {
+      console.error('[API] Error in profile update endpoint:', error);
+      return res.status(500).json({ 
+        error: "An unexpected error occurred while updating your profile"
+      });
+    }
+  });
+  
+  // Endpoint to serve profile images
+  app.get("/api/profile/image/:filename", async (req: Request, res: Response) => {
+    try {
+      const { filename } = req.params;
+      
+      if (!filename) {
+        return res.status(400).json({ error: "Filename is required" });
+      }
+      
+      // Get image from object storage
+      const imageBuffer = await objectStorage.downloadBuffer(`profiles/${filename}`);
+      
+      if (!imageBuffer) {
+        console.error(`[API] Image not found: profiles/${filename}`);
+        return res.status(404).json({ error: "Image not found" });
+      }
+      
+      // Determine content type based on file extension
+      const fileExtension = filename.split('.').pop()?.toLowerCase() || '';
+      let contentType = 'image/png'; // Default
+      
+      if (fileExtension === 'jpg' || fileExtension === 'jpeg') {
+        contentType = 'image/jpeg';
+      } else if (fileExtension === 'gif') {
+        contentType = 'image/gif';
+      } else if (fileExtension === 'webp') {
+        contentType = 'image/webp';
+      }
+      
+      // Set cache headers for better performance
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+      res.setHeader('Content-Type', contentType);
+      return res.send(imageBuffer);
+    } catch (error) {
+      console.error('[API] Error serving profile image:', error);
+      return res.status(500).json({ error: "Error serving image" });
     }
   });
 
