@@ -12,7 +12,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  console.log(`[queryClient] Making ${method} request to ${url}`);
+  console.log(`[queryClient] Making ${method} request to ${url}`, data ? 'with data' : 'without data');
   
   // Always include the Authorization header with the Supabase JWT token if available
   let headers: Record<string, string> = {};
@@ -21,6 +21,11 @@ export async function apiRequest(
   if (data) {
     headers["Content-Type"] = "application/json";
     console.log('[queryClient] Request has data, adding Content-Type header');
+    
+    // Debug the data being sent
+    if (typeof data === 'object') {
+      console.log('[queryClient] Request data:', JSON.stringify(data));
+    }
   }
   
   // Try to get the session token from Supabase

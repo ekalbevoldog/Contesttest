@@ -191,15 +191,28 @@ const EditProfilePage = () => {
         } else {
           // Try to get token from localStorage as fallback
           try {
-            const storedAuth = localStorage.getItem('supabase-auth');
+            console.log('[EditProfilePage] Trying to get token from localStorage...');
+            // Try both storage keys - the one used by the app and the one used by Supabase
+            let storedAuth = localStorage.getItem('contested-auth');
+            if (!storedAuth) {
+              console.log('[EditProfilePage] No token in contested-auth, trying supabase-auth...');
+              // Try the alternative key if the first one doesn't exist
+              storedAuth = localStorage.getItem('supabase-auth');
+            }
+            
             if (storedAuth) {
+              console.log('[EditProfilePage] Token found in localStorage, parsing...');
               const authData = JSON.parse(storedAuth);
+              console.log('[EditProfilePage] Auth data parsed, token exists:', !!authData.access_token);
               if (authData.access_token) {
                 authHeader = `Bearer ${authData.access_token}`;
+                console.log('[EditProfilePage] Using token from localStorage for image upload');
               }
+            } else {
+              console.log('[EditProfilePage] No auth token found in localStorage for image upload');
             }
           } catch (localStorageError) {
-            console.error('Error accessing localStorage:', localStorageError);
+            console.error('[EditProfilePage] Error accessing localStorage:', localStorageError);
           }
         }
       } catch (error) {
@@ -307,6 +320,16 @@ const EditProfilePage = () => {
 
   // Handle form submission
   const onSubmit = async (values: ProfileFormValues) => {
+    console.log('[EditProfilePage] Submitting form values:', values);
+    // Make sure the values are not empty
+    if (!values || Object.keys(values).length === 0) {
+      toast({
+        title: "Form submission error",
+        description: "No form data to submit. Please fill out the form.",
+        variant: "destructive",
+      });
+      return;
+    }
     updateProfileMutation.mutate(values);
   };
   

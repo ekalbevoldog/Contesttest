@@ -111,6 +111,11 @@ router.patch('/', requireAuth, async (req, res) => {
   try {
     console.log('[ProfileRoutes] Processing profile update request');
     
+    // Debug logging
+    console.log('[ProfileRoutes] Request headers:', JSON.stringify(req.headers, null, 2));
+    console.log('[ProfileRoutes] Request body:', JSON.stringify(req.body, null, 2));
+    console.log('[ProfileRoutes] Request body type:', typeof req.body);
+    
     // Get user ID, handle both id formats (direct id and auth_id)
     const userId = req.user.id;
     const authId = req.user.auth_id || req.user.id;
@@ -120,6 +125,15 @@ router.patch('/', requireAuth, async (req, res) => {
     const userRole = req.user.role?.toLowerCase() || 'user';
     
     console.log(`[ProfileRoutes] Update profile for user ${userId} (${userEmail}) with role ${userRole}`);
+    
+    // Check if body is empty
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.error('[ProfileRoutes] Empty request body received');
+      return res.status(400).json({
+        error: 'Empty request body',
+        message: 'No profile data provided for update'
+      });
+    }
     
     // Extract profile data, remove profile_image if present
     const { profile_image, ...profileData } = req.body;
