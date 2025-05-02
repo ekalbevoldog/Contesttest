@@ -150,12 +150,30 @@ function Router() {
             <UnifiedProtectedRoute path="/dashboard" component={DashboardRedirect} />
             
             {/* Pro Campaign Wizard Routes - Business role protected */}
-            <RoleProtectedRoute path="/wizard/pro/start" component={lazy(() => import('./pages/wizard/pro/start'))} requiredRole="business" />
-            <RoleProtectedRoute path="/wizard/pro/advanced" component={lazy(() => import('./pages/wizard/pro/advanced'))} requiredRole="business" />
-            <RoleProtectedRoute path="/wizard/pro/deliverables" component={lazy(() => import('./pages/wizard/pro/deliverables'))} requiredRole="business" />
-            <RoleProtectedRoute path="/wizard/pro/match" component={lazy(() => import('./pages/wizard/pro/match'))} requiredRole="business" />
-            <RoleProtectedRoute path="/wizard/pro/bundle" component={lazy(() => import('./pages/wizard/pro/bundle'))} requiredRole="business" />
-            <RoleProtectedRoute path="/wizard/pro/review" component={lazy(() => import('./pages/wizard/pro/review'))} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/start" component={() => {
+              const StartPage = require('./pages/wizard/pro/start').default;
+              return <StartPage />;
+            }} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/advanced" component={() => {
+              const AdvancedPage = require('./pages/wizard/pro/advanced').default;
+              return <AdvancedPage />;
+            }} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/deliverables" component={() => {
+              const DeliverablesPage = require('./pages/wizard/pro/deliverables').default;
+              return <DeliverablesPage />;
+            }} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/match" component={() => {
+              const MatchPage = require('./pages/wizard/pro/match').default;
+              return <MatchPage />;
+            }} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/bundle" component={() => {
+              const BundlePage = require('./pages/wizard/pro/bundle').default;
+              return <BundlePage />;
+            }} requiredRole="business" />
+            <RoleProtectedRoute path="/wizard/pro/review" component={() => {
+              const ReviewPage = require('./pages/wizard/pro/review').default;
+              return <ReviewPage />;
+            }} requiredRole="business" />
             
             {/* Subscription routes */}
             <Route path="/subscribe" component={Subscribe} />
