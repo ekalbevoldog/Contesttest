@@ -936,8 +936,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
 
             // Notify the athlete via WebSocket if they're connected
-            if (athletes[0].sessionId) {
-              sendWebSocketMessage(athletes[0].sessionId, {
+            if (athletes[0].session_id) {
+              sendWebSocketMessage(athletes[0].session_id, {
                 type: 'match',
                 message: `Contested Match Alert: New partnership opportunity with ${business.name}!`,
                 matchData: {
@@ -1100,9 +1100,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Format matches for the frontend
       const formattedMatches = await Promise.all(matches.map(async (match) => {
-        const athlete = await storage.getAthlete(match.athleteId);
-        const business = await storage.getBusiness(match.businessId);
-        const campaign = await storage.getCampaign(match.campaignId);
+        const athlete = await storage.getAthlete(match.athlete_id);
+        const business = await storage.getBusiness(match.business_id);
+        const campaign = await storage.getCampaign(match.campaign_id);
 
         return {
           id: match.id,
@@ -1148,23 +1148,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create a new partnership offer
       const partnershipOffer = await storage.createPartnershipOffer({
-        athleteId,
-        businessId,
-        campaignId,
-        matchId,
-        compensationType,
-        offerAmount,
+        athlete_id: athleteId,
+        business_id: businessId,
+        campaign_id: campaignId,
+        match_id: matchId,
+        compensation_type: compensationType,
+        offer_amount: offerAmount,
         deliverables,
-        usageRights,
+        usage_rights: usageRights,
         term,
-        paymentSchedule: req.body.paymentSchedule || null,
-        bonusStructure: req.body.bonusStructure || null,
-        contentSpecifications: req.body.contentSpecifications || null,
-        postFrequency: req.body.postFrequency || null,
-        approvalProcess: req.body.approvalProcess || null,
+        payment_schedule: req.body.paymentSchedule || null,
+        bonus_structure: req.body.bonusStructure || null,
+        content_specifications: req.body.contentSpecifications || null,
+        post_frequency: req.body.postFrequency || null,
+        approval_process: req.body.approvalProcess || null,
         exclusivity: req.body.exclusivity || null,
-        geographicRestrictions: req.body.geographicRestrictions || null,
-        expiresAt: req.body.expiresAt || null,
+        geographic_restrictions: req.body.geographicRestrictions || null,
+        expires_at: req.body.expiresAt || null,
       });
 
       res.status(201).json(partnershipOffer);
@@ -1350,17 +1350,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
 
         const athleteData = {
-          sessionId: profileData.sessionId,
+          session_id: profileData.sessionId,
           name: profileData.basicInfo?.name || "",
           sport: profileData.basicInfo?.sport || "",
           division: profileData.basicInfo?.division || "Division I",
           school: profileData.basicInfo?.school || "",
-          followerCount: followerCount,
-          contentStyle: contentPreferences.join(", "),
-          compensationGoals: `$${profileData.budgetValues?.budgetRange?.min || "1000"}-$${profileData.budgetValues?.budgetRange?.max || "5000"}`,
+          follower_count: followerCount,
+          content_style: contentPreferences.join(", "),
+          compensation_goals: `$${profileData.budgetValues?.budgetRange?.min || "1000"}-$${profileData.budgetValues?.budgetRange?.max || "5000"}`,
           email: profileData.basicInfo?.email || null,
           phone: profileData.basicInfo?.phone || null,
-          socialHandles: JSON.stringify(profileData.basicInfo?.socialHandles) || "",
+          social_handles: JSON.stringify(profileData.basicInfo?.socialHandles) || "",
           // Store the complete wizard data and AI insights in preferences
           preferences: JSON.stringify({
             aiInsights: processedProfile.enrichedData,
@@ -1382,8 +1382,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Update session
         await sessionService.updateSession(profileData.sessionId, {
-          profileCompleted: true,
-          athleteId: athlete.id
+          profile_completed: true,
+          athlete_id: athlete.id
         });
 
         // Generate confirmation message
@@ -1404,13 +1404,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const aiInsights = processedProfile.enrichedData;
 
         const businessData = {
-          sessionId: profileData.sessionId,
+          session_id: profileData.sessionId,
           name: profileData.basicInfo?.name || profileData.basicInfo?.companyName || "",
           values: profileData.budgetValues?.valueAlignment?.join(", ") || "Quality, Innovation",
-          productType: profileData.basicInfo?.industry || "Retail",
-          audienceGoals: profileData.targetAudience?.demographics?.join(", ") || "College students",
-          campaignVibe: profileData.stylePreferences?.communicationStyle || "Authentic",
-          targetSchoolsSports: profileData.targetAudience?.geographicReach?.join(", ") || "All",
+          product_type: profileData.basicInfo?.industry || "Retail",
+          audience_goals: profileData.targetAudience?.demographics?.join(", ") || "College students",
+          campaign_vibe: profileData.stylePreferences?.communicationStyle || "Authentic",
+          target_schools_sports: profileData.targetAudience?.geographicReach?.join(", ") || "All",
           email: profileData.basicInfo?.email || null,
           phone: profileData.basicInfo?.phone || null,
           website: profileData.basicInfo?.website || null,
@@ -1444,7 +1444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Prepare campaign data
         const campaignData = {
-          businessId: business.id,
+          business_id: business.id,
           title: campaign.title,
           description: campaign.description,
           deliverables: campaign.deliverables,
@@ -1453,7 +1453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           duration: profileData.budgetValues?.campaignDuration || "Short-term",
           requirements: aiInsights.contentSuggestions?.join(", ") || "Authentic content creation",
           goals: profileData.goalsExpectations?.primaryGoals?.join(", ") || "Brand awareness",
-          targetDemographics: profileData.targetAudience?.demographics?.join(", ") || "College students"
+          target_demographics: profileData.targetAudience?.demographics?.join(", ") || "College students"
         };
 
         // Store campaign
@@ -1468,9 +1468,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Update session
         await sessionService.updateSession(profileData.sessionId, {
-          profileCompleted: true,
-          businessId: business.id,
-          campaignId: storedCampaign.id
+          profile_completed: true,
+          business_id: business.id,
+          campaign_id: storedCampaign.id
         });
 
         // Generate confirmation message
