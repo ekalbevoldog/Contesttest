@@ -179,10 +179,38 @@ const EditProfilePage = () => {
       const formData = new FormData();
       formData.append("profile_image", file);
       
+      // Get Supabase token to include with request
+      let authHeader = '';
+      try {
+        // Dynamically import supabase to avoid circular dependencies
+        const { supabase } = await import('@/lib/supabase-client');
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (sessionData?.session?.access_token) {
+          authHeader = `Bearer ${sessionData.session.access_token}`;
+        } else {
+          // Try to get token from localStorage as fallback
+          try {
+            const storedAuth = localStorage.getItem('supabase-auth');
+            if (storedAuth) {
+              const authData = JSON.parse(storedAuth);
+              if (authData.access_token) {
+                authHeader = `Bearer ${authData.access_token}`;
+              }
+            }
+          } catch (localStorageError) {
+            console.error('Error accessing localStorage:', localStorageError);
+          }
+        }
+      } catch (error) {
+        console.error('Error getting auth session:', error);
+      }
+      
       const response = await fetch("/api/profile/upload-image", {
         method: "POST",
         body: formData,
         credentials: "include",
+        headers: authHeader ? { Authorization: authHeader } : undefined,
       });
       
       if (!response.ok) {

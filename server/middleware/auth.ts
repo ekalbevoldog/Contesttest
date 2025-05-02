@@ -25,21 +25,52 @@ export const requireAuth = async (
   
   // Otherwise check for supabase JWT
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
+  
+  // Debug - log authorization header
+  console.log('[Auth Middleware] Authorization header:', authHeader ? 'Present' : 'Missing');
+  
+  // First try getting token from Authorization header
+  let token = null;
+  
+  if (authHeader) {
+    // Handle both "Bearer <token>" and raw token formats
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else {
+      // Try using the header value directly
+      token = authHeader;
+    }
+  }
+  
+  // If no token found yet, check if it's in a cookie
+  if (!token && req.cookies && req.cookies.supabaseToken) {
+    token = req.cookies.supabaseToken;
+    console.log('[Auth Middleware] Found token in cookies');
+  }
+  
+  // If no token found yet, check query string (for testing only)
+  if (!token && req.query && req.query.token) {
+    token = req.query.token as string;
+    console.log('[Auth Middleware] Found token in query string');
+  }
+  
+  if (!token) {
+    console.log('[Auth Middleware] No token found in request');
     return res.status(401).json({ error: 'Unauthorized - No authentication token provided' });
   }
 
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorized - Invalid authorization header format' });
-  }
-
   try {
+    console.log('[Auth Middleware] Verifying token with Supabase (length:', token.length, 'chars)');
+    // Debug - log first and last 10 chars of token
+    if (token.length > 20) {
+      console.log('[Auth Middleware] Token starts with:', token.substring(0, 10), '... ends with:', token.substring(token.length - 10));
+    }
+    
     // Verify the token with Supabase
     const { data, error } = await supabase.auth.getUser(token);
     
     if (error || !data.user) {
-      console.error('Auth error:', error);
+      console.error('[Auth Middleware] Token verification failed:', error);
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication token' });
     }
     
