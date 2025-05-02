@@ -349,7 +349,7 @@ export default function Header() {
                 // Special handling for Dashboard button - dynamically determine the right URL based on user type
                 if (item.label === "Dashboard" && user) {
                   // Get the correct dashboard URL based on user type
-                  let dashboardUrl = "/profile"; // Default fallback
+                  let dashboardUrl = "/"; // Default fallback to home
                   if (userType === 'athlete') dashboardUrl = "/athlete/dashboard";
                   else if (userType === 'business') dashboardUrl = "/business/dashboard";
                   else if (userType === 'compliance') dashboardUrl = "/compliance/dashboard";
@@ -559,7 +559,7 @@ export default function Header() {
                           userType === 'business' ? "/business/dashboard" : 
                           userType === 'compliance' ? "/compliance/dashboard" : 
                           userType === 'admin' ? "/admin/dashboard" : 
-                          "/profile"
+                          "/"
                         }>
                           <span className="flex items-center">
                             <BarChart className="h-4 w-4 mr-1" />
