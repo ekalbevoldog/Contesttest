@@ -30,14 +30,25 @@ try {
     }
     
     // Build server code with esbuild (more permissive than tsc)
-    // Explicitly exclude the archive and auth-fixes directories which contain utility scripts not needed for production
-    const esbuildCommand = 'npx esbuild "server/**/*.ts" "shared/**/*.ts" "!server/archive/**/*" "!server/auth-fixes/**/*" ' +
+    // Manually identify and build specific files, excluding archive and auth-fixes directories
+    const { globSync } = await import('glob');
+    
+    // Find all TypeScript files, excluding archive and auth-fixes
+    const serverFiles = globSync('server/**/!(archive|auth-fixes)/**/*.ts');
+    const serverRootFiles = globSync('server/*.ts');
+    const sharedFiles = globSync('shared/**/*.ts');
+    
+    // Combine all file paths
+    const allFiles = [...serverFiles, ...serverRootFiles, ...sharedFiles].join(' ');
+    
+    // Create and run esbuild command
+    const esbuildCommand = `npx esbuild ${allFiles} ` +
       '--outdir=dist ' +
       '--platform=node ' +
       '--target=node16 ' +
       '--format=esm ' +
       '--bundle=false ' +
-      '--sourcemap ' +
+      '--sourcemap ' + 
       '--allow-overwrite';
     
     execSync(esbuildCommand, { stdio: 'inherit' });
