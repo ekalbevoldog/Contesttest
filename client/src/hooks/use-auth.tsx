@@ -32,6 +32,10 @@ interface AuthContextType {
   loginMutation: UseMutationResult<any, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<any, Error, RegisterData>;
+  refetchProfile: () => Promise<void>;
+  userType: string | null;
+  hasProfile: boolean;
+  logout: () => void;
 }
 
 interface LoginData {
@@ -501,6 +505,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Method to refetch profile data
+  const refetchProfile = async () => {
+    try {
+      console.log('[Auth Provider] Manual refetch of user profile requested');
+      await refetch();
+    } catch (error) {
+      console.error('[Auth Provider] Error refetching profile:', error);
+    }
+  };
+
+  // Determine user type
+  const userType = user?.role || null;
+  
+  // Check if user has a completed profile
+  const hasProfile = Boolean(profile && Object.keys(profile).length > 0);
+  
+  // Convenience method for logout
+  const logout = () => {
+    logoutMutation.mutate();
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -511,6 +536,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        refetchProfile,
+        userType,
+        hasProfile,
+        logout,
       }}
     >
       {children}

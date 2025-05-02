@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import Onboarding from "@/pages/Onboarding";
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/ProfilePage";
+import EditProfilePage from "@/pages/EditProfilePage";
 import AthleteInfo from "@/pages/AthleteInfo";
 import BusinessInfo from "@/pages/BusinessInfo";
 import BusinessDashboard from "@/pages/BusinessDashboard";
@@ -115,13 +116,14 @@ function Router() {
 
             {/* Profile routes */}
             <UnifiedProtectedRoute path="/profile" component={ProfilePage} />
+            <UnifiedProtectedRoute path="/edit-profile" component={EditProfilePage} />
 
             {/* Main dashboard redirect - user will be redirected based on role */}
             <UnifiedProtectedRoute path="/dashboard" component={ProfilePage} />
-
+            
             {/* Subscription routes */}
-            <UnifiedProtectedRoute path="/subscribe" component={Subscribe} />
-            <Route path="/subscription-success" component={SubscriptionSuccess} />
+            <Route path="/subscribe" component={Subscribe} />
+            <Route path="/subscription/success" component={SubscriptionSuccess} />
             <UnifiedProtectedRoute path="/account/subscription" component={Subscribe} />
 
             {/* All other routes redirect to home */}

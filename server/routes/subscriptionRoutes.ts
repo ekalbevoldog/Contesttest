@@ -1,595 +1,337 @@
 import { Router } from "express";
 import Stripe from "stripe";
 import { supabase } from "../lib/supabase";
-import { verifyToken } from "../middleware/auth";
+import { requireAuth } from "../middleware/auth";
 import dotenv from "dotenv";
 
 dotenv.config();
 
+// Check for Stripe API key
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("Missing required environment variable: STRIPE_SECRET_KEY");
+  console.warn("Missing Stripe secret key. Payment features will not work.");
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Initialize Stripe client
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2023-10-16",
 });
 
-// Available subscription plans
-const SUBSCRIPTION_PLANS = [
-  {
-    id: "basic",
-    name: "Basic",
-    description: "Perfect for getting started",
-    price: 9.99,
-    interval: "month",
-    stripePriceId: process.env.STRIPE_PRICE_BASIC || "price_basic",
-    features: [
-      "Basic profile features",
-      "10 athlete matches per month",
-      "Basic analytics",
-      "Email support",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    description: "The most popular plan",
-    price: 29.99,
-    interval: "month",
-    stripePriceId: process.env.STRIPE_PRICE_PRO || "price_pro",
-    recommended: true,
-    features: [
-      "Advanced profile customization",
-      "Unlimited athlete matches",
-      "Advanced analytics dashboard",
-      "Priority email support",
-      "Brand integration options",
-    ],
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    description: "For serious businesses",
-    price: 99.99,
-    interval: "month",
-    stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE || "price_enterprise",
-    features: [
-      "White-glove onboarding",
-      "Dedicated account manager",
-      "Custom integration options",
-      "API access",
-      "Advanced analytics & reporting",
-      "Phone & email support",
-      "Multiple team members",
-    ],
-  },
-];
-
 const router = Router();
 
-// Get available subscription plans
+// Constants
+const SUBSCRIPTION_PLANS = {
+  BASIC: {
+    id: process.env.STRIPE_BASIC_PRICE_ID || "price_basic",
+    name: "Basic",
+    description: "Basic subscription with essential features",
+  },
+  PRO: {
+    id: process.env.STRIPE_PRO_PRICE_ID || "price_pro",
+    name: "Pro",
+    description: "Professional plan with advanced features",
+  },
+  ENTERPRISE: {
+    id: process.env.STRIPE_ENTERPRISE_PRICE_ID || "price_enterprise",
+    name: "Enterprise",
+    description: "Full-featured enterprise plan",
+  },
+};
+
+// Get subscription plans
 router.get("/plans", (req, res) => {
-  return res.json({ plans: SUBSCRIPTION_PLANS });
+  res.json({
+    plans: Object.values(SUBSCRIPTION_PLANS).map(plan => ({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+    })),
+  });
 });
 
-// Get current user's subscription
-router.get("/subscription", verifyToken, async (req, res) => {
+// Get current user's subscription status
+router.get("/status", requireAuth, async (req, res) => {
   try {
-    const userId = req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
     }
-    
-    // Get user details including subscription info
-    const { data, error } = await supabase
-      .from("users")
-      .select("subscription_id, subscription_status, subscription_plan, subscription_current_period_end")
-      .eq("id", userId)
-      .single();
-    
-    if (error) {
-      console.error("Error fetching user subscription:", error);
-      return res.status(500).json({ error: "Failed to fetch subscription" });
-    }
-    
-    if (!data || !data.subscription_id) {
+
+    // If user doesn't have a subscription, return null
+    if (!user.subscription_id) {
       return res.json({ subscription: null });
     }
-    
-    // Format subscription data for frontend
-    const subscriptionData = {
-      id: data.subscription_id,
-      status: data.subscription_status || "inactive",
-      planType: data.subscription_plan || "free",
-      currentPeriodEnd: data.subscription_current_period_end 
-        ? Math.floor(new Date(data.subscription_current_period_end).getTime() / 1000)
-        : null,
-    };
-    
-    return res.json({ subscription: subscriptionData });
-  } catch (error) {
-    console.error("Error in subscription endpoint:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
 
-// Get subscription status (simplified endpoint for UI components)
-router.get("/status", verifyToken, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    
-    // Get user details including subscription info
-    const { data, error } = await supabase
-      .from("users")
-      .select("subscription_status, subscription_plan")
-      .eq("id", userId)
-      .single();
-    
-    if (error) {
-      console.error("Error fetching subscription status:", error);
-      return res.status(500).json({ error: "Failed to fetch subscription status" });
-    }
-    
-    // Return simplified subscription data
-    return res.json({
-      subscription: {
-        status: data?.subscription_status || "inactive",
-        plan: data?.subscription_plan || "free",
-      },
-    });
-  } catch (error) {
-    console.error("Error in subscription status endpoint:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Create or get existing subscription
-router.post("/get-or-create-subscription", verifyToken, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const userEmail = req.user?.email;
-    const { planId } = req.body;
-    
-    if (!userId || !userEmail) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    
-    // Find the selected plan
-    const selectedPlan = SUBSCRIPTION_PLANS.find(plan => plan.id === planId);
-    if (!selectedPlan) {
-      return res.status(400).json({ error: "Invalid plan selected" });
-    }
-    
-    // Get user record to check for existing Stripe customer
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("stripe_customer_id, subscription_id, subscription_status")
-      .eq("id", userId)
-      .single();
-    
-    if (userError) {
-      console.error("Error fetching user data:", userError);
-      return res.status(500).json({ error: "Failed to fetch user data" });
-    }
-    
-    // Check if user has an active subscription
-    if (userData?.subscription_status === "active" && userData?.subscription_id) {
-      try {
-        // Fetch the subscription from Stripe
-        const existingSubscription = await stripe.subscriptions.retrieve(userData.subscription_id);
+    // Get subscription from Stripe
+    try {
+      const subscription = await stripe.subscriptions.retrieve(user.subscription_id);
+      
+      // Get the price details for more information
+      const priceId = subscription.items.data[0]?.price.id;
+      const price = priceId 
+        ? await stripe.prices.retrieve(priceId)
+        : null;
         
-        // If it's already for the same plan, return success
-        if (existingSubscription.items.data[0].price.id === selectedPlan.stripePriceId) {
-          return res.json({
-            status: "active",
-            message: "Already subscribed to this plan",
-          });
+      // Format the subscription info
+      return res.json({
+        subscription: {
+          id: subscription.id,
+          status: subscription.status,
+          currentPeriodStart: subscription.current_period_start,
+          currentPeriodEnd: subscription.current_period_end,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          plan: price?.nickname || "Standard",
+          priceId: priceId,
         }
-        
-        // Otherwise, update the subscription to the new plan
-        const updatedSubscription = await stripe.subscriptions.update(
-          existingSubscription.id,
-          {
-            items: [{
-              id: existingSubscription.items.data[0].id,
-              price: selectedPlan.stripePriceId,
-            }],
-            proration_behavior: "create_prorations",
-          }
-        );
-        
-        // Update user record with new plan
-        await supabase
-          .from("users")
-          .update({
-            subscription_plan: selectedPlan.id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", userId);
-        
-        return res.json({
-          status: "updated",
-          message: "Subscription updated successfully",
-          subscriptionId: updatedSubscription.id,
-        });
-      } catch (stripeError) {
-        console.error("Error with existing subscription:", stripeError);
-        // If the subscription doesn't exist in Stripe, we'll create a new one
-      }
+      });
+    } catch (err) {
+      console.error("Error retrieving subscription from Stripe:", err);
+      
+      // If we can't get the subscription from Stripe, return the basic info we have
+      return res.json({
+        subscription: {
+          id: user.subscription_id,
+          status: user.subscription_status || "unknown",
+        }
+      });
     }
+  } catch (err) {
+    console.error("Error retrieving subscription status:", err);
+    return res.status(500).json({ error: "Failed to retrieve subscription status" });
+  }
+});
+
+// Create a checkout session for subscription
+router.post("/create-checkout-session", requireAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    const { priceId, successUrl, cancelUrl } = req.body;
+
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    // Validate the price ID
+    const validPriceIds = Object.values(SUBSCRIPTION_PLANS).map(plan => plan.id);
+    const selectedPriceId = priceId || SUBSCRIPTION_PLANS.BASIC.id;
     
-    // Get or create Stripe customer
-    let customerId = userData?.stripe_customer_id;
+    if (!validPriceIds.includes(selectedPriceId)) {
+      return res.status(400).json({ error: "Invalid price ID" });
+    }
+
+    // Set default URLs if not provided
+    const defaultSuccessUrl = `${req.protocol}://${req.get('host')}/subscription/success`;
+    const defaultCancelUrl = `${req.protocol}://${req.get('host')}/subscribe`;
+
+    // Check if user already has a Stripe customer ID
+    let customerId = user.stripe_customer_id;
     
     if (!customerId) {
       // Create a new customer in Stripe
       const customer = await stripe.customers.create({
-        email: userEmail,
+        email: user.email,
         metadata: {
-          userId,
+          userId: user.id,
         },
       });
       
       customerId = customer.id;
       
-      // Update user with Stripe customer ID
-      await supabase
-        .from("users")
-        .update({
-          stripe_customer_id: customerId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", userId);
+      // Save the customer ID to the user record
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', user.id);
+        
+      if (updateError) {
+        console.error("Error updating user with Stripe customer ID:", updateError);
+        return res.status(500).json({ error: "Failed to update user record" });
+      }
     }
-    
-    // Create a subscription
-    const subscription = await stripe.subscriptions.create({
+
+    // Create the checkout session
+    const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      items: [
+      payment_method_types: ['card'],
+      line_items: [
         {
-          price: selectedPlan.stripePriceId,
+          price: selectedPriceId,
+          quantity: 1,
         },
       ],
-      payment_behavior: "default_incomplete",
-      expand: ["latest_invoice.payment_intent"],
+      mode: 'subscription',
+      success_url: successUrl || defaultSuccessUrl,
+      cancel_url: cancelUrl || defaultCancelUrl,
+      metadata: {
+        userId: user.id,
+      },
     });
-    
-    // Update user record with subscription info
-    await supabase
-      .from("users")
-      .update({
-        subscription_id: subscription.id,
-        subscription_status: subscription.status,
-        subscription_plan: selectedPlan.id,
-        subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
-    
-    // Add to subscription history
-    await supabase
-      .from("subscription_history")
-      .insert({
-        user_id: userId,
-        stripe_subscription_id: subscription.id,
-        plan_id: selectedPlan.id,
-        status: subscription.status,
-        amount: selectedPlan.price,
-        currency: "usd",
-        interval: selectedPlan.interval,
-        created_at: new Date().toISOString(),
-      });
-    
-    // Return client secret for payment
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-    
-    return res.json({
-      subscriptionId: subscription.id,
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (error) {
-    console.error("Error creating subscription:", error);
-    return res.status(500).json({ error: "Failed to create subscription" });
+
+    res.json({ sessionId: session.id, url: session.url });
+  } catch (err) {
+    console.error("Error creating checkout session:", err);
+    res.status(500).json({ error: "Failed to create checkout session" });
   }
 });
 
 // Cancel subscription
-router.post("/cancel-subscription", verifyToken, async (req, res) => {
+router.post("/cancel", requireAuth, async (req, res) => {
   try {
-    const userId = req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
     }
-    
-    // Get user's subscription ID
-    const { data, error } = await supabase
-      .from("users")
-      .select("subscription_id")
-      .eq("id", userId)
-      .single();
-    
-    if (error || !data?.subscription_id) {
-      return res.status(404).json({ error: "No active subscription found" });
+
+    if (!user.subscription_id) {
+      return res.status(400).json({ error: "No active subscription found" });
     }
-    
+
     // Cancel the subscription at period end
-    await stripe.subscriptions.update(data.subscription_id, {
+    const subscription = await stripe.subscriptions.update(user.subscription_id, {
       cancel_at_period_end: true,
     });
-    
+
     // Update user record
-    await supabase
-      .from("users")
-      .update({
-        subscription_status: "canceled",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
-    
-    return res.json({ success: true, message: "Subscription canceled" });
-  } catch (error) {
-    console.error("Error canceling subscription:", error);
-    return res.status(500).json({ error: "Failed to cancel subscription" });
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ cancel_at_period_end: true })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error("Error updating user subscription status:", updateError);
+    }
+
+    res.json({
+      message: "Subscription will be canceled at the end of the billing period",
+      subscription: {
+        id: subscription.id,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        currentPeriodEnd: subscription.current_period_end,
+      }
+    });
+  } catch (err) {
+    console.error("Error canceling subscription:", err);
+    res.status(500).json({ error: "Failed to cancel subscription" });
   }
 });
 
-// Resume subscription
-router.post("/resume-subscription", verifyToken, async (req, res) => {
+// Reactivate a canceled subscription
+router.post("/reactivate", requireAuth, async (req, res) => {
   try {
-    const userId = req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
     }
-    
-    // Get user's subscription ID
-    const { data, error } = await supabase
-      .from("users")
-      .select("subscription_id")
-      .eq("id", userId)
-      .single();
-    
-    if (error || !data?.subscription_id) {
-      return res.status(404).json({ error: "No subscription found to resume" });
+
+    if (!user.subscription_id) {
+      return res.status(400).json({ error: "No subscription found" });
     }
-    
-    // Resume the subscription
-    await stripe.subscriptions.update(data.subscription_id, {
+
+    // Reactivate the subscription
+    const subscription = await stripe.subscriptions.update(user.subscription_id, {
       cancel_at_period_end: false,
     });
-    
+
     // Update user record
-    await supabase
-      .from("users")
-      .update({
-        subscription_status: "active",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
-    
-    return res.json({ success: true, message: "Subscription resumed" });
-  } catch (error) {
-    console.error("Error resuming subscription:", error);
-    return res.status(500).json({ error: "Failed to resume subscription" });
-  }
-});
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ cancel_at_period_end: false })
+      .eq('id', user.id);
 
-// Create customer portal session
-router.post("/create-portal-session", verifyToken, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const { return_url } = req.body;
-    
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+    if (updateError) {
+      console.error("Error updating user subscription status:", updateError);
     }
-    
-    // Get user's Stripe customer ID
-    const { data, error } = await supabase
-      .from("users")
-      .select("stripe_customer_id")
-      .eq("id", userId)
-      .single();
-    
-    if (error || !data?.stripe_customer_id) {
-      return res.status(404).json({ error: "No Stripe customer found" });
-    }
-    
-    // Create a customer portal session
-    const session = await stripe.billingPortal.sessions.create({
-      customer: data.stripe_customer_id,
-      return_url: return_url || `${req.headers.origin}/account/subscription`,
+
+    res.json({
+      message: "Subscription reactivated successfully",
+      subscription: {
+        id: subscription.id,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      }
     });
-    
-    return res.json({ url: session.url });
-  } catch (error) {
-    console.error("Error creating portal session:", error);
-    return res.status(500).json({ error: "Failed to create portal session" });
+  } catch (err) {
+    console.error("Error reactivating subscription:", err);
+    res.status(500).json({ error: "Failed to reactivate subscription" });
   }
 });
 
-// Process Stripe webhook events
-router.post("/webhook", async (req, res) => {
-  const sig = req.headers["stripe-signature"] as string;
-  let event: Stripe.Event;
-  
-  // Verify webhook signature and extract the event
+// Change subscription plan
+router.post("/change-plan", requireAuth, async (req, res) => {
   try {
-    // Make sure STRIPE_WEBHOOK_SECRET is set in environment variables
-    if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      console.error("Missing Stripe webhook secret");
-      return res.status(500).send("Webhook Error: Missing Stripe webhook secret");
+    const user = req.user;
+    const { priceId } = req.body;
+
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
     }
+
+    if (!user.subscription_id) {
+      return res.status(400).json({ error: "No active subscription found" });
+    }
+
+    // Validate the price ID
+    const validPriceIds = Object.values(SUBSCRIPTION_PLANS).map(plan => plan.id);
     
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
+    if (!priceId || !validPriceIds.includes(priceId)) {
+      return res.status(400).json({ error: "Invalid price ID" });
+    }
+
+    // Get the subscription
+    const subscription = await stripe.subscriptions.retrieve(user.subscription_id);
+    
+    // Update the subscription with the new price
+    const updatedSubscription = await stripe.subscriptions.update(
+      user.subscription_id,
+      {
+        items: [
+          {
+            id: subscription.items.data[0].id,
+            price: priceId,
+          },
+        ],
+      }
     );
+
+    res.json({
+      message: "Subscription plan updated successfully",
+      subscription: {
+        id: updatedSubscription.id,
+        status: updatedSubscription.status,
+        priceId: priceId,
+      }
+    });
   } catch (err) {
-    console.error("Webhook Error:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error("Error changing subscription plan:", err);
+    res.status(500).json({ error: "Failed to change subscription plan" });
   }
-  
-  // Handle the event
+});
+
+// Create a portal session for subscription management
+router.post("/create-portal-session", requireAuth, async (req, res) => {
   try {
-    switch (event.type) {
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
-        const subscription = event.data.object as Stripe.Subscription;
-        
-        // Find the user with this subscription
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("id")
-          .eq("subscription_id", subscription.id)
-          .single();
-        
-        if (userError || !userData) {
-          console.error("No user found with subscription:", subscription.id);
-          return res.status(202).send("No user found with this subscription");
-        }
-        
-        // Determine the plan from the subscription
-        const priceId = subscription.items.data[0].price.id;
-        const plan = SUBSCRIPTION_PLANS.find(p => p.stripePriceId === priceId);
-        
-        // Update the user's subscription status
-        await supabase
-          .from("users")
-          .update({
-            subscription_status: subscription.status,
-            subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            subscription_plan: plan?.id || "unknown",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", userData.id);
-        
-        break;
-      
-      case "customer.subscription.deleted":
-        const deletedSubscription = event.data.object as Stripe.Subscription;
-        
-        // Find the user with this subscription
-        const { data: userWithDeletedSub, error: deleteError } = await supabase
-          .from("users")
-          .select("id")
-          .eq("subscription_id", deletedSubscription.id)
-          .single();
-        
-        if (deleteError || !userWithDeletedSub) {
-          console.error("No user found with deleted subscription:", deletedSubscription.id);
-          return res.status(202).send("No user found with this subscription");
-        }
-        
-        // Update the user's subscription status
-        await supabase
-          .from("users")
-          .update({
-            subscription_status: "inactive",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", userWithDeletedSub.id);
-        
-        break;
-      
-      case "invoice.payment_succeeded":
-        const invoice = event.data.object as Stripe.Invoice;
-        
-        // Only process subscription invoices
-        if (invoice.subscription) {
-          // Find the user with this subscription
-          const { data: invoiceUser, error: invoiceError } = await supabase
-            .from("users")
-            .select("id")
-            .eq("subscription_id", invoice.subscription)
-            .single();
-          
-          if (invoiceError || !invoiceUser) {
-            console.error("No user found with invoice subscription:", invoice.subscription);
-            return res.status(202).send("No user found for this invoice");
-          }
-          
-          // Update the subscription status to active
-          await supabase
-            .from("users")
-            .update({
-              subscription_status: "active",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", invoiceUser.id);
-          
-          // Add to payment history
-          await supabase
-            .from("payment_history")
-            .insert({
-              user_id: invoiceUser.id,
-              stripe_invoice_id: invoice.id,
-              stripe_subscription_id: invoice.subscription as string,
-              amount: invoice.amount_paid / 100, // Convert from cents
-              currency: invoice.currency,
-              status: "paid",
-              payment_method: invoice.payment_method_types?.[0] || "unknown",
-              created_at: new Date().toISOString(),
-            });
-        }
-        break;
-      
-      case "invoice.payment_failed":
-        const failedInvoice = event.data.object as Stripe.Invoice;
-        
-        // Only process subscription invoices
-        if (failedInvoice.subscription) {
-          // Find the user with this subscription
-          const { data: failedInvoiceUser, error: failedInvoiceError } = await supabase
-            .from("users")
-            .select("id")
-            .eq("subscription_id", failedInvoice.subscription)
-            .single();
-          
-          if (failedInvoiceError || !failedInvoiceUser) {
-            console.error("No user found with failed invoice subscription:", failedInvoice.subscription);
-            return res.status(202).send("No user found for this invoice");
-          }
-          
-          // Update the subscription status to past_due
-          await supabase
-            .from("users")
-            .update({
-              subscription_status: "past_due",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", failedInvoiceUser.id);
-          
-          // Add to payment history
-          await supabase
-            .from("payment_history")
-            .insert({
-              user_id: failedInvoiceUser.id,
-              stripe_invoice_id: failedInvoice.id,
-              stripe_subscription_id: failedInvoice.subscription as string,
-              amount: failedInvoice.amount_due / 100, // Convert from cents
-              currency: failedInvoice.currency,
-              status: "failed",
-              payment_method: failedInvoice.payment_method_types?.[0] || "unknown",
-              created_at: new Date().toISOString(),
-            });
-        }
-        break;
+    const user = req.user;
+    const { returnUrl } = req.body;
+
+    if (!user) {
+      return res.status(401).json({ error: "User not authenticated" });
     }
-    
-    // Return a response to acknowledge receipt of the event
-    res.json({ received: true });
+
+    if (!user.stripe_customer_id) {
+      return res.status(400).json({ error: "No Stripe customer found for this user" });
+    }
+
+    // Create a portal session
+    const session = await stripe.billingPortal.sessions.create({
+      customer: user.stripe_customer_id,
+      return_url: returnUrl || `${req.protocol}://${req.get('host')}/account/subscription`,
+    });
+
+    res.json({ url: session.url });
   } catch (err) {
-    console.error("Error processing webhook:", err);
-    res.status(500).send("Error processing webhook");
+    console.error("Error creating portal session:", err);
+    res.status(500).json({ error: "Failed to create portal session" });
   }
 });
 

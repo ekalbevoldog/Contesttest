@@ -13,9 +13,10 @@ import { setupSupabaseAuth, verifySupabaseToken } from "./supabaseAuth.js";
 import { pool, db as supabaseAdmin } from "./db.js";
 // Import auth fixes
 import { ensureBusinessProfile } from "./auth-fixes/auto-create-business-profile.js";
-// Import subscription routes
+// Import routes
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 
 // Mock service for BigQuery
 const bigQueryService = {
@@ -3879,6 +3880,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register webhook routes
   app.use('/api/stripe', webhookRoutes);
+  
+  // Register profile routes
+  app.use('/api/profile', profileRoutes);
   
   // Add Stripe plan listing endpoint
   app.get('/api/subscription/plans', async (req: Request, res: Response) => {
