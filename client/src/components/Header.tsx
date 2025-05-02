@@ -351,7 +351,10 @@ export default function Header() {
                 // Special handling for Dashboard button - dynamically determine the right URL based on user type
                 if (item.label === "Dashboard" && user) {
                   // Get the correct dashboard URL based on user type
-                  let dashboardUrl = "/"; // Default fallback to home
+                  let dashboardUrl = "/dashboard"; // Redirect to dashboard redirection component
+                  console.log("Dashboard button clicked, userType:", userType);
+                  
+                  // Direct linking to dashboard based on role
                   if (userType === 'athlete') dashboardUrl = "/athlete/dashboard";
                   else if (userType === 'business') dashboardUrl = "/business/dashboard";
                   else if (userType === 'compliance') dashboardUrl = "/compliance/dashboard";
@@ -554,14 +557,17 @@ export default function Header() {
                         variant="outline"
                         className="w-full justify-center mb-2 border-primary bg-transparent hover:bg-primary/15 text-white"
                         asChild
-                        onClick={() => setOpen(false)}
+                        onClick={() => {
+                          console.log("Mobile dashboard button clicked, userType:", userType);
+                          setOpen(false);
+                        }}
                       >
                         <Link href={
                           userType === 'athlete' ? "/athlete/dashboard" : 
                           userType === 'business' ? "/business/dashboard" : 
                           userType === 'compliance' ? "/compliance/dashboard" : 
                           userType === 'admin' ? "/admin/dashboard" : 
-                          "/"
+                          "/dashboard" // Redirect to dashboard component if no specific type matches
                         }>
                           <span className="flex items-center">
                             <BarChart className="h-4 w-4 mr-1" />

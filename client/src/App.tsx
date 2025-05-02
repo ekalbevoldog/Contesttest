@@ -20,7 +20,7 @@ import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SupabaseAuthProvider } from "@/hooks/use-supabase-auth";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 // Using unified protected route instead of separate components
 import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "@/lib/unified-protected-route";
 import { Suspense, lazy, useEffect, useState } from "react";
