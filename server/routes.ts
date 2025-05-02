@@ -1589,15 +1589,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sport: athlete.sport,
             school: athlete.school,
             division: athlete.division,
-            followerCount: athlete.followerCount,
-            contentStyle: athlete.contentStyle,
+            follower_count: athlete.follower_count,
+            content_style: athlete.content_style,
             // Additional fields as needed
             email: athlete.email,
             phone: athlete.phone,
             // Parse JSON fields if they exist
-            socialHandles: athlete.socialHandles ? JSON.parse(athlete.socialHandles) : {},
-            personalValues: athlete.personalValues ? JSON.parse(athlete.personalValues) : [],
-            contentTypes: athlete.contentTypes ? JSON.parse(athlete.contentTypes) : [],
+            social_handles: athlete.social_handles ? JSON.parse(athlete.social_handles) : {},
+            personal_values: athlete.personal_values ? JSON.parse(athlete.personal_values) : [],
+            content_types: athlete.content_types ? JSON.parse(athlete.content_types) : [],
           });
         }
 
@@ -1611,8 +1611,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sport: athletes[0].sport,
             school: athletes[0].school,
             division: athletes[0].division,
-            followerCount: athletes[0].followerCount,
-            contentStyle: athletes[0].contentStyle,
+            follower_count: athletes[0].follower_count,
+            content_style: athletes[0].content_style,
           });
         }
 
@@ -1631,8 +1631,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: business.id,
             name: business.name,
             userType: "business",
-            productType: business.productType,
-            audienceGoals: business.audienceGoals,
+            product_type: business.product_type,
+            audience_goals: business.audience_goals,
             values: business.values,
             industry: business.industry,
             email: business.email,
@@ -1648,8 +1648,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: businesses[0].id,
             name: businesses[0].name,
             userType: "business",
-            productType: businesses[0].productType,
-            audienceGoals: businesses[0].audienceGoals,
+            product_type: businesses[0].product_type,
+            audience_goals: businesses[0].audience_goals,
             values: businesses[0].values
           });
         }
@@ -1701,8 +1701,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: data.id,
             name: data.name,
             userType: "business",
-            productType: data.product_type,
-            audienceGoals: data.audience_goals,
+            product_type: data.product_type,
+            audience_goals: data.audience_goals,
             values: data.values,
             industry: data.industry,
             email: data.email,
@@ -1724,8 +1724,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: business.id,
           name: business.name,
           userType: "business",
-          productType: business.productType,
-          audienceGoals: business.audienceGoals,
+          product_type: business.product_type,
+          audience_goals: business.audience_goals,
           values: business.values,
           industry: business.industry,
           email: business.email,
@@ -1776,13 +1776,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sport: data.sport,
             school: data.school,
             division: data.division,
-            followerCount: data.follower_count,
-            contentStyle: data.content_style,
+            follower_count: data.follower_count,
+            content_style: data.content_style,
             email: data.email,
             // Parse JSON fields if they exist
-            socialHandles: data.social_handles ? JSON.parse(data.social_handles) : {},
-            personalValues: data.personal_values ? JSON.parse(data.personal_values) : [],
-            contentTypes: data.content_types ? JSON.parse(data.content_types) : [],
+            social_handles: data.social_handles ? JSON.parse(data.social_handles) : {},
+            personal_values: data.personal_values ? JSON.parse(data.personal_values) : [],
+            content_types: data.content_types ? JSON.parse(data.content_types) : [],
           });
         }
       } catch (supabaseErr) {
@@ -1837,14 +1837,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       score: matchResponse.score,
       reason: matchResponse.reason,
       // Store all the multi-dimensional scores
-      audience_fit_score: matchResponse.audienceFitScore,
-      content_style_fit_score: matchResponse.contentStyleFitScore,
-      brand_value_alignment_score: matchResponse.brandValueAlignmentScore,
-      engagement_potential_score: matchResponse.engagementPotentialScore,
-      compensation_fit_score: matchResponse.compensationFitScore,
+      audience_fit_score: matchResponse.audience_fit_score,
+      content_style_fit_score: matchResponse.content_style_fit_score,
+      brand_value_alignment_score: matchResponse.brand_value_alignment_score,
+      engagement_potential_score: matchResponse.engagement_potential_score,
+      compensation_fit_score: matchResponse.compensation_fit_score,
       // Store strength and weakness areas as JSON
-      strength_areas: matchResponse.strengthAreas ? JSON.stringify(matchResponse.strengthAreas) : null,
-      weakness_areas: matchResponse.weaknessAreas ? JSON.stringify(matchResponse.weaknessAreas) : null
+      strength_areas: matchResponse.strength_areas ? JSON.stringify(matchResponse.strength_areas) : null,
+      weakness_areas: matchResponse.weakness_areas ? JSON.stringify(matchResponse.weakness_areas) : null
     };
 
     const match = await storage.storeMatch(matchData);
