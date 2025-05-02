@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "./supabase.js";
 
 async function checkBusinessProfilesForeignKeys() {
   console.log("Checking foreign key constraints on business_profiles table...");

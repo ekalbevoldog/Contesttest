@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "./supabase.js";
 import { v4 as uuidv4 } from 'uuid';
 
 async function tryInsertWithTypes() {

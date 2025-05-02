@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "./supabase.js";
 
 // Simple script to check the actual structure of critical tables
 async function checkTables() {

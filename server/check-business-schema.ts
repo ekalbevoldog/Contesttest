@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "./supabase.js";
 
 async function checkBusinessProfilesSchema() {
   console.log("Checking business_profiles table schema...");
