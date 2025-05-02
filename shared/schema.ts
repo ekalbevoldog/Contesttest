@@ -23,8 +23,10 @@ export const userSchema = z.object({
   subscription_cancel_at_period_end: z.boolean().optional()
 });
 
-// Create User type from schema
-export type User = z.infer<typeof userSchema>;
+// Create User type from schema with additional fields for compatibility
+export type User = z.infer<typeof userSchema> & {
+  stripe_id?: string;  // Additional field
+};
 
 export const insertUserSchema = userSchema.omit({ 
   id: true, 
@@ -56,6 +58,10 @@ export const insertSessionSchema = sessionSchema.omit({
   updated_at: true,
   last_login: true
 });
+
+// Session types
+export type Session = z.infer<typeof sessionSchema>;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
 
 // Athlete profile type definitions
 export const athleteSchema = z.object({
@@ -144,6 +150,17 @@ export const insertAthleteSchema = athleteSchema.omit({
   updated_at: true
 });
 
+// Athlete types
+export type Athlete = z.infer<typeof athleteSchema> & {
+  userId?: string | number;  // Additional field for compatibility
+};
+export type InsertAthlete = z.infer<typeof insertAthleteSchema> & {
+  sessionId?: string;
+  followerCount?: number;
+  contentStyle?: string;
+  compensationGoals?: string;
+};
+
 // Business profile type definitions
 export const businessSchema = z.object({
   id: z.number(),
@@ -221,6 +238,18 @@ export const insertBusinessSchema = businessSchema.omit({
   created_at: true,
   updated_at: true
 });
+
+// Business types - with camelCase alternatives 
+export type Business = z.infer<typeof businessSchema> & {
+  userId?: string | number;  // Alternative to auth_id
+};
+export type InsertBusiness = z.infer<typeof insertBusinessSchema> & {
+  sessionId?: string;  // Alternative to session_id
+  productType?: string;  // Alternative to product_type
+  audienceGoals?: string;  // Alternative to audience_goals
+  campaignVibe?: string;  // Alternative to campaign_vibe
+  targetSchoolsSports?: string;  // Alternative to target_schools_sports
+};
 
 // Campaign type definitions
 export const campaignSchema = z.object({
@@ -429,36 +458,73 @@ export const insertFeedbackSchema = feedbackSchema.omit({
   response_by: true
 });
 
-// Type inferences
-export type User = z.infer<typeof userSchema>;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+// Update Campaign type with camelCase alternative
+export type Campaign = z.infer<typeof campaignSchema> & {
+  businessId?: number;  // Alternative to business_id
+};
+export type InsertCampaign = z.infer<typeof insertCampaignSchema> & {
+  businessId?: number;  // Alternative to business_id
+};
 
-export type Session = z.infer<typeof sessionSchema>;
-export type InsertSession = z.infer<typeof insertSessionSchema>;
+// Update Match type with camelCase alternatives
+export type Match = z.infer<typeof matchSchema> & {
+  athleteId?: number;  // Alternative to athlete_id
+  businessId?: number;  // Alternative to business_id
+  campaignId?: number;  // Alternative to campaign_id
+};
+export type InsertMatch = z.infer<typeof insertMatchSchema> & {
+  athleteId?: number;  // Alternative to athlete_id
+  businessId?: number;  // Alternative to business_id
+  campaignId?: number;  // Alternative to campaign_id
+};
 
-export type Athlete = z.infer<typeof athleteSchema>;
-export type InsertAthlete = z.infer<typeof insertAthleteSchema>;
-
-export type Business = z.infer<typeof businessSchema>;
-export type InsertBusiness = z.infer<typeof insertBusinessSchema>;
-
-export type Campaign = z.infer<typeof campaignSchema>;
-export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
-
-export type Match = z.infer<typeof matchSchema>;
-export type InsertMatch = z.infer<typeof insertMatchSchema>;
-
-export type Message = z.infer<typeof messageSchema>;
+// Update Message type with camelCase alternative
+export type Message = z.infer<typeof messageSchema> & {
+  sessionId?: string;  // Alternative to session_id
+};
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
-export type ComplianceOfficer = z.infer<typeof complianceOfficerSchema>;
-export type InsertComplianceOfficer = z.infer<typeof insertComplianceOfficerSchema>;
+// Update PartnershipOffer type with camelCase alternatives
+export type PartnershipOffer = z.infer<typeof partnershipOfferSchema> & {
+  matchId?: number;  // Alternative to match_id
+  businessId?: number;  // Alternative to business_id
+  athleteId?: number;  // Alternative to athlete_id
+  campaignId?: number;  // Alternative to campaign_id
+  compensationType?: string;  // Alternative to compensation_type
+  offerAmount?: string;  // Alternative to offer_amount
+  usageRights?: string;  // Alternative to usage_rights
+};
+export type InsertPartnershipOffer = z.infer<typeof insertPartnershipOfferSchema> & {
+  matchId?: number;  // Alternative to match_id
+  businessId?: number;  // Alternative to business_id
+  athleteId?: number;  // Alternative to athlete_id
+  campaignId?: number;  // Alternative to campaign_id
+  compensationType?: string;  // Alternative to compensation_type
+  offerAmount?: string;  // Alternative to offer_amount
+  usageRights?: string;  // Alternative to usage_rights
+};
 
-export type PartnershipOffer = z.infer<typeof partnershipOfferSchema>;
-export type InsertPartnershipOffer = z.infer<typeof insertPartnershipOfferSchema>;
+// Update Feedback type with camelCase alternatives
+export type Feedback = z.infer<typeof feedbackSchema> & {
+  userId?: number;  // Additional field
+  userType?: string;  // Alternative to user_type
+  matchId?: number;  // Alternative to match_id
+  feedbackType?: string;  // Additional field
+};
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema> & {
+  userId?: number;  // Additional field
+  userType?: string;  // Alternative to user_type
+  matchId?: number;  // Alternative to match_id
+  feedbackType?: string;  // Additional field
+};
 
-export type Feedback = z.infer<typeof feedbackSchema>;
-export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+// Add interface for Stripe-related code
+export interface StripeInterface {
+  // Basic interface to help TypeScript with Stripe-related code
+  id: string;
+  object: string;
+  [key: string]: any;
+}
 
 export interface MessageMetadata {
   [key: string]: unknown;
