@@ -37,8 +37,8 @@ try {
     // Manually identify and build specific files, excluding archive and auth-fixes directories
     const { globSync } = await import('glob');
     
-    // Find all TypeScript files, excluding archive and auth-fixes
-    const serverFiles = globSync('server/**/!(archive|auth-fixes)/**/*.ts');
+    // Find all TypeScript files, explicitly excluding archive and auth-fixes directories
+    const serverFiles = globSync('server/**/*.ts', { ignore: ['server/archive/**', 'server/auth-fixes/**'] });
     const serverRootFiles = globSync('server/*.ts');
     const sharedFiles = globSync('shared/**/*.ts');
     
