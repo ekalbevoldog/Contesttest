@@ -24,13 +24,43 @@ try {
     console.log('⚠️ SQL migration file not found, skipping copy operation');
   }
   
-  // Copy vite.config.ts file to dist directory
-  if (fs.existsSync('vite.config.ts')) {
-    execSync('cp vite.config.ts dist/vite.config.js', { stdio: 'inherit' });
-    console.log('✅ vite.config.ts copied to dist/vite.config.js');
-  } else {
-    console.log('⚠️ vite.config.ts file not found, skipping copy');
+  // Fix the vite.config import path issue using a custom file
+  const viteConfigContent = `
+// Generated vite.config.js file with fixed module syntax
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
+import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+
+function getPlugins() {
+  return [
+    react(),
+    runtimeErrorOverlay(),
+    themePlugin(),
+  ];
+}
+
+export default defineConfig({
+  plugins: getPlugins(),
+  resolve: {
+    alias: {
+      "@": "/client/src",
+      "@shared": "/shared",
+    }
+  },
+  root: "/client",
+  build: {
+    outDir: "/dist/public",
+    emptyOutDir: true,
   }
+});
+`;
+  
+  // Write the new files directly to dist directory
+  fs.writeFileSync('dist/vite.config', viteConfigContent);
+  fs.writeFileSync('dist/vite.config.js', viteConfigContent);
+  console.log('✅ Created fixed vite.config files in dist directory');
   
   serverBuildSuccess = true;
   
@@ -78,13 +108,43 @@ try {
       console.log('⚠️ SQL migration file not found, skipping copy operation');
     }
     
-    // Copy vite.config.ts file to dist directory
-    if (fs.existsSync('vite.config.ts')) {
-      execSync('cp vite.config.ts dist/vite.config.js', { stdio: 'inherit' });
-      console.log('✅ vite.config.ts copied to dist/vite.config.js');
-    } else {
-      console.log('⚠️ vite.config.ts file not found, skipping copy');
+    // Fix the vite.config import path issue using a custom file
+    const viteConfigContent = `
+// Generated vite.config.js file with fixed module syntax
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
+import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+
+function getPlugins() {
+  return [
+    react(),
+    runtimeErrorOverlay(),
+    themePlugin(),
+  ];
+}
+
+export default defineConfig({
+  plugins: getPlugins(),
+  resolve: {
+    alias: {
+      "@": "/client/src",
+      "@shared": "/shared",
     }
+  },
+  root: "/client",
+  build: {
+    outDir: "/dist/public",
+    emptyOutDir: true,
+  }
+});
+`;
+    
+    // Write the new file directly to dist directory
+    fs.writeFileSync('dist/vite.config.js', viteConfigContent);
+    console.log('✅ Created a fixed vite.config.js in dist directory');
+    
     
     console.log('⚠️ Build completed with fallback strategy. TypeScript errors should be fixed for future builds.');
     serverBuildSuccess = true;
