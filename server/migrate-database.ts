@@ -1,6 +1,5 @@
 
-#!/usr/bin/env tsx
-
+// #!/usr/bin/env tsx
 import { runCompleteMigration } from './runCompleteMigration.js';
 
 // Run the migration
