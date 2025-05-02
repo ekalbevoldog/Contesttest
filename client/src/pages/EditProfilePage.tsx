@@ -150,7 +150,61 @@ const EditProfilePage = () => {
   // Profile update mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
-      const response = await apiRequest("PATCH", "/api/profile", data);
+      console.log('[EditProfilePage] Updating profile with data:', data);
+      
+      // Get authorization token directly (don't rely on apiRequest to do it)
+      let authHeader = '';
+      try {
+        // Dynamically import supabase to avoid circular dependencies
+        const { supabase } = await import('@/lib/supabase-client');
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (sessionData?.session?.access_token) {
+          authHeader = `Bearer ${sessionData.session.access_token}`;
+          console.log('[EditProfilePage] Got token from Supabase session');
+        } else {
+          // Try to get token from localStorage as fallback
+          try {
+            console.log('[EditProfilePage] No token in session, trying localStorage...');
+            // Try both storage keys
+            let storedAuth = localStorage.getItem('contested-auth');
+            if (!storedAuth) {
+              storedAuth = localStorage.getItem('supabase-auth');
+            }
+            
+            if (storedAuth) {
+              const authData = JSON.parse(storedAuth);
+              if (authData.access_token) {
+                authHeader = `Bearer ${authData.access_token}`;
+                console.log('[EditProfilePage] Using token from localStorage');
+              }
+            } else {
+              console.log('[EditProfilePage] No auth token found in localStorage');
+            }
+          } catch (localStorageError) {
+            console.error('[EditProfilePage] Error accessing localStorage:', localStorageError);
+          }
+        }
+      } catch (error) {
+        console.error('[EditProfilePage] Error getting auth session:', error);
+      }
+      
+      // Make direct fetch request with auth header
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authHeader ? { "Authorization": authHeader } : {})
+        },
+        body: JSON.stringify(data),
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Failed to update profile");
+      }
+      
       return await response.json();
     },
     onSuccess: () => {
@@ -165,6 +219,7 @@ const EditProfilePage = () => {
       setLocation("/profile");
     },
     onError: (error) => {
+      console.error('[EditProfilePage] Profile update error:', error);
       toast({
         title: "Error updating profile",
         description: error.message || "Failed to update profile. Please try again.",
@@ -256,7 +311,57 @@ const EditProfilePage = () => {
   // Image removal mutation
   const removeImageMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("DELETE", "/api/profile/remove-image");
+      console.log('[EditProfilePage] Removing profile image');
+      
+      // Get authorization token directly
+      let authHeader = '';
+      try {
+        // Dynamically import supabase to avoid circular dependencies
+        const { supabase } = await import('@/lib/supabase-client');
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (sessionData?.session?.access_token) {
+          authHeader = `Bearer ${sessionData.session.access_token}`;
+          console.log('[EditProfilePage] Got token from Supabase session for image removal');
+        } else {
+          // Try to get token from localStorage as fallback
+          try {
+            // Try both storage keys
+            let storedAuth = localStorage.getItem('contested-auth');
+            if (!storedAuth) {
+              storedAuth = localStorage.getItem('supabase-auth');
+            }
+            
+            if (storedAuth) {
+              const authData = JSON.parse(storedAuth);
+              if (authData.access_token) {
+                authHeader = `Bearer ${authData.access_token}`;
+                console.log('[EditProfilePage] Using token from localStorage for image removal');
+              }
+            }
+          } catch (localStorageError) {
+            console.error('[EditProfilePage] Error accessing localStorage:', localStorageError);
+          }
+        }
+      } catch (error) {
+        console.error('[EditProfilePage] Error getting auth session:', error);
+      }
+      
+      // Make direct fetch request with auth header
+      const response = await fetch("/api/profile/remove-image", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authHeader ? { "Authorization": authHeader } : {})
+        },
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Failed to remove image");
+      }
+      
       return await response.json();
     },
     onSuccess: () => {
@@ -271,6 +376,7 @@ const EditProfilePage = () => {
       }
     },
     onError: (error) => {
+      console.error('[EditProfilePage] Image removal error:', error);
       toast({
         title: "Error removing image",
         description: error.message || "Failed to remove image. Please try again.",
