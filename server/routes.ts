@@ -229,7 +229,11 @@ const checkUserAuth = (requiredRole: string | null = null) => async (req: Reques
       }
 
       // Attach the user to the request for convenience in route handlers
-      req.user = user;
+      // Convert id to string if it's a number to satisfy type requirements
+      req.user = {
+        ...user,
+        id: user.id.toString() // Convert to string to match expected type
+      };
     } catch (err) {
       console.error("Error checking user role:", err);
       return res.status(500).json({ error: "Server error checking permissions" });
@@ -261,11 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 2. Supabase authentication (JWT)
   setupSupabaseAuth(app);
   
-  // Type for authenticated requests
-  interface AuthenticatedRequest extends Request {
-    user?: any;
-    isAuthenticated(): this is AuthenticatedRequest;
-  }
+  // Using the global Express type extension instead of a local interface
   
   // Register the business profile auto-creation endpoint
   app.post('/api/create-business-profile', async (req: Request, res: Response) => {
