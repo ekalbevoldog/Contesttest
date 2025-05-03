@@ -97,8 +97,9 @@ export default function Review() {
     }
   };
   
-  // Launch campaign and send offers
+  // Form submission handler for campaign launch
   const launchCampaign = async () => {
+    // Validate campaign ID exists
     if (!campaignId) {
       toast({
         title: "Error",
@@ -109,6 +110,7 @@ export default function Review() {
       return;
     }
     
+    // Validate terms acceptance
     if (!acceptedTerms) {
       toast({
         title: "Please accept terms",
@@ -118,23 +120,83 @@ export default function Review() {
       return;
     }
     
+    // Set loading state
     setIsLoading(true);
     
     try {
-      // First update campaign status in Supabase
+      // First, fetch the current campaign to verify it exists
+      const { data: campaignData, error: fetchError } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('id', campaignId)
+        .single();
+      
+      if (fetchError) {
+        throw new Error(`Campaign verification failed: ${fetchError.message}`);
+      }
+      
+      if (!campaignData) {
+        throw new Error('Campaign not found in database');
+      }
+      
+      // Update campaign status in Supabase
       const { error: campaignError } = await supabase
         .from('campaigns')
         .update({ 
           status: 'ACTIVE',
           launched_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          terms_accepted: true,
+          terms_accepted_at: new Date().toISOString(),
+          terms_accepted_by: user?.id
         })
         .eq('id', campaignId);
       
       if (campaignError) {
-        throw new Error(campaignError.message);
+        throw new Error(`Campaign update failed: ${campaignError.message}`);
       }
       
-      // Then call the offer sending API
+      // Log campaign launch activity
+      const { error: activityError } = await supabase
+        .from('campaign_activities')
+        .insert([{
+          campaign_id: campaignId,
+          activity_type: 'LAUNCH',
+          actor_id: user?.id,
+          details: {
+            bundle_type: form.bundleType,
+            athlete_count: form.selectedMatches?.length || 0
+          },
+          created_at: new Date().toISOString()
+        }]);
+      
+      if (activityError) {
+        console.warn('Failed to log campaign activity:', activityError);
+        // Non-critical, continue with the flow
+      }
+      
+      // Create offer records for each athlete
+      const offers = (form.selectedMatches || []).map(athlete => ({
+        campaign_id: campaignId,
+        athlete_id: athlete.id,
+        status: 'PENDING',
+        bundle_type: form.bundleType,
+        compensation: form.selectedBundle?.compensation || 'Not specified',
+        created_at: new Date().toISOString(),
+        created_by: user?.id
+      }));
+      
+      if (offers.length > 0) {
+        const { error: offersError } = await supabase
+          .from('offers')
+          .insert(offers);
+        
+        if (offersError) {
+          throw new Error(`Failed to create offers: ${offersError.message}`);
+        }
+      }
+      
+      // Call the offer sending API to trigger notifications
       const response = await fetch('/api/offer/send', {
         method: 'POST',
         headers: {
@@ -149,7 +211,8 @@ export default function Review() {
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to send offers');
+        console.warn('Notification service error:', error);
+        // Non-critical, continue with the flow
       }
       
       // Success - show toast and navigate to dashboard
@@ -168,18 +231,11 @@ export default function Review() {
     } catch (error: any) {
       console.error('Campaign launch error:', error);
       
-      // For demo purposes, we'll show a success message anyway
       toast({
-        title: "Campaign Launched!",
-        description: "Your campaign is now live and offers have been sent to athletes",
-        variant: "default",
+        title: "Launch failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
       });
-      
-      // Reset wizard state
-      reset();
-      
-      // Navigate to dashboard
-      navigate('/business/dashboard');
       
     } finally {
       setIsLoading(false);

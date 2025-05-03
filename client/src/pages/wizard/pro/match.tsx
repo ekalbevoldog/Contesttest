@@ -12,11 +12,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/lib/supabase';
+import { z } from 'zod';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function Match() {
   const { campaignId, form, updateForm, nextStep, prevStep } = useProWizard();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [matchCandidates, setMatchCandidates] = useState<any[]>([]);
   const [selectedAthletes, setSelectedAthletes] = useState<any[]>(form.selectedMatches || []);
@@ -132,9 +135,10 @@ export default function Match() {
           
         if (error) throw error;
         
-        // Complete progress animation - use a no-op if interval wasn't set
-        const intervalRef = matchingInterval || setInterval(() => {}, 1000);
-        clearInterval(intervalRef);
+        // Complete progress animation - only clear if interval was actually set
+        if (matchingInterval) {
+          clearInterval(matchingInterval);
+        }
         setMatchProgress(100);
         
         setTimeout(() => {
@@ -184,24 +188,74 @@ export default function Match() {
     (athlete.university && athlete.university.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Continue to next step
-  const handleContinue = async () => {
-    if (selectedAthletes.length === 0) {
-      toast({
-        title: "No athletes selected",
-        description: "Please select at least one athlete for your campaign",
-        variant: "destructive"
-      });
-      return;
-    }
+  // Form validation schema using zod
+  const validationSchema = z.object({
+    selectedAthletes: z.array(z.any()).min(1, {
+      message: "Please select at least one athlete for your campaign"
+    }),
+    matchCandidates: z.array(z.any()).min(1, {
+      message: "Please run the athlete matching process first"
+    })
+  });
 
+  // Form submission handler with loading state
+  const handleContinue = async () => {
+    setIsLoading(true);
+    
     try {
+      // Validate using schema
+      const validationResult = validationSchema.safeParse({
+        selectedAthletes,
+        matchCandidates
+      });
+      
+      if (!validationResult.success) {
+        const errorMessage = validationResult.error.errors[0]?.message || 
+                            "Please select at least one athlete";
+        toast({
+          title: "Validation Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!campaignId) {
+        toast({
+          title: "Error",
+          description: "Campaign ID not found. Please start from the beginning.",
+          variant: "destructive"
+        });
+        navigate('/wizard/pro/start');
+        return;
+      }
+
+      // First fetch the campaign to make sure it exists
+      const { data: campaignData, error: fetchError } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('id', campaignId)
+        .single();
+        
+      if (fetchError || !campaignData) {
+        toast({
+          title: "Error",
+          description: "Campaign not found. Please start from the beginning.",
+          variant: "destructive"
+        });
+        navigate('/wizard/pro/start');
+        return;
+      }
+      
       // Update campaign matches in Supabase
       const { error } = await supabase
         .from('campaigns')
         .update({ 
           selected_athletes: selectedAthletes.map(a => a.id),
           match_candidates: matchCandidates.map(c => c.id),
+          updated_at: new Date().toISOString(),
+          match_step_completed: true
         })
         .eq('id', campaignId);
       
@@ -214,19 +268,47 @@ export default function Match() {
         return;
       }
       
+      // Log an activity for the selection
+      const { error: activityError } = await supabase
+        .from('campaign_activities')
+        .insert([{
+          campaign_id: campaignId,
+          activity_type: 'ATHLETE_SELECTION',
+          actor_id: user?.id,
+          details: {
+            selected_count: selectedAthletes.length,
+            total_candidates: matchCandidates.length
+          },
+          created_at: new Date().toISOString()
+        }]);
+        
+      if (activityError) {
+        console.warn('Failed to log activity:', activityError);
+        // Non-critical, continue with the flow
+      }
+      
       // Update the wizard state with selected athletes
       updateForm({ selectedMatches: selectedAthletes });
       nextStep();
+      
+      // Show success message
+      toast({
+        title: "Athletes selected",
+        description: `You've selected ${selectedAthletes.length} athletes for your campaign`,
+      });
       
       // Navigate to next step
       navigate('/wizard/pro/bundle');
       
     } catch (error: any) {
+      console.error('Error saving athlete selections:', error);
       toast({
         title: "Error",
         description: error.message || "Something went wrong",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
