@@ -1,18 +1,33 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import AuthGuard from '@/components/AuthGuard';
 import { ProWizardProvider, useProWizard } from '@/contexts/ProWizardProvider';
 import { ChevronRight } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 // Component for the actual layout with navigation
 const WizardLayout = ({ children }: { children: ReactNode }) => {
   const [, navigate] = useLocation();
-  const { currentStep } = useProWizard();
+  const { currentStep, campaignId } = useProWizard();
+  const { toast } = useToast();
   
   // Get current path
   const [currentPath] = useLocation();
+  
+  // Verify campaign ID exists
+  useEffect(() => {
+    if (!campaignId && currentPath !== '/wizard/pro/start') {
+      toast({
+        title: "Campaign ID Missing",
+        description: "Redirecting to start step to create a new campaign",
+        variant: "destructive"
+      });
+      
+      navigate('/wizard/pro/start');
+    }
+  }, [campaignId, currentPath, navigate, toast]);
   
   // Define steps
   const steps = [
