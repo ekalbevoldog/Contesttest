@@ -110,18 +110,17 @@ const WizardLayout = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Wrapper component that provides the auth guard and wizard context
+// Wrapper component that provides the context without restrictive auth guard
 export default function ProWizardLayoutWrapper({ children }: { children: ReactNode }) {
   // Debug output to troubleshoot layout rendering
   console.log('ProWizardLayoutWrapper rendering');
   
   return (
-    <AuthGuard requiredRole="business">
-      <ProWizardProvider>
-        <WizardLayout>
-          {children}
-        </WizardLayout>
-      </ProWizardProvider>
-    </AuthGuard>
+    // Removed the AuthGuard to allow direct access to the wizard
+    <ProWizardProvider>
+      <WizardLayout>
+        {children}
+      </WizardLayout>
+    </ProWizardProvider>
   );
 }

@@ -149,51 +149,29 @@ function Router() {
             {/* Main dashboard redirect - user will be redirected based on role */}
             <UnifiedProtectedRoute path="/dashboard" component={DashboardRedirect} />
             
-            {/* Pro Campaign Wizard Routes - Business role protected */}
+            {/* Pro Campaign Wizard Routes - No business role protection at route level */}
             {/* Layout component wraps all wizard pages with context provider */}
             <Route path="/wizard/pro">
               {() => {
                 const WizardLayout = require('./pages/wizard/pro/layout').default;
                 
+                // Import directly to avoid dynamic imports which might be causing issues
+                const StartPage = require('./pages/wizard/pro/start').default;
+                const AdvancedPage = require('./pages/wizard/pro/advanced').default;
+                const DeliverablesPage = require('./pages/wizard/pro/deliverables').default;
+                const MatchPage = require('./pages/wizard/pro/match').default;
+                const BundlePage = require('./pages/wizard/pro/bundle').default;
+                const ReviewPage = require('./pages/wizard/pro/review').default;
+                
                 return (
                   <WizardLayout>
                     <Switch>
-                      <Route path="/wizard/pro/start">
-                        {() => {
-                          const StartPage = require('./pages/wizard/pro/start').default;
-                          return <StartPage />;
-                        }}
-                      </Route>
-                      <Route path="/wizard/pro/advanced">
-                        {() => {
-                          const AdvancedPage = require('./pages/wizard/pro/advanced').default;
-                          return <AdvancedPage />;
-                        }}
-                      </Route>
-                      <Route path="/wizard/pro/deliverables">
-                        {() => {
-                          const DeliverablesPage = require('./pages/wizard/pro/deliverables').default;
-                          return <DeliverablesPage />;
-                        }}
-                      </Route>
-                      <Route path="/wizard/pro/match">
-                        {() => {
-                          const MatchPage = require('./pages/wizard/pro/match').default;
-                          return <MatchPage />;
-                        }}
-                      </Route>
-                      <Route path="/wizard/pro/bundle">
-                        {() => {
-                          const BundlePage = require('./pages/wizard/pro/bundle').default;
-                          return <BundlePage />;
-                        }}
-                      </Route>
-                      <Route path="/wizard/pro/review">
-                        {() => {
-                          const ReviewPage = require('./pages/wizard/pro/review').default;
-                          return <ReviewPage />;
-                        }}
-                      </Route>
+                      <Route path="/wizard/pro/start" component={StartPage} />
+                      <Route path="/wizard/pro/advanced" component={AdvancedPage} />
+                      <Route path="/wizard/pro/deliverables" component={DeliverablesPage} />
+                      <Route path="/wizard/pro/match" component={MatchPage} />
+                      <Route path="/wizard/pro/bundle" component={BundlePage} />
+                      <Route path="/wizard/pro/review" component={ReviewPage} />
                       {/* Default route redirects to start */}
                       <Route>
                         {() => {
