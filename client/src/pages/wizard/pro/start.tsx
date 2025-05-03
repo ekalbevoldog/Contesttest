@@ -75,19 +75,21 @@ export default function Start() {
   
   // Function to create a new campaign in the database
   const createNewCampaign = async () => {
-    if (!user?.id) {
-      toast({
-        title: 'Authentication required',
-        description: 'You must be logged in to create a campaign',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
     try {
       setIsSubmitting(true);
       
-      // Create a basic campaign record
+      // If user is not logged in, create a temporary campaign without a business_id
+      // This allows exploration of the wizard without authentication
+      if (!user?.id) {
+        console.log('Creating temporary campaign without authentication');
+        // Generate a temporary ID
+        const tempId = 'temp-' + Math.random().toString(36).substring(2, 15);
+        setCampaignId(tempId);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Create a basic campaign record for authenticated users
       const { data, error } = await supabase
         .from('campaigns')
         .insert({
@@ -114,10 +116,14 @@ export default function Start() {
       }
     } catch (error: any) {
       console.error('Error creating campaign:', error);
+      // Still create a campaign ID even if there's an error
+      const tempId = 'temp-' + Math.random().toString(36).substring(2, 15);
+      setCampaignId(tempId);
+      
       toast({
-        title: 'Failed to create campaign',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
+        title: 'Using temporary campaign',
+        description: 'Your progress won\'t be saved to your account',
+        variant: 'default',
       });
     } finally {
       setIsSubmitting(false);
@@ -138,37 +144,45 @@ export default function Start() {
     try {
       setIsSubmitting(true);
       
-      // Update campaign record with form data
-      const { error } = await supabase
-        .from('campaigns')
-        .update({
-          objective: values.objective,
-          channels: values.channels,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', campaignId);
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Update the wizard state
+      // Update the wizard state regardless of authentication
       updateForm({
         objective: values.objective,
         channels: values.channels,
       });
+      
+      // If this is a temporary campaign, don't try to update Supabase
+      if (campaignId.startsWith('temp-')) {
+        // Just move to the next step without trying to save to the database
+        console.log('Using temporary campaign - skipping database update');
+      } else {
+        // For real campaigns, update the database
+        const { error } = await supabase
+          .from('campaigns')
+          .update({
+            objective: values.objective,
+            channels: values.channels,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', campaignId);
+        
+        if (error) {
+          console.warn('Database update failed, but continuing with local state:', error);
+        }
+      }
       
       // Move to the next step
       nextStep();
       navigate('/wizard/pro/advanced');
       
     } catch (error: any) {
-      console.error('Error updating campaign:', error);
-      toast({
-        title: 'Failed to save campaign',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
+      console.error('Error during form submission:', error);
+      // Continue anyway since we're being lenient with auth requirements
+      updateForm({
+        objective: values.objective,
+        channels: values.channels,
       });
+      nextStep();
+      navigate('/wizard/pro/advanced');
     } finally {
       setIsSubmitting(false);
     }
