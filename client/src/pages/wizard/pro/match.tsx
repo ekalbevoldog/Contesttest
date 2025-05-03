@@ -26,6 +26,8 @@ export default function Match() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMatching, setIsMatching] = useState(false);
   const [matchProgress, setMatchProgress] = useState(0);
+  // Initialize the interval reference
+  const [matchingInterval, setMatchingInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Load previously selected athletes if any
   useEffect(() => {
@@ -58,11 +60,10 @@ export default function Match() {
 
     setIsMatching(true);
     setMatchProgress(0);
-    let matchingInterval: ReturnType<typeof setInterval>;
     
     try {
       // Set up progress animation
-    const progressInterval = setInterval(() => {
+      const progressInterval = setInterval(() => {
         setMatchProgress(prev => {
           if (prev >= 95) {
             clearInterval(progressInterval);
@@ -72,8 +73,8 @@ export default function Match() {
         });
       }, 200);
       
-      // Assign to our outer variable for cleanup
-      matchingInterval = progressInterval;
+      // Store interval in state for cleanup
+      setMatchingInterval(progressInterval);
       
       // First update campaign in Supabase to record match attempt
       const { error: updateError } = await supabase
@@ -111,7 +112,12 @@ export default function Match() {
       const matchData = await response.json();
       
       // Complete progress
-      clearInterval(matchingInterval);
+      setMatchingInterval((currentInterval) => {
+        if (currentInterval) {
+          clearInterval(currentInterval);
+        }
+        return null;
+      });
       setMatchProgress(100);
       
       // Short timeout to show 100% before resetting
@@ -135,10 +141,13 @@ export default function Match() {
           
         if (error) throw error;
         
-        // Complete progress animation - only clear if interval was actually set
-        if (matchingInterval) {
-          clearInterval(matchingInterval);
-        }
+        // Complete progress animation
+        setMatchingInterval((currentInterval) => {
+          if (currentInterval) {
+            clearInterval(currentInterval);
+          }
+          return null;
+        });
         setMatchProgress(100);
         
         setTimeout(() => {
