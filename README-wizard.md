@@ -27,30 +27,67 @@ This document outlines the key changes made to implement the Pro Campaign Wizard
    - Bundle page: offers and compensation setup
    - Review page: final campaign overview
 
-## Running the Application
+## Running and Testing the Application
 
-To start the application:
-```
-./run-app.sh
-```
+To test the Pro Campaign Wizard feature:
 
-## Testing Business Role Authentication
+1. **Start the application** (use one of these methods)
+   ```bash
+   # Option 1: Using the test script (recommended)
+   ./test-wizard.sh
+   
+   # Option 2: Direct command
+   npm run dev
+   ```
 
-To test if your account has the business role correctly assigned:
-1. Log in to the application
-2. Check browser console logs for "AuthGuard Check:" and "business role check:" entries
-3. If your account isn't recognized as a business account, you can update it in Supabase:
+2. **Access entry points (in order of reliability)**:
+   - `/wizard-entry` - Direct entry point with automatic redirect
+   - `/wizard/pro/test` - Test page without auth guard 
+   - `/wizard/pro/start` - Initial wizard step (requires business role)
+
+3. **Check business role detection**:
+   - Open browser console (F12)
+   - Look for "AuthGuard Check:" and "business role check:" entries
+   - Verify your user account has the business role detected
+
+4. **Verify wizard state management**:
+   - Open Application tab in browser DevTools
+   - Check Local Storage for "pro-campaign-wizard" entry
+   - Ensure state is being properly saved between steps
+
+## Assigning Business Role To Your Account
+
+If your account isn't recognized as a business account, run this SQL in Supabase:
 
 ```sql
--- SQL command to update a user's role to business in Supabase
+-- Option 1: Update user metadata (preferred)
 UPDATE auth.users
 SET raw_user_meta_data = raw_user_meta_data || '{"role": "business"}'
 WHERE email = 'your.email@example.com';
+
+-- Option 2: Update user_type field directly (if available)
+UPDATE users
+SET user_type = 'business'
+WHERE email = 'your.email@example.com';
 ```
 
-## Troubleshooting
+## Troubleshooting Common Issues
 
-If you encounter issues with the Pro Campaign Wizard:
-1. Visit `/wizard/pro/test` to check if basic routing is working
-2. Check browser console logs for AuthGuard and routing-related messages
-3. Clear localStorage if you get stuck in a particular wizard state
+If encountering issues with the Pro Campaign Wizard:
+
+1. **Routing problems**
+   - Clear browser cache or try incognito window
+   - Visit `/wizard/pro/test` first to verify basic routing
+   - Check console for routing/navigation errors
+
+2. **Authentication issues**
+   - Verify user role in console logs (should show "business")
+   - Try updating user role in database using SQL above
+   - Check for "Unauthorized" messages in console
+
+3. **State persistence problems**
+   - Clear localStorage if wizard gets stuck in a particular state:
+     ```javascript
+     localStorage.removeItem('pro-campaign-wizard')
+     ```
+   - Reload the page after clearing storage

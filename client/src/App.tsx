@@ -222,6 +222,40 @@ function Router() {
               }}
             </Route>
             
+            {/* Direct access entry point to Pro Wizard */}
+            <Route path="/wizard-entry">
+              {() => {
+                const { useState, useEffect } = require('react');
+                const { useLocation } = require('wouter');
+                const [redirecting, setRedirecting] = useState(true);
+                const [, navigate] = useLocation();
+                
+                useEffect(() => {
+                  console.log('Wizard entry point accessed, redirecting to wizard start');
+                  // Allow a moment for the console log to be visible
+                  const timer = setTimeout(() => {
+                    navigate('/wizard/pro/start');
+                    setRedirecting(false);
+                  }, 1000);
+                  
+                  return () => clearTimeout(timer);
+                }, [navigate]);
+                
+                return (
+                  <div className="min-h-screen bg-black text-white p-8">
+                    <div className="max-w-4xl mx-auto bg-zinc-900/50 border border-zinc-800 rounded-lg p-6">
+                      <h1 className="text-3xl font-bold mb-6">Pro Wizard Entry Point</h1>
+                      {redirecting ? (
+                        <p className="text-amber-500">Redirecting to Pro Campaign Wizard...</p>
+                      ) : (
+                        <p className="text-red-500">Redirect failed. Please try navigating to /wizard/pro/start directly.</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }}
+            </Route>
+            
             {/* Subscription routes */}
             <Route path="/subscribe" component={Subscribe} />
             <Route path="/subscription/success" component={SubscriptionSuccess} />
