@@ -6,15 +6,6 @@
 }
 
 @font-face {
-  font-family: 'Oblivion';
-  src: url('/fonts/Oblivion.woff2') format('woff2'),
-       url('/fonts/Oblivion.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
   font-family: 'Clofie-Light';
   src: url('/fonts/Clofie-Light.woff2') format('woff2'),
        url('/fonts/Clofie-Light.woff') format('woff');
@@ -52,7 +43,7 @@
     --glass-shine: rgba(255, 255, 255, 0.1);
     --glass-shadow: rgba(0, 0, 0, 0.25);
     --glass-glow: rgba(255, 191, 13, 0.3);
-    --font-heading: 'Oblivion', system-ui, sans-serif;
+    --font-heading: 'Inter', system-ui, sans-serif;
     --font-body: 'Clofie-Light', system-ui, sans-serif;
   }
 
