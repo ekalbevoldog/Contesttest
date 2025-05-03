@@ -1,27 +1,17 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import ChatInterface from "@/components/ChatInterface";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { FadeIn } from "@/components/animations/FadeIn";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { Parallax } from "@/components/animations/Parallax";
 import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
 import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
-import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
-  const [budgetValue, setBudgetValue] = useState([30000]);
-  const [singleCampaign, setSingleCampaign] = useState(true);
   const { user } = useSupabaseAuth();
   
   // Listen for the custom event to toggle the AI assistant
@@ -40,7 +30,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
       
-      {/* Hero Section */}
+      {/* Hero Section - Above the Fold */}
       <section className="relative overflow-hidden bg-black">
         <AnimatedGradient 
           className="absolute inset-0" 
@@ -55,129 +45,75 @@ export default function Home() {
         <div className="absolute w-24 h-24 top-1/3 left-1/4 glass-panel opacity-30 rounded-full"></div>
         
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <div className="container mx-auto px-6 py-40 pb-60 md:py-48 md:pb-72 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-            <Parallax className="space-y-12" speed={0.2} direction="up" offset={[-20, 20]}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="mb-12"
-              >
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-heading mb-4">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
-                    Connecting Athletes & Brands
-                  </span>
-                  <br />
-                  <span className="glow-text mt-4 block">For Authentic Partnerships</span>
-                </h1>
-              </motion.div>
+        <div className="container mx-auto px-6 py-24 md:py-32 relative z-10">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mb-8"
+            >
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                <span>Fair‑Play Sponsorships,</span>
+                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-500">
+                  Powered by Data
+                </span>
+              </h1>
               
-              <motion.div
-                className="glass-card p-8 mb-16"
-                initial={{ opacity: 0, filter: "blur(4px)" }}
-                animate={{ opacity: 1, filter: "blur(0px)" }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                whileHover={{ 
-                  boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 191, 13, 0.4)",
-                  y: -5
-                }}
-              >
-                <p className="text-xl text-white max-w-xl">
-                  Contested is the premier platform connecting mid-tier athletes with small-to-medium businesses for powerful, authentic marketing partnerships.
-                </p>
-              </motion.div>
-              
-              <motion.div 
-                className="flex gap-8 mt-12 mb-20"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-              >
-                <Link href="/athletes">
-                  <motion.a 
-                    className="glass-button text-lg"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    For Athletes
-                  </motion.a>
-                </Link>
-                <Link href="/businesses">
-                  <motion.a 
-                    className="glass-button text-lg"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    For Businesses
-                  </motion.a>
-                </Link>
-              </motion.div>
-            </Parallax>
+              <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-10">
+                Our engine evaluates 224+ performance and audience signals to unite emerging athletes with growth‑hungry brands—fast, transparent, and on your terms.
+              </p>
+            </motion.div>
             
-            <Parallax direction="right" speed={0.1} offset={[-15, 15]} className="relative h-96 md:h-[500px] hidden lg:block">
-              <motion.div 
-                className="absolute top-0 right-0 w-full h-full bg-gradient-to-r from-[#FFBF0D]/10 to-amber-500/5 rounded-xl border border-[#FFBF0D]/10"
-                initial={{ opacity: 0, rotate: 0 }}
-                animate={{ opacity: 0.8, rotate: 3 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
-              />
-              <motion.div 
-                className="glass-card absolute top-0 right-0 w-full h-full overflow-hidden rounded-xl flex items-center justify-center backdrop-blur-sm"
-                initial={{ opacity: 0, filter: "blur(10px)" }}
-                animate={{ opacity: 1, filter: "blur(0px)" }}
-                transition={{ duration: 1, delay: 0.5 }}
-                whileHover={{ boxShadow: "0 0 30px rgba(255, 191, 13, 0.3)" }}
-              >
-                <video 
-                  className="w-full h-full object-cover rounded-xl opacity-80"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
+            {/* Dual CTAs */}
+            <motion.div 
+              className="flex flex-col sm:flex-row gap-6 mb-16 w-full max-w-lg mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Link href="/athlete/sign-up" className="w-full sm:w-1/2">
+                <motion.div 
+                  className="glass-button bg-[#FFBF0D]/80 hover:bg-[#FFBF0D] text-black font-semibold w-full"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <source src="/videos/landing-video.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 to-transparent"></div>
-                
-                {/* Floating elements */}
-                <motion.div 
-                  className="absolute top-6 right-6 h-10 w-10 glass-panel rounded-full opacity-60"
-                  animate={{ 
-                    y: [0, -10, 0],
-                    opacity: [0.6, 0.8, 0.6]
-                  }}
-                  transition={{ 
-                    duration: 4,
-                    repeat: Infinity,
-                    repeatType: "reverse"
-                  }}
-                />
-                <motion.div 
-                  className="absolute bottom-12 left-8 h-16 w-16 glass-panel rounded-full opacity-40"
-                  animate={{ 
-                    y: [0, 15, 0],
-                    opacity: [0.4, 0.6, 0.4]
-                  }}
-                  transition={{ 
-                    duration: 6,
-                    repeat: Infinity,
-                    repeatType: "reverse"
-                  }}
-                />
-                
-                <motion.div 
-                  className="absolute bottom-4 right-4 glass-badge"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 1 }}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <span className="text-sm">Authentic Partnerships</span>
+                  I'm an Athlete <span className="block text-sm">→ Claim My Profile</span>
                 </motion.div>
-              </motion.div>
-            </Parallax>
+              </Link>
+              <Link href="/business/sign-up" className="w-full sm:w-1/2">
+                <motion.div 
+                  className="glass-button border-white/20 bg-transparent w-full"
+                  whileHover={{ scale: 1.03, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  I'm a Business <span className="block text-sm">→ Start Free Trial</span>
+                </motion.div>
+              </Link>
+            </motion.div>
+            
+            {/* Proof Strip */}
+            <motion.div
+              className="glass-card p-6 w-full max-w-4xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div>
+                  <p className="font-bold text-[#FFBF0D] text-2xl md:text-3xl">17,000+</p>
+                  <p className="text-gray-300">campaigns launched</p>
+                </div>
+                <div>
+                  <p className="font-bold text-[#FFBF0D] text-2xl md:text-3xl">$12.3M</p>
+                  <p className="text-gray-300">earned by athletes</p>
+                </div>
+                <div>
+                  <p className="font-bold text-[#FFBF0D] text-2xl md:text-3xl">98%</p>
+                  <p className="text-gray-300">contract‑completion rate</p>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
         
@@ -185,7 +121,7 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FFBF0D] to-amber-500 opacity-70"></div>
       </section>
       
-      {/* Benefits Section */}
+      {/* Why Contested Section */}
       <section className="py-20 bg-black relative overflow-hidden">
         <AnimatedGradient 
           className="absolute inset-0" 
@@ -194,866 +130,203 @@ export default function Home() {
           duration={20}
         />
         
-        {/* Floating glass elements in background */}
-        <motion.div 
-          className="absolute w-32 h-32 top-1/4 right-1/5 glass-panel opacity-20 rounded-full"
-          animate={{ 
-            y: [0, -20, 0],
-            x: [0, 15, 0]
-          }}
-          transition={{ 
-            duration: 10,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        />
-        <motion.div 
-          className="absolute w-48 h-48 bottom-1/3 left-1/4 glass-panel opacity-15 rounded-full"
-          animate={{ 
-            y: [0, 30, 0],
-            x: [0, -20, 0]
-          }}
-          transition={{ 
-            duration: 15,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        />
-        
         <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-3"></div>
         <div className="container mx-auto px-4 relative z-10">
-          <Parallax direction="up" speed={0.1} offset={[-10, 10]} className="text-center mb-16">
-            <motion.div 
-              className="glass-panel p-8 inline-block"
-              initial={{ opacity: 0, scale: 0.9, filter: "blur(5px)" }}
-              whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true }}
-              whileHover={{ boxShadow: "0 0 30px rgba(255, 191, 13, 0.2)" }}
-            >
-              <motion.h2 
-                className="text-3xl md:text-4xl font-bold mb-4 font-heading"
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">
-                  The Contested Advantage
-                </span>
-              </motion.h2>
-              <motion.p 
-                className="text-white max-w-2xl mx-auto"
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                viewport={{ once: true }}
-              >
-                Our AI-powered platform creates perfect matches between athletes and businesses, 
-                delivering authentic partnerships that drive real results.
-              </motion.p>
-            </motion.div>
-          </Parallax>
+          <motion.div 
+            className="mb-12 text-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Why <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">Contested</span>
+            </h2>
+          </motion.div>
           
-          <Tabs defaultValue="athletes" className="max-w-4xl mx-auto">
-            <div className="glass-card overflow-hidden p-1 mb-8">
-              <TabsList className="grid w-full grid-cols-2 bg-transparent">
-                <TabsTrigger value="athletes" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FFBF0D] data-[state=active]:to-amber-400 data-[state=active]:text-black">Athletes</TabsTrigger>
-                <TabsTrigger value="businesses" className="text-lg py-3 flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FFBF0D] data-[state=active]:to-amber-400 data-[state=active]:text-black">Businesses</TabsTrigger>
-              </TabsList>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            <motion.div 
+              className="glass-card p-8"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 191, 13, 0.3)" }}
+            >
+              <h3 className="text-xl font-bold mb-3 text-[#FFBF0D]">Hundreds of Data Points, One Perfect Match</h3>
+              <p className="text-gray-300">We score alignment on reach, relevance, brand values, and predicted ROI—so no one wastes a pitch.</p>
+            </motion.div>
             
-            <TabsContent value="athletes" className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Parallax direction="up" speed={0.15} offset={[-15, 15]}>
-                  <motion.div 
-                    className="glass-card h-full"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    viewport={{ once: true }}
-                    whileHover={{ 
-                      y: -5,
-                      boxShadow: "0 15px 30px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 191, 13, 0.3)" 
-                    }}
-                  >
-                    <CardContent className="p-6 relative overflow-hidden">
-                      <motion.div 
-                        className="absolute top-0 right-0 w-40 h-40 bg-gradient-radial from-[#FFBF0D]/10 to-transparent rounded-full -mr-20 -mt-20 z-0"
-                        animate={{
-                          scale: [1, 1.2, 1],
-                          opacity: [0.1, 0.15, 0.1]
-                        }}
-                        transition={{
-                          duration: 8,
-                          repeat: Infinity,
-                          repeatType: "reverse"
-                        }}
-                      />
-                      
-                      <motion.div 
-                        className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4 relative z-10"
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                      >
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                      </motion.div>
-                      
-                      <motion.h3 
-                        className="text-xl font-bold mb-2 font-heading text-white glow-text relative z-10"
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.2 }}
-                        viewport={{ once: true }}
-                      >
-                        Monetize Your Influence
-                      </motion.h3>
-                      
-                      <motion.p 
-                        className="text-white relative z-10"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 0.3, delay: 0.3 }}
-                        viewport={{ once: true }}
-                      >
-                        Turn your social media presence and athletic achievements into income with partnerships that respect your personal brand.
-                      </motion.p>
-                    </CardContent>
-                  </motion.div>
-                </Parallax>
-                
-                <Parallax direction="up" speed={0.2} offset={[-15, 15]}>
-                  <motion.div 
-                    className="glass-card h-full"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    viewport={{ once: true }}
-                    whileHover={{ 
-                      y: -5,
-                      boxShadow: "0 15px 30px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 191, 13, 0.3)" 
-                    }}
-                  >
-                    <CardContent className="p-6 relative overflow-hidden">
-                      <motion.div 
-                        className="absolute top-0 right-0 w-40 h-40 bg-gradient-radial from-[#FFBF0D]/10 to-transparent rounded-full -mr-20 -mt-20 z-0"
-                        animate={{
-                          scale: [1, 1.2, 1],
-                          opacity: [0.1, 0.15, 0.1]
-                        }}
-                        transition={{
-                          duration: 8,
-                          repeat: Infinity,
-                          repeatType: "reverse",
-                          delay: 2
-                        }}
-                      />
-                      
-                      <motion.div 
-                        className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4 relative z-10"
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                      >
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                        </svg>
-                      </motion.div>
-                      
-                      <motion.h3 
-                        className="text-xl font-bold mb-2 font-heading text-white glow-text relative z-10"
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.3 }}
-                        viewport={{ once: true }}
-                      >
-                        Vetted Opportunities
-                      </motion.h3>
-                      
-                      <motion.p 
-                        className="text-white relative z-10"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 0.3, delay: 0.4 }}
-                        viewport={{ once: true }}
-                      >
-                        Access quality partnership opportunities specifically matched to your sport, values, content style, and audience.
-                      </motion.p>
-                    </CardContent>
-                  </motion.div>
-                </Parallax>
-                
-                <Parallax direction="up" speed={0.25} offset={[-15, 15]}>
-                  <motion.div 
-                    className="glass-card h-full"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    viewport={{ once: true }}
-                    whileHover={{ 
-                      y: -5,
-                      boxShadow: "0 15px 30px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 191, 13, 0.3)" 
-                    }}
-                  >
-                    <CardContent className="p-6 relative overflow-hidden">
-                      <motion.div 
-                        className="absolute top-0 right-0 w-40 h-40 bg-gradient-radial from-[#FFBF0D]/10 to-transparent rounded-full -mr-20 -mt-20 z-0"
-                        animate={{
-                          scale: [1, 1.2, 1],
-                          opacity: [0.1, 0.15, 0.1]
-                        }}
-                        transition={{
-                          duration: 8,
-                          repeat: Infinity,
-                          repeatType: "reverse",
-                          delay: 4
-                        }}
-                      />
-                      
-                      <motion.div 
-                        className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4 relative z-10"
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                      >
-                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                      </motion.div>
-                      
-                      <motion.h3 
-                        className="text-xl font-bold mb-2 font-heading text-white glow-text relative z-10"
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.4 }}
-                        viewport={{ once: true }}
-                      >
-                        Career Growth
-                      </motion.h3>
-                      
-                      <motion.p 
-                        className="text-white relative z-10"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 0.3, delay: 0.5 }}
-                        viewport={{ once: true }}
-                      >
-                        Build a portfolio of professional collaborations that can lead to bigger opportunities throughout your career.
-                      </motion.p>
-                    </CardContent>
-                  </motion.div>
-                </Parallax>
-              </div>
-              
-              <ScrollReveal delay={0.4} direction="up" distance={20} className="w-full">
-                <div className="glass-card p-6 mt-8">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="glass-panel p-5">
-                      <h4 className="text-base font-semibold text-white mb-1">Average<br />Compensation</h4>
-                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                        <span>$250</span>
-                      </div>
-                      <p className="text-xs text-white/70">per campaign</p>
-                    </div>
-                    
-                    <div className="glass-panel p-5">
-                      <h4 className="text-base font-semibold text-white mb-1">Match Rate</h4>
-                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                        <span>92%</span>
-                      </div>
-                      <p className="text-xs text-white/70">of athletes find matches</p>
-                    </div>
-                    
-                    <div className="glass-panel p-5">
-                      <h4 className="text-base font-semibold text-white mb-1">Time to First<br />Match</h4>
-                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                        <span>48hrs</span>
-                      </div>
-                      <p className="text-xs text-white/70">average timeframe</p>
-                    </div>
-                    
-                    <div className="glass-panel p-5">
-                      <h4 className="text-base font-semibold text-white mb-1">Athletes</h4>
-                      <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                        <span>300+</span>
-                      </div>
-                      <p className="text-xs text-white/70">active on platform</p>
-                    </div>
-                  </div>
-                </div>
-              </ScrollReveal>
-            </TabsContent>
+            <motion.div 
+              className="glass-card p-8"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 191, 13, 0.3)" }}
+            >
+              <h3 className="text-xl font-bold mb-3 text-[#FFBF0D]">Wizard‑Built Campaigns</h3>
+              <p className="text-gray-300">Auto‑generate briefs, contracts, KPIs, and compliant payouts in under seven minutes.</p>
+            </motion.div>
             
-            <TabsContent value="businesses" className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="glass-card h-full">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 font-heading glow-text">Authentic Influencers</h3>
-                    <p className="text-white">
-                      Connect with college athletes who genuinely align with your brand values and can authentically represent your products.
-                    </p>
-                  </CardContent>
-                </div>
-                
-                <div className="glass-card h-full">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 font-heading glow-text">Measurable Results</h3>
-                    <p className="text-white">
-                      Get detailed analytics on campaign performance and engagement to track your return on investment.
-                    </p>
-                  </CardContent>
-                </div>
-                
-                <div className="glass-card h-full">
-                  <CardContent className="p-6">
-                    <div className="h-12 w-12 rounded-full bg-[#FFBF0D]/20 text-[#FFBF0D] flex items-center justify-center mb-4">
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 font-heading glow-text">Cost-Effective</h3>
-                    <p className="text-white">
-                      Access quality influencer marketing at a fraction of the cost of traditional celebrity endorsements.
-                    </p>
-                  </CardContent>
-                </div>
-              </div>
-              
-              <div className="glass-card p-6 mt-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="glass-panel p-5">
-                    <h4 className="text-base font-semibold text-white mb-1">Average ROI</h4>
-                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                      <span>3.37x</span>
-                    </div>
-                    <p className="text-xs text-white/70">return on investment</p>
-                  </div>
-                  
-                  <div className="glass-panel p-5">
-                    <h4 className="text-base font-semibold text-white mb-1">Engagement Rate</h4>
-                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                      <span>5.52%</span>
-                    </div>
-                    <p className="text-xs text-white/70">avg. across platforms</p>
-                  </div>
-                  
-                  <div className="glass-panel p-5">
-                    <h4 className="text-base font-semibold text-white mb-1">Audience Reached</h4>
-                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                      <span>1.12M+</span>
-                    </div>
-                    <p className="text-xs text-white/70">monthly impressions</p>
-                  </div>
-                  
-                  <div className="glass-panel p-5">
-                    <h4 className="text-base font-semibold text-white mb-1">Businesses</h4>
-                    <div className="text-3xl font-bold text-[#FFBF0D] flex items-center">
-                      <span>150+</span>
-                    </div>
-                    <p className="text-xs text-white/70">active on platform</p>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+            <motion.div 
+              className="glass-card p-8"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 191, 13, 0.3)" }}
+            >
+              <h3 className="text-xl font-bold mb-3 text-[#FFBF0D]">Transparent Economics</h3>
+              <p className="text-gray-300">Athletes set the price; businesses see true costs up front. No hidden fees. Ever.</p>
+            </motion.div>
+            
+            <motion.div 
+              className="glass-card p-8"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 191, 13, 0.3)" }}
+            >
+              <h3 className="text-xl font-bold mb-3 text-[#FFBF0D]">Compliance at the Core</h3>
+              <p className="text-gray-300">NCAA, NFHS, FTC, and tax guardrails are baked in, so every deal is headache‑free.</p>
+            </motion.div>
+          </div>
         </div>
       </section>
       
       {/* How It Works Section */}
       <section className="py-24 bg-black relative overflow-hidden">
         <AnimatedGradient 
-          className="absolute inset-0 opacity-30" 
-          colors={['hsl(45, 100%, 50%, 0.08)', 'hsl(235, 100%, 50%, 0.05)', 'hsl(345, 90%, 55%, 0.05)']} 
-          blur={150}
-          duration={25}
-        />
-        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-3"></div>
-        <Parallax direction="up" speed={0.1} className="relative z-10">
-          <div className="container mx-auto px-4">
-            <ScrollReveal className="text-center mb-16">
-              <div className="glass-panel p-8 inline-block">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">
-                    How Contested Works
-                  </span>
-                </h2>
-                <p className="text-white max-w-2xl mx-auto">
-                  Our intelligent platform makes the connection process seamless for both athletes and businesses
-                </p>
-              </div>
-            </ScrollReveal>
-            
-            <BentoGrid className="max-w-6xl mx-auto mb-16">
-              <BentoGridItem
-                title="Create Your Profile"
-                description="Athletes and businesses build detailed profiles highlighting unique strengths, preferences, and campaign goals."
-                className="col-span-1 row-span-1 border border-zinc-800"
-                header={
-                  <div className="glass-panel w-full h-40 rounded-t-lg flex items-center justify-center backdrop-blur-md border-b border-white/10">
-                    <svg className="h-16 w-16 text-[#FFBF0D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                  </div>
-                }
-                delay={0.1}
-              />
-              
-              <BentoGridItem
-                title="AI-Powered Matching"
-                description="Our intelligent algorithm analyzes profiles to suggest perfect partnerships that align with values, goals, and audience demographics."
-                className="col-span-2 row-span-1 border border-zinc-800"
-                header={
-                  <div className="glass-panel w-full h-40 rounded-t-lg flex items-center justify-center backdrop-blur-md border-b border-white/10">
-                    <svg className="h-16 w-16 text-[#FFBF0D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"></path>
-                    </svg>
-                  </div>
-                }
-                delay={0.2}
-              />
-              
-              <BentoGridItem
-                title="Review & Connect"
-                description="Browse partnership opportunities, review detailed matches, and initiate conversations with potential partners."
-                className="col-span-2 row-span-1 border border-zinc-800"
-                header={
-                  <div className="glass-panel w-full h-40 rounded-t-lg flex items-center justify-center backdrop-blur-md border-b border-white/10">
-                    <svg className="h-16 w-16 text-[#FFBF0D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.068.157 2.148.279 3.238.364.466.037.893.281 1.153.671L12 21l2.652-3.978c.26-.39.687-.634 1.153-.67 1.09-.086 2.17-.208 3.238-.365 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"></path>
-                    </svg>
-                  </div>
-                }
-                delay={0.3}
-              />
-              
-              <BentoGridItem
-                title="Campaign Collaboration"
-                description="Design and execute campaigns with all tools needed for successful partnerships, from content planning to performance tracking."
-                className="col-span-1 row-span-1 border border-zinc-800"
-                header={
-                  <div className="glass-panel w-full h-40 rounded-t-lg flex items-center justify-center backdrop-blur-md border-b border-white/10">
-                    <svg className="h-16 w-16 text-[#FFBF0D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"></path>
-                    </svg>
-                  </div>
-                }
-                delay={0.4}
-              />
-              
-              <BentoGridItem
-                title="Payment & Compliance"
-                description="Secure, transparent payment processing and built-in compliance assistance to navigate NIL regulations with confidence."
-                className="col-span-3 row-span-1 border border-zinc-800"
-                header={
-                  <div className="glass-panel w-full h-40 rounded-t-lg flex items-center justify-center backdrop-blur-md border-b border-white/10">
-                    <svg className="h-16 w-16 text-[#FFBF0D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"></path>
-                    </svg>
-                  </div>
-                }
-                delay={0.5}
-              />
-            </BentoGrid>
-            
-            {/* Button removed */}
-          </div>
-        </Parallax>
-      </section>
-      
-      {/* Budget Exploration Section */}
-      <section className="py-24 bg-[#0a0a0a]">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                Discover the right athlete partnership for your budget
-              </span>
-            </h2>
-            <p className="text-zinc-400 text-lg">
-              Explore what's possible at different investment levels before you commit
-            </p>
-          </div>
-          
-          <div className="mb-8">
-            <label className="block text-zinc-400 text-lg mb-2">Explore Budget Ranges</label>
-            <div className="flex items-center mb-4">
-              <span className="text-4xl md:text-5xl font-bold text-red-500">
-                ${budgetValue[0]}
-              </span>
-            </div>
-            
-            <div className="py-6">
-              <Slider
-                defaultValue={[30000]}
-                max={30000}
-                min={500}
-                step={100}
-                value={budgetValue}
-                onValueChange={setBudgetValue}
-              />
-              
-              {/* Tick marks */}
-              <div className="flex justify-between text-zinc-500 text-sm mt-4">
-                <span>$500</span>
-                <span>$10,000</span>
-                <span>$20,000</span>
-                <span>$30,000+</span>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-blue-950 to-blue-900 p-6 rounded-lg border border-blue-800/40 text-white mb-10">
-              <div className="flex items-start mb-2">
-                <span className="text-3xl font-bold text-blue-300 mr-2">
-                  {budgetValue[0] <= 1000 ? "350+" : 
-                   budgetValue[0] <= 3000 ? "750+" : 
-                   budgetValue[0] <= 10000 ? "1050+" : 
-                   budgetValue[0] <= 20000 ? "1500+" : "2000+"}
-                </span>
-                <span className="text-lg mt-1">potential athlete matches in this range</span>
-              </div>
-              <p className="text-blue-200/90 text-sm">
-                {budgetValue[0] <= 3000 ? 
-                  "Perfect for testing the waters with micro-influencers who have highly engaged niche followers." : 
-                  budgetValue[0] <= 10000 ? 
-                  "Great for medium-influence athletes who can create dedicated content across multiple platforms." : 
-                  "Ideal for high-profile athletes featuring multiple deliverables and long-term partnerships."}
-              </p>
-            </div>
-            
-            {/* Button removed */}
-          </div>
-        </div>
-      </section>
-      
-      {/* Pricing Section */}
-      <section className="py-20 bg-[#121212]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                Simple, Transparent Pricing
-              </span>
-            </h2>
-            <p className="text-gray-300 max-w-2xl mx-auto">
-              Choose the plan that's right for you, with no hidden fees or long-term commitments.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Basic Plan */}
-            <Card id="basic-plan" className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-1 text-white">Basic</h3>
-                <p className="text-zinc-400 text-sm mb-4">Perfect for getting started</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$99</span>
-                  <span className="text-zinc-400">/month</span>
-                </div>
-                <ul className="space-y-3 mb-8 text-zinc-400">
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Up to 3 active campaigns</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>10 athlete matches per month</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Basic analytics</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Email support</span>
-                  </li>
-                </ul>
-                {/* Basic Plan Button Removed */}
-              </div>
-            </Card>
-            
-            {/* Pro Plan */}
-            <Card className="bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden border-red-500 border-2">
-              <div className="absolute -right-12 top-8 bg-red-500 text-white py-1 px-12 transform rotate-45">
-                <span className="text-xs font-bold">POPULAR</span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-1 text-white">Professional</h3>
-                <p className="text-zinc-400 text-sm mb-4">For growing businesses</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$249</span>
-                  <span className="text-zinc-400">/month</span>
-                </div>
-                <ul className="space-y-3 mb-8 text-zinc-400">
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Up to 10 active campaigns</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Unlimited athlete matches</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Advanced analytics dashboard</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Priority matching algorithm</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Priority support</span>
-                  </li>
-                </ul>
-                {/* Professional Plan Button Removed */}
-              </div>
-            </Card>
-            
-            {/* Enterprise Plan */}
-            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden border-none">
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-1 text-white">Enterprise</h3>
-                <p className="text-zinc-400 text-sm mb-4">For larger organizations</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$749</span>
-                  <span className="text-zinc-400">/month</span>
-                </div>
-                <ul className="space-y-3 mb-8 text-zinc-400">
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Unlimited campaigns</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Unlimited athlete matches</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Custom reporting & API access</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Dedicated account manager</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg className="h-5 w-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <span>Strategic campaign consulting</span>
-                  </li>
-                </ul>
-                {/* Enterprise Plan Button Removed */}
-              </div>
-            </Card>
-          </div>
-          
-          <div className="text-center mt-8 text-gray-400">
-            All plans include a 14-day free trial. No credit card required.
-          </div>
-        </div>
-      </section>
-      
-      {/* Testimonials / Success Stories */}
-      <section className="py-20 bg-black relative overflow-hidden">
-        <AnimatedGradient 
-          className="absolute inset-0 opacity-20" 
-          colors={['hsl(345, 90%, 55%, 0.05)', 'hsl(35, 100%, 50%, 0.05)', 'hsl(235, 100%, 50%, 0.05)']} 
+          className="absolute inset-0" 
+          colors={['hsl(235, 100%, 50%, 0.05)', 'hsl(45, 100%, 50%, 0.08)', 'hsl(345, 90%, 55%, 0.05)']} 
           blur={120}
           duration={20}
         />
-        <Parallax direction="up" speed={0.15} className="relative z-10">
-          <div className="container mx-auto px-4">
-            <ScrollReveal className="text-center mb-16" threshold={0.1}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-amber-500">
-                  Success Stories
-                </span>
-              </h2>
-              <p className="text-zinc-400 max-w-2xl mx-auto">
-                See how athletes and businesses are creating winning partnerships with Contested.
-              </p>
-            </ScrollReveal>
-          </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div 
+            className="mb-16 text-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              How It <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FFBF0D] to-amber-400">Works</span>
+            </h2>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
-              <div className="flex flex-col h-full">
-                <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-xl font-bold font-heading">Sarah Johnson</h3>
-                      <p className="text-white/80">Division I Volleyball Player</p>
-                    </div>
-                    <div className="flex -space-x-2">
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6 flex-grow">
-                  <p className="text-zinc-400 italic mb-4">
-                    "Contested has completely changed how I approach NIL opportunities. Within my first month, I secured partnerships with three local businesses that perfectly aligned with my personal values. The AI matching technology is incredible!"
-                  </p>
-                  <div className="flex items-center">
-                    <div className="text-red-500 font-bold">Results:</div>
-                    <div className="ml-2 text-zinc-400">3 partnerships, $3,500 in revenue</div>
-                  </div>
-                </div>
-              </div>
-            </Card>
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto" staggerChildren={0.1}>
+            <StaggerItem className="glass-card p-8 relative">
+              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-[#FFBF0D] flex items-center justify-center text-black font-bold text-xl">1</div>
+              <h3 className="text-xl font-bold mb-3 text-white mt-4">Create Your Profile</h3>
+              <p className="text-gray-300">Fill in the essentials; our AI enriches the rest with verified stats and social insights.</p>
+            </StaggerItem>
             
-            <Card className="bg-zinc-900 shadow-md hover:shadow-lg transition-shadow overflow-hidden border-none">
-              <div className="flex flex-col h-full">
-                <div className="bg-gradient-to-r from-red-500 to-amber-500 p-6 text-white">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-xl font-bold font-heading">Mountain Outfitters</h3>
-                      <p className="text-white/80">Outdoor Apparel Brand</p>
-                    </div>
-                    <div className="flex -space-x-2">
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6 flex-grow">
-                  <p className="text-zinc-400 italic mb-4">
-                    "As a growing outdoor brand, we wanted to connect with authentic voices who love nature and adventure. Contested matched us with hikers, climbers, and trail runners who genuinely use and love our products. The ROI has been incredible."
-                  </p>
-                  <div className="flex items-center">
-                    <div className="text-red-500 font-bold">Results:</div>
-                    <div className="ml-2 text-zinc-400">4.2x ROI, 230% increase in social engagement</div>
-                  </div>
+            <StaggerItem className="glass-card p-8 relative">
+              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-[#FFBF0D] flex items-center justify-center text-black font-bold text-xl">2</div>
+              <h3 className="text-xl font-bold mb-3 text-white mt-4">Instant Match Score</h3>
+              <p className="text-gray-300">We rank the top 50 fits for you using 224+ data inputs.</p>
+            </StaggerItem>
+            
+            <StaggerItem className="glass-card p-8 relative">
+              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-[#FFBF0D] flex items-center justify-center text-black font-bold text-xl">3</div>
+              <h3 className="text-xl font-bold mb-3 text-white mt-4">One‑Click Contracts</h3>
+              <p className="text-gray-300">Digitally sign lawyer‑vetted agreements.</p>
+            </StaggerItem>
+            
+            <StaggerItem className="glass-card p-8 relative">
+              <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-[#FFBF0D] flex items-center justify-center text-black font-bold text-xl">4</div>
+              <h3 className="text-xl font-bold mb-3 text-white mt-4">Track & Get Paid</h3>
+              <p className="text-gray-300">Real‑time KPI dashboards tie every view, click, and sale to dollars earned.</p>
+            </StaggerItem>
+          </StaggerContainer>
+        </div>
+      </section>
+      
+      {/* Social Proof Section */}
+      <section className="py-20 bg-black relative overflow-hidden">
+        <AnimatedGradient 
+          className="absolute inset-0" 
+          colors={['hsl(45, 100%, 50%, 0.08)', 'hsl(235, 100%, 50%, 0.05)', 'hsl(345, 90%, 55%, 0.05)']} 
+          blur={120}
+          duration={20}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <motion.div 
+              className="glass-card p-10 text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              viewport={{ once: true }}
+              whileHover={{ boxShadow: "0 15px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 191, 13, 0.4)" }}
+            >
+              <p className="text-2xl mb-8 italic text-gray-100">
+                "Contested turned my 5K IG followers into $4,200 in brand income—no agent required."
+              </p>
+              <p className="font-bold text-[#FFBF0D]">— Jordan K., NCAA D‑II Soccer</p>
+              
+              <div className="mt-12 pt-8 border-t border-gray-800">
+                <p className="text-sm uppercase tracking-wider text-gray-400 mb-6">Trusted by</p>
+                <div className="flex flex-wrap justify-center gap-8 opacity-70">
+                  <div className="w-20 h-12 bg-white/10 rounded flex items-center justify-center">CPG</div>
+                  <div className="w-20 h-12 bg-white/10 rounded flex items-center justify-center">E-Sports</div>
+                  <div className="w-20 h-12 bg-white/10 rounded flex items-center justify-center">Startups</div>
                 </div>
               </div>
-            </Card>
-          </div>
-          
-          {/* View More Success Stories button removed */}
-        </Parallax>
-      </section>
-      
-      {/* CTA Section */}
-      <section className="py-20 bg-zinc-950 text-white relative overflow-hidden border-t border-zinc-800">
-        <AnimatedGradient 
-          className="absolute inset-0 opacity-20" 
-          colors={['hsl(345, 90%, 55%, 0.1)', 'hsl(235, 100%, 50%, 0.1)']} 
-          blur={120}
-          duration={15}
-        />
-        <div className="absolute inset-0 bg-[url('/grid-pattern.png')] opacity-5"></div>
-        <Parallax direction="up" speed={0.05} className="relative z-10">
-          <div className="container mx-auto px-4">
-            <ScrollReveal className="max-w-3xl mx-auto text-center" threshold={0.1}>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 font-heading">Ready to create winning partnerships?</h2>
-              <p className="text-xl text-zinc-400 mb-8">
-                Whether you're an athlete looking to monetize your influence or a business seeking authentic brand ambassadors, Contested makes it easy to find your perfect match.
-              </p>
-              {/* CTA buttons removed */}
-            </ScrollReveal>
-          </div>
-        </Parallax>
-      </section>
-      
-      {/* Chat Interface */}
-      {showChat && (
-        <div className="fixed bottom-8 right-8 z-50 max-w-md w-full shadow-2xl rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-red-500 to-amber-500 text-white p-4 flex justify-between items-center">
-            <h3 className="text-lg font-semibold font-heading">Contested Assistant</h3>
-            <button 
-              onClick={() => setShowChat(false)}
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <div className="bg-zinc-950 p-2">
-            <ChatInterface />
+            </motion.div>
           </div>
         </div>
-      )}
+      </section>
       
+      {/* Closing Banner */}
+      <section className="py-20 bg-gradient-to-br from-black to-zinc-900 relative overflow-hidden">
+        <AnimatedGradient 
+          className="absolute inset-0" 
+          colors={['hsl(45, 100%, 50%, 0.15)', 'hsl(235, 100%, 50%, 0.08)', 'hsl(345, 90%, 55%, 0.08)']} 
+          blur={120}
+          duration={20}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                Ready to Win on Your Own Terms?
+              </h2>
+              <p className="text-xl text-gray-300 mb-10">
+                Spots for the next matching window close May 12.
+              </p>
+              
+              <Link href="/auth">
+                <motion.div
+                  className="glass-button bg-[#FFBF0D]/80 hover:bg-[#FFBF0D] text-black font-semibold inline-block"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Join Contested Now
+                </motion.div>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Show chat interface is active */}
+      {showChat && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <ChatInterface />
+        </div>
+      )}
     </div>
   );
 }
