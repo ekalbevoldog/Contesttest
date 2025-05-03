@@ -238,16 +238,7 @@ export default function Header() {
     // Messages Link
     { label: "Messages", href: "/messages", icon: MessageSquare, condition: (user) => !!user },
     
-    // Dashboard Button (for all logged-in users)
-    { 
-      label: "Dashboard", 
-      icon: BarChart, 
-      condition: (user) => !!user,
-      isButton: true,
-      buttonVariant: 'outline',
-      buttonClassName: "ml-2 border-primary bg-transparent hover:bg-primary/15 text-white",
-      href: "/dashboard", // Added href to trigger proper routing
-    },
+    
 
     // --- Admin Section (Admin Only) ---
     {
@@ -600,33 +591,7 @@ export default function Header() {
 
                   {/* Footer Buttons */}
                   <div className="mt-auto pt-4 px-1"> {/* Stick to bottom */}
-                    {/* Dashboard Button (for all logged-in users) */}
-                    {user && (
-                      <Button
-                        key="mobile-dashboard-btn"
-                        size="sm"
-                        variant="outline"
-                        className="w-full justify-center mb-2 border-primary bg-transparent hover:bg-primary/15 text-white"
-                        asChild
-                        onClick={() => {
-                          console.log("Mobile dashboard button clicked, userType:", userType);
-                          setOpen(false);
-                        }}
-                      >
-                        <Link href={
-                          userType === 'athlete' ? "/athlete/dashboard" : 
-                          userType === 'business' ? "/business/dashboard" : 
-                          userType === 'compliance' ? "/compliance/dashboard" : 
-                          userType === 'admin' ? "/admin/dashboard" : 
-                          "/dashboard" // Redirect to dashboard component if no specific type matches
-                        }>
-                          <span className="flex items-center">
-                            <BarChart className="h-4 w-4 mr-1" />
-                            Dashboard
-                          </span>
-                        </Link>
-                      </Button>
-                    )}
+                    
                     
                     {/* Other Mobile Buttons */}
                     {mobileNavItems.filter(item => item.isButton && item.mobileOnly).map((item, index) => (
