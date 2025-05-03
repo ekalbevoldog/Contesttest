@@ -31,8 +31,9 @@ export default function Match() {
     }
   }, [form.selectedMatches]);
 
-  // Simulate matching process
+  // Run the matching process with proper validation
   const runMatching = async () => {
+    // Validate campaign ID
     if (!campaignId) {
       toast({
         title: "Error",
@@ -43,20 +44,49 @@ export default function Match() {
       return;
     }
 
+    // Validate targeting criteria 
+    if (!form.targetSports || form.targetSports.length === 0) {
+      toast({
+        title: "Missing targeting criteria",
+        description: "Please go back and select target sports for better athlete matching"
+      });
+      // We'll continue anyway for demo purposes, but show a warning
+    }
+
     setIsMatching(true);
     setMatchProgress(0);
+    let matchingInterval: ReturnType<typeof setInterval>;
     
     try {
-      // Increment progress simulation
-      const interval = setInterval(() => {
+      // Set up progress animation
+    const progressInterval = setInterval(() => {
         setMatchProgress(prev => {
           if (prev >= 95) {
-            clearInterval(interval);
+            clearInterval(progressInterval);
             return 95;
           }
           return prev + 5;
         });
       }, 200);
+      
+      // Assign to our outer variable for cleanup
+      matchingInterval = progressInterval;
+      
+      // First update campaign in Supabase to record match attempt
+      const { error: updateError } = await supabase
+        .from('campaigns')
+        .update({
+          match_attempted: true,
+          match_timestamp: new Date().toISOString(),
+          target_sports: form.targetSports,
+          target_audience: form.targetAudience
+        })
+        .eq('id', campaignId);
+        
+      if (updateError) {
+        console.warn('Could not update campaign match attempt:', updateError);
+        // Continue anyway - non-critical
+      }
       
       // Call the matching service
       const response = await fetch('/api/match/run', {
@@ -66,8 +96,8 @@ export default function Match() {
         },
         body: JSON.stringify({ 
           campaignId, 
-          targetSports: form.targetSports,
-          targetAudience: form.targetAudience,
+          targetSports: form.targetSports || [],
+          targetAudience: form.targetAudience || {},
         }),
       });
       
@@ -78,7 +108,7 @@ export default function Match() {
       const matchData = await response.json();
       
       // Complete progress
-      clearInterval(interval);
+      clearInterval(matchingInterval);
       setMatchProgress(100);
       
       // Short timeout to show 100% before resetting
@@ -88,14 +118,13 @@ export default function Match() {
       }, 500);
       
     } catch (error: any) {
-      // If API fails, simulate with mock data for demo
       console.error('Matching API error:', error);
-      // Here we'd normally show an error, but for the demo we'll load sample data
       
-      // Call Supabase for sample athletes
+      // Call Supabase for athlete data if the API fails
       setIsLoading(true);
       
       try {
+        // Get real athlete data from database as fallback
         const { data, error } = await supabase
           .from('athlete_profiles')
           .select('*')
@@ -103,12 +132,25 @@ export default function Match() {
           
         if (error) throw error;
         
-        // We have data, clear the interval and set candidates
-        clearInterval(interval);
+        // Complete progress animation - use a no-op if interval wasn't set
+        const intervalRef = matchingInterval || setInterval(() => {}, 1000);
+        clearInterval(intervalRef);
         setMatchProgress(100);
         
         setTimeout(() => {
-          setMatchCandidates(data || []);
+          if (data && data.length > 0) {
+            setMatchCandidates(data);
+            toast({
+              title: "Athletes found",
+              description: `Found ${data.length} athletes for your campaign`,
+            });
+          } else {
+            toast({
+              title: "No matches found",
+              description: "Try adjusting your targeting criteria",
+              variant: "destructive"
+            });
+          }
           setIsMatching(false);
           setIsLoading(false);
         }, 500);
@@ -225,7 +267,6 @@ export default function Match() {
             <Progress 
               value={matchProgress} 
               className="h-2 mb-4 bg-gray-800" 
-              indicatorClassName="bg-amber-500" 
             />
             <p className="text-gray-400 text-sm">
               {matchProgress < 30 ? "Analyzing campaign requirements..." : 

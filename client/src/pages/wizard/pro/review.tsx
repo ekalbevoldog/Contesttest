@@ -476,6 +476,33 @@ export default function Review() {
         </CardContent>
       </Card>
       
+      {/* Terms and Conditions Agreement */}
+      <Card className="bg-zinc-800/50 border-zinc-700">
+        <CardContent className="pt-6">
+          <div className="flex items-start space-x-3 space-y-0">
+            <Checkbox 
+              id="terms"
+              checked={acceptedTerms}
+              onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+              className="data-[state=checked]:bg-amber-500 data-[state=checked]:text-black mt-0.5"
+            />
+            <div className="space-y-1">
+              <Label 
+                htmlFor="terms" 
+                className="text-white font-medium cursor-pointer"
+              >
+                I agree to the Terms and Conditions
+              </Label>
+              <p className="text-gray-400 text-sm">
+                By checking this box, I acknowledge that I have read and agree to the Campaign Terms, 
+                Athletes Rights Agreement, and Content Licensing Terms. I understand that this will 
+                initiate partnership offers to the selected athletes.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       {/* Navigation Buttons */}
       <div className="flex justify-between pt-4 border-t border-zinc-800">
         <Button 

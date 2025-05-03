@@ -29,8 +29,44 @@ export default function Bundle() {
   });
   const [selectedAthletes] = useState<any[]>(form.selectedMatches || []);
   
-  // Create bundle
+  // Form validation function
+  const validateCustomBundle = () => {
+    if (bundleType !== 'custom') return true;
+    
+    // Required fields for custom bundle
+    if (!customBundle.name) {
+      toast({
+        title: "Missing bundle name",
+        description: "Please provide a name for your custom bundle",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    if (!customBundle.deliverables) {
+      toast({
+        title: "Missing deliverables",
+        description: "Please specify the content deliverables for your bundle",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    if (!customBundle.compensation) {
+      toast({
+        title: "Missing compensation",
+        description: "Please specify the compensation terms for athletes",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Create bundle with enhanced validation and error handling
   const createBundle = async () => {
+    // Validate campaign ID
     if (!campaignId) {
       toast({
         title: "Error",
@@ -41,6 +77,7 @@ export default function Bundle() {
       return;
     }
     
+    // Validate athlete selection
     if (selectedAthletes.length === 0) {
       toast({
         title: "No athletes selected",
@@ -50,52 +87,98 @@ export default function Bundle() {
       return;
     }
     
+    // Validate custom bundle fields if applicable
+    if (!validateCustomBundle()) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // Prepare bundle data
+      // Prepare bundle data with campaign and athlete info
       const bundleData = {
         campaign_id: campaignId,
         type: bundleType,
         custom_details: bundleType === 'custom' ? customBundle : null,
         athlete_ids: selectedAthletes.map(a => a.id),
+        created_at: new Date().toISOString(),
+        status: 'DRAFT'
       };
       
-      // Call API to create bundle
-      const response = await fetch('/api/bundle/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bundleData),
-      });
+      // First, save bundle to Supabase directly
+      const { data: bundleRecord, error: bundleError } = await supabase
+        .from('bundles')
+        .insert([{
+          campaign_id: campaignId,
+          type: bundleType,
+          details: bundleType === 'custom' ? customBundle : getPresetBundleDetails(bundleType),
+          created_at: new Date().toISOString(),
+          status: 'DRAFT'
+        }])
+        .select()
+        .single();
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create bundle');
+      if (bundleError) {
+        console.error('Supabase bundle creation error:', bundleError);
+        throw new Error('Failed to create bundle in database');
       }
       
-      const bundle = await response.json();
+      // Then try calling API to register bundle members
+      try {
+        const response = await fetch('/api/bundle/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bundle_id: bundleRecord.id,
+            athlete_ids: selectedAthletes.map(a => a.id),
+          }),
+        });
+        
+        if (!response.ok) {
+          console.warn('API bundle creation warning - will continue anyway');
+        }
+      } catch (apiError) {
+        console.warn('API bundle creation error - will continue anyway:', apiError);
+        // Non-critical, continue with the flow
+      }
       
-      // Update campaign in Supabase
-      const { error } = await supabase
+      // Update campaign in Supabase with bundle reference
+      const { error: campaignError } = await supabase
         .from('campaigns')
         .update({ 
-          bundle_id: bundle.id,
+          bundle_id: bundleRecord.id,
           bundle_type: bundleType,
           bundle_details: bundleType === 'custom' ? customBundle : null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', campaignId);
       
-      if (error) {
-        throw new Error(error.message);
+      if (campaignError) {
+        console.error('Campaign update error:', campaignError);
+        toast({
+          title: "Warning",
+          description: "Bundle created but campaign update failed"
+        });
+        // Continue anyway - we have the bundle ID
       }
       
       // Update the wizard state with bundle data
       updateForm({ 
         bundleType, 
         customBundle: bundleType === 'custom' ? customBundle : null,
-        selectedBundle: bundle,
+        selectedBundle: {
+          id: bundleRecord.id,
+          type: bundleType,
+          ...getPresetBundleDetails(bundleType),
+          ...(bundleType === 'custom' ? customBundle : {})
+        },
+      });
+      
+      toast({
+        title: "Bundle created",
+        description: `Created a ${bundleType} bundle for ${selectedAthletes.length} athletes`,
       });
       
       nextStep();
@@ -103,26 +186,14 @@ export default function Bundle() {
       
     } catch (error: any) {
       console.error('Bundle creation error:', error);
-      
-      // For demo purposes, we'll fallback to client-side only
-      // This would normally be an error, but we'll simulate success
-      
-      const mockBundle = {
-        id: `bundle-${Date.now()}`,
-        type: bundleType,
-        details: bundleType === 'custom' ? customBundle : getPresetBundleDetails(bundleType),
-        athlete_count: selectedAthletes.length,
-      };
-      
-      // Update the wizard state with bundle data
-      updateForm({ 
-        bundleType, 
-        customBundle: bundleType === 'custom' ? customBundle : null,
-        selectedBundle: mockBundle,
+      toast({
+        title: "Bundle creation error",
+        description: error.message || "Failed to create bundle",
+        variant: "destructive"
       });
       
-      nextStep();
-      navigate('/wizard/pro/review');
+      // Allow retry
+      setIsLoading(false);
       
     } finally {
       setIsLoading(false);
