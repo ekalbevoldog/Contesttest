@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS athlete_profiles (
 
 -- Create business_profiles table if it doesn't exist
 CREATE TABLE IF NOT EXISTS business_profiles (
-  id UUID PRIMARY KEY,
-  auth_id TEXT NOT NULL,
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL,
   session_id TEXT NOT NULL,
   
   -- Basic Information
