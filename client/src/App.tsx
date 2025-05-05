@@ -149,46 +149,105 @@ function Router() {
             {/* Main dashboard redirect - user will be redirected based on role */}
             <UnifiedProtectedRoute path="/dashboard" component={DashboardRedirect} />
             
-            {/* Pro Campaign Wizard Routes - No business role protection at route level */}
-            {/* Layout component wraps all wizard pages with context provider */}
-            <Route path="/wizard/pro">
+            {/* Direct Pro Campaign Wizard Routes - Flattened structure for better reliability */}
+            {/* Each route imports its own components to avoid context nesting issues */}
+            <Route path="/wizard/pro/start">
               {() => {
                 const WizardLayout = require('./pages/wizard/pro/layout').default;
-                
-                // Import directly to avoid dynamic imports which might be causing issues
                 const StartPage = require('./pages/wizard/pro/start').default;
-                const AdvancedPage = require('./pages/wizard/pro/advanced').default;
-                const DeliverablesPage = require('./pages/wizard/pro/deliverables').default;
-                const MatchPage = require('./pages/wizard/pro/match').default;
-                const BundlePage = require('./pages/wizard/pro/bundle').default;
-                const ReviewPage = require('./pages/wizard/pro/review').default;
-                
                 return (
                   <WizardLayout>
-                    <Switch>
-                      <Route path="/wizard/pro/start" component={StartPage} />
-                      <Route path="/wizard/pro/advanced" component={AdvancedPage} />
-                      <Route path="/wizard/pro/deliverables" component={DeliverablesPage} />
-                      <Route path="/wizard/pro/match" component={MatchPage} />
-                      <Route path="/wizard/pro/bundle" component={BundlePage} />
-                      <Route path="/wizard/pro/review" component={ReviewPage} />
-                      {/* Default route redirects to start */}
-                      <Route>
-                        {() => {
-                          const { useEffect } = require('react');
-                          const { useLocation } = require('wouter');
-                          const [, navigate] = useLocation();
-                          
-                          useEffect(() => {
-                            navigate('/wizard/pro/start');
-                          }, [navigate]);
-                          
-                          return <div>Redirecting...</div>;
-                        }}
-                      </Route>
-                    </Switch>
+                    <StartPage />
                   </WizardLayout>
                 );
+              }}
+            </Route>
+            
+            {/* Test version of start page that doesn't depend on Supabase */}
+            <Route path="/wizard/pro/start-test">
+              {() => {
+                const WizardLayout = require('./pages/wizard/pro/layout').default;
+                const StartTestPage = require('./pages/wizard/pro/start-test').default;
+                return (
+                  <WizardLayout>
+                    <StartTestPage />
+                  </WizardLayout>
+                );
+              }}
+            </Route>
+
+            <Route path="/wizard/pro/advanced">
+              {() => {
+                const WizardLayout = require('./pages/wizard/pro/layout').default;
+                const AdvancedPage = require('./pages/wizard/pro/advanced').default;
+                return (
+                  <WizardLayout>
+                    <AdvancedPage />
+                  </WizardLayout>
+                );
+              }}
+            </Route>
+
+            <Route path="/wizard/pro/deliverables">
+              {() => {
+                const WizardLayout = require('./pages/wizard/pro/layout').default;
+                const DeliverablesPage = require('./pages/wizard/pro/deliverables').default;
+                return (
+                  <WizardLayout>
+                    <DeliverablesPage />
+                  </WizardLayout>
+                );
+              }}
+            </Route>
+
+            <Route path="/wizard/pro/match">
+              {() => {
+                const WizardLayout = require('./pages/wizard/pro/layout').default;
+                const MatchPage = require('./pages/wizard/pro/match').default;
+                return (
+                  <WizardLayout>
+                    <MatchPage />
+                  </WizardLayout>
+                );
+              }}
+            </Route>
+
+            <Route path="/wizard/pro/bundle">
+              {() => {
+                const WizardLayout = require('./pages/wizard/pro/layout').default;
+                const BundlePage = require('./pages/wizard/pro/bundle').default;
+                return (
+                  <WizardLayout>
+                    <BundlePage />
+                  </WizardLayout>
+                );
+              }}
+            </Route>
+
+            <Route path="/wizard/pro/review">
+              {() => {
+                const WizardLayout = require('./pages/wizard/pro/layout').default;
+                const ReviewPage = require('./pages/wizard/pro/review').default;
+                return (
+                  <WizardLayout>
+                    <ReviewPage />
+                  </WizardLayout>
+                );
+              }}
+            </Route>
+
+            {/* Default wizard pro route redirects to start */}
+            <Route path="/wizard/pro">
+              {() => {
+                const { useEffect } = require('react');
+                const { useLocation } = require('wouter');
+                const [, navigate] = useLocation();
+                
+                useEffect(() => {
+                  navigate('/wizard/pro/start');
+                }, [navigate]);
+                
+                return <div>Redirecting to wizard start...</div>;
               }}
             </Route>
             
