@@ -149,8 +149,7 @@ function Router() {
             {/* Main dashboard redirect - user will be redirected based on role */}
             <UnifiedProtectedRoute path="/dashboard" component={DashboardRedirect} />
             
-            {/* Direct Pro Campaign Wizard Routes - Flattened structure for better reliability */}
-            {/* Each route imports its own components to avoid context nesting issues */}
+            {/* Pro Campaign Wizard Start Page - Direct Implementation */}
             <Route path="/wizard/pro/start">
               {() => {
                 const WizardLayout = require('./pages/wizard/pro/layout').default;
@@ -158,32 +157,6 @@ function Router() {
                 return (
                   <WizardLayout>
                     <StartPage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-            
-            {/* Test version of start page that doesn't depend on Supabase */}
-            <Route path="/wizard/pro/start-test">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const StartTestPage = require('./pages/wizard/pro/start-test').default;
-                return (
-                  <WizardLayout>
-                    <StartTestPage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-            
-            {/* Ultra-simple start page with bare minimum code */}
-            <Route path="/wizard/pro/start-simple">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const StartSimplePage = require('./pages/wizard/pro/start-simple').default;
-                return (
-                  <WizardLayout>
-                    <StartSimplePage />
                   </WizardLayout>
                 );
               }}
@@ -264,61 +237,11 @@ function Router() {
               }}
             </Route>
             
-            {/* Simple test route without layout or auth protection */}
+            {/* Test page - keeping this one for diagnostics */}
             <Route path="/wizard/pro/test">
               {() => {
                 const TestPage = require('./pages/wizard/pro/test').default;
                 return <TestPage />;
-              }}
-            </Route>
-            
-            {/* Ultra minimal test route with no dependencies */}
-            <Route path="/wizard/pro/minimal">
-              {() => {
-                const MinimalPage = require('./pages/wizard/pro/minimal').default;
-                return <MinimalPage />;
-              }}
-            </Route>
-            
-            {/* Direct access entry point to Pro Wizard - Redirecting version */}
-            <Route path="/wizard-entry-redirect">
-              {() => {
-                const { useState, useEffect } = require('react');
-                const { useLocation } = require('wouter');
-                const [redirecting, setRedirecting] = useState(true);
-                const [, navigate] = useLocation();
-                
-                useEffect(() => {
-                  console.log('Wizard entry point accessed, redirecting to wizard start');
-                  // Allow a moment for the console log to be visible
-                  const timer = setTimeout(() => {
-                    navigate('/wizard/pro/start');
-                    setRedirecting(false);
-                  }, 1000);
-                  
-                  return () => clearTimeout(timer);
-                }, [navigate]);
-                
-                return (
-                  <div className="min-h-screen bg-black text-white p-8">
-                    <div className="max-w-4xl mx-auto bg-zinc-900/50 border border-zinc-800 rounded-lg p-6">
-                      <h1 className="text-3xl font-bold mb-6">Pro Wizard Entry Point</h1>
-                      {redirecting ? (
-                        <p className="text-amber-500">Redirecting to Pro Campaign Wizard...</p>
-                      ) : (
-                        <p className="text-red-500">Redirect failed. Please try navigating to /wizard/pro/start directly.</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              }}
-            </Route>
-            
-            {/* Simple hub page with links to all wizard test pages */}
-            <Route path="/wizard-entry">
-              {() => {
-                const EntryPage = require('./pages/wizard/entry').default;
-                return <EntryPage />;
               }}
             </Route>
             

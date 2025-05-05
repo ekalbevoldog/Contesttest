@@ -62,16 +62,14 @@ export default function Start() {
   
   // Check for existing campaign on mount
   useEffect(() => {
-    if (campaignId) {
-      // We already have a campaign ID, no need to create a new one
-      return;
-    }
-    
-    // If user is logged in and there's no campaign ID yet, initiate a new campaign
-    if (user?.id) {
+    // Always create a campaign ID to ensure the wizard works
+    if (!campaignId) {
+      console.log('No campaign ID found, creating one');
       createNewCampaign();
+    } else {
+      console.log('Using existing campaign ID:', campaignId);
     }
-  }, [user, campaignId]);
+  }, [campaignId, createNewCampaign]);
   
   // Function to create a new campaign in the database
   const createNewCampaign = async () => {
