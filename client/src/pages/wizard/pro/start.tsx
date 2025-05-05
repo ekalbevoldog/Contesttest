@@ -6,7 +6,7 @@ import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useProWizard } from '@/contexts/ProWizardProvider';
 import { supabase } from '@/lib/supabase';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import {
   Form,
@@ -60,19 +60,8 @@ export default function Start() {
     },
   });
   
-  // Check for existing campaign on mount
-  useEffect(() => {
-    // Always create a campaign ID to ensure the wizard works
-    if (!campaignId) {
-      console.log('No campaign ID found, creating one');
-      createNewCampaign();
-    } else {
-      console.log('Using existing campaign ID:', campaignId);
-    }
-  }, [campaignId, createNewCampaign]);
-  
   // Function to create a new campaign in the database
-  const createNewCampaign = async () => {
+  const createNewCampaign = useCallback(async () => {
     try {
       setIsSubmitting(true);
       
@@ -126,7 +115,18 @@ export default function Start() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [user, supabase, setCampaignId, toast, setIsSubmitting]);
+  
+  // Check for existing campaign on mount
+  useEffect(() => {
+    // Always create a campaign ID to ensure the wizard works
+    if (!campaignId) {
+      console.log('No campaign ID found, creating one');
+      createNewCampaign();
+    } else {
+      console.log('Using existing campaign ID:', campaignId);
+    }
+  }, [campaignId, createNewCampaign]);
   
   // Handle form submission
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
