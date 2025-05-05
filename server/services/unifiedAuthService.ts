@@ -287,16 +287,26 @@ export class UnifiedAuthService {
         };
       }
 
-      // Fetch the user profile
-      const { data: userRecord, error: userError } = await this.supabase
+      // Try to fetch user profile using auth_id first
+      let { data: userRecord, error: userError } = await this.supabase
         .from("users")
         .select("*")
-        .eq("id", data.user.id)  // Use UUID directly as id
+        .eq("auth_id", data.user.id)
         .single();
 
+      // If not found, try with id
       if (userError || !userRecord) {
-        // Try with email as fallback
-        if (data.user.email) {
+        const { data: idRecord, error: idError } = await this.supabase
+          .from("users")
+          .select("*")
+          .eq("id", data.user.id)
+          .single();
+
+        if (!idError && idRecord) {
+          userRecord = idRecord;
+          userError = null;
+        } else if (data.user.email) {
+          // Try with email as last fallback
           const { data: emailRecord, error: emailError } = await this.supabase
             .from("users")
             .select("*")
@@ -310,7 +320,9 @@ export class UnifiedAuthService {
             };
           }
         }
+      }
 
+      if (userError || !userRecord) {
         // User exists in auth but not in users table - they need to complete onboarding
         return { 
           success: true,
