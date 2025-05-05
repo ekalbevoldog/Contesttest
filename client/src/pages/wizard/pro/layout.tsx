@@ -1,33 +1,29 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { useLocation } from 'wouter';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import AuthGuard from '@/components/AuthGuard';
-import { ProWizardProvider, useProWizard } from '@/contexts/ProWizardProvider';
 import { ChevronRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { ProWizardProvider } from '@/contexts/ProWizardProvider';
 
-// Component for the actual layout with navigation
-const WizardLayout = ({ children }: { children: ReactNode }) => {
+// Ultra simplified version without dependencies on complex hooks
+export default function ProWizardLayoutWrapper({ children }: { children: ReactNode }) {
+  // Debug output to troubleshoot layout rendering
+  console.log('ProWizardLayoutWrapper rendering');
+  
+  return (
+    <ProWizardProvider>
+      <SimplifiedWizardLayout>
+        {children}
+      </SimplifiedWizardLayout>
+    </ProWizardProvider>
+  );
+}
+
+// Completely simplified layout with minimal dependencies
+const SimplifiedWizardLayout = ({ children }: { children: ReactNode }) => {
   const [, navigate] = useLocation();
-  const { currentStep, campaignId } = useProWizard();
-  const { toast } = useToast();
   
   // Get current path
   const [currentPath] = useLocation();
-  
-  // Verify campaign ID exists
-  useEffect(() => {
-    if (!campaignId && currentPath !== '/wizard/pro/start') {
-      toast({
-        title: "Campaign ID Missing",
-        description: "Redirecting to start step to create a new campaign",
-        variant: "destructive"
-      });
-      
-      navigate('/wizard/pro/start');
-    }
-  }, [campaignId, currentPath, navigate, toast]);
   
   // Define steps
   const steps = [
@@ -39,6 +35,10 @@ const WizardLayout = ({ children }: { children: ReactNode }) => {
     { path: '/wizard/pro/review', label: 'Review', value: 6 },
   ];
   
+  // Hard-code current step based on path to avoid context issues
+  const currentStepObj = steps.find(step => step.path === currentPath) || steps[0];
+  const currentStep = currentStepObj.value;
+  
   // Calculate progress percentage
   const progressPercentage = ((currentStep - 1) / (steps.length - 1)) * 100;
   
@@ -47,7 +47,7 @@ const WizardLayout = ({ children }: { children: ReactNode }) => {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white font-heading">Pro Campaign Wizard</h1>
+          <h1 className="text-3xl font-bold text-white font-heading">Pro Campaign Wizard (Simplified)</h1>
           <p className="text-gray-400 mt-2">Create professionally managed athlete partnerships</p>
         </div>
         
@@ -71,11 +71,7 @@ const WizardLayout = ({ children }: { children: ReactNode }) => {
           value={currentPath}
           className="mb-8"
           onValueChange={(path) => {
-            // Prevent navigating ahead of current progress
-            const targetStep = steps.find(step => step.path === path)?.value || 1;
-            if (targetStep <= currentStep) {
-              navigate(path);
-            }
+            navigate(path);
           }}
         >
           <TabsList className="grid grid-cols-6 bg-zinc-900/50 border border-zinc-800 p-1">
@@ -83,16 +79,7 @@ const WizardLayout = ({ children }: { children: ReactNode }) => {
               <TabsTrigger
                 key={step.path}
                 value={step.path}
-                // Disable steps ahead of current progress
-                disabled={step.value > currentStep}
-                className={`text-xs px-1 sm:text-sm sm:px-2 data-[state=active]:bg-amber-500/10 data-[state=active]:text-amber-500 ${
-                  // Custom styling for completed, active, and future steps
-                  step.value < currentStep 
-                    ? 'text-gray-400'
-                    : step.value === currentStep
-                      ? 'font-medium text-white'
-                      : 'text-gray-600'
-                }`}
+                className="text-xs px-1 sm:text-sm sm:px-2"
               >
                 {step.value < currentStep && <ChevronRight className="h-3 w-3 inline mr-1" />}
                 {step.label}
@@ -109,18 +96,3 @@ const WizardLayout = ({ children }: { children: ReactNode }) => {
     </div>
   );
 };
-
-// Wrapper component that provides the context without restrictive auth guard
-export default function ProWizardLayoutWrapper({ children }: { children: ReactNode }) {
-  // Debug output to troubleshoot layout rendering
-  console.log('ProWizardLayoutWrapper rendering');
-  
-  return (
-    // Removed the AuthGuard to allow direct access to the wizard
-    <ProWizardProvider>
-      <WizardLayout>
-        {children}
-      </WizardLayout>
-    </ProWizardProvider>
-  );
-}

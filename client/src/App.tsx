@@ -175,6 +175,19 @@ function Router() {
                 );
               }}
             </Route>
+            
+            {/* Ultra-simple start page with bare minimum code */}
+            <Route path="/wizard/pro/start-simple">
+              {() => {
+                const WizardLayout = require('./pages/wizard/pro/layout').default;
+                const StartSimplePage = require('./pages/wizard/pro/start-simple').default;
+                return (
+                  <WizardLayout>
+                    <StartSimplePage />
+                  </WizardLayout>
+                );
+              }}
+            </Route>
 
             <Route path="/wizard/pro/advanced">
               {() => {
@@ -259,8 +272,16 @@ function Router() {
               }}
             </Route>
             
-            {/* Direct access entry point to Pro Wizard */}
-            <Route path="/wizard-entry">
+            {/* Ultra minimal test route with no dependencies */}
+            <Route path="/wizard/pro/minimal">
+              {() => {
+                const MinimalPage = require('./pages/wizard/pro/minimal').default;
+                return <MinimalPage />;
+              }}
+            </Route>
+            
+            {/* Direct access entry point to Pro Wizard - Redirecting version */}
+            <Route path="/wizard-entry-redirect">
               {() => {
                 const { useState, useEffect } = require('react');
                 const { useLocation } = require('wouter');
@@ -290,6 +311,14 @@ function Router() {
                     </div>
                   </div>
                 );
+              }}
+            </Route>
+            
+            {/* Simple hub page with links to all wizard test pages */}
+            <Route path="/wizard-entry">
+              {() => {
+                const EntryPage = require('./pages/wizard/entry').default;
+                return <EntryPage />;
               }}
             </Route>
             
