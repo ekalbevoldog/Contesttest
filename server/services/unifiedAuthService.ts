@@ -35,11 +35,11 @@ export class UnifiedAuthService {
   private supabase: SupabaseClient;
   private supabaseAdmin: SupabaseClient;
   private fallbackClient: SupabaseClient | null = null;
-  
+
   constructor() {
     this.supabase = supabase;
     this.supabaseAdmin = supabaseAdmin;
-    
+
     // Initialize a fallback client if possible
     try {
       if (process.env.SUPABASE_FALLBACK_URL && process.env.SUPABASE_FALLBACK_KEY) {
@@ -53,7 +53,7 @@ export class UnifiedAuthService {
       console.error("Failed to initialize fallback Supabase client:", error);
     }
   }
-  
+
   /**
    * Login with email and password
    */
@@ -61,21 +61,21 @@ export class UnifiedAuthService {
     try {
       // Try primary Supabase instance
       const { email, password } = credentials;
-      
+
       if (!email || !password) {
         return { 
           success: false, 
           error: "Email and password are required" 
         };
       }
-      
+
       console.log("Login attempt for:", email);
-      
+
       const {
         data: authData,
         error: authError
       } = await this.supabase.auth.signInWithPassword({ email, password });
-      
+
       // If primary auth fails, try fallback if available
       if (authError && this.fallbackClient) {
         console.log("Primary auth failed, trying fallback");
@@ -83,13 +83,13 @@ export class UnifiedAuthService {
           email, 
           password 
         });
-        
+
         if (!fallbackResult.error) {
           console.log("Fallback auth succeeded");
           return this.processSuccessfulAuth(fallbackResult, email);
         }
       }
-      
+
       // If we had an error and either no fallback is available or fallback also failed
       if (authError) {
         console.error("Supabase auth error:", authError);
@@ -98,10 +98,10 @@ export class UnifiedAuthService {
           error: "Invalid credentials" 
         };
       }
-      
+
       // Process the successful authentication
       return this.processSuccessfulAuth({ data: authData, error: null }, email);
-      
+
     } catch (error) {
       console.error("Login error:", error);
       return { 
@@ -110,35 +110,35 @@ export class UnifiedAuthService {
       };
     }
   }
-  
+
   /**
    * Register a new user
    */
   async register(data: RegistrationData): Promise<AuthResult> {
     try {
       const { email, password, fullName, role } = data;
-      
+
       if (!email || !password || !fullName || !role) {
         return { 
           success: false, 
           error: "Missing required fields" 
         };
       }
-      
+
       // Check if user already exists
       const { data: existingUser } = await this.supabase
         .from("users")
         .select("*")
         .eq("email", email)
         .single();
-        
+
       if (existingUser) {
         return { 
           success: false, 
           error: "User with this email already exists" 
         };
       }
-      
+
       // Register the user with Supabase Auth
       const { data: signUpData, error: signUpErr } = await this.supabase.auth.signUp({
         email,
@@ -150,7 +150,7 @@ export class UnifiedAuthService {
           } 
         }
       });
-      
+
       if (signUpErr) {
         console.error("Supabase signup error:", signUpErr);
         return { 
@@ -158,7 +158,7 @@ export class UnifiedAuthService {
           error: signUpErr.message 
         };
       }
-      
+
       // Map role → DB enum
       let dbRole: string;
       switch (role) {
@@ -175,7 +175,7 @@ export class UnifiedAuthService {
         default:
           dbRole = "athlete";
       }
-      
+
       // Check if auth_id column exists before inserting
       let hasAuthIdColumn = true;
       try {
@@ -183,18 +183,18 @@ export class UnifiedAuthService {
           .from('users')
           .select('auth_id')
           .limit(1);
-          
+
         if (columnCheckError) {
           console.warn("auth_id column check failed:", columnCheckError);
           hasAuthIdColumn = false;
-          
+
           // Try to add the column if it doesn't exist
           try {
             console.log("Attempting to add auth_id column to users table");
             const { error: alterError } = await this.supabase.rpc('exec_sql', {
               sql: "ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id TEXT UNIQUE"
             });
-            
+
             if (alterError) {
               console.error("Failed to add auth_id column:", alterError);
             } else {
@@ -208,14 +208,14 @@ export class UnifiedAuthService {
       } catch (columnCheckErr) {
         console.error("Error checking for auth_id column:", columnCheckErr);
       }
-      
+
       // Store the user in our database
       const userToInsert = { 
         email, 
         role: dbRole, 
         created_at: new Date() 
       };
-      
+
       // Only include auth_id if the column exists
       if (hasAuthIdColumn && signUpData.user?.id) {
         // Using typecasting to avoid TypeScript error
@@ -223,14 +223,14 @@ export class UnifiedAuthService {
       } else {
         console.warn("Omitting auth_id from insert due to missing column or missing auth ID");
       }
-      
+
       // Use supabaseAdmin to bypass Row Level Security policies
       const { data: insertedUser, error: insertErr } = await this.supabaseAdmin
         .from("users")
         .insert(userToInsert)
         .select()
         .single();
-        
+
       if (insertErr) {
         console.error("DB insert error:", insertErr);
         return { 
@@ -238,14 +238,14 @@ export class UnifiedAuthService {
           error: "Failed to store user" 
         };
       }
-      
+
       return { 
         success: true, 
         user: insertedUser,
         needsProfile: true,
         redirectTo: "/onboarding"
       };
-      
+
     } catch (error) {
       console.error("Registration error:", error);
       return { 
@@ -254,7 +254,7 @@ export class UnifiedAuthService {
       };
     }
   }
-  
+
   /**
    * Logout the current user
    */
@@ -272,28 +272,28 @@ export class UnifiedAuthService {
       };
     }
   }
-  
+
   /**
    * Get the current user
    */
   async getCurrentUser(token: string): Promise<AuthResult> {
     try {
       const { data, error } = await this.supabase.auth.getUser(token);
-      
+
       if (error || !data.user) {
         return { 
           success: false, 
           error: "Not authenticated" 
         };
       }
-      
+
       // Fetch the user profile
       const { data: userRecord, error: userError } = await this.supabase
         .from("users")
         .select("*")
-        .eq("auth_id", data.user.id)
+        .eq("id", data.user.id)  // Use UUID directly as id
         .single();
-        
+
       if (userError || !userRecord) {
         // Try with email as fallback
         if (data.user.email) {
@@ -302,7 +302,7 @@ export class UnifiedAuthService {
             .select("*")
             .eq("email", data.user.email)
             .single();
-            
+
           if (!emailError && emailRecord) {
             return { 
               success: true, 
@@ -310,7 +310,7 @@ export class UnifiedAuthService {
             };
           }
         }
-        
+
         // User exists in auth but not in users table - they need to complete onboarding
         return { 
           success: true,
@@ -323,12 +323,12 @@ export class UnifiedAuthService {
           redirectTo: "/onboarding"
         };
       }
-      
+
       return { 
         success: true, 
         user: userRecord 
       };
-      
+
     } catch (error) {
       console.error("Get current user error:", error);
       return { 
@@ -337,7 +337,7 @@ export class UnifiedAuthService {
       };
     }
   }
-  
+
   /**
    * Update a user profile
    */
@@ -345,7 +345,7 @@ export class UnifiedAuthService {
     try {
       // Check if userId is a numeric ID or an auth_id (UUID)
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
-      
+
       let query;
       if (isUUID) {
         console.log(`Updating user by auth_id: ${userId}`);
@@ -360,9 +360,9 @@ export class UnifiedAuthService {
           .update(profileData)
           .eq("id", userId);
       }
-      
+
       const { data, error } = await query.select().single();
-        
+
       if (error) {
         console.error("Profile update error:", error);
         return { 
@@ -370,12 +370,12 @@ export class UnifiedAuthService {
           error: "Failed to update profile" 
         };
       }
-      
+
       return { 
         success: true, 
         user: data 
       };
-      
+
     } catch (error) {
       console.error("Update profile error:", error);
       return { 
@@ -384,7 +384,7 @@ export class UnifiedAuthService {
       };
     }
   }
-  
+
   /**
    * Refresh the authentication token
    */
@@ -393,7 +393,7 @@ export class UnifiedAuthService {
       const { data, error } = await this.supabase.auth.refreshSession({
         refresh_token: refreshToken
       });
-      
+
       if (error || !data.session) {
         console.error("Token refresh error:", error);
         return { 
@@ -401,12 +401,12 @@ export class UnifiedAuthService {
           error: "Failed to refresh token" 
         };
       }
-      
+
       return { 
         success: true, 
         session: data.session 
       };
-      
+
     } catch (error) {
       console.error("Token refresh error:", error);
       return { 
@@ -415,34 +415,35 @@ export class UnifiedAuthService {
       };
     }
   }
-  
+
   /**
    * Process a successful authentication
    * Private helper method to handle the logic after successful authentication
    */
   private async processSuccessfulAuth(authResponse: AuthResponse, email: string): Promise<AuthResult> {
     const { data: authData } = authResponse;
-    
+
     if (!authData?.user || !authData?.session) {
       return { 
         success: false, 
         error: "Invalid authentication data" 
       };
     }
-    
+
     // Update last_login
     await this.supabase
       .from("users")
       .update({ last_login: new Date() })
       .eq("email", email);
-      
+
     // Fetch user profile
     const { data: userRecord, error: userError } = await this.supabase
       .from("users")
       .select("*")
-      .eq("email", email)
+      .eq("id", authData.user.id) // Use Supabase Auth UUID as primary ID
       .single();
-    
+
+
     // Try with auth_id if email lookup fails
     if (userError || !userRecord) {
       const { data: authIdRecord, error: authIdError } = await this.supabase
@@ -450,13 +451,13 @@ export class UnifiedAuthService {
         .select("*")
         .eq("auth_id", authData.user.id)
         .single();
-        
+
       if (authIdError || !authIdRecord) {
         // User exists in auth but not in users table - they need to complete onboarding
         return {
           success: true,
           user: {
-            id: authData.user.id,
+            id: authData.user.id, // Use Supabase Auth UUID as primary ID
             email: email,
             role: authData.user.user_metadata?.role || "user"
           },
@@ -469,7 +470,7 @@ export class UnifiedAuthService {
           }
         };
       }
-      
+
       // Found user by auth_id, use this record
       return {
         success: true,
@@ -487,7 +488,7 @@ export class UnifiedAuthService {
         }
       };
     }
-    
+
     // Make sure the auth_id is updated in the user record if it's missing
     if (userRecord && userRecord.id && (!userRecord.auth_id || userRecord.auth_id !== authData.user.id)) {
       console.log(`Updating auth_id for user ${userRecord.id} to ${authData.user.id}`);
@@ -501,12 +502,11 @@ export class UnifiedAuthService {
       }
     }
 
-    // Return user + session
+    // Process the successful authentication with correct UUID handling
     return {
       success: true,
       user: {
-        id: userRecord.id, // Use the database ID, not the auth ID
-        auth_id: authData.user.id,
+        id: authData.user.id, // Use Supabase Auth UUID as primary ID
         email,
         role: userRecord.role || "user"
       },
