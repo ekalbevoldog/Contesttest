@@ -1,0 +1,24 @@
+Your Task
+
+Diagnose the root cause(s):
+Inspect our Supabase RLS policies for both tables and confirm that the signed-in user can SELECT their own row in public.business_profiles.
+Verify that the Replit-hosted env variables (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, or service key) are correct and being loaded before any Supabase operations.
+Audit our Supabase client instantiation and auth listener logic to ensure we handle token refresh and session rehydration properly.
+Confirm that the foreign key relationship between users.id and business_profiles.user_id is always maintained (no orphaned rows).
+Short-term fixes:
+Add logging around each Supabase call to capture which queries succeed or fail, and the current session state (supabase.auth.getSession()).
+Implement a fallback data-fetch routine that retries once upon token expiry errors.
+Temporarily relax RLS policies to debug whether permissions are blocking data, then re-apply strict policies once you identify the issue.
+Long-term architectural repairs:
+Propose a unified data-layer service module (e.g., /lib/supabaseClient.ts) that centralizes all auth and data-fetch logic, ensuring a single source of truth for session handling.
+Design a clear data-contract for our front end: how and when the profile object is populated, with TypeScript interfaces for both User and BusinessProfile, and a merged FullProfile.
+Recommend adding database constraints (foreign keys, NOT NULL, and unique indexes) to enforce data integrity between auth users and business profiles.
+Suggest a CI check or a pre-deployment script that runs a smoke test against Supabase (e.g., using the service key) to verify that RLS policies allow expected queries.
+Outline best practices for environment management on Replit (e.g., locking required env vars, staging vs. prod keys) to prevent accidental misconfiguration.
+Deliverables
+
+A written report of your findings: root causes, affected code paths, and RLS policy audits.
+A patched code diff (or PR) for the short-term fixes (instrumented logging, retry logic).
+A high-level design doc for the long-term architecture changes (data-layer service, DB constraints, CI checks).
+A migration plan to apply these changes with zero downtime and clear rollback steps.
+Please treat this as a high-priority maintenance ticket—our user onboarding flow is currently unstable. Let me know if you need any additional context (code snippets, table schemas, or logs).

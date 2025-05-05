@@ -2182,7 +2182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const { data: athleteProfile } = await supabase
                 .from('athlete_profiles')
                 .select('*')
-                .eq('user_id', user.id)
+                .eq('id', user.id)
                 .maybeSingle();
 
               if (athleteProfile) {
@@ -2198,27 +2198,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const { data: directProfile } = await supabase
                 .from('business_profiles')
                 .select('*')
-                .eq('user_id', user.id)
+                .eq('id', user.id)
                 .maybeSingle();
 
               if (directProfile) {
-                console.log(`Found business profile for user with auth_id=${user.id}`);
+                console.log(`Found business profile for user with id=${user.id}`);
                 profileData = directProfile;
               } else {
                 // Then try with database user ID
-                console.log(`No business profile found with auth_id=${user.id}, trying database user_id=${dbUser.id}`);
+                console.log(`No business profile found with auth_id=${user.id}, trying database id=${dbUser.id}`);
                 const { data: dbUserProfile } = await supabase
                   .from('business_profiles')
                   .select('*')
-                  .eq('user_id', dbUser.id)
+                  .eq('id', dbUser.id)
                   .maybeSingle();
                 
                 if (dbUserProfile) {
-                  console.log(`Found business profile for database user_id=${dbUser.id}`);
+                  console.log(`Found business profile for database id=${dbUser.id}`);
                   profileData = dbUserProfile;
                 } else {
                   // Try with string conversion (in case of UUID/string type mismatches)
-                  console.log(`Trying string comparison fallback for user_id=${dbUser.id}`);
+                  console.log(`Trying string comparison fallback for id=${dbUser.id}`);
                   const { data: allProfiles } = await supabase
                     .from('business_profiles')
                     .select('*');
