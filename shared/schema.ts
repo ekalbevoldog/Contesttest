@@ -175,8 +175,8 @@ export type InsertAthlete = z.infer<typeof insertAthleteSchema> & {
 
 // Business profile type definitions
 export const businessSchema = z.object({
-  id: z.number(),
-  auth_id: z.string().uuid().optional(), // Use auth_id to reference Supabase user
+  id: z.string().uuid(),
+  auth_id: z.string().uuid(), // References auth.users(id)
   session_id: z.string(),
   
   // Basic Information
