@@ -7,6 +7,7 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+
 // Create a hook for user authentication
 export async function signInWithEmail(email: string, password: string) {
   return await supabase.auth.signInWithPassword({

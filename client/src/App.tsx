@@ -1,9 +1,16 @@
-import { Switch, Route, useLocation, RouteComponentProps } from "wouter";
-import { queryClient } from "./lib/queryClient";
+
+import { Switch, Route, useLocation } from "wouter";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { Toaster } from "./components/ui/toaster";
+import { SupabaseAuthProvider } from "./hooks/use-supabase-auth";
+import { AuthProvider, useAuth } from "./hooks/use-auth";
+import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "./lib/unified-protected-route";
+import { useToast } from "./hooks/use-toast";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
-// SimpleOnboarding and EnhancedOnboarding removed - consolidated to main onboarding
 import Onboarding from "./pages/Onboarding";
 import AuthPage from "./pages/auth-page";
 import ProfilePage from "./pages/ProfilePage";
@@ -13,68 +20,47 @@ import BusinessInfo from "./pages/BusinessInfo";
 import BusinessDashboard from "./pages/BusinessDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AthleteDashboard from "./pages/AthleteDashboard";
-// Import the subscription-related pages
 import Subscribe from "./pages/Subscribe";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
-
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import { SupabaseAuthProvider } from "./hooks/use-supabase-auth";
-import { AuthProvider, useAuth } from "./hooks/use-auth";
-// Using unified protected route instead of separate components
-import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "./lib/unified-protected-route";
-import { Suspense, lazy, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useToast } from "./hooks/use-toast";
 
-// Define a fallback loading component
+// Wizard Pages
+const WizardLayout = lazy(() => import('./pages/wizard/pro/layout'));
+const StartPage = lazy(() => import('./pages/wizard/pro/start'));
+const AdvancedPage = lazy(() => import('./pages/wizard/pro/advanced'));
+const DeliverablesPage = lazy(() => import('./pages/wizard/pro/deliverables'));
+const MatchPage = lazy(() => import('./pages/wizard/pro/match'));
+const BundlePage = lazy(() => import('./pages/wizard/pro/bundle'));
+const ReviewPage = lazy(() => import('./pages/wizard/pro/review'));
+const TestPage = lazy(() => import('./pages/wizard/pro/test'));
+
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-screen">
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
   </div>
 );
 
-// Simple redirect component
-const RedirectToOnboarding = () => {
-  const [, navigate] = useLocation();
-
-  useEffect(() => {
-    navigate('/onboarding');
-  }, [navigate]);
-
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
-};
-
-// Dashboard redirect component - redirects to the appropriate dashboard based on user role
 const DashboardRedirect = () => {
   const [, navigate] = useLocation();
   const { userType } = useAuth();
-  
+
   useEffect(() => {
-    // Redirect to the appropriate dashboard based on user type
-    if (userType === 'athlete') {
-      navigate('/athlete/dashboard');
-    } else if (userType === 'business') {
-      navigate('/business/dashboard');
-    } else if (userType === 'compliance') {
-      navigate('/compliance/dashboard');
-    } else if (userType === 'admin') {
-      navigate('/admin/dashboard');
-    } else {
-      // Fallback to profile page if user type is unknown
-      navigate('/profile');
-    }
+    if (userType === 'athlete') navigate('/athlete/dashboard');
+    else if (userType === 'business') navigate('/business/dashboard');
+    else if (userType === 'compliance') navigate('/compliance/dashboard');
+    else if (userType === 'admin') navigate('/admin/dashboard');
+    else navigate('/profile');
   }, [navigate, userType]);
 
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+  return <LoadingFallback />;
+};
+
+const WizardRedirect = () => {
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    navigate('/wizard/pro/start');
+  }, [navigate]);
+  return <div>Redirecting to wizard start...</div>;
 };
 
 function Router() {
@@ -84,173 +70,35 @@ function Router() {
       <main className="flex-grow">
         <Suspense fallback={<LoadingFallback />}>
           <Switch>
-            {/* Public routes accessible to everyone */}
             <Route path="/" component={Home} />
-            <Route path="/onboarding" component={Onboarding} />
-            {/* Combined auth route */}
             <Route path="/auth" component={AuthPage} />
-            {/* Redirect /sign-in to /auth for consistency */}
-            <Route path="/sign-in">
-              {() => {
-                window.location.href = "/auth";
-                return null;
-              }}
-            </Route>
-
-            {/* Onboarding routes - accessible after authentication */}
+            <Route path="/sign-in">{() => { window.location.href = "/auth"; return null; }}</Route>
+            <Route path="/onboarding" component={Onboarding} />
             <UnifiedProtectedRoute path="/onboarding" component={Onboarding} />
-
-            {/* Role-specific onboarding routes */}
-            <RoleProtectedRoute 
-              path="/athlete-onboarding" 
-              component={Onboarding} 
-              requiredRole="athlete"
-            />
-            <RoleProtectedRoute 
-              path="/business-onboarding" 
-              component={Onboarding} 
-              requiredRole="business"
-            />
-
-            {/* Alternate paths for onboarding */}
+            <RoleProtectedRoute path="/athlete-onboarding" component={Onboarding} requiredRole="athlete" />
+            <RoleProtectedRoute path="/business-onboarding" component={Onboarding} requiredRole="business" />
             <RoleProtectedRoute path="/athlete/sign-up" component={Onboarding} requiredRole="athlete" />
             <RoleProtectedRoute path="/business/sign-up" component={Onboarding} requiredRole="business" />
-
-            {/* Public info pages */}
             <Route path="/athletes" component={AthleteInfo} />
             <Route path="/businesses" component={BusinessInfo} />
-
-            {/* Redirect exploration path to main onboarding */}
-            <Route path="/explore-matches" component={RedirectToOnboarding} />
-
-            {/* Role-specific protected dashboard routes with profile completion check */}
-            <UnifiedProfileRequiredRoute 
-              path="/athlete/dashboard" 
-              component={AthleteDashboard} 
-              requiredRole="athlete"
-              redirectPath="/athlete-onboarding"
-            />
-            <UnifiedProfileRequiredRoute 
-              path="/business/dashboard" 
-              component={BusinessDashboard} 
-              requiredRole="business"
-              redirectPath="/business-onboarding"
-            />
-            <RoleProtectedRoute 
-              path="/admin/dashboard" 
-              component={AdminDashboard} 
-              requiredRole="admin"
-            />
-
-            {/* Profile routes */}
+            <Route path="/explore-matches">{() => <WizardRedirect />}</Route>
+            <UnifiedProfileRequiredRoute path="/athlete/dashboard" component={AthleteDashboard} requiredRole="athlete" redirectPath="/athlete-onboarding" />
+            <UnifiedProfileRequiredRoute path="/business/dashboard" component={BusinessDashboard} requiredRole="business" redirectPath="/business-onboarding" />
+            <RoleProtectedRoute path="/admin/dashboard" component={AdminDashboard} requiredRole="admin" />
             <UnifiedProtectedRoute path="/profile" component={ProfilePage} />
             <UnifiedProtectedRoute path="/edit-profile" component={EditProfilePage} />
-
-            {/* Main dashboard redirect - user will be redirected based on role */}
             <UnifiedProtectedRoute path="/dashboard" component={DashboardRedirect} />
-            
-            {/* Pro Campaign Wizard Start Page - Direct Implementation */}
-            <Route path="/wizard/pro/start">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const StartPage = require('./pages/wizard/pro/start').default;
-                return (
-                  <WizardLayout>
-                    <StartPage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-
-            <Route path="/wizard/pro/advanced">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const AdvancedPage = require('./pages/wizard/pro/advanced').default;
-                return (
-                  <WizardLayout>
-                    <AdvancedPage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-
-            <Route path="/wizard/pro/deliverables">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const DeliverablesPage = require('./pages/wizard/pro/deliverables').default;
-                return (
-                  <WizardLayout>
-                    <DeliverablesPage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-
-            <Route path="/wizard/pro/match">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const MatchPage = require('./pages/wizard/pro/match').default;
-                return (
-                  <WizardLayout>
-                    <MatchPage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-
-            <Route path="/wizard/pro/bundle">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const BundlePage = require('./pages/wizard/pro/bundle').default;
-                return (
-                  <WizardLayout>
-                    <BundlePage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-
-            <Route path="/wizard/pro/review">
-              {() => {
-                const WizardLayout = require('./pages/wizard/pro/layout').default;
-                const ReviewPage = require('./pages/wizard/pro/review').default;
-                return (
-                  <WizardLayout>
-                    <ReviewPage />
-                  </WizardLayout>
-                );
-              }}
-            </Route>
-
-            {/* Default wizard pro route redirects to start */}
-            <Route path="/wizard/pro">
-              {() => {
-                const { useEffect } = require('react');
-                const { useLocation } = require('wouter');
-                const [, navigate] = useLocation();
-                
-                useEffect(() => {
-                  navigate('/wizard/pro/start');
-                }, [navigate]);
-                
-                return <div>Redirecting to wizard start...</div>;
-              }}
-            </Route>
-            
-            {/* Test page - keeping this one for diagnostics */}
-            <Route path="/wizard/pro/test">
-              {() => {
-                const TestPage = require('./pages/wizard/pro/test').default;
-                return <TestPage />;
-              }}
-            </Route>
-            
-            {/* Subscription routes */}
+            <Route path="/wizard/pro/start">{() => <WizardLayout><StartPage /></WizardLayout>}</Route>
+            <Route path="/wizard/pro/advanced">{() => <WizardLayout><AdvancedPage /></WizardLayout>}</Route>
+            <Route path="/wizard/pro/deliverables">{() => <WizardLayout><DeliverablesPage /></WizardLayout>}</Route>
+            <Route path="/wizard/pro/match">{() => <WizardLayout><MatchPage /></WizardLayout>}</Route>
+            <Route path="/wizard/pro/bundle">{() => <WizardLayout><BundlePage /></WizardLayout>}</Route>
+            <Route path="/wizard/pro/review">{() => <WizardLayout><ReviewPage /></WizardLayout>}</Route>
+            <Route path="/wizard/pro/test">{() => <TestPage />}</Route>
+            <Route path="/wizard/pro" component={WizardRedirect} />
             <Route path="/subscribe" component={Subscribe} />
             <Route path="/subscription/success" component={SubscriptionSuccess} />
             <UnifiedProtectedRoute path="/account/subscription" component={Subscribe} />
-
-            {/* All other routes redirect to home */}
             <Route component={Home} />
           </Switch>
         </Suspense>
@@ -264,35 +112,25 @@ function App() {
   const { toast } = useToast();
   const [serverHealth, setServerHealth] = useState<'unknown' | 'ok' | 'error'>('unknown');
 
-  // Check server health on startup
   useEffect(() => {
     const checkHealth = async () => {
       try {
         const response = await fetch('/api/health-check');
         if (response.ok) {
           const data = await response.json();
-          console.log('Health check results:', data);
-
           if (data.supabase?.status === 'error') {
-            toast({
-              title: "Database Connection Issue",
-              description: "There's a problem connecting to the database. Some features may not work properly.",
-              variant: "destructive"
-            });
+            toast({ title: "Database Connection Issue", description: "There’s a problem connecting to the database.", variant: "destructive" });
             setServerHealth('error');
           } else {
             setServerHealth('ok');
           }
         } else {
-          console.error('Health check failed:', await response.text());
           setServerHealth('error');
         }
       } catch (err) {
-        console.error('Error checking server health:', err);
         setServerHealth('error');
       }
     };
-
     checkHealth();
   }, [toast]);
 
@@ -300,7 +138,6 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>
         <AuthProvider>
-          {/* Session refresh is handled internally by SupabaseAuthProvider */}
           <Router />
           <Toaster />
         </AuthProvider>
