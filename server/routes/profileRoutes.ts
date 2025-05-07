@@ -22,7 +22,7 @@ router.post('/create-business-profile', requireAuth, async (req, res) => {
       .from('users').select('role,email').eq('id',userId).maybeSingle();
     if (ue) throw ue;
     if (!u || u.role!=='business') return res.status(400).json({ error:'Invalid business user' });
-
+// NEED TO EDIT AND REVIEW
     const sessionId = uuidv4();
     const { data: profile, error: pe } = await supabase
       .from('business_profiles')
