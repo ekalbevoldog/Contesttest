@@ -10,7 +10,6 @@ ADD COLUMN IF NOT EXISTS subscription_cancel_at_period_end BOOLEAN DEFAULT FALSE
 -- Create subscription_history table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.subscription_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id TEXT NOT NULL,
   subscription_id TEXT NOT NULL,
   status TEXT NOT NULL,
   event_type TEXT NOT NULL,
@@ -18,8 +17,8 @@ CREATE TABLE IF NOT EXISTS public.subscription_history (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   
   CONSTRAINT fk_user
-    FOREIGN KEY (user_id)
-    REFERENCES public.users(auth_id)
+    FOREIGN KEY (id)
+    REFERENCES public.users(id)
     ON DELETE CASCADE
 );
 
@@ -29,7 +28,7 @@ ALTER TABLE public.subscription_history ENABLE ROW LEVEL SECURITY;
 -- Allow users to view their own subscription history
 CREATE POLICY "Users can view own subscription history" ON public.subscription_history
 FOR SELECT
-USING (auth.uid() = user_id);
+USING (auth.uid() = id);
 
 -- Allow admins to view all subscription history
 CREATE POLICY "Admins can view all subscription history" ON public.subscription_history
@@ -37,7 +36,7 @@ FOR SELECT
 USING (
   EXISTS (
     SELECT 1 FROM public.users
-    WHERE users.auth_id = auth.uid()
+    WHERE users.id = auth.uid()
     AND users.role = 'admin'
   )
 );

@@ -7,6 +7,9 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
 import { supabase, supabaseAdmin } from "./supabase.js";
+// NEW — right under your other imports
+import connectPgSimple from "connect-pg-simple";
+import { Pool } from "pg";
 
 // Helper for password hashing
 const scryptAsync = promisify(scrypt);

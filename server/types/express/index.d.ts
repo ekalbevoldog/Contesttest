@@ -17,7 +17,7 @@ declare global {
       profileId?: number | string;
       profileCompleted?: boolean;
       // Additional fields for compatibility
-      userId?: string | number;
+      Id?: string | number;
       sessionId?: string;
       athleteId?: number;
       businessId?: number;

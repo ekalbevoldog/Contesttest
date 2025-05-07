@@ -131,7 +131,7 @@ router.post("/create-checkout-session", requireAuth, async (req, res) => {
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: {
-          userId: user.id,
+          Id: user.id,
         },
       });
       

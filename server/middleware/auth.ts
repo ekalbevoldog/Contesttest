@@ -107,12 +107,12 @@ export const requireAuth = async (
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('auth_id', data.user.id)
+      req.user.id = data.user.id
       .single();
       
     if (userError) {
       // Only log the error, don't fail - try alternative lookup method
-      console.log('User data lookup error with auth_id:', userError);
+      console.log('User data lookup error with id:', userError);
       
       // Try looking up by email instead
       const { data: userByEmail, error: emailError } = await supabase
@@ -127,7 +127,6 @@ export const requireAuth = async (
         // Instead of failing, create a basic user object from the token data
         req.user = {
           id: data.user.id,
-          auth_id: data.user.id,
           email: data.user.email,
           role: role,
           created_at: new Date().toISOString()
@@ -137,12 +136,11 @@ export const requireAuth = async (
         req.user = userByEmail;
       }
     } else if (!userData) {
-      console.warn('No user data found for auth_id:', data.user.id);
+      console.warn('No user data found for id:', data.user.id);
       
       // Create a basic user object from the token data
       req.user = {
         id: data.user.id,
-        auth_id: data.user.id,
         email: data.user.email,
         role: role,
         created_at: new Date().toISOString()

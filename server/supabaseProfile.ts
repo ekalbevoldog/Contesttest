@@ -56,35 +56,35 @@ async function safelyUpdateUserProfile(userId: string, profileId: string | numbe
  */
 export async function getAthleteByUserId(userId: string) {
   try {
-    // Try getting by user_id first
+    // Try getting by id first
     const { data, error } = await supabase
       .from('athlete_profiles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .maybeSingle();
 
     if (!error && data) {
-      console.log('Found athlete profile by user_id:', userId);
+      console.log('Found athlete profile by uid:', userId);
       return data;
     }
     
-    // Try getting by auth_id as fallback
+    // Try getting by id as fallback
     const { data: userData } = await supabase
       .from('users')
       .select('id')
-      .eq('auth_id', userId)
+      .eq('id', userId)
       .maybeSingle();
       
     if (userData?.id) {
-      console.log('Found user id for auth_id:', userData.id);
+      console.log('Found user id for id:', userData.id);
       const { data: profileData, error: profileError } = await supabase
         .from('athlete_profiles')
         .select('*')
-        .eq('user_id', userData.id)
+        .eq('id', userData.id)
         .maybeSingle();
         
       if (!profileError && profileData) {
-        console.log('Found athlete profile by auth_id lookup');
+        console.log('Found athlete profile by id lookup');
         return profileData;
       }
     }
@@ -118,55 +118,55 @@ export async function getBusinessByUserId(userId: string) {
       console.error('Error finding business profile with direct id:', directError);
     }
     
-    // If direct match fails, try to find user record by auth_id (UUID from Supabase Auth)
-    const { data: userByAuthId, error: authIdError } = await supabase
+    // If direct match fails, try to find user record by id (UUID from Supabase Auth)
+    const { data: userById, error: IdError } = await supabase
       .from('users')
-      .select('id, email, auth_id')
-      .eq('auth_id', userId)
+      .select('id, email, id')
+      .eq('id', userId)
       .maybeSingle();
     
-    if (userByAuthId) {
-      console.log('Found matching user by auth_id search:', userByAuthId);
+    if (userById) {
+      console.log('Found matching user by id search:', userById);
       
-      // Look up business profile using this user ID as the id field (not user_id)
+      // Look up business profile using this user ID as the id field (not uid)
       const { data: profileByUserId, error: profileError } = await supabase
         .from('business_profiles')
         .select('*')
-        .eq('id', userByAuthId.id)
+        .eq('id', userById.id)
         .maybeSingle();
         
       if (profileByUserId) {
         console.log('Found business profile through user record:', profileByUserId);
         return profileByUserId;
       } else if (profileError) {
-        console.error('Error finding business profile with direct user_id:', profileError);
+        console.error('Error finding business profile with direct id:', profileError);
       } else {
-        console.log('No business profile found for user ID:', userByAuthId.id);
+        console.log('No business profile found for user ID:', userByhId.id);
       }
     } else if (authIdError) {
-      console.log('Error finding user by auth_id:', authIdError);
+      console.log('Error finding user by id:', IdError);
     }
     
-    // No need to try direct user_id lookup, the field name has changed to 'id'
+    // No need to try direct id lookup, the field name has changed to 'id'
     // Skip this section
     
     // Try by email as fallback
     // First get all users to find our target user
     const { data: allUsers, error: usersError } = await supabase
       .from('users')
-      .select('id, email, auth_id');
+      .select('id, email, id');
       
     if (usersError) {
       console.log('Error fetching users:', usersError);
     } else if (allUsers && allUsers.length > 0) {
-      // Find user by userId match on either id or auth_id
+      // Find user by userId match on either id or id
       const matchingUser = allUsers.find(u => 
         u.id?.toString() === userId || 
-        u.auth_id === userId
+        u.id === userId
       );
       
       if (matchingUser) {
-        console.log('Found matching user by id/auth_id search:', matchingUser);
+        console.log('Found matching user by id search:', matchingUser);
         
         // Look up business profile using this user ID as the ID field
         const { data: profileData } = await supabase
@@ -200,7 +200,7 @@ async function syncToDomain(userType: string, profile: any) {
     await supabaseAdmin
       .from('athletes')
       .upsert({
-        user_id:          profile.user_id,
+        id:          profile.id,
         full_name:        profile.name,
         date_of_birth:    profile.birthdate,
         gender:           profile.gender,
@@ -211,13 +211,13 @@ async function syncToDomain(userType: string, profile: any) {
         position:         profile.position,
         zip_code:         profile.zipcode ?? profile.zip_code,
         bio:              profile.bio,
-      }, { onConflict: ['user_id'] });
+      }, { onConflict: ['id'] });
   } else if (userType === 'business') {
     // Use the primary key 'id' for businesses instead of 'user_id'
     await supabaseAdmin
       .from('businesses')
       .upsert({
-        id:            profile.id, // Use 'id' instead of 'user_id'
+        id:            profile.id, // Use 'id' instead of 'id'
         company_name:  profile.name,
         email:         profile.email,
         industry:      profile.industry,
@@ -267,24 +267,24 @@ export function setupProfileEndpoints(app: Express) {
     // Continue with userId if available, otherwise profile creation might still fail
     // but we won't block it at this validation step
 
-    // First, look up the internal user ID if we have an auth_id
+    // First, look up the internal user ID if we have an id
     let internalUserId = userId;
     
     try {
       // Check if the userId is from Auth (UUID format)
       if (userId.includes('-') && userId.length > 30) {
-        console.log('Looking up internal user ID for auth_id:', userId);
+        console.log('Looking up internal user ID for id:', userId);
         const { data: userData, error } = await supabase
           .from('users')
           .select('id')
-          .eq('auth_id', userId)
+          .eq('id', userId)
           .maybeSingle();
           
         if (userData?.id) {
           console.log('Found internal user ID:', userData.id);
           internalUserId = userData.id;
         } else if (error) {
-          console.error('Error finding user by auth_id:', error);
+          console.error('Error finding user by id:', error);
         }
       }
     } catch (err) {
@@ -317,7 +317,7 @@ export function setupProfileEndpoints(app: Express) {
       base.id = internalUserId;
     } else {
       // For athlete_profiles, it's still 'user_id'
-      base.user_id = internalUserId;
+      base.id = internalUserId;
     }
 
     // Choose the correct staging table
@@ -326,7 +326,7 @@ export function setupProfileEndpoints(app: Express) {
       : 'business_profiles';
 
     // Upsert using proper conflict key based on table
-    const conflictKey = generatedUserType === 'athlete' ? 'user_id' : 'id';
+    const conflictKey = generatedUserType === 'athlete' ? 'id' : 'id';
     console.log(`Using ${conflictKey} as conflict key for ${table} upsert`);
     
     // Double-check that the ID field is present before attempting upsert

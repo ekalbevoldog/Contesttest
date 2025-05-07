@@ -8,9 +8,9 @@ ADD COLUMN IF NOT EXISTS profile_image TEXT;
 
 -- Update RLS policies to allow access to these columns
 ALTER POLICY "Users can view own business profiles" ON public.business_profiles
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
 
 ALTER POLICY "Users can view own athlete profiles" ON public.athlete_profiles
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
