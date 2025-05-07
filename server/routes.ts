@@ -10,7 +10,7 @@ import { setupSupabaseAuth } from "./supabaseAuth.js";
 /* ---------- Core resource routers (compiled to .js at runtime) --- */
 import profileRoutes  from "./routes/profileRoutes";
 import publicRoutes   from "./routes-public.js";
-import webhookroutes  from "./webhooks.ts";
+import webhookRoutes  from "./webhooks.js";
 
 /* ---------- registerRoutes – expected by index.ts ---------------- */
 export function registerRoutes(app: Express) {
