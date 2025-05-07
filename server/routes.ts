@@ -20,8 +20,7 @@ export function registerRoutes(app: Express) {
 
   /* 2️⃣  Auth‑protected JSON APIs ---------------------------------- */
   app.use("/api/profile",  profileRoutes);   // athlete | business | user
-  // add more protected routers here as you create them, e.g.:
-  // app.use("/api/matches", matchRoutes);
+
 
   /* 3️⃣  Webhooks (Stripe, etc.) ----------------------------------- */
   app.use("/api/webhooks", webhookRoutes);
