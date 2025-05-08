@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
 import { Crown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ export default function SubscriptionBadge({
   redirectToUpgrade = true 
 }: SubscriptionBadgeProps) {
   const [, navigate] = useLocation();
-  const { user } = useSupabaseAuth();
+  const { user } = useAuth();
   const [status, setStatus] = useState<'loading' | 'active' | 'free' | 'error'>('loading');
   const [planName, setPlanName] = useState<string>('');
   

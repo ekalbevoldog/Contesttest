@@ -5,16 +5,20 @@
 import { Express } from "express";
 
 /* ---------- Auth (Supabase JWT + cookies) ------------------------ */
-import { setupSupabaseAuth } from "./supabaseAuth.js";
+import { setupSupabaseAuth } from "./supabaseAuth";
 
 /* ---------- Core resource routers (compiled to .js at runtime) --- */
 import profileRoutes  from "./routes/profileRoutes";
-import publicRoutes from "./routes/Routes-public.js";
-import webhookRoutes  from "./routes/webhookRoutes.ts";
+import publicRoutes from "./routes/Routes-public";
+import webhookRoutes  from "./routes/webhookRoutes";
 // NEED TO EDIT AND REVIEW
 
 /* ---------- registerRoutes – expected by index.ts ---------------- */
-export function registerRoutes(app: Express) {
+// Returns HTTP server for WebSocket support
+import http from 'http';
+export function registerRoutes(app: Express): http.Server {
+  // Create HTTP server for WebSocket support
+  const httpServer = http.createServer(app);
   /* 1️⃣  Authentication & session‑cookies -------------------------- */
   setupSupabaseAuth(app);            // mounts /api/auth/* endpoints
 
@@ -37,6 +41,9 @@ export function registerRoutes(app: Express) {
 
   /* 4️⃣  Public (no‑auth) pages & fallback static assets ----------- */
   app.use("/", publicRoutes);
+  
+  // Return the HTTP server for use in WebSocket setup
+  return httpServer;
 }
 
 /* ------------------------------------------------------------------

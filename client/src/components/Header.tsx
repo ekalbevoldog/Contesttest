@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import React, { ReactNode } from "react";
 // Remove the legacy auth hook and only use Supabase
-import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils"; // Import cn for conditional classes
 
 // Remove duplicate imports block
@@ -195,8 +195,8 @@ const NavDropdown: React.FC<{
 export default function Header() {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
-  // Only use Supabase auth
-  const { user, userData, signOut } = useSupabaseAuth();
+  // Use the centralized auth hook as the single source of truth
+  const { user, profile: userData, logoutMutation } = useAuth();
   
   // Set user type from userData with fallback options
   const userType = (userData?.role || user?.role || user?.user_metadata?.role) as UserType || null;
@@ -210,7 +210,7 @@ export default function Header() {
   });
 
   const handleLogout = async () => {
-    await signOut();
+    await logoutMutation.mutateAsync();
     setOpen(false); // Close sheet on logout
   };
 

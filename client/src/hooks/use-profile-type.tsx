@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase-client";
-import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { useAuth } from "@/hooks/use-auth";
 
 export type ProfileType = "business" | "athlete" | "compliance" | "admin" | null;
 
 export function useProfileType() {
-  const { user, isLoading: authLoading } = useSupabaseAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [profileType, setProfileType] = useState<ProfileType>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

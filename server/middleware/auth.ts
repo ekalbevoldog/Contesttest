@@ -107,7 +107,7 @@ export const requireAuth = async (
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
-      req.user.id = data.user.id
+      .eq('id', data.user.id)
       .single();
       
     if (userError) {

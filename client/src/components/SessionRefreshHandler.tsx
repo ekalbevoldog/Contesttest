@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { recoverSession } from '@/lib/session-persistence';
 
 /**
@@ -9,13 +9,13 @@ import { recoverSession } from '@/lib/session-persistence';
  * to maintain persistent authentication without requiring user action.
  */
 export function SessionRefreshHandler() {
-  const { user, session, refreshSession } = useSupabaseAuth();
+  const { user, refetchProfile } = useAuth();
   const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
   
   // Attempt to recover session on initial load if no active session exists
   useEffect(() => {
     async function attemptSessionRecovery() {
-      if (!user && !session) {
+      if (!user) {
         console.log('[SessionHandler] No active session, attempting recovery...');
         const recovered = await recoverSession();
         if (recovered) {
@@ -27,42 +27,29 @@ export function SessionRefreshHandler() {
     }
     
     attemptSessionRecovery();
-  }, [user, session]);
+  }, [user]);
 
   // Regular interval session refresh
   useEffect(() => {
-    if (!user || !session) return;
+    if (!user) return;
     
     const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
-    const REFRESH_BEFORE_EXPIRY = 5 * 60 * 1000; // 5 minutes before expiry
     
     function scheduleNextRefresh() {
-      // Calculate time until next refresh
-      let timeUntilNextRefresh = REFRESH_INTERVAL;
-      
-      // If session has expiry info, ensure we refresh before it expires
-      if (session.expires_at) {
-        const expiryTime = session.expires_at * 1000; // Convert to milliseconds
-        const timeUntilExpiry = expiryTime - Date.now();
-        
-        // If expiring soon, refresh earlier
-        if (timeUntilExpiry < REFRESH_INTERVAL) {
-          timeUntilNextRefresh = Math.max(timeUntilExpiry - REFRESH_BEFORE_EXPIRY, 10000);
-          console.log(`[SessionHandler] Session expires in ${Math.floor(timeUntilExpiry / 60000)}m, scheduling refresh in ${Math.floor(timeUntilNextRefresh / 60000)}m`);
-        }
-      }
+      // Calculate time until next refresh - simplified without session expiry
+      const timeUntilNextRefresh = REFRESH_INTERVAL;
       
       return setTimeout(async () => {
-        console.log('[SessionHandler] Time for scheduled session refresh');
+        console.log('[SessionHandler] Time for scheduled profile refresh');
         await performRefresh();
       }, timeUntilNextRefresh);
     }
     
     async function performRefresh() {
       try {
-        await refreshSession();
+        await refetchProfile();
         setLastRefresh(Date.now());
-        console.log('[SessionHandler] Session refreshed successfully');
+        console.log('[SessionHandler] Session refreshed successfully via profile refetch');
       } catch (error) {
         console.error('[SessionHandler] Error refreshing session:', error);
       }
@@ -75,11 +62,11 @@ export function SessionRefreshHandler() {
       console.log('[SessionHandler] Clearing session refresh timer');
       clearTimeout(refreshTimer);
     };
-  }, [user, session, refreshSession, lastRefresh]);
+  }, [user, refetchProfile, lastRefresh]);
 
   // Safety net: Periodically check session validity
   useEffect(() => {
-    if (!user || !session) return;
+    if (!user) return;
     
     const VALIDITY_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes
     
@@ -88,9 +75,9 @@ export function SessionRefreshHandler() {
       
       // If it's been too long since our last successful refresh, force a new one
       if (timeSinceLastRefresh > VALIDITY_CHECK_INTERVAL) {
-        console.log('[SessionHandler] Extended period without refresh, forcing session check');
+        console.log('[SessionHandler] Extended period without refresh, forcing profile check');
         try {
-          await refreshSession();
+          await refetchProfile();
           setLastRefresh(Date.now());
         } catch (error) {
           console.error('[SessionHandler] Validity check refresh failed:', error);
@@ -108,19 +95,19 @@ export function SessionRefreshHandler() {
     return () => {
       clearInterval(validityCheck);
     };
-  }, [user, session, refreshSession, lastRefresh]);
+  }, [user, refetchProfile, lastRefresh]);
   
   // Handle page visibility changes to refresh session when tab becomes active
   useEffect(() => {
-    if (!user || !session) return;
+    if (!user) return;
     
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
         // If the page becomes visible and it's been a while since the last refresh
         const timeSinceLastRefresh = Date.now() - lastRefresh;
         if (timeSinceLastRefresh > 5 * 60 * 1000) { // 5 minutes
-          console.log('[SessionHandler] Page became visible, refreshing session');
-          refreshSession();
+          console.log('[SessionHandler] Page became visible, refreshing profile');
+          refetchProfile();
           setLastRefresh(Date.now());
         }
       }
@@ -131,7 +118,7 @@ export function SessionRefreshHandler() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user, session, refreshSession, lastRefresh]);
+  }, [user, refetchProfile, lastRefresh]);
 
   // This is a background component, it doesn't render anything
   return null;

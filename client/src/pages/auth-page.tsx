@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Lock, Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { storeAuthData, isAuthenticated } from '@/lib/simple-auth';
 import { FadeIn } from '@/components/animations/FadeIn';
 
@@ -49,7 +49,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading, signIn, signUp } = useSupabaseAuth();
+  const { user, isLoading, loginMutation, registerMutation } = useAuth();
   // Use the pending state directly from the mutations for better UX
   
   // Redirect if already logged in based on role
@@ -175,50 +175,52 @@ export default function AuthPage() {
   // Handle login form submission
   const onLoginSubmit = async (values: LoginFormValues) => {
     try {
-      // Use the signIn method from useSupabaseAuth hook
-      const { error, user } = await signIn(values.email, values.password);
-      
-      if (error) {
-        toast({
-          title: "Login failed",
-          description: error.message || "Unable to log in. Please check your credentials and try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // If login successful, check for role and redirect directly to appropriate dashboard
-      if (user) {
-        console.log('[AuthPage] Login successful, directing to dashboard');
-        
-        // Get user role from metadata or session data
-        const role = user.user_metadata?.role || 
-                     user.role || 
-                     localStorage.getItem('userRole');
-        
-        console.log('[AuthPage] Detected role for direct redirect:', role);
-        
-        // Redirect based on role
-        if (role === 'athlete') {
-          navigate('/athlete/dashboard');
-        } else if (role === 'business') {
-          navigate('/business/dashboard');
-        } else if (role === 'compliance') {
-          navigate('/compliance/dashboard');
-        } else if (role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          // Fallback
-          navigate('/profile');
+      // Use the loginMutation from useAuth hook
+      loginMutation.mutate({
+        email: values.email,
+        password: values.password
+      }, {
+        onSuccess: (data) => {
+          console.log('[AuthPage] Login successful, directing to dashboard');
+          
+          // Get user role from metadata or session data
+          const loginUser = data?.user;
+          const role = loginUser?.user_metadata?.role || 
+                      loginUser?.role || 
+                      localStorage.getItem('userRole');
+          
+          console.log('[AuthPage] Detected role for direct redirect:', role);
+          
+          // Redirect based on role
+          if (role === 'athlete') {
+            navigate('/athlete/dashboard');
+          } else if (role === 'business') {
+            navigate('/business/dashboard');
+          } else if (role === 'compliance') {
+            navigate('/compliance/dashboard');
+          } else if (role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            // Fallback
+            navigate('/profile');
+          }
+          
+          toast({
+            title: "Login successful",
+            description: "Welcome back!",
+          });
+        },
+        onError: (error) => {
+          console.error('Login error in component:', error);
+          toast({
+            title: "Login failed",
+            description: error.message || "Unable to log in. Please check your credentials and try again.",
+            variant: "destructive",
+          });
         }
-        
-        toast({
-          title: "Login successful",
-          description: "Welcome back!",
-        });
-      }
+      });
     } catch (error: any) {
-      console.error('Login error in component:', error);
+      console.error('Unexpected login error in component:', error);
       toast({
         title: "Login failed",
         description: error.message || "An unexpected error occurred during login.",
@@ -230,57 +232,51 @@ export default function AuthPage() {
   // Handle register form submission
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     try {
-      // Use the signUp method from useSupabaseAuth hook
-      // Format the data according to the modified registerUser function in supabase-client.ts
-      const { error, user } = await signUp(values.email, values.password, {
+      // Use the registerMutation from useAuth hook
+      registerMutation.mutate({
+        email: values.email,
+        password: values.password,
         fullName: `${values.firstName} ${values.lastName}`,
         role: values.role
-      });
-      
-      if (error) {
-        toast({
-          title: "Registration failed",
-          description: error.message || "Unable to create account. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      } 
-      
-      // If we get confirmation, redirect to the appropriate dashboard
-      if (user) {
-        console.log('[AuthPage] Registration successful, directing to dashboard');
-        
-        // Store the user role in localStorage for persistence
-        localStorage.setItem('userRole', values.role);
-        
-        toast({
-          title: "Registration successful",
-          description: "Your account has been created. Welcome!",
-        });
-        
-        // Redirect based on role
-        if (values.role === 'athlete') {
-          navigate('/athlete/dashboard');
-        } else if (values.role === 'business') {
-          navigate('/business/dashboard');
-        } else if (values.role === 'compliance') {
-          navigate('/compliance/dashboard');
-        } else if (values.role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          // Fallback
-          navigate('/profile');
+      }, {
+        onSuccess: (data) => {
+          const regUser = data?.user;
+          
+          console.log('[AuthPage] Registration successful, directing to dashboard');
+          
+          // Store the user role in localStorage for persistence
+          localStorage.setItem('userRole', values.role);
+          
+          toast({
+            title: "Registration successful",
+            description: "Your account has been created. Welcome!",
+          });
+          
+          // Redirect based on role
+          if (values.role === 'athlete') {
+            navigate('/athlete/dashboard');
+          } else if (values.role === 'business') {
+            navigate('/business/dashboard');
+          } else if (values.role === 'compliance') {
+            navigate('/compliance/dashboard');
+          } else if (values.role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            // Fallback
+            navigate('/profile');
+          }
+        },
+        onError: (error) => {
+          console.error('Registration error in component:', error);
+          toast({
+            title: "Registration failed",
+            description: error.message || "Unable to create account. Please try again.",
+            variant: "destructive",
+          });
         }
-      } else {
-        // If auto-login isn't working, show success and direct to login
-        toast({
-          title: "Registration successful",
-          description: "We've created your account. You can now log in.",
-        });
-        setActiveTab('login');
-      }
+      });
     } catch (error: any) {
-      console.error('Registration error in component:', error);
+      console.error('Unexpected registration error in component:', error);
       toast({
         title: "Registration failed",
         description: error.message || "An unexpected error occurred during registration.",

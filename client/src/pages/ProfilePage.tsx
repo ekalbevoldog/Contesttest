@@ -1,7 +1,43 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+
+// Define a comprehensive profile data interface to type-check all possible profile fields
+interface ProfileData {
+  id?: string | number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  joined?: string;
+  lastActive?: string;
+  position?: string;
+  title?: string;
+  company?: string;
+  location?: string;
+  bio?: string;
+  sport?: string;
+  division?: string;
+  school?: string;
+  follower_count?: number;
+  content_style?: string;
+  compensation_goals?: string;
+  industry?: string;
+  company_size?: string;
+  product_type?: string;
+  campaign_vibe?: string;
+  audience_goals?: string;
+  created_at?: string | Date;
+  updated_at?: string | Date;
+  profile_image?: string;
+  website?: string;
+  linkedin_url?: string;
+  linkedin?: string;
+  twitter_url?: string;
+  twitter?: string;
+  instagram_url?: string;
+  instagram?: string;
+  [key: string]: any; // For any other fields that might be in the profile
+}
 import { Loader2, User, Mail, Phone, Link as LinkIcon, Calendar, Building, Edit, MapPin, ArrowLeft, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UnifiedProtectedRoute } from '@/lib/unified-protected-route';
@@ -21,7 +57,6 @@ import { Separator } from '@/components/ui/separator';
 
 const ProfileContent = () => {
   const { user, isLoading, profile, userType } = useAuth();
-  const { user: supabaseUser } = useSupabaseAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
@@ -92,13 +127,13 @@ const ProfileContent = () => {
   ].filter(link => link.url);
 
   // Determine user profile data to display
-  const profileData = {
+  const profileData: ProfileData = {
     name: profile?.name || user?.user_metadata?.full_name || 'Anonymous User',
     email: profile?.email || user?.email,
     phone: profile?.phone || 'Not provided',
     joined: formatDate(user?.created_at || profile?.created_at),
     lastActive: formatDate(user?.last_sign_in_at || profile?.updated_at),
-    ...profile
+    ...(profile as ProfileData || {})
   };
 
   return (

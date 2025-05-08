@@ -1,11 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from './supabase-client'; // Import from the centralized client
 
-// Hard-coded Supabase credentials from the user-provided details
-const supabaseUrl = 'https://yfkqvuevaykxizpndhke.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlma3F2dWV2YXlreGl6cG5kaGtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3NTExNDMsImV4cCI6MjA2MDMyNzE0M30.fWogNLRxTPk8uEYA8bh3SoeiZoyrpPlv5zt0pSVJu4s';
+// This file is maintained for backward compatibility with existing code
+// All new code should use the getSupabase() function from supabase-client.ts
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create a proxy that delegates all operations to the singleton instance
+// from supabase-client.ts to avoid multiple instances problem
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get: (target, prop) => {
+    try {
+      const supabaseInstance = getSupabase();
+      // @ts-ignore
+      return supabaseInstance[prop];
+    } catch (error) {
+      console.error('[Supabase Proxy] Error accessing Supabase client:', error);
+      // Fallback to a dummy method that returns a proper error in a Supabase-like format
+      if (typeof prop === 'string' && ['auth', 'from', 'storage', 'functions'].includes(prop)) {
+        return new Proxy({}, {
+          get: () => (...args: any[]) => {
+            console.warn(`[Supabase] Method ${String(prop)} called before initialization`);
+            return { data: null, error: { message: 'Supabase client not initialized' } };
+          }
+        });
+      }
+      return undefined;
+    }
+  }
+});
 
 
 // Create a hook for user authentication

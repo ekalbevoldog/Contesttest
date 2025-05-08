@@ -7,9 +7,7 @@
 import { Route, RouteComponentProps, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
-import { isAuthenticated, getStoredAuthData } from "./simple-auth";
-import { useAuth } from "@/hooks/use-auth"; // Import the enhanced useAuth hook
+import { useAuth } from "@/hooks/use-auth"; // Single source of truth for authentication
 
 interface ProtectedRouteProps {
   component: React.ComponentType<any>;
@@ -42,12 +40,9 @@ export function UnifiedProtectedRoute({
   const userType = user?.role || 'visitor';
   const userHasProfile = !!profile;
   
-  // Also get Supabase auth for backwards compatibility
-  const { user: supabaseUser, isLoading: isSupabaseLoading } = useSupabaseAuth();
-  
   useEffect(() => {
-    // Wait for both auth methods to complete loading
-    if (isAuthLoading || isSupabaseLoading) return;
+    // Wait for auth to complete loading
+    if (isAuthLoading) return;
     
     console.log('[UnifiedProtectedRoute] Auth state:', {
       hasUser: !!user,
@@ -57,7 +52,7 @@ export function UnifiedProtectedRoute({
       requiresProfile
     });
     
-    // First try our main auth hook which has enhanced profile detection
+    // Use the useAuth() hook as the single source of truth
     if (user) {
       // Determine user role using the enhanced userType property
       const effectiveRole = userType || user.role || user.userType || 'visitor';
@@ -150,128 +145,11 @@ export function UnifiedProtectedRoute({
       return;
     }
     
-    // Fallback to Supabase auth if our main hook doesn't have a user
-    if (supabaseUser) {
-      const userRole = supabaseUser.userType || supabaseUser.role || supabaseUser.user_metadata?.role || 'visitor';
-      
-      // Check role requirement if specified
-      if (requiredRole) {
-        let hasRequiredRole = false;
-        
-        // Special handling for business role - check multiple ways the role could be stored
-        if (requiredRole === 'business' || (Array.isArray(requiredRole) && requiredRole.includes('business'))) {
-          // More flexible check for business users
-          const isBusinessUser = 
-            userRole === 'business' || 
-            supabaseUser.role === 'business' || 
-            supabaseUser.userType === 'business' ||
-            (supabaseUser.user_metadata?.role === 'business') ||
-            (typeof supabaseUser.email === 'string' && (supabaseUser.email.includes('@business') || supabaseUser.email.includes('business@')));
-            
-          console.log('[UnifiedProtectedRoute] Supabase business role check:', { 
-            isBusinessUser, 
-            userRole, 
-            userMetaRole: supabaseUser.user_metadata?.role 
-          });
-            
-          hasRequiredRole = !!isBusinessUser; // Convert to boolean
-        } else {
-          // Standard role check for other roles
-          hasRequiredRole = Array.isArray(requiredRole)
-            ? requiredRole.includes(userRole)
-            : userRole === requiredRole;
-        }
-        
-        if (!hasRequiredRole) {
-          console.log('[UnifiedProtectedRoute] Supabase user does not have required role. Has:', userRole, 'Required:', requiredRole);
-          // User does not have the required role, redirect to appropriate dashboard
-          redirectBasedOnRole(userRole);
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // Check profile requirement if specified
-      if (requiresProfile) {
-        const hasProfile = checkProfileCompletion(supabaseUser);
-        if (!hasProfile) {
-          // User does not have a complete profile, redirect
-          navigate(redirectPath);
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // User is authenticated and meets all requirements
-      setIsAuthorized(true);
-      setUserData(supabaseUser);
-      setIsLoading(false);
-      return;
-    }
-    
-    // Fallback to simple-auth if not authenticated with other methods
-    const simpleAuthUser = isAuthenticated() ? getStoredAuthData()?.user : null;
-    if (simpleAuthUser) {
-      const userRole = simpleAuthUser.role || 'visitor';
-      
-      // Check role requirement if specified
-      if (requiredRole) {
-        const hasRequiredRole = Array.isArray(requiredRole)
-          ? requiredRole.includes(userRole)
-          : userRole === requiredRole;
-        
-        if (!hasRequiredRole) {
-          // User does not have the required role, redirect to appropriate dashboard
-          redirectBasedOnRole(userRole);
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // User is authenticated and meets role requirements
-      setIsAuthorized(true);
-      setUserData(simpleAuthUser);
-      setIsLoading(false);
-      return;
-    }
-    
-    // Check localStorage as a last resort
-    try {
-      const cachedUserData = localStorage.getItem('contestedUserData');
-      if (cachedUserData) {
-        const parsedData = JSON.parse(cachedUserData);
-        if (parsedData && parsedData.id) {
-          console.log('[UnifiedProtectedRoute] Using cached user data as fallback');
-          const cachedRole = parsedData.userType || parsedData.role || 'visitor';
-          
-          // Check role requirement if applicable
-          if (requiredRole) {
-            const hasRequiredRole = Array.isArray(requiredRole)
-              ? requiredRole.includes(cachedRole)
-              : cachedRole === requiredRole;
-            
-            if (!hasRequiredRole) {
-              redirectBasedOnRole(cachedRole);
-              setIsLoading(false);
-              return;
-            }
-          }
-          
-          setIsAuthorized(true);
-          setUserData(parsedData);
-          setIsLoading(false);
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('[UnifiedProtectedRoute] Error reading cached user data:', error);
-    }
-    
     console.log('[UnifiedProtectedRoute] No authenticated user found, redirecting to auth page');
     // Not authenticated with any method, redirect to auth page
     navigate(redirectPath || '/auth');
     setIsLoading(false);
-  }, [user, userType, userHasProfile, supabaseUser, isAuthLoading, isSupabaseLoading, requiredRole, requiresProfile, redirectPath, navigate]);
+  }, [user, userType, userHasProfile, isAuthLoading, requiredRole, requiresProfile, redirectPath, navigate]);
   
   // Helper function to redirect based on user role
   function redirectBasedOnRole(role: string) {

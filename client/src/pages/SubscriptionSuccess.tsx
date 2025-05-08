@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQueryParams } from '@/hooks/use-query-params';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
 import { CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { UnifiedProtectedRoute } from '@/lib/unified-protected-route';
+import { SimpleProtectedRoute } from '@/lib/simplified-protected-route';
 
 const SubscriptionSuccessContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
-  const { user } = useSupabaseAuth();
+  const { user } = useAuth();
   const [, navigate] = useLocation();
   const query = useQueryParams();
   
@@ -161,9 +161,9 @@ const SubscriptionSuccessContent = () => {
 
 const SubscriptionSuccess = () => {
   return (
-    <UnifiedProtectedRoute>
+    <SimpleProtectedRoute>
       <SubscriptionSuccessContent />
-    </UnifiedProtectedRoute>
+    </SimpleProtectedRoute>
   );
 };
 

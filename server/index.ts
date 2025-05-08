@@ -2,10 +2,10 @@ import express from 'express'
 import path from 'path'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
-import { registerRoutes } from './routes.js'
-import { registerPublicRoutes } from './routes-public.js'
-import { setupSupabaseAuth } from './supabaseAuth.js'
-import { setupProfileEndpoints } from './supabaseProfile.js'
+import { registerRoutes } from './routes'
+import publicRoutes from './routes/Routes-public'
+import { setupSupabaseAuth } from './supabaseAuth'
+import { setupProfileEndpoints } from './supabaseProfile'
 
 // Load environment variables (including SUPABASE_URL, SUPABASE_ANON_KEY)
 dotenv.config()
@@ -30,7 +30,7 @@ app.get('/api/config/supabase', (_req, res) => {
 })
 
 // 3️⃣ Public and custom routes
-registerPublicRoutes(app)
+app.use(publicRoutes)
 const httpServer = await registerRoutes(app)
 
 // API-specific middleware to ensure JSON responses for API routes

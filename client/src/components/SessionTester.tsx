@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
-import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/hooks/use-auth';
 
 /**
  * Component for testing session persistence
@@ -10,8 +9,9 @@ import { supabase } from '@/lib/supabase-client';
  * sessions persist properly between page loads
  */
 export function SessionTester() {
-  const auth = useSupabaseAuth();
-  const { user, session, refreshSession } = auth;
+  const auth = useAuth();
+  const { user, refetchProfile } = auth;
+  const [session, setSession] = useState<any>(null);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
   const [cookieInfo, setCookieInfo] = useState<string>('');
   const [localStorageKeys, setLocalStorageKeys] = useState<string[]>([]);
@@ -34,11 +34,26 @@ export function SessionTester() {
 
   // Function to handle session refresh and update display
   const handleRefreshSession = async () => {
-    await refreshSession();
+    await refetchProfile();
     
-    // Update display after refreshing
-    setSessionInfo(session);
+    // Get cookie info
     setCookieInfo(document.cookie);
+    
+    // Check authentication state
+    const authStatus = localStorage.getItem('auth-status');
+    if (authStatus === 'authenticated') {
+      // Extract session info from local storage
+      try {
+        const storedSession = localStorage.getItem('contested-auth-session');
+        if (storedSession) {
+          const parsedSession = JSON.parse(storedSession);
+          setSession(parsedSession);
+          setSessionInfo(parsedSession);
+        }
+      } catch (error) {
+        console.error('Error parsing session:', error);
+      }
+    }
     
     // Also update localStorage keys
     const keys = [];

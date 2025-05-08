@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, ArrowRight, Mail, UserPlus, Lock, Briefcase, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { FadeIn } from '@/components/animations/FadeIn';
 
 // Form validation schema
@@ -51,7 +51,7 @@ export default function SignIn() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, userData, signIn, signUp, isLoading } = useSupabaseAuth();
+  const { user, profile: userData, loginMutation, registerMutation, isLoading } = useAuth();
   
   // Redirect if already logged in
   useEffect(() => {
@@ -97,68 +97,56 @@ export default function SignIn() {
     try {
       console.log("Starting login process for:", values.email);
       
-      // Direct call to the API to debug the issue
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      loginMutation.mutate({
+        email: values.email,
+        password: values.password
+      }, {
+        onSuccess: (data) => {
+          // Login was successful
+          toast({
+            title: "Login successful",
+            description: "You've been signed in successfully!",
+          });
+          
+          // Reset the form
+          loginForm.reset();
+          
+          // Get the user profile data
+          const responseData = data?.user || {};
+          
+          // Determine where to redirect based on user role
+          const userRole = responseData?.role || responseData?.user_metadata?.role || userData?.role || 'visitor';
+          console.log("User role for redirection:", userRole);
+          
+          if (userRole === 'athlete') {
+            navigate('/athlete/dashboard');
+          } else if (userRole === 'business') {
+            navigate('/business/dashboard');
+          } else if (userRole === 'compliance') {
+            navigate('/compliance/dashboard');
+          } else if (userRole === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/');
+          }
         },
-        body: JSON.stringify({ 
-          email: values.email, 
-          password: values.password 
-        }),
+        onError: (error) => {
+          // Login failed
+          const errorMessage = error?.message || 'Login failed';
+          console.error("Login error:", errorMessage);
+          
+          toast({
+            title: "Login failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        },
+        onSettled: () => {
+          // Force the form state to not be submitting anymore
+          loginForm.formState.isSubmitting = false;
+        }
       });
       
-      console.log("Login API response status:", response.status);
-      let responseData;
-      
-      try {
-        // Try to parse the response as JSON
-        responseData = await response.json();
-        console.log("Login API response data:", responseData);
-      } catch (parseError) {
-        // If not JSON, get the text
-        const text = await response.text();
-        console.log("Login API response text:", text);
-        responseData = { error: text };
-      }
-      
-      if (response.ok) {
-        // Login was successful
-        toast({
-          title: "Login successful",
-          description: "You've been signed in successfully!",
-        });
-        
-        // Reset the form
-        loginForm.reset();
-        
-        // Determine where to redirect based on user role
-        const userRole = responseData.user?.role || responseData.user?.user_metadata?.role || 'visitor';
-        console.log("User role for redirection:", userRole);
-        
-        if (userRole === 'athlete') {
-          navigate('/athlete/dashboard');
-        } else if (userRole === 'business') {
-          navigate('/business/dashboard');
-        } else if (userRole === 'compliance') {
-          navigate('/compliance/dashboard');
-        } else if (userRole === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/');
-        }
-      } else {
-        // Login failed
-        const errorMessage = responseData?.error || responseData?.message || 'Login failed';
-        console.error("Login error:", errorMessage);
-        
-        toast({
-          title: "Login failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
     } catch (e) {
       console.error("Unexpected login error:", e);
       toast({
@@ -166,7 +154,6 @@ export default function SignIn() {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } finally {
       // Force the form state to not be submitting anymore
       loginForm.formState.isSubmitting = false;
     }
@@ -182,41 +169,53 @@ export default function SignIn() {
     
     try {
       console.log("Starting registration process for:", values.email, "with role:", values.userType);
-      const { error, user } = await signUp(values.email, values.password, userData);
       
-      if (!error && user) {
-        // Registration successful
-        console.log("Registration successful, user created:", user.id);
-        registerForm.reset();
-        
-        // Use the user role from the response if available
-        const userRole = user.role || values.userType;
-        console.log("User role for redirection:", userRole);
-        
-        if (userRole === values.userType) {
-          // User exists with right role or new user successfully created
-          toast({
-            title: 'Account ready',
-            description: 'Redirecting to onboarding...',
-          });
+      registerMutation.mutate({
+        email: values.email,
+        password: values.password,
+        fullName: userData.fullName,
+        role: values.userType
+      }, {
+        onSuccess: (data) => {
+          // Registration successful
+          console.log("Registration successful, user created:", data?.user?.id);
+          registerForm.reset();
           
-          // Redirect to onboarding flow
-          navigate(`/onboarding?userType=${values.userType}`);
-        } else {
-          // User exists but with different role
-          console.log("Role mismatch - expected:", values.userType, "got:", userRole);
+          // Use the user role from the response if available
+          const userRole = data?.user?.role || values.userType;
+          console.log("User role for redirection:", userRole);
+          
+          if (userRole === values.userType) {
+            // User exists with right role or new user successfully created
+            toast({
+              title: 'Account ready',
+              description: 'Redirecting to onboarding...',
+            });
+            
+            // Redirect to onboarding flow
+            navigate(`/onboarding?userType=${values.userType}`);
+          } else {
+            // User exists but with different role
+            console.log("Role mismatch - expected:", values.userType, "got:", userRole);
+            toast({
+              title: 'Account exists with different role',
+              description: `This email is already registered as a ${userRole}. Please use a different email or login.`,
+              variant: 'destructive'
+            });
+            
+            // Switch to login tab
+            setActiveTab('login');
+          }
+        },
+        onError: (error) => {
+          console.error("Registration returned error:", error);
           toast({
-            title: 'Account exists with different role',
-            description: `This email is already registered as a ${userRole}. Please use a different email or login.`,
+            title: 'Registration failed',
+            description: error.message || 'Could not register account. Please try again.',
             variant: 'destructive'
           });
-          
-          // Switch to login tab
-          setActiveTab('login');
         }
-      } else {
-        console.error("Registration returned error:", error);
-      }
+      });
     } catch (e: any) {
       // Error is already handled by the hook, but might want to do something else here
       console.error('Registration error in component:', e);

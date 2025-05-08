@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
-import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { loadStripe } from '@stripe/stripe-js';
 import { ChevronLeft, Crown, Check, Loader2 } from 'lucide-react';
-import { UnifiedProtectedRoute } from '@/lib/unified-protected-route';
+import { SimpleProtectedRoute } from '@/lib/simplified-protected-route';
 import { apiRequest } from '@/lib/queryClient';
 
 // Plans configuration
@@ -76,7 +76,7 @@ const SubscribeContent = () => {
   
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { user } = useSupabaseAuth();
+  const { user } = useAuth();
 
   // Fetch current subscription status
   useEffect(() => {
@@ -296,7 +296,7 @@ const SubscribeContent = () => {
         <Button
           variant="ghost"
           className="mb-6"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
           Back
@@ -404,7 +404,7 @@ const SubscribeContent = () => {
       <Button
         variant="ghost"
         className="mb-6"
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/')}
       >
         <ChevronLeft className="mr-2 h-4 w-4" />
         Back
@@ -590,9 +590,9 @@ const SubscribeContent = () => {
 // Wrap with protected route
 const Subscribe = () => {
   return (
-    <UnifiedProtectedRoute>
+    <SimpleProtectedRoute>
       <SubscribeContent />
-    </UnifiedProtectedRoute>
+    </SimpleProtectedRoute>
   );
 };
 
