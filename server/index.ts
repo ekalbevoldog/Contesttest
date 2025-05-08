@@ -1,86 +1,97 @@
-// ===============================
-// Contested Replit – unified server
-// ===============================
-// This file **replaces** the old index.ts in your repo.
-// It merges Supabase auth/profile helpers + route registration + static file serving in a clean, deployment‑ready form.
+/**
+ * Server Entry Point
+ * 
+ * This is the main server initialization that sets up Express, WebSockets, 
+ * database connections, and all required middleware for the application.
+ */
 
-// ---------- server/index.ts ----------
-import express, { Express, Request, Response, NextFunction } from 'express';
+import express from 'express';
+import http from 'http';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import session from 'express-session';
+import { registerRoutes, configureWebSocket } from './routes'; // Import from consolidated routes
 
-// ES modules fix for __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Local helpers
-import { registerRoutes } from './routes';
-import { setupSupabaseAuth } from './supabaseAuth';
-import { setupProfileEndpoints } from './supabaseProfile';
-
-// ---------- Env ----------
+// Load environment variables
 dotenv.config();
-const PORT = Number(process.env.PORT) || 5000;
-const NODE_ENV = process.env.NODE_ENV ?? 'development';
 
-// ---------- App ----------
-const app: Express = express();
+// Initialize Express app
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-// ---------- Global middleware ----------
+// Set up middleware
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
-app.use(cors({ origin: process.env.CORS_ORIGIN ?? '*' }));
 
-// ---------- Supabase auth + profile endpoints ----------
-setupSupabaseAuth(app);
-setupProfileEndpoints(app);
+// Configure session management
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'contested-app-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
-// ---------- Config endpoint used by front‑end ----------
-app.get('/api/config/supabase', (_req: Request, res: Response) => {
-  const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env;
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return res.status(500).json({ error: 'Missing Supabase credentials' });
-  }
-  res.json({ url: SUPABASE_URL, key: SUPABASE_ANON_KEY });
-});
-
-// ---------- API routes ----------
+// Register all routes through the centralized route registry
 registerRoutes(app);
 
-// ---------- 404 for unknown API paths ----------
-app.use('/api', (_req, res) => {
-  res.status(404).json({ error: 'API endpoint not found' });
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve frontend static files
+  app.use(express.static(path.join(__dirname, '../../client/dist')));
+  
+  // All unhandled requests should return the React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../../client/dist/index.html'));
+  });
+}
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Store the app in the server for access by other modules
+(server as any).app = app;
+
+// Configure WebSocket server
+const wss = configureWebSocket(server);
+
+// Handle server errors
+server.on('error', (error: Error) => {
+  console.error('Server error:', error);
+  process.exit(1);
 });
 
-// ---------- Static asset serving ----------
-// We're handling static asset serving through the Routes-public.ts module
-// This ensures a consistent approach with proper fallbacks
-
-// ---------- Error handler ----------
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-  const status = err.status ?? 500;
-  console.error('[Server error]', err);
-  // Always return JSON for API paths, otherwise fallback to generic text
-  if (req.originalUrl.startsWith('/api')) {
-    return res.status(status).json({ error: err.message ?? 'Internal Server Error' });
-  }
-  res.status(status).send(err.message ?? 'Internal Server Error');
+// Start listening (parse port as number to avoid TypeScript error)
+server.listen(parseInt(String(PORT), 10), () => {
+  console.log(`⚡ Server running on port ${PORT}`);
+  console.log(`🌎 API available at http://localhost:${PORT}/api/status`);
+  console.log(`🩺 Health check at http://localhost:${PORT}/health`);
+  console.log(`🧵 WebSocket server running at ws://localhost:${PORT}/ws`);
 });
 
-// ---------- Start ----------
-app.listen(PORT, '0.0.0.0', () =>
-  console.log(`🚀 Server listening on http://localhost:${PORT}  (env: ${NODE_ENV})`)
-);
-// ---------- END server/index.ts ----------
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+  
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+});
 
-
-// NOTE: This is a legacy comment. The actual routes logic is in server/routes.ts
-// The server/routes.ts file is imported above and used on line 49
-// ---------- END server/index.ts ----------
+export default server;

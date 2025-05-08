@@ -5,9 +5,14 @@
  * all path aliases to ensure they're properly resolved during build time.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+// Get proper __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Read the original tsconfig
 const tsconfigPath = path.resolve(__dirname, '../tsconfig.json');
@@ -35,7 +40,7 @@ console.log('📝 Created temporary tsconfig.paths.json for correct path resolut
 try {
   // Run the build with the temporary tsconfig
   console.log('🔨 Building client with correct paths...');
-  execSync('vite build --config vite.config.ts', { 
+  execSync('vite build --config ../vite.config.ts', { 
     stdio: 'inherit',
     cwd: __dirname
   });

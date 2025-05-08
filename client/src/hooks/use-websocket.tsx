@@ -1,232 +1,169 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase-client';
+/**
+ * WebSocket Hook for React Components
+ * 
+ * This hook provides a simple interface for React components to interact with
+ * the WebSocket API, handling connection, message sending, and state tracking.
+ */
 
-type WebSocketMessage = {
-  type: string;
-  message?: string;
-  data?: any;
-  matchData?: any;
-  sessionId?: string;
-  step?: string;
-};
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { websocketClient, WebSocketMessage } from '../lib/websocket-client';
+import { v4 as uuidv4 } from 'uuid';
 
-type WebSocketHook = {
+// Connection status enum for better type safety
+export enum ConnectionStatus {
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected'
+}
+
+interface UseWebSocketOptions {
+  // Whether to connect automatically on component mount
+  autoConnect?: boolean;
+  // Whether to store and retrieve sessionId from localStorage
+  persistSession?: boolean;
+  // Custom storage key for the session ID
+  sessionStorageKey?: string;
+}
+
+interface UseWebSocketResult {
+  // Current connection status
+  connectionStatus: ConnectionStatus;
+  // Last message received from the server
   lastMessage: WebSocketMessage | null;
-  sendMessage: (message: any) => void;
-  connectionStatus: 'connecting' | 'open' | 'closed';
-};
+  // Function to send a message to the server
+  sendMessage: (message: WebSocketMessage) => boolean;
+  // Function to manually connect to the server
+  connect: () => Promise<void>;
+  // Function to manually disconnect from the server
+  disconnect: () => void;
+  // Current session ID
+  sessionId: string;
+}
 
-export function useWebSocket(sessionId: string | null): WebSocketHook {
+/**
+ * React hook for WebSocket communication
+ * @param initialSessionId Optional initial session ID
+ * @param options Configuration options
+ */
+export function useWebSocket(
+  initialSessionId?: string,
+  options: UseWebSocketOptions = {}
+): UseWebSocketResult {
+  // Set default options
+  const {
+    autoConnect = true,
+    persistSession = true,
+    sessionStorageKey = 'websocket_session_id'
+  } = options;
+  
+  // State for tracking connection status
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(
+    ConnectionStatus.DISCONNECTED
+  );
+  
+  // Keep track of the last received message
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'open' | 'closed'>('closed');
-  const socketRef = useRef<WebSocket | null>(null);
-  const channelRef = useRef<any>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reconnectAttemptsRef = useRef(0);
-  const MAX_RECONNECT_ATTEMPTS = 5;
-  const RECONNECT_DELAY = 3000; // 3 seconds
-
-  // Function reference for attempting reconnect
-  const attemptReconnectRef = useRef<() => void>();
   
-  // Disable Supabase realtime channel - it's causing conflicts with our direct WebSocket
-  // useEffect(() => {
-  //   // Supabase realtime channel has been disabled to prevent websocket conflicts
-  // }, [sessionId]);
-  
-  // Function to establish a direct WebSocket connection
-  const connectWebSocket = useCallback(() => {
-    // TEMPORARILY DISABLED - WebSocket connection is causing app to fail
-    console.log('WebSocket connections are temporarily disabled');
-    setConnectionStatus('closed');
-    return;
+  // Generate or retrieve session ID
+  const [sessionId, setSessionId] = useState<string>(() => {
+    if (initialSessionId) return initialSessionId;
     
-    /*
-    if (!sessionId) return;
-    
-    // Get user authentication data
-    let userId = localStorage.getItem('userId');
-    if (!userId) {
-      try {
-        // Try to get from Supabase auth
-        const authData = JSON.parse(localStorage.getItem('supabase.auth.token') || '{}');
-        userId = authData?.currentSession?.user?.id;
-        if (userId) {
-          console.log('Found user ID from Supabase auth:', userId);
-          // Store it for easier access later
-          localStorage.setItem('userId', userId);
-        }
-      } catch (error) {
-        console.error('Error parsing Supabase auth data:', error);
-      }
+    if (persistSession) {
+      const stored = localStorage.getItem(sessionStorageKey);
+      if (stored) return stored;
     }
     
-    // Clear any existing socket
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
-
+    // Generate a new session ID if none exists
+    return uuidv4();
+  });
+  
+  // Store active listeners for cleanup
+  const listenersRef = useRef<Array<() => void>>([]);
+  
+  // Connect to the WebSocket server
+  const connect = useCallback(async () => {
     try {
-      // Create WebSocket connection - use relative path with host for cross-compatibility
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // Use the same origin as the current page to avoid CORS issues
-      // Don't specify port - let the browser handle it automatically based on current location
-      // Use a distinct path to avoid conflicts with Vite's WebSocket
-      const wsUrl = `${protocol}//${window.location.host}/api/contested-ws`;
-      console.log(`Attempting to connect to WebSocket at ${wsUrl}`);
+      setConnectionStatus(ConnectionStatus.CONNECTING);
       
-      const socket = new WebSocket(wsUrl);
-      socketRef.current = socket;
-    */
-      
-      /*
-      setConnectionStatus('connecting');
-
-      socket.onopen = () => {
-        console.log('WebSocket connection established successfully');
-        setConnectionStatus('open');
-        reconnectAttemptsRef.current = 0; // Reset reconnect attempts
-        
-        // Register with the server using the session ID
-        // Get the userId that we fetched earlier
-        const userId = localStorage.getItem('userId');
-        
-        const registrationMessage = {
-          type: 'register',
-          sessionId,
-          userData: {
-            // Add user data from localStorage
-            userId: userId || null,
-            role: localStorage.getItem('userRole') || 'visitor'
-          }
-        };
-        
-        // Log the userId for debugging
-        console.log('Registering WebSocket with userId:', registrationMessage.userData.userId);
-        console.log('Sending registration message:', registrationMessage);
-        socket.send(JSON.stringify(registrationMessage));
-      };
-
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log('WebSocket message received:', data);
-          setLastMessage(data);
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
-
-      socket.onclose = (event) => {
-        console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
-        
-        // Always set status to closed since we don't use Supabase channel
-        setConnectionStatus('closed');
-
-        // Attempt to reconnect if not a normal closure
-        if (event.code !== 1000 && attemptReconnectRef.current) {
-          attemptReconnectRef.current();
-        }
-      };
-
-      socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        // Always set status to closed
-        setConnectionStatus('closed');
-      };
-      */
-    /*
-    } catch (error) {
-      console.error('Error creating WebSocket connection:', error);
-      // Always set status to closed
-      setConnectionStatus('closed');
-      
-      if (attemptReconnectRef.current) {
-        attemptReconnectRef.current();
+      // Store session ID if persistence is enabled
+      if (persistSession) {
+        localStorage.setItem(sessionStorageKey, sessionId);
       }
+      
+      // Connect to the WebSocket server
+      await websocketClient.connect(sessionId);
+      setConnectionStatus(ConnectionStatus.CONNECTED);
+      
+      // Set up message listener
+      const removeListener = websocketClient.on('message', (data: WebSocketMessage) => {
+        setLastMessage(data);
+      });
+      
+      // Track for cleanup
+      listenersRef.current.push(removeListener);
+    } catch (err) {
+      console.error('Failed to connect to WebSocket:', err);
+      setConnectionStatus(ConnectionStatus.DISCONNECTED);
     }
-    */
-  }, [sessionId]);
-
-  // Define the reconnect function and store in ref to avoid dependency cycles
-  useEffect(() => {
-    attemptReconnectRef.current = () => {
-      if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
-        console.log('Maximum reconnection attempts reached');
-        return;
-      }
-
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-
-      reconnectTimeoutRef.current = setTimeout(() => {
-        reconnectAttemptsRef.current += 1;
-        console.log(`Attempting to reconnect (attempt ${reconnectAttemptsRef.current} of ${MAX_RECONNECT_ATTEMPTS})...`);
-        connectWebSocket();
-      }, RECONNECT_DELAY);
-    };
-  }, [connectWebSocket, MAX_RECONNECT_ATTEMPTS, RECONNECT_DELAY]);
-
-  // Initialize WebSocket connection
-  useEffect(() => {
-    if (sessionId) {
-      connectWebSocket();
-    }
-
-    // Clean up WebSocket connection and timeouts on unmount
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [sessionId, connectWebSocket]);
-
-  // Send a message through WebSocket - TEMPORARILY DISABLED
-  const sendMessage = useCallback((message: any) => {
-    console.log('WebSocket messaging is temporarily disabled', message);
-    return false;
+  }, [sessionId, persistSession, sessionStorageKey]);
+  
+  // Disconnect from the WebSocket server
+  const disconnect = useCallback(() => {
+    websocketClient.disconnect();
+    setConnectionStatus(ConnectionStatus.DISCONNECTED);
     
-    /*
-    let messageSent = false;
-    
-    // Try direct WebSocket first
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      try {
-        socketRef.current.send(JSON.stringify(message));
-        console.log('WebSocket message sent successfully:', message.type);
-        messageSent = true;
-      } catch (error) {
-        console.error('Error sending WebSocket message:', error);
-        connectWebSocket(); // Try to reconnect on send error
-      }
-    } else {
-      console.warn('WebSocket is not connected, attempting to reconnect');
-      
-      // If no connection, attempt to reconnect
-      if (!socketRef.current || socketRef.current.readyState === WebSocket.CLOSED) {
-        console.log('Attempting to reconnect WebSocket before sending message');
-        connectWebSocket();
-        
-        // Queue the message to be sent after connection is established
-        setTimeout(() => {
-          if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-            console.log('Sending delayed message after reconnection');
-            socketRef.current.send(JSON.stringify(message));
-            messageSent = true;
-          } else {
-            console.error('Failed to send message after reconnection attempt');
-          }
-        }, 1000); // Wait 1 second for connection to establish
-      }
-    }
-    
-    return messageSent;
-    */
+    // Clean up listeners
+    listenersRef.current.forEach(removeListener => removeListener());
+    listenersRef.current = [];
   }, []);
-
-  return { lastMessage, sendMessage, connectionStatus };
+  
+  // Send a message to the WebSocket server
+  const sendMessage = useCallback((message: WebSocketMessage): boolean => {
+    // Include sessionId if not provided in message
+    const messageWithSession = {
+      ...message,
+      sessionId: message.sessionId || sessionId
+    };
+    
+    return websocketClient.send(messageWithSession);
+  }, [sessionId]);
+  
+  // Auto-connect on mount if enabled
+  useEffect(() => {
+    if (autoConnect) {
+      connect();
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      disconnect();
+    };
+  }, [autoConnect, connect, disconnect]);
+  
+  // Monitor connection status changes
+  useEffect(() => {
+    // Helper to update status based on client state
+    const updateStatus = () => {
+      const isConnected = websocketClient.isConnected();
+      setConnectionStatus(
+        isConnected ? ConnectionStatus.CONNECTED : ConnectionStatus.DISCONNECTED
+      );
+    };
+    
+    // Update status every 5 seconds as a safeguard
+    const interval = setInterval(updateStatus, 5000);
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+  
+  return {
+    connectionStatus,
+    lastMessage,
+    sendMessage,
+    connect,
+    disconnect,
+    sessionId
+  };
 }

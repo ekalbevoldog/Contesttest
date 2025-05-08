@@ -1,115 +1,142 @@
-// Global utility types
-declare type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
-declare type JsonObject = { [key: string]: Json };
-declare type JsonArray = Json[];
+/**
+ * Custom type declarations for third-party modules and project extensions
+ * 
+ * This file provides TypeScript declarations for modules that don't have their own
+ * declaration files or need augmentation for project-specific functionality.
+ */
 
-// Add MessageMetadata type that's missing from server/storage.ts and causing errors
-declare interface MessageMetadata {
-  [key: string]: unknown;
-  unread?: boolean;
+// ===== Common Node modules without declaration files =====
+declare module 'morgan';
+declare module 'cors';
+declare module 'micro' {
+  export function buffer(req: import('express').Request): Promise<Buffer>;
+  export function text(req: import('express').Request): Promise<string>;
+  export function json(req: import('express').Request): Promise<any>;
 }
 
-// Relaxed variants of Drizzle schema types to fix type errors during build
-declare namespace RelaxedTypes {
-  // Type for allowing any string IDs or numeric IDs
-  type FlexibleId = string | number;
-  
-  // Fix for numeric ID vs string ID issues
-  interface FlexibleRecord {
-    id?: FlexibleId;
-    [key: string]: any;
-  }
-  
-  // Fix for message metadata
-  interface Message {
-    id: number;
-    sessionId: string;
-    role: string; 
-    content: string;
-    metadata?: MessageMetadata | unknown;
-    createdAt?: Date | null;
-    unread?: boolean;
-  }
-  
-  // Fix for dynamic properties
-  interface DynamicObject {
-    [key: string]: any;
-  }
-}
-
-// Make TypeScript more permissive about missing fields
-declare interface AnyObject {
-  [key: string]: any;
-}
-
-// Fix Express session type augmentation
+// ===== Extension to Express types =====
 declare namespace Express {
-  interface Session {
-    passport?: {
-      user: string;
-    };
+  export interface Request {
+    rawBody?: string | Buffer;
+    user?: any; // User data from auth middleware
     userId?: string;
-    role?: string;
-    data?: any;
-    sessionId?: string;
+    userRole?: string;
+    session?: any;
+    isAuthenticated?: () => boolean;
   }
 }
 
-// Fix WebSocket type augmentation
-declare interface CustomWebSocket extends WebSocket {
-  userData?: {
-    role: 'athlete' | 'business' | 'compliance' | 'admin';
-    userId?: string;
-  };
+// ===== Local module declarations =====
+declare module './runCompleteMigration.js' {
+  export function runCompleteMigration(): Promise<boolean>;
 }
 
-// Module declarations for dynamic imports
-declare module '@shared/*';
-declare module '@components/*';
-declare module '@lib/*';
-declare module '@pages/*';
-declare module '@hooks/*';
+// ===== Module augmentations =====
+declare module 'connect-pg-simple' {
+  import session from 'express-session';
+  export default function(options?: any): (
+    options?: session.SessionOptions
+  ) => session.Store;
+}
 
-// Fix for drizzle-orm issues with schema inference
-declare module 'drizzle-orm' {
-  interface PgColumn<TData extends any, TColumnData extends any> {
-    [key: string]: any;
+// ===== Supabase type extensions =====
+import { SupabaseClient } from '@supabase/supabase-js';
+
+declare module '@supabase/supabase-js' {
+  interface SupabaseClient {
+    // Session-related methods
+    createSession(session: any): Promise<any>;
+    getSession(id: string): Promise<any>;
+    updateSession(id: string, data: any): Promise<any>;
+    deleteSession(id: string): Promise<any>;
   }
 }
 
-// Fix for equality operators
-declare module 'drizzle-orm/pg-core' {
-  interface SQL {
-    [key: string]: any;
-  }
+// ===== Storage interface extensions =====
+interface SupabaseStorage {
+  // User subscription methods
+  updateUserSubscription(userId: string, data: any): Promise<any>;
+  createSubscriptionHistory(data: any): Promise<any>;
+  getUserByStripeSubscriptionId(subscriptionId: string): Promise<any>;
+  
+  // User management methods
+  getUserById(id: string): Promise<any>;
+  getUserByEmail(email: string): Promise<any>;
+  createUser(userData: any): Promise<any>;
+  updateUser(id: string, data: any): Promise<any>;
+  deleteUser(id: string): Promise<any>;
+  
+  // Profile management methods
+  getAthleteProfile(id: string): Promise<any>;
+  getBusinessProfile(id: string): Promise<any>;
+  updateAthleteProfile(id: string, data: any): Promise<any>;
+  updateBusinessProfile(id: string, data: any): Promise<any>;
+  
+  // Session management
+  createUserSession(userData: any): Promise<any>;
+  deleteUserSession(sessionId: string): Promise<any>;
+  
+  // Administrative functions
+  getAdminById(id: string): Promise<any>; 
+  createAdmin(data: any): Promise<any>;
+  updateAdmin(id: string, data: any): Promise<any>;
+  deleteAdmin(id: string): Promise<any>;
+  getAllAdmins(): Promise<any[]>;
+  
+  // Compliance officer functions
+  getComplianceOfficerById(id: string): Promise<any>;
+  createComplianceOfficer(data: any): Promise<any>;
+  updateComplianceOfficer(id: string, data: any): Promise<any>;
+  deleteComplianceOfficer(id: string): Promise<any>;
+  getAllComplianceOfficers(): Promise<any[]>;
+  
+  // Campaign and content management
+  createCampaign(data: any): Promise<any>;
+  updateCampaign(id: string, data: any): Promise<any>;
+  deleteCampaign(id: string): Promise<any>;
+  getCampaignById(id: string): Promise<any>;
+  getAllCampaigns(filters?: any): Promise<any[]>;
+  getUserCampaigns(userId: string): Promise<any[]>;
+  
+  // Analytics methods
+  recordAnalyticEvent(data: any): Promise<any>;
+  getAnalyticsByUserId(userId: string): Promise<any[]>;
+  getAnalyticsByCampaignId(campaignId: string): Promise<any[]>;
+  getGlobalAnalytics(timeRange?: string): Promise<any>;
 }
 
-// Add support for undefined error in schema checks
-declare namespace NodeJS {
-  interface Promise<T> {
-    catch<TResult = never>(
-      onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined
-    ): Promise<T | TResult>;
-  }
-}
-// Add missing type definitions for auth_id and objectStorage
-declare namespace Express {
-  interface User {
-    auth_id?: string;
-    role?: string;
-    email?: string;
-  }
-}
-
+// Ensure access to Stripe's key version
 declare module 'stripe' {
-  interface Stripe {
-    customers: any;
-    subscriptions: any;
-    webhooks: any;
+  interface StripeConstructorOptions {
+    apiVersion?: string;
   }
 }
 
-declare const objectStorage: {
-  uploadBuffer: (path: string, buffer: Buffer) => Promise<boolean>;
-  downloadBuffer: (path: string) => Promise<Buffer | null>;
-};
+// ===== Vite server configuration types =====
+declare module 'vite' {
+  interface ServerOptions {
+    // Extend to allow boolean for allowedHosts
+    allowedHosts?: boolean | string | true | string[];
+  }
+}
+
+// Export the extended storage interface 
+declare global {
+  interface Window {
+    SUPABASE_URL?: string;
+    SUPABASE_KEY?: string;
+  }
+  
+  namespace NodeJS {
+    interface ProcessEnv {
+      NODE_ENV: 'development' | 'production' | 'test';
+      PORT?: string;
+      DATABASE_URL?: string;
+      SUPABASE_URL?: string;
+      SUPABASE_KEY?: string;
+      SESSION_SECRET?: string;
+      STRIPE_SECRET_KEY?: string;
+      STRIPE_WEBHOOK_SECRET?: string;
+    }
+  }
+}

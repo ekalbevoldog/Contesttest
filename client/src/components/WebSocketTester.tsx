@@ -1,141 +1,167 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { useWebSocket } from "@/hooks/use-websocket";
-import { v4 as uuidv4 } from "uuid";
+/**
+ * WebSocket Tester Component
+ * 
+ * A UI component for testing the WebSocket connection and functionality.
+ */
+import { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+interface Message {
+  type: string;
+  data?: any;
+  message?: string;
+  timestamp: string;
+}
 
 export function WebSocketTester() {
-  // Generate a unique session ID for testing if none exists
-  const [sessionId, setSessionId] = useState<string>(() => {
-    const existingId = localStorage.getItem('sessionId');
-    return existingId || uuidv4();
-  });
-  
-  // Get the WebSocket hook
-  const { connectionStatus, lastMessage, sendMessage } = useWebSocket(sessionId);
-  
-  // Save session ID to localStorage when it changes
+  const [connected, setConnected] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const socketRef = useRef<WebSocket | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Establish WebSocket connection
   useEffect(() => {
-    localStorage.setItem('sessionId', sessionId);
-  }, [sessionId]);
-  
-  // Test sending a message through the WebSocket
-  const handleTestWebSocket = () => {
-    sendMessage({
-      type: 'test',
-      sessionId,
-      message: 'This is a test message'
-    });
-  };
-  
-  // Test the notification endpoint
-  const handleTestNotification = async () => {
+    // Close previous connection if exists
+    if (socketRef.current) {
+      socketRef.current.close();
+    }
+
     try {
-      const response = await fetch('/api/test/simulate-match', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ sessionId })
+      // Construct WebSocket URL
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      // Create WebSocket connection
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
+      
+      // Connection opened handler
+      socket.addEventListener('open', () => {
+        setConnected(true);
+        setError(null);
+        console.log('WebSocket connection established');
       });
       
-      const data = await response.json();
-      console.log('Notification test response:', data);
-    } catch (error) {
-      console.error('Error testing notification:', error);
+      // Message handler
+      socket.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setMessages((prev) => [...prev, data]);
+        } catch (err) {
+          console.error('Error parsing WebSocket message:', err);
+        }
+      });
+      
+      // Error handler
+      socket.addEventListener('error', (event) => {
+        console.error('WebSocket error:', event);
+        setError('Connection error occurred');
+        setConnected(false);
+      });
+      
+      // Connection closed handler
+      socket.addEventListener('close', () => {
+        console.log('WebSocket connection closed');
+        setConnected(false);
+      });
+      
+      // Cleanup on unmount
+      return () => {
+        socket.close();
+      };
+    } catch (err) {
+      console.error('Failed to establish WebSocket connection:', err);
+      setError('Failed to establish connection');
+    }
+  }, []);
+  
+  // Function to send a message
+  const sendMessage = () => {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN || !inputMessage.trim()) {
+      return;
+    }
+    
+    try {
+      const message = {
+        text: inputMessage.trim(),
+        timestamp: new Date().toISOString()
+      };
+      
+      socketRef.current.send(JSON.stringify(message));
+      setInputMessage('');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message');
     }
   };
   
-  // Reset the session ID
-  const handleResetSession = () => {
-    const newSessionId = uuidv4();
-    setSessionId(newSessionId);
+  // Handle Enter key press
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
   };
   
   return (
-    <Card className="bg-zinc-900 border-zinc-800 shadow-xl">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">WebSocket Connection Tester</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          WebSocket Test
+          <Badge variant={connected ? "secondary" : "destructive"}>
+            {connected ? 'Connected' : 'Disconnected'}
+          </Badge>
+        </CardTitle>
+        <CardDescription>
+          Test the real-time WebSocket connection
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="session-id">Session ID</Label>
-          <div className="flex space-x-2">
-            <Input 
-              id="session-id" 
-              value={sessionId} 
-              readOnly 
-              className="flex-1 bg-zinc-800 border-zinc-700" 
-            />
-            <Button variant="outline" onClick={handleResetSession}>
-              Reset
-            </Button>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label>Connection Status</Label>
-          <div className="flex items-center space-x-2">
-            <div 
-              className={`w-3 h-3 rounded-full ${
-                connectionStatus === 'open' 
-                  ? 'bg-green-500' 
-                  : connectionStatus === 'connecting' 
-                  ? 'bg-yellow-500' 
-                  : 'bg-red-500'
-              }`} 
-            />
-            <span className="text-sm">
-              {connectionStatus === 'open' 
-                ? 'Connected' 
-                : connectionStatus === 'connecting' 
-                ? 'Connecting...' 
-                : 'Disconnected'}
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <Button 
-            onClick={handleTestWebSocket}
-            disabled={connectionStatus !== 'open'}
-            className="bg-zinc-800 hover:bg-zinc-700"
-          >
-            Send Test Message
-          </Button>
-          <Button 
-            onClick={handleTestNotification}
-            disabled={connectionStatus !== 'open'}
-            className="bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600"
-          >
-            Test Match Notification
-          </Button>
-        </div>
-        
-        {lastMessage && (
-          <div className="mt-6 space-y-2">
-            <Label>Last Message Received</Label>
-            <Card className="bg-zinc-800 border-zinc-700">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="outline" className="bg-zinc-700">
-                    {lastMessage.type || 'unknown'}
-                  </Badge>
-                  <span className="text-xs text-zinc-400">
-                    {new Date().toLocaleTimeString()}
-                  </span>
-                </div>
-                <pre className="text-xs bg-black p-2 rounded-md overflow-auto max-h-32">
-                  {JSON.stringify(lastMessage, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
+      
+      <CardContent>
+        {error && (
+          <div className="bg-destructive/20 text-destructive p-2 rounded mb-4 text-sm">
+            Error: {error}
           </div>
         )}
+        
+        <ScrollArea className="h-[250px] p-2 border rounded-md bg-muted/20">
+          {messages.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              No messages yet. Send something to start!
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {messages.map((msg, index) => (
+                <div key={index} className="p-2 border rounded-md bg-background">
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(msg.timestamp).toLocaleTimeString()} - {msg.type}
+                  </div>
+                  <div className="mt-1">
+                    {msg.message || (msg.data && JSON.stringify(msg.data, null, 2))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
       </CardContent>
+      
+      <CardFooter className="flex gap-2">
+        <Input
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Type a message..."
+          disabled={!connected}
+        />
+        <Button onClick={sendMessage} disabled={!connected || !inputMessage.trim()}>
+          Send
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

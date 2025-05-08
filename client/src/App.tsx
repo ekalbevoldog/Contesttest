@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import WebSocketTest from "./pages/WebSocketTest";
 import { Loader2 } from "lucide-react";
 
 // Wizard Pages
@@ -99,6 +100,7 @@ function Router() {
             <Route path="/subscribe" component={Subscribe} />
             <Route path="/subscription/success" component={SubscriptionSuccess} />
             <UnifiedProtectedRoute path="/account/subscription" component={Subscribe} />
+            <Route path="/websocket-test" component={WebSocketTest} />
             <Route component={Home} />
           </Switch>
         </Suspense>

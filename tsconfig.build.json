@@ -14,7 +14,12 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["./shared/*"]
+      "@/*": [
+        "./client/src/*"
+      ],
+      "@shared/*": [
+        "./shared/*"
+      ]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -38,6 +43,17 @@
     "transpileOnly": true,
     "swc": true
   },
-  "include": ["server/**/*", "shared/**/*", "shared/custom.d.ts"],
-  "exclude": ["client/**/*", "node_modules", "**/*.test.ts", "dist", "server/archive/**/*", "server/auth-fixes/**/*"]
+  "include": [
+    "server/**/*",
+    "shared/**/*",
+    "shared/custom.d.ts"
+  ],
+  "exclude": [
+    "client/**/*",
+    "node_modules",
+    "**/*.test.ts",
+    "dist",
+    "server/archive/**/*",
+    "server/auth-fixes/**/*"
+  ]
 }
