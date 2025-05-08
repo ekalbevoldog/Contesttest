@@ -15,18 +15,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /* -------------------------------------------------------------------
  * 1) ENV / BUILD PATHS
  * ------------------------------------------------------------------*/
+const DIST_PUBLIC = path.resolve(__dirname, "../../dist/public"); // vite build output
 const CLIENT_DIST = path.resolve(__dirname, "../../client/dist"); // vite build
 const PUBLIC_DIR  = path.resolve(__dirname, "../../public");      // raw assets
 
 /* Helper: pick the first directory that actually exists */
 function existingDir(...dirs: string[]) {
   for (const d of dirs) {
-    try { if (fs.statSync(d).isDirectory()) return d; } catch {}
+    try { 
+      if (fs.statSync(d).isDirectory()) {
+        console.log(`[routes-public] Found static directory: ${d}`);
+        return d; 
+      }
+    } catch (e) {
+      console.log(`[routes-public] Directory not found: ${d}`);
+    }
   }
   return undefined;
 }
 
-const STATIC_ROOT = existingDir(CLIENT_DIST, PUBLIC_DIR);
+const STATIC_ROOT = existingDir(DIST_PUBLIC, CLIENT_DIST, PUBLIC_DIR);
 if (!STATIC_ROOT) {
   console.warn(
     "[routes-public] No static directory found; " +

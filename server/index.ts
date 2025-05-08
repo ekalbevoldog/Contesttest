@@ -59,12 +59,8 @@ app.use('/api', (_req, res) => {
 });
 
 // ---------- Static asset serving ----------
-// In dev we rely on Vite dev server (client script); in production we serve the built files.
-const staticRoot = path.join(__dirname, '..', 'dist', 'public');
-app.use(express.static(staticRoot));
-app.get('*', (_req: Request, res: Response) => {
-  res.sendFile(path.join(staticRoot, 'index.html'));
-});
+// We're handling static asset serving through the Routes-public.ts module
+// This ensures a consistent approach with proper fallbacks
 
 // ---------- Error handler ----------
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
