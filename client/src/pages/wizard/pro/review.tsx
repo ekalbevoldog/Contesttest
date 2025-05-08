@@ -124,95 +124,38 @@ export default function Review() {
     setIsLoading(true);
     
     try {
-      // First, fetch the current campaign to verify it exists
-      const { data: campaignData, error: fetchError } = await supabase
-        .from('campaigns')
-        .select('*')
-        .eq('id', campaignId)
-        .single();
-      
-      if (fetchError) {
-        throw new Error(`Campaign verification failed: ${fetchError.message}`);
-      }
-      
-      if (!campaignData) {
-        throw new Error('Campaign not found in database');
-      }
-      
-      // Update campaign status in Supabase
-      const { error: campaignError } = await supabase
-        .from('campaigns')
-        .update({ 
-          status: 'ACTIVE',
-          launched_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          terms_accepted: true,
-          terms_accepted_at: new Date().toISOString(),
-          terms_accepted_by: user?.id
-        })
-        .eq('id', campaignId);
-      
-      if (campaignError) {
-        throw new Error(`Campaign update failed: ${campaignError.message}`);
-      }
-      
-      // Log campaign launch activity
-      const { error: activityError } = await supabase
-        .from('campaign_activities')
-        .insert([{
-          campaign_id: campaignId,
-          activity_type: 'LAUNCH',
-          actor_id: user?.id,
-          details: {
-            bundle_type: form.bundleType,
-            athlete_count: form.selectedMatches?.length || 0
-          },
-          created_at: new Date().toISOString()
-        }]);
-      
-      if (activityError) {
-        console.warn('Failed to log campaign activity:', activityError);
-        // Non-critical, continue with the flow
-      }
-      
-      // Create offer records for each athlete
-      const offers = (form.selectedMatches || []).map(athlete => ({
-        campaign_id: campaignId,
-        athlete_id: athlete.id,
-        status: 'PENDING',
-        bundle_type: form.bundleType,
-        compensation: form.selectedBundle?.compensation || 'Not specified',
-        created_at: new Date().toISOString(),
-        created_by: user?.id
-      }));
-      
-      if (offers.length > 0) {
-        const { error: offersError } = await supabase
-          .from('offers')
-          .insert(offers);
-        
-        if (offersError) {
-          throw new Error(`Failed to create offers: ${offersError.message}`);
-        }
-      }
-      
-      // Call the offer sending API to trigger notifications
-      const response = await fetch('/api/offer/send', {
+      // Instead of multiple Supabase queries, use a single server endpoint 
+      // that handles all operations in a transaction for consistency
+      const response = await fetch('/api/campaigns/launch', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           campaignId,
           bundleType: form.bundleType,
-          athletes: form.selectedMatches,
-        }),
+          selectedAthletes: form.selectedMatches || [],
+          bundleDetails: form.selectedBundle || getBundleDetails(),
+          launchDetails: {
+            terms_accepted: true,
+            terms_accepted_at: new Date().toISOString()
+          }
+        })
       });
       
+      // Handle server response
       if (!response.ok) {
-        const error = await response.json();
-        console.warn('Notification service error:', error);
-        // Non-critical, continue with the flow
+        // Try to get detailed error message
+        let errorMessage = "Server error occurred";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || "Failed to launch campaign";
+        } catch (e) {
+          console.error('Failed to parse error response:', e);
+        }
+        
+        throw new Error(errorMessage);
       }
       
       // Success - show toast and navigate to dashboard

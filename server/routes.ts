@@ -10,6 +10,7 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { getDb, sql } from './dbSetup';
 import healthRoutes from './routes/healthRoutes';
+import campaignLaunchRoutes from './api/campaigns/launch.js';
 import { jsonWithRawBody } from './middleware/rawBodyParser';
 import dotenv from 'dotenv';
 
@@ -36,6 +37,9 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 
 // Health check routes
 router.use('/health', healthRoutes);
+
+// Campaign routes
+router.use('/api/campaigns/launch', authMiddleware, campaignLaunchRoutes);
 
 // Enhanced Authentication Middleware
 // Properly verifies Supabase JWT tokens and extracts user info

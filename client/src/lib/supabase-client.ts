@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// Default placeholder values
+// Track Supabase connection values - will be set during initialization
 let supabaseUrl = '';
 let supabaseKey = '';
 
 // Declare supabase as a singleton to prevent multiple instances
-// This is the root cause of the "Multiple GoTrueClient instances" warning
+// This ensures we only have one Supabase client throughout the application lifecycle
 let _supabaseInstance: SupabaseClient | null = null;
 
 // Create a function to get the Supabase client - singleton pattern
@@ -25,7 +25,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
   }
 });
 
-// We'll use a flag to track initialization state
+// Track initialization state
 let isInitialized = false;
 
 // Custom storage implementation that handles serialization and adds debugging
@@ -69,43 +69,27 @@ export async function initializeSupabase(): Promise<boolean> {
   try {
     console.log('[Client] Fetching Supabase configuration from server...');
 
-    // Make sure we have a proper fetch call with error handling
+    // Get configuration from server with proper error handling
     let config;
-    try {
-      const response = await fetch('/api/config/supabase', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-      });
+    const response = await fetch('/api/config/supabase', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      },
+    });
 
-      if (!response.ok) {
-        console.warn(`Supabase config response not OK: ${response.status}`);
-        // Use fallback configuration
-        config = {
-          url: 'https://dummy.supabase.co',
-          key: 'dummy-key'
-        };
-      } else {
-        config = await response.json();
-      }
-    } catch (fetchError) {
-      console.error('Error fetching Supabase config:', fetchError);
-      // Use fallback configuration
-      config = {
-        url: 'https://dummy.supabase.co',
-        key: 'dummy-key'
-      };
+    if (!response.ok) {
+      console.error(`Supabase config response not OK: ${response.status}`);
+      throw new Error(`Failed to fetch Supabase configuration: ${response.statusText}`);
     }
+    
+    config = await response.json();
 
-    // Validate configuration
+    // Validate configuration - no fallbacks, require proper config
     if (!config || !config.url || !config.key) {
-      console.warn('Invalid Supabase configuration, using fallbacks');
-      config = {
-        url: config?.url || 'https://dummy.supabase.co',
-        key: config?.key || 'dummy-key'
-      };
+      console.error('Invalid Supabase configuration received from server');
+      throw new Error('Invalid Supabase configuration: Missing URL or API key');
     }
 
     supabaseUrl = config.url;
