@@ -1,0 +1,55 @@
+Diagnosis (why it’s crashing)
+
+The server is trying to load a file named server/routes/authRoutes (TypeScript or JavaScript).
+That exact file does not exist at that path—either the file is named differently (e.g., auth.ts, AuthRoutes.ts, routes-auth.ts), lives in another folder (e.g., server/api/), or was deleted.
+Because the import fails, Node’s module-loader throws ERR_MODULE_NOT_FOUND and the app dies before it even starts listening on a port.
+One Fix That Works Everywhere
+
+Step 1 Pick a single, canonical filename and location for every route.
+Put all route files—authRoutes.ts, profileRoutes.ts, etc.—inside server/routes/.
+
+server/
+└─ routes/
+   ├─ authRoutes.ts        ← THIS file must exist
+   ├─ profileRoutes.ts
+   └─ index.ts             ← collects & exports them
+Step 2 Create or rename the missing file.
+If you already have code like auth.ts or AuthRoutes.ts, rename it to authRoutes.ts and move it into server/routes/.
+
+Minimal stub to unblock the build (add this if you truly don’t have any auth route yet):
+
+// server/routes/authRoutes.ts
+import { Router } from 'express';
+const router = Router();
+
+// ⬇️  replace this with real logic later
+router.post('/api/auth/login', (_req, res) => res.json({ ok: true }));
+
+export default router;
+Step 3 Ensure the aggregator knows about it.
+Open server/routes/index.ts (or whatever you called registerRoutes).
+Make it explicitly import and use that router:
+
+// server/routes/index.ts
+import { Express } from 'express';
+import authRoutes from './authRoutes';
+import profileRoutes from './profileRoutes';   // example of another route
+
+export async function registerRoutes(app: Express) {
+  app.use(authRoutes);
+  app.use(profileRoutes);
+  // …add more here
+  return app;    // if you return httpServer elsewhere, keep that as is
+}
+Step 4 Try again.
+
+npm run dev
+No ERR_MODULE_NOT_FOUND this time ➜ server boots.
+
+Why this fix is “cross-codebase”
+Explicit path, explicit file – any environment (Replit, local, CI) can find server/routes/authRoutes.ts; nothing relies on filename guessing or OS-specific case sensitivity.
+Single import point – all route wires are in server/routes/index.ts; future devs (or AI agents) add routes in one place.
+Fail-proof for new hires – “If you create a route, drop it in server/routes/ and register it in index.ts. Done.”
+If other …NOT_FOUND errors appear, the remedy is the same: either create the missing file in the expected spot or update the import to match the file you already have.
+
+Let me know if another path blows up and I’ll map it just as clearly.
