@@ -7,7 +7,7 @@
 import { Route, RouteComponentProps, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth"; // Single source of truth for authentication
+import { useAuth } from "../hooks/use-auth"; // Single source of truth for authentication
 
 interface ProtectedRouteProps {
   component: React.ComponentType<any>;

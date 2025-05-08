@@ -1,13 +1,13 @@
 import { createContext, ReactNode, useContext, useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "../lib/queryClient";
+import { useToast } from "./use-toast";
 import { 
   loginWithEmail, 
   registerWithEmail, 
   logout as logoutUser, 
   getCurrentUser 
-} from "@/lib/auth-utils";
+} from "../lib/auth-utils";
 import { useLocation } from "wouter";
 
 interface User {
