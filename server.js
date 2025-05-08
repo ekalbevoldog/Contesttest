@@ -62,6 +62,16 @@ async function startServer() {
       console.error('Failed to load API routes:', apiError);
     }
 
+    // Health check endpoint
+    app.get('/api/health-check', (req, res) => {
+      res.json({ 
+        status: 'ok', 
+        server: 'running',
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
+      });
+    });
+
     // Fallback for SPA routing - MUST come after API routes
     app.get('*', (req, res) => {
       res.sendFile(path.join(clientDist, 'index.html'));
