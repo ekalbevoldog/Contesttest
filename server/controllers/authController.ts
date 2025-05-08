@@ -1,4 +1,4 @@
-/** 05/08/2025 - 13:37 CST
+/** 05/08/2025 - 13:35 CST
  * Authentication Controller
  * 
  * Handles HTTP requests related to authentication.

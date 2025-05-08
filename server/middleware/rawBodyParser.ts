@@ -1,70 +1,75 @@
-/**
+/** 12/08/2025 - 13:25 CST
  * Raw Body Parser Middleware
  * 
- * A middleware that extends Express request objects with rawBody property
- * for webhook verification and other use cases requiring the raw request body.
+ * Provides middleware for handling raw request bodies.
+ * Useful for webhook signature verification and other cases
+ * where access to the raw request body is needed.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { json } from 'express';
 
+// Extend Express Request type to include rawBody property
 declare global {
   namespace Express {
     interface Request {
-      rawBody?: string;
+      rawBody?: Buffer;
     }
   }
 }
 
 /**
- * Creates middleware that parses the raw request body as text
- * and attaches it to the request object as `rawBody`
- * @returns Express middleware
+ * Middleware that captures the raw request body as Buffer
+ * and attaches it to req.rawBody
  */
-export function rawBodyParser() {
+export const rawBodyParser = () => {
   return (req: Request, res: Response, next: NextFunction) => {
-    let data = '';
-    
-    // Only parse if not already parsed
-    if (req.rawBody === undefined) {
-      // Save the raw body
-      req.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      req.on('end', () => {
-        req.rawBody = data;
-        next();
-      });
-    } else {
+    const chunks: Buffer[] = [];
+
+    req.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => {
+      req.rawBody = Buffer.concat(chunks);
       next();
-    }
+    });
+
+    req.on('error', next);
   };
-}
+};
 
 /**
- * Creates middleware that combines raw body parsing with JSON parsing
- * Useful for webhook endpoints that need both the parsed JSON and the raw body
- * @returns Express middleware for both raw and JSON parsing
+ * Middleware that combines raw body parsing with JSON parsing
+ * For use with webhooks that need both raw body and parsed JSON body
  */
-export function jsonWithRawBody() {
+export const jsonWithRawBody = () => {
   return [
     // First capture the raw body
-    (req: Request, res: Response, next: NextFunction) => {
-      let data = '';
-      
-      req.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      req.on('end', () => {
-        req.rawBody = data;
-        next();
-      });
-    },
-    // Then parse as JSON
-    json()
-  ];
-}
+    rawBodyParser(),
 
-export default rawBodyParser;
+    // Then parse body as JSON, but preserve the raw body
+    (req: Request, res: Response, next: NextFunction) => {
+      try {
+        // Skip parsing if body is already handled
+        if (typeof req.body === 'object' && req.body !== null) {
+          return next();
+        }
+
+        // Parse the raw body as JSON
+        if (req.rawBody) {
+          req.body = JSON.parse(req.rawBody.toString());
+        }
+
+        next();
+      } catch (error) {
+        next(error);
+      }
+    }
+  ];
+};
+
+export default {
+  rawBodyParser,
+  jsonWithRawBody
+};
