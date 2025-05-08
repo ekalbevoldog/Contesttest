@@ -36,14 +36,14 @@ export function registerRoutes(app: Express): Express {
   app.use(requestLogger);
 
   // Register API routes with their respective prefixes
-  app.use('/api/auth', authRoutes.default || authRoutes);
-  app.use('/api/profile', profileRoutes.default || profileRoutes);
-  app.use('/api/campaign', campaignRoutes.default || campaignRoutes);
-  app.use('/api/match', matchRoutes.default || matchRoutes);
-  app.use('/api/subscription', subscriptionRoutes.default || subscriptionRoutes);
-  app.use('/api/webhook', webhookRoutes.default || webhookRoutes);
-  app.use('/api/config', configRoutes.default || configRoutes);
-  app.use('/health', healthRoutes.default || healthRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/profile', profileRoutes);
+  app.use('/api/campaign', campaignRoutes);
+  app.use('/api/match', matchRoutes);
+  app.use('/api/subscription', subscriptionRoutes);
+  app.use('/api/webhook', webhookRoutes);
+  app.use('/api/config', configRoutes);
+  app.use('/health', healthRoutes);
 
   // API status endpoint
   app.get('/api/status', (req, res) => {
