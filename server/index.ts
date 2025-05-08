@@ -15,7 +15,7 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import net from 'net';
 import fs from 'fs';
-import router, { configureWebSocket } from './routes';
+import { router, configureWebSocket } from './routes';
 import { setupVite, serveStatic } from './vite';
 
 // Import each route module

@@ -1,218 +1,158 @@
 /**
  * WebSocket Status Component
- * 
- * Provides a UI for monitoring and interacting with the WebSocket connection.
- * Can be used for debugging and displaying connection status.
+ *
+ * Displays the current WebSocket connection status in the UI.
+ * Can be shown as a small indicator or expanded with details.
  */
-import { useState } from 'react';
-import { useWebSocket } from '../hooks/use-websocket';
-import { useAuth } from '../hooks/use-auth';
-import { Button } from '@/components/ui/button';
+
+import React, { useState } from 'react';
+import { useWebSocketContext } from '@/contexts/WebSocketProvider';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { WifiIcon, WifiOffIcon, AlertCircleIcon, CheckCircleIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Wifi, WifiOff, Lock, Unlock, RefreshCw } from 'lucide-react';
 
 interface WebSocketStatusProps {
   showDebug?: boolean;
+  expanded?: boolean;
 }
 
-export function WebSocketStatus({ showDebug = false }: WebSocketStatusProps) {
-  const { user } = useAuth();
-  const { 
-    connected, 
-    connecting, 
-    authenticated, 
-    messages, 
-    connect, 
-    disconnect, 
-    reconnect,
-    connectionId,
-    connectionStartTime,
-    clearMessages
-  } = useWebSocket();
+export const WebSocketStatus: React.FC<WebSocketStatusProps> = ({
+  showDebug = false,
+  expanded = false,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(expanded);
+  const ws = useWebSocketContext();
 
-  const [expanded, setExpanded] = useState(false);
-  
-  // Calculate connection duration if connected
-  const connectionDuration = connectionStartTime 
-    ? Math.floor((Date.now() - connectionStartTime) / 1000)
-    : 0;
-  
-  // Get the most recent messages (limited to 5)
-  const recentMessages = messages.slice(-5).reverse();
+  // Color mappings based on connection status
+  const getStatusColor = () => {
+    switch (ws.status) {
+      case 'connected':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'authenticated':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'connecting':
+        return 'bg-blue-500 hover:bg-blue-600';
+      case 'error':
+        return 'bg-red-500 hover:bg-red-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
 
+  // Icon based on connection status
+  const StatusIcon = () => {
+    if (ws.status === 'connecting') {
+      return <RefreshCw className="h-4 w-4 animate-spin" />;
+    } else if (ws.status === 'closed' || ws.status === 'error') {
+      return <WifiOff className="h-4 w-4" />;
+    } else if (ws.status === 'connected' || ws.status === 'authenticated') {
+      return <Wifi className="h-4 w-4" />;
+    }
+    return <WifiOff className="h-4 w-4" />;
+  };
+
+  // Minimized indicator
+  if (!isExpanded) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge
+              className={`${getStatusColor()} cursor-pointer transition-all`}
+              onClick={() => setIsExpanded(true)}
+            >
+              <div className="flex items-center space-x-1">
+                <StatusIcon />
+                {showDebug && (
+                  <span className="text-xs ml-1">
+                    {ws.status.charAt(0).toUpperCase() + ws.status.slice(1)}
+                  </span>
+                )}
+                {ws.isAuthenticated && <Lock className="h-3 w-3 ml-1" />}
+              </div>
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>WebSocket Status: {ws.status}</p>
+            <p>Authenticated: {ws.isAuthenticated ? 'Yes' : 'No'}</p>
+            <p>Click to expand</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  // Expanded card with details
   return (
-    <div className="flex flex-col">
-      {/* Simple status indicator when collapsed */}
-      {!expanded && (
-        <div 
-          className="flex items-center gap-2 p-2 cursor-pointer hover:bg-muted rounded"
-          onClick={() => setExpanded(true)}
-        >
-          {connected ? (
-            <WifiIcon className="h-4 w-4 text-green-500" />
-          ) : (
-            <WifiOffIcon className="h-4 w-4 text-red-500" />
-          )}
-          <span className="text-xs font-medium">
-            {connecting ? 'Connecting...' : connected ? 'Connected' : 'Disconnected'}
-          </span>
+    <Card className="w-64 shadow-lg">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-sm font-medium">WebSocket Status</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={() => setIsExpanded(false)}
+          >
+            ✕
+          </Button>
         </div>
-      )}
-
-      {/* Expanded status card */}
-      {expanded && (
-        <Card className="w-full">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-base">WebSocket Status</CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setExpanded(false)}
-              >
-                Collapse
-              </Button>
-            </div>
-            <CardDescription>Real-time connection information</CardDescription>
-          </CardHeader>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs">Status:</span>
+            <Badge className={getStatusColor()}>
+              <div className="flex items-center">
+                <StatusIcon />
+                <span className="ml-1">{ws.status.toUpperCase()}</span>
+              </div>
+            </Badge>
+          </div>
           
-          <CardContent className="pb-2">
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Status</span>
-                <div className="flex items-center gap-1.5">
-                  {connected ? (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      Connected
-                    </Badge>
-                  ) : connecting ? (
-                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                      Connecting
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                      Disconnected
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Authentication</span>
-                <div className="flex items-center gap-1.5">
-                  {authenticated ? (
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      Authenticated
-                    </Badge>
-                  ) : connected ? (
-                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                      Not Authenticated
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
-                      N/A
-                    </Badge>
-                  )}
-                </div>
-              </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs">Authenticated:</span>
+            <div className="flex items-center">
+              {ws.isAuthenticated ? (
+                <Lock className="h-3 w-3 text-green-500" />
+              ) : (
+                <Unlock className="h-3 w-3 text-gray-500" />
+              )}
+              <span className="text-xs ml-1">{ws.isAuthenticated ? 'YES' : 'NO'}</span>
             </div>
-            
-            {connected && (
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Connection ID:</span>
-                  <span className="font-mono ml-1">{connectionId || 'Unknown'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Duration:</span>
-                  <span className="ml-1">{connectionDuration}s</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">User:</span>
-                  <span className="ml-1">{user?.email || 'Not logged in'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Messages:</span>
-                  <span className="ml-1">{messages.length}</span>
-                </div>
-              </div>
-            )}
-            
-            {/* Debug section with recent messages */}
-            {showDebug && connected && (
-              <div className="mt-3">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs font-medium">Recent Messages</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={clearMessages}
-                    className="h-6 text-xs"
-                  >
-                    Clear
-                  </Button>
-                </div>
-                <div className="bg-slate-50 rounded border border-slate-200 p-2 max-h-32 overflow-y-auto">
-                  {recentMessages.length === 0 ? (
-                    <div className="text-xs text-center text-muted-foreground py-2">
-                      No messages yet
-                    </div>
-                  ) : (
-                    <ul className="space-y-1">
-                      {recentMessages.map((msg, idx) => (
-                        <li key={idx} className="text-xs font-mono whitespace-nowrap overflow-hidden text-ellipsis">
-                          {msg.type}: {JSON.stringify(msg).slice(0, 50)}
-                          {JSON.stringify(msg).length > 50 ? '...' : ''}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
-          </CardContent>
+          </div>
           
-          <CardFooter className="pt-0">
-            <div className="flex gap-2 w-full">
-              {!connected && !connecting && (
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  onClick={connect}
-                  className="flex-1"
-                  disabled={connecting}
-                >
-                  Connect
-                </Button>
-              )}
-              
-              {connected && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={disconnect}
-                  className="flex-1"
-                >
-                  Disconnect
-                </Button>
-              )}
-              
-              {(connected || (!connected && !connecting)) && (
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={reconnect}
-                  className="flex-1"
-                  disabled={connecting}
-                >
-                  Reconnect
-                </Button>
-              )}
-            </div>
-          </CardFooter>
-        </Card>
-      )}
-    </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs">Channels:</span>
+            <span className="text-xs">{ws.subscriptions.size}</span>
+          </div>
+          
+          <div className="flex space-x-2 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs h-7 px-2 py-0 flex-1"
+              onClick={ws.connect}
+              disabled={ws.isConnected}
+            >
+              Connect
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-xs h-7 px-2 py-0 flex-1"
+              onClick={ws.disconnect}
+              disabled={!ws.isConnected}
+            >
+              Disconnect
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
-}
+};
+
+export default WebSocketStatus;

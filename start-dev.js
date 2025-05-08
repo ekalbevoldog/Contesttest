@@ -5,10 +5,10 @@
  * with proper workflow integration, automatic reloading, and environment setup.
  */
 
-const { spawn } = require('child_process');
-const { execSync } = require('child_process');
-const dotenv = require('dotenv');
-const fs = require('fs');
+import { spawn } from 'child_process';
+import { execSync } from 'child_process';
+import dotenv from 'dotenv';
+import fs from 'fs';
 
 // Load environment variables from all potential .env files
 dotenv.config({ path: '.env' });

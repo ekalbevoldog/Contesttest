@@ -7,7 +7,7 @@
  */
 
 import express from 'express';
-import { getDb, sql } from '../../dbSetup.js';
+import { getDb, sql, handleDatabaseError } from '../../lib/unifiedSupabase.js';
 
 const router = express.Router();
 
@@ -231,9 +231,14 @@ router.post('/', async (req, res) => {
     
     console.error('Campaign launch error:', error);
     
+    // Use the standardized error handler
+    const errorResponse = handleDatabaseError(error);
+    
     res.status(500).json({
       error: 'Campaign launch failed',
-      message: error.message || 'An unexpected error occurred'
+      message: errorResponse.error.message,
+      details: errorResponse.error.details,
+      code: errorResponse.error.code
     });
     
   } finally {

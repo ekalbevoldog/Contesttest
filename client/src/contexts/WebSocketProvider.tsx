@@ -1,103 +1,115 @@
 /**
- * WebSocket Provider
+ * WebSocket Provider Context
  * 
- * A context provider that makes the WebSocket connection available to all components
- * in the application. Uses the useWebSocket hook for connection management.
+ * Provides application-wide WebSocket connection and management.
+ * Simply wrap your app with this provider to enable WebSocket functionality.
  */
-import { createContext, useContext, ReactNode, useMemo } from 'react';
-import { useWebSocket } from '../hooks/use-websocket';
-import type { WebSocketMessage } from '../hooks/use-websocket';
 
-// Context interface
-interface WebSocketContextType {
-  connected: boolean;
-  connecting: boolean;
-  authenticated: boolean;
-  messages: WebSocketMessage[];
-  sendMessage: (message: any) => void;
-  subscribeToChannel: (channel: string) => void;
-  unsubscribeFromChannel: (channel: string) => void;
-  connectionId: string | null;
-  reconnect: () => void;
-}
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import useWebSocket, { WebSocketMessage, UseWebSocketReturn, WebSocketStatus } from '@/lib/useWebsocket';
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 
-// Create the context with default values
-const WebSocketContext = createContext<WebSocketContextType | null>(null);
+// Default WebSocket context value
+const defaultWebSocketValue: UseWebSocketReturn = {
+  status: 'closed',
+  isConnected: false,
+  isAuthenticated: false,
+  connect: () => {},
+  disconnect: () => {},
+  authenticate: () => {},
+  sendMessage: () => {},
+  subscribe: () => {},
+  unsubscribe: () => {},
+  subscriptions: new Set(),
+  lastMessage: null,
+};
 
-// Provider props interface
+// WebSocket context
+const WebSocketContext = createContext<UseWebSocketReturn>(defaultWebSocketValue);
+
+// WebSocket provider props
 interface WebSocketProviderProps {
-  children: ReactNode;
-  autoConnect?: boolean; 
-  path?: string;
+  children: React.ReactNode;
+  initialChannels?: string[];
+  debug?: boolean;
+  autoConnect?: boolean;
+  enableNotifications?: boolean;
 }
 
 /**
  * WebSocket Provider Component
  * 
- * Provides WebSocket functionality to the application through React Context.
+ * @param props Component props
+ * @returns Provider component
  */
-export function WebSocketProvider({ 
-  children, 
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
+  children,
+  initialChannels = [],
+  debug = false,
   autoConnect = true,
-  path = '/ws'
-}: WebSocketProviderProps) {
-  // Use the WebSocket hook to manage the connection
-  const { 
-    connected,
-    connecting,
-    authenticated,
-    messages,
-    sendMessage,
-    subscribeToChannel,
-    unsubscribeFromChannel,
-    connectionId,
-    reconnect
-  } = useWebSocket({
+  enableNotifications = true,
+}) => {
+  // Get authentication token from Supabase
+  const { session } = useSupabaseAuth();
+  const token = session?.access_token;
+  
+  // WebSocket hook
+  const webSocket = useWebSocket(token, {
     autoConnect,
-    path
+    channels: initialChannels,
+    debug,
+    onMessage: handleMessage,
   });
-
-  // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = useMemo(() => ({
-    connected,
-    connecting,
-    authenticated,
-    messages,
-    sendMessage,
-    subscribeToChannel,
-    unsubscribeFromChannel,
-    connectionId,
-    reconnect
-  }), [
-    connected,
-    connecting,
-    authenticated,
-    messages,
-    sendMessage,
-    subscribeToChannel,
-    unsubscribeFromChannel,
-    connectionId,
-    reconnect
-  ]);
+  
+  // Message notification system
+  const [notifications, setNotifications] = useState<WebSocketMessage[]>([]);
+  
+  // Handle incoming messages
+  function handleMessage(message: WebSocketMessage) {
+    // Store notifications if enabled
+    if (enableNotifications && message.type === 'notification') {
+      setNotifications(prev => [...prev, message]);
+    }
+  }
+  
+  // Clear notifications
+  const clearNotifications = () => setNotifications([]);
+  
+  // Status change handler
+  useEffect(() => {
+    if (webSocket.status === 'authenticated') {
+      // Auto-subscribe to user-specific channel when authenticated
+      if (session?.user?.id) {
+        webSocket.subscribe(`user:${session.user.id}`);
+      }
+    }
+  }, [webSocket.status, session?.user?.id]);
 
   return (
-    <WebSocketContext.Provider value={contextValue}>
+    <WebSocketContext.Provider 
+      value={{
+        ...webSocket,
+        // Add additional functionality if needed
+      }}
+    >
       {children}
     </WebSocketContext.Provider>
   );
-}
+};
 
 /**
- * Custom hook to use WebSocket context
+ * Use WebSocket Hook
  * 
- * This hook provides easy access to the WebSocket context values.
+ * @returns WebSocket context
  */
-export function useWebSocketContext() {
+export const useWebSocketContext = (): UseWebSocketReturn => {
   const context = useContext(WebSocketContext);
   
-  if (context === null) {
+  if (!context) {
     throw new Error('useWebSocketContext must be used within a WebSocketProvider');
   }
   
   return context;
-}
+};
+
+export default WebSocketProvider;

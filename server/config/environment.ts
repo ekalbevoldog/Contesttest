@@ -45,19 +45,20 @@ export const config = {
   isProduction: (process.env.NODE_ENV === 'production'),
   
   // Database configuration
-  DATABASE_URL: process.env.DATABASE_URL || '',
+  DATABASE_URL: process.env.DATABASE_URL,
   
   // Session configuration
   SESSION_SECRET: process.env.SESSION_SECRET || 'contested-app-secret',
   
   // API configuration
-  API_URL: process.env.API_URL || '',
-  SERVER_URL: process.env.SERVER_URL || '',
+  API_URL: process.env.API_URL,
+  SERVER_URL: process.env.SERVER_URL,
   
   // Supabase configuration
-  SUPABASE_URL: process.env.SUPABASE_URL || '',
-  SUPABASE_PUBLIC_KEY: process.env.SUPABASE_PUBLIC_KEY || process.env.SUPABASE_ANON_KEY || '',
-  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+  SUPABASE_PUBLIC_KEY: process.env.SUPABASE_PUBLIC_KEY,
+  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
   
   // Object storage configuration
   OBJECT_STORAGE_BUCKET: process.env.REPLIT_OBJECT_STORAGE_BUCKET || process.env.OBJECT_STORAGE_BUCKET || '',

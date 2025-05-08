@@ -8,17 +8,31 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { getDb, sql } from './dbSetup';
+import { getDb, sql, handleDatabaseError } from './lib/unifiedSupabase';
 import healthRoutes from './routes/healthRoutes';
-import campaignLaunchRoutes from './api/campaigns/launch.js';
 import { jsonWithRawBody } from './middleware/rawBodyParser';
-import dotenv from 'dotenv';
+import config from './config/environment';
 
-// Load environment variables
-dotenv.config();
+// Import API routes
+// Note: We use require() for JS files to avoid TypeScript declaration errors
+const campaignLaunchRoutes = require('./api/campaigns/launch.js');
 
 // Create main router
 export const router = Router();
+
+// Define interface for Express Request with user property
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        token: string;
+        role: string;
+        email: string;
+      };
+    }
+  }
+}
 
 // Middleware for all routes
 router.use((req: Request, res: Response, next: NextFunction) => {
@@ -34,12 +48,6 @@ router.use((req: Request, res: Response, next: NextFunction) => {
   
   next();
 });
-
-// Health check routes
-router.use('/health', healthRoutes);
-
-// Campaign routes
-router.use('/api/campaigns/launch', authMiddleware, campaignLaunchRoutes);
 
 // Enhanced Authentication Middleware
 // Properly verifies Supabase JWT tokens and extracts user info
@@ -90,9 +98,9 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
         WHERE id = (SELECT sub FROM auth.jwt_claim_validate($1))
       `;
       
-      const userResult = await db.query(userQuery, [token]);
+      const userResult = await userQuery.execute();
       
-      if (!userResult || !userResult.rows || userResult.rows.length === 0) {
+      if (!userResult || userResult.length === 0) {
         console.log('Auth Middleware: Token validation failed - user not found');
         return res.status(401).json({ 
           error: 'Invalid or expired token',
@@ -100,7 +108,7 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
         });
       }
       
-      const userData = userResult.rows[0];
+      const userData = userResult[0];
       
       // Assign user data to request for use in route handlers
       req.user = { 
@@ -164,9 +172,19 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
+// Health check routes
+router.use('/health', healthRoutes);
+
+// Campaign routes
+router.use('/api/campaigns/launch', authMiddleware, campaignLaunchRoutes);
+
 // API endpoints
 router.get('/api/status', (req: Request, res: Response) => {
-  res.json({ status: 'ok', version: '1.0.0' });
+  res.json({ 
+    status: 'ok', 
+    version: config.VERSION,
+    environment: config.NODE_ENV 
+  });
 });
 
 // Protected endpoint example
@@ -393,86 +411,66 @@ export function configureWebSocket(server: http.Server) {
             // Echo the message back to the client by default
             sendMessage(ws, {
               type: 'echo',
-              data
+              data: data
             });
         }
       } catch (error) {
-        console.error(`WebSocket error for ${connectionId}:`, error);
+        console.error(`Error processing message from ${connectionId}:`, error);
         stats.errors++;
         
         sendMessage(ws, {
           type: 'error',
-          error: 'Invalid message format'
+          message: error instanceof Error ? error.message : 'Invalid message format'
         });
       }
     });
     
-    // Handle WebSocket close
+    // Handle connection close
     ws.on('close', () => {
-      const connection = connections.get(ws);
-      console.log(`WebSocket connection closed: ${connection?.id}`);
-      
-      // Clean up connection tracking
+      console.log(`WebSocket connection closed: ${connectionId}`);
       connections.delete(ws);
       stats.activeConnections--;
     });
     
-    // Handle WebSocket errors
-    ws.on('error', (err) => {
-      console.error(`WebSocket error for ${connections.get(ws)?.id}:`, err);
+    // Handle connection errors
+    ws.on('error', (error) => {
+      console.error(`WebSocket error on connection ${connectionId}:`, error);
       stats.errors++;
     });
   });
   
-  // Setup periodic cleanup of inactive connections (every 5 minutes)
-  const INACTIVE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+  // Set up health check method for WebSocket server
+  (wss as any).getStats = () => ({
+    ...stats,
+    connections: {
+      total: connections.size,
+      authenticated: Array.from(connections.values()).filter(c => c.authenticated).length
+    }
+  });
+  
+  // Cleanup inactive connections periodically (every 5 minutes)
+  const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  const MAX_INACTIVE_TIME = 30 * 60 * 1000; // 30 minutes
+  
   setInterval(() => {
     const now = Date.now();
+    let closedCount = 0;
+    
     connections.forEach((connection, ws) => {
-      if (now - connection.lastActivity > INACTIVE_TIMEOUT) {
-        console.log(`Closing inactive connection: ${connection.id}`);
-        ws.terminate();
+      const inactiveTime = now - connection.lastActivity;
+      if (inactiveTime > MAX_INACTIVE_TIME) {
+        console.log(`Closing inactive connection ${connection.id} (inactive for ${Math.round(inactiveTime/1000/60)} minutes)`);
+        ws.close();
         connections.delete(ws);
-        stats.activeConnections--;
+        closedCount++;
       }
     });
-  }, 5 * 60 * 1000);
-  
-  // Setup health status reporting (every minute)
-  setInterval(() => {
-    console.log('WebSocket server status:', {
-      activeConnections: stats.activeConnections,
-      totalConnections: stats.totalConnections,
-      messagesReceived: stats.messagesReceived,
-      messagesSent: stats.messagesSent,
-      errors: stats.errors
-    });
-  }, 60 * 1000);
-  
-  // Log WebSocket server status
-  console.log('WebSocket server initialized on path: /ws');
-  
-  // Add methods to the wss instance for external usage
-  (wss as any).broadcast = broadcast;
-  (wss as any).broadcastToChannel = broadcastToChannel;
-  (wss as any).getActiveConnections = () => stats.activeConnections;
-  (wss as any).getConnectionStats = () => ({ ...stats });
+    
+    if (closedCount > 0) {
+      console.log(`Cleaned up ${closedCount} inactive WebSocket connections`);
+      stats.activeConnections = connections.size;
+    }
+  }, CLEANUP_INTERVAL);
   
   return wss;
 }
-
-// Add type definition for User in Request
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        token: string;
-        role: string;
-        email: string;
-      };
-    }
-  }
-}
-
-export default router;

@@ -1,5 +1,11 @@
+/**
+ * Authentication Middleware
+ * 
+ * Provides authentication and role-based authorization using Supabase tokens
+ * and session-based authentication. Centralizes all auth logic in one place.
+ */
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/unifiedSupabase';
 import { Session } from 'express-session';
 
 // Extend Session type to include passport property

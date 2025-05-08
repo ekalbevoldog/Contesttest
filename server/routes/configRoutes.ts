@@ -1,25 +1,26 @@
-// server/routes/configRoutes.ts
-import { Router } from 'express';
-import dotenv from 'dotenv';
-
-dotenv.config();
+/**
+ * Configuration Routes
+ * 
+ * Provides frontend with necessary configuration values for connecting to backend services.
+ * Includes Supabase credentials and application feature flags.
+ */
+import { Router, Request, Response } from 'express';
+import config from '../config/environment';
 
 const router = Router();
 
 // Get Supabase configuration
-router.get('/supabase', (_req, res) => {
-  // Get Supabase URL and key from environment variables
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_PUBLIC_KEY || process.env.SUPABASE_ANON_KEY;
+router.get('/supabase', (_req: Request, res: Response) => {
+  // Get Supabase URL and key from centralized config
+  const supabaseUrl = config.SUPABASE_URL;
+  const supabaseKey = config.SUPABASE_PUBLIC_KEY || config.SUPABASE_ANON_KEY;
 
   // Check if we have both required values
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing Supabase configuration. SUPABASE_URL and SUPABASE_PUBLIC_KEY are required.');
-    // Return temporary dummy values that will allow the frontend to initialize
-    // This is better than crashing the entire application
-    return res.json({
-      url: process.env.SUPABASE_URL || 'https://dummy.supabase.co',
-      key: process.env.SUPABASE_PUBLIC_KEY || 'dummy-key'
+    console.error('Missing Supabase configuration. SUPABASE_URL and SUPABASE_PUBLIC_KEY/SUPABASE_ANON_KEY are required.');
+    return res.status(500).json({
+      error: 'Missing Supabase configuration',
+      message: 'Server is not properly configured for Supabase. Please contact support.'
     });
   }
 
@@ -31,15 +32,21 @@ router.get('/supabase', (_req, res) => {
 });
 
 // Get general application configuration
-router.get('/', (_req, res) => {
-  // Return general configuration
+router.get('/', (_req: Request, res: Response) => {
+  // Return general configuration using centralized config
   res.json({
-    version: process.env.APP_VERSION || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
+    version: config.VERSION,
+    environment: config.NODE_ENV,
     features: {
       enableWebsockets: true,
       enableAuth: true,
-      enableSubscriptions: true
+      enableSubscriptions: true,
+      stripeEnabled: !!config.STRIPE_PUBLIC_KEY
+    },
+    // Additional app-level configuration
+    apiEndpoints: {
+      baseUrl: config.API_URL || '/api',
+      websocketUrl: '/ws'
     }
   });
 });

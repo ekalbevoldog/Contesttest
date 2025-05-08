@@ -1,310 +1,255 @@
 /**
- * WebSocket Test Page
+ * WebSocket Test Component
  * 
- * A page for testing WebSocket functionality including:
- * - Connecting/disconnecting
- * - Authentication
- * - Subscribing to channels
- * - Sending and receiving messages
+ * A test UI for interacting with the WebSocket server.
+ * This page allows testing authentication, subscription, and message sending.
  */
-import { useState } from 'react';
-import { useWebSocketContext } from '../contexts/WebSocketProvider';
-import { useAuth } from '../hooks/use-auth';
-import { WebSocketStatus } from '../components/WebSocketStatus';
+
+import { useState, useEffect } from 'react';
+import useWebSocket, { WebSocketMessage } from '@/lib/useWebsocket';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 
-export default function WebSocketTest() {
-  const { user } = useAuth();
-  const { 
-    connected, 
-    connecting, 
-    authenticated, 
-    messages, 
-    sendMessage, 
-    subscribeToChannel, 
-    unsubscribeFromChannel 
-  } = useWebSocketContext();
+const WebSocketTest = () => {
+  const { session } = useSupabaseAuth();
+  const token = session?.access_token;
   
-  const [messageText, setMessageText] = useState('');
-  const [channelName, setChannelName] = useState('');
-  const [activeSubscriptions, setActiveSubscriptions] = useState<string[]>([]);
+  // Local state
+  const [channel, setChannel] = useState('global');
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<WebSocketMessage[]>([]);
   
-  // Handle sending a message
-  const handleSendMessage = () => {
-    if (!messageText.trim()) return;
-    
-    sendMessage({
-      type: 'message',
-      content: messageText,
-      sender: user?.email || 'anonymous'
-    });
-    
-    setMessageText('');
-  };
-  
-  // Handle subscribing to a channel
-  const handleSubscribe = () => {
-    if (!channelName.trim()) return;
-    
-    subscribeToChannel(channelName);
-    
-    if (!activeSubscriptions.includes(channelName)) {
-      setActiveSubscriptions([...activeSubscriptions, channelName]);
+  // Initialize WebSocket
+  const ws = useWebSocket(token, {
+    autoConnect: true,
+    autoAuthenticate: true,
+    debug: true,
+    onMessage: (msg) => {
+      setMessages(prev => [msg, ...prev]);
     }
-    
-    setChannelName('');
+  });
+  
+  // Handle sending message
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      ws.sendMessage({
+        type: 'message',
+        content: message,
+        channel: channel
+      });
+      setMessage('');
+    }
   };
   
-  // Handle unsubscribing from a channel
-  const handleUnsubscribe = (channel: string) => {
-    unsubscribeFromChannel(channel);
-    setActiveSubscriptions(activeSubscriptions.filter(ch => ch !== channel));
+  // Subscribe to channel
+  const handleSubscribe = () => {
+    if (channel.trim()) {
+      ws.subscribe(channel);
+    }
   };
+  
+  // Unsubscribe from channel
+  const handleUnsubscribe = () => {
+    if (channel.trim()) {
+      ws.unsubscribe(channel);
+    }
+  };
+  
+  // Clear messages
+  const clearMessages = () => {
+    setMessages([]);
+  };
+  
+  // Get status badge color
+  const getStatusColor = () => {
+    switch(ws.status) {
+      case 'connected': return 'bg-yellow-500';
+      case 'authenticated': return 'bg-green-500';
+      case 'connecting': return 'bg-blue-500';
+      case 'error': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
+  
+  // Count channels
+  const channelCount = ws.subscriptions.size;
   
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">WebSocket Test Page</h1>
+    <div className="container mx-auto py-6">
+      <h1 className="text-3xl font-bold mb-6">WebSocket Test Console</h1>
       
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* WebSocket Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Status Panel */}
         <Card>
           <CardHeader>
-            <CardTitle>WebSocket Connection</CardTitle>
-            <CardDescription>Status and controls for the WebSocket connection</CardDescription>
+            <CardTitle>Connection Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="mb-6">
-              <WebSocketStatus showDebug={true} />
-            </div>
-            
             <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium mb-2">Channel Subscriptions</h3>
-                <div className="flex">
-                  <Input
-                    placeholder="Enter channel name..."
-                    value={channelName}
-                    onChange={(e) => setChannelName(e.target.value)}
-                    disabled={!connected}
-                    className="mr-2"
-                  />
-                  <Button 
-                    onClick={handleSubscribe} 
-                    disabled={!connected || !channelName.trim()}
-                  >
-                    Subscribe
-                  </Button>
-                </div>
-                
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {activeSubscriptions.map((channel) => (
-                    <Badge 
-                      key={channel} 
-                      variant="outline"
-                      className="flex gap-1 items-center px-2 py-1"
-                    >
-                      {channel}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleUnsubscribe(channel)}
-                        className="h-4 w-4 p-0 ml-1"
-                      >
-                        &times;
-                      </Button>
-                    </Badge>
-                  ))}
-                  {activeSubscriptions.length === 0 && (
-                    <span className="text-xs text-muted-foreground">No active subscriptions</span>
-                  )}
-                </div>
+              <div className="flex items-center justify-between">
+                <span>Status:</span>
+                <Badge className={getStatusColor()}>
+                  {ws.status.toUpperCase()}
+                </Badge>
               </div>
               
+              <div className="flex items-center justify-between">
+                <span>Authenticated:</span>
+                <Badge variant={ws.isAuthenticated ? "default" : "outline"}>
+                  {ws.isAuthenticated ? "YES" : "NO"}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span>Channels:</span>
+                <Badge variant="outline">{channelCount}</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span>Messages:</span>
+                <Badge variant="outline">{messages.length}</Badge>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button 
+              onClick={ws.connect}
+              disabled={ws.isConnected}
+              variant="outline"
+            >
+              Connect
+            </Button>
+            <Button 
+              onClick={ws.disconnect}
+              disabled={!ws.isConnected}
+              variant="destructive"
+            >
+              Disconnect
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        {/* Control Panel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Channel Controls</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium mb-2">Send Message</h3>
-                <div className="flex">
-                  <Input
-                    placeholder="Enter message..."
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    disabled={!connected}
-                    className="mr-2"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <Button 
-                    onClick={handleSendMessage} 
-                    disabled={!connected || !messageText.trim()}
-                  >
-                    Send
-                  </Button>
+                <label className="block text-sm mb-2">Channel Name</label>
+                <Input
+                  value={channel}
+                  onChange={(e) => setChannel(e.target.value)}
+                  placeholder="Enter channel name"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={handleSubscribe} disabled={!ws.isConnected}>
+                  Subscribe
+                </Button>
+                <Button 
+                  onClick={handleUnsubscribe} 
+                  variant="outline"
+                  disabled={!ws.isConnected}
+                >
+                  Unsubscribe
+                </Button>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <label className="block text-sm mb-2">Active Channels</label>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(ws.subscriptions).map(ch => (
+                    <Badge key={ch} variant="secondary">
+                      {ch}
+                    </Badge>
+                  ))}
+                  {ws.subscriptions.size === 0 && (
+                    <span className="text-sm text-gray-500">No active subscriptions</span>
+                  )}
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        {/* Message Display */}
+        {/* Message Panel */}
         <Card>
           <CardHeader>
-            <CardTitle>Messages</CardTitle>
-            <CardDescription>WebSocket message history</CardDescription>
+            <CardTitle>Send Message</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="all">
-              <TabsList>
-                <TabsTrigger value="all">All Messages</TabsTrigger>
-                <TabsTrigger value="system">System</TabsTrigger>
-                <TabsTrigger value="auth">Auth</TabsTrigger>
-                <TabsTrigger value="custom">Custom</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="all" className="mt-2">
-                <MessageList 
-                  messages={messages} 
-                  filter={() => true}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm mb-2">Message</label>
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Type a message"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 />
-              </TabsContent>
-              
-              <TabsContent value="system" className="mt-2">
-                <MessageList 
-                  messages={messages} 
-                  filter={(msg) => msg.type === 'system' || msg.type === 'ping' || msg.type === 'pong'}
-                />
-              </TabsContent>
-              
-              <TabsContent value="auth" className="mt-2">
-                <MessageList 
-                  messages={messages} 
-                  filter={(msg) => msg.type.includes('auth')}
-                />
-              </TabsContent>
-              
-              <TabsContent value="custom" className="mt-2">
-                <MessageList 
-                  messages={messages} 
-                  filter={(msg) => 
-                    msg.type === 'message' || 
-                    msg.type === 'echo' || 
-                    (!msg.type.includes('auth') && 
-                     msg.type !== 'system' && 
-                     msg.type !== 'ping' && 
-                     msg.type !== 'pong')}
-                />
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button 
+              onClick={handleSendMessage}
+              disabled={!ws.isConnected || !message.trim()}
+            >
+              Send
+            </Button>
+            <Button 
+              onClick={clearMessages}
+              variant="outline"
+            >
+              Clear Messages
+            </Button>
+          </CardFooter>
         </Card>
       </div>
       
-      <div className="mt-6">
-        <h2 className="text-xl font-bold mb-4">WebSocket API Reference</h2>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium">Authentication</h3>
-                <pre className="bg-muted p-3 rounded-md text-xs mt-2">
-{`// Send authentication request with JWT token
-{
-  "type": "authenticate",
-  "token": "your-jwt-token"
-}`}
-                </pre>
+      {/* Message Log */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Message Log</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[300px] w-full rounded border p-4">
+            {messages.length === 0 ? (
+              <div className="text-center text-gray-500 py-10">
+                No messages received yet
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium">Channel Subscription</h3>
-                <pre className="bg-muted p-3 rounded-md text-xs mt-2">
-{`// Subscribe to a channel
-{
-  "type": "subscribe",
-  "channel": "channel-name"
-}
-
-// Unsubscribe from a channel
-{
-  "type": "unsubscribe",
-  "channel": "channel-name"
-}`}
-                </pre>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((msg, index) => (
+                  <div key={index} className="border rounded p-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <Badge variant="outline">{msg.type}</Badge>
+                      <span className="text-xs text-gray-500">
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <pre className="text-sm overflow-x-auto p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                      {JSON.stringify(msg, null, 2)}
+                    </pre>
+                  </div>
+                ))}
               </div>
-              
-              <div>
-                <h3 className="text-lg font-medium">Sending Messages</h3>
-                <pre className="bg-muted p-3 rounded-md text-xs mt-2">
-{`// Send a custom message (echo)
-{
-  "type": "message",
-  "content": "Your message",
-  "data": { /* any additional data */ }
-}
-
-// Send a ping to keep connection alive
-{
-  "type": "ping"
-}`}
-                </pre>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
 
-// Helper component for displaying messages
-function MessageList({ 
-  messages, 
-  filter 
-}: { 
-  messages: any[],
-  filter: (msg: any) => boolean
-}) {
-  // Get last 50 messages and apply filter
-  const filteredMessages = messages
-    .filter(filter)
-    .slice(-50)
-    .reverse();
-  
-  if (filteredMessages.length === 0) {
-    return (
-      <div className="bg-muted/50 rounded-md p-4 text-center text-sm text-muted-foreground">
-        No messages to display
-      </div>
-    );
-  }
-  
-  return (
-    <ScrollArea className="h-[300px] rounded-md border p-2">
-      <div className="space-y-2">
-        {filteredMessages.map((msg, idx) => (
-          <div key={idx} className="text-sm border-b border-border pb-2">
-            <div className="flex justify-between items-start">
-              <Badge variant="outline" className="mb-1">
-                {msg.type}
-              </Badge>
-              {msg.timestamp && (
-                <span className="text-xs text-muted-foreground">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
-                </span>
-              )}
-            </div>
-            <pre className="whitespace-pre-wrap break-all text-xs bg-muted p-2 rounded mt-1">
-              {JSON.stringify(msg, null, 2)}
-            </pre>
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
-  );
-}
+export default WebSocketTest;
