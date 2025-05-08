@@ -1,5 +1,15 @@
 import { supabase } from "../supabase.js";
-import { SupabaseClient, AuthResponse } from "@supabase/supabase-js";
+import { SupabaseClient, AuthResponse, AuthUser, Session, User } from "@supabase/supabase-js";
+
+// Custom interface to help with our authentication processes
+interface CustomAuthResponse {
+  data: {
+    user: User | null;
+    session: Session | null;
+    weakPassword?: any;
+  };
+  error: Error | null;
+}
 
 // — Types —
 export interface AuthResult {
@@ -43,8 +53,17 @@ export class UnifiedAuthService {
     if (authError || !authData.session || !authData.user) {
       return { success: false, error: authError?.message || "Invalid credentials" };
     }
+    
+    // Create a CustomAuthResponse from the Supabase response
+    const customAuthResponse: CustomAuthResponse = {
+      data: {
+        user: authData.user,
+        session: authData.session
+      },
+      error: null
+    };
 
-    return this.processSuccessfulAuth(authData, email);
+    return this.processSuccessfulAuth(customAuthResponse, email);
   }
 
   /** Register */
@@ -96,7 +115,9 @@ export class UnifiedAuthService {
       session: {
         access_token: signUpData.session.access_token,
         refresh_token: signUpData.session.refresh_token,
-        expires_at: signUpData.session.expires_at,
+        expires_at: typeof signUpData.session.expires_at === 'number' ? 
+          signUpData.session.expires_at : 
+          Math.floor(Date.now() / 1000) + 3600, // Default 1 hour expiration
       },
       needsProfile: true,
       redirectTo: "/onboarding",
@@ -115,7 +136,17 @@ export class UnifiedAuthService {
     if (error || !data.user) {
       return { success: false, error: error?.message || "Not authenticated" };
     }
-    return this.processSuccessfulAuth({ data, error: null }, data.user.email || "");
+    
+    // Create a proper CustomAuthResponse structure for processSuccessfulAuth
+    const authResponse: CustomAuthResponse = {
+      data: {
+        user: data.user,
+        session: null // We don't have session in getUser response
+      },
+      error: null
+    };
+    
+    return this.processSuccessfulAuth(authResponse as any, data.user.email || "");
   }
 
   /** Refresh session */
@@ -126,7 +157,17 @@ export class UnifiedAuthService {
     if (error || !data.session || !data.user) {
       return { success: false, error: error?.message || "Failed to refresh token" };
     }
-    return this.processSuccessfulAuth(data, data.user.email || "");
+    
+    // Create a proper CustomAuthResponse structure for processSuccessfulAuth
+    const authResponse: CustomAuthResponse = {
+      data: {
+        user: data.user,
+        session: data.session
+      },
+      error: null
+    };
+    
+    return this.processSuccessfulAuth(authResponse as any, data.user.email || "");
   }
 
   /** Update user profile */
@@ -144,12 +185,14 @@ export class UnifiedAuthService {
 
   /** Internal helper */
   private async processSuccessfulAuth(
-    authResponse: AuthResponse,
+    authResponse: CustomAuthResponse,
     email: string
   ): Promise<AuthResult> {
     const { user, session } = authResponse.data;
-    if (!user || !session) {
-      return { success: false, error: "Invalid auth data" };
+    
+    // For getCurrentUser calls, we may not have a session
+    if (!user) {
+      return { success: false, error: "Invalid auth data: missing user" };
     }
 
     const userId = user.id;
@@ -166,15 +209,25 @@ export class UnifiedAuthService {
       return { success: false, error: upsertErr?.message || "Failed to sync user record" };
     }
 
-    return {
+    // Basic response without session
+    const authResult: AuthResult = {
       success: true,
-      user: { id: userRecord.id, email, role: userRecord.role },
-      session: {
+      user: { id: userRecord.id, email, role: userRecord.role }
+    };
+    
+    // Add session data if available
+    if (session) {
+      authResult.session = {
         access_token: session.access_token,
         refresh_token: session.refresh_token,
-        expires_at: session.expires_at,
-      },
-    };
+        // Make sure expires_at is a number
+        expires_at: typeof session.expires_at === 'number' ? 
+          session.expires_at : 
+          Math.floor(Date.now() / 1000) + 3600 // Default 1 hour expiration if not provided
+      };
+    }
+    
+    return authResult;
   }
 }
 

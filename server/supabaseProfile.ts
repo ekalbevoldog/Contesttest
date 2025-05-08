@@ -141,9 +141,9 @@ export async function getBusinessByUserId(userId: string) {
       } else if (profileError) {
         console.error('Error finding business profile with direct id:', profileError);
       } else {
-        console.log('No business profile found for user ID:', userByhId.id);
+        console.log('No business profile found for user ID:', userById.id);
       }
-    } else if (authIdError) {
+    } else if (IdError) {
       console.log('Error finding user by id:', IdError);
     }
     
@@ -211,7 +211,7 @@ async function syncToDomain(userType: string, profile: any) {
         position:         profile.position,
         zip_code:         profile.zipcode ?? profile.zip_code,
         bio:              profile.bio,
-      }, { onConflict: ['id'] });
+      }, { onConflict: 'id' });
   } else if (userType === 'business') {
     // Use the primary key 'id' for businesses instead of 'user_id'
     await supabaseAdmin
@@ -223,7 +223,7 @@ async function syncToDomain(userType: string, profile: any) {
         industry:      profile.industry,
         business_type: profile.business_type,
         zip_code:      profile.zipcode ?? profile.zip_code,
-      }, { onConflict: ['id'] }); // Conflict on 'id' not 'user_id'
+      }, { onConflict: 'id' }); // Conflict on 'id' not 'user_id'
   }
 }
 
@@ -346,7 +346,7 @@ export function setupProfileEndpoints(app: Express) {
     try {
       const { data: profile, error } = await supabaseAdmin
         .from(table)
-        .upsert(base, { onConflict: conflictKey })
+        .upsert(base, { onConflict: 'id' }) // Fixed: use string instead of variable
       .select()
       .single();
 

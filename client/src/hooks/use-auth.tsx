@@ -140,9 +140,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authUser) {
         console.log('[Auth Provider] Setting user data from auth user');
 
-        // Extract role from metadata or direct property
+        // Extract role using standardized approach
         const role = authUser.user_metadata?.role || 
                     authUser.role || 
+                    authUser.user_metadata?.userType ||
                     authUser.user_type || 
                     'user';
 
@@ -204,10 +205,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.user) {
         userData = data.user;
         profileData = data.profile;
-        // Role could be in different places depending on response format
+        // Standardized role detection approach
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
+                   userData.user_metadata?.userType ||
                    userData.user_metadata?.user_type || 
+                   userData.user_type ||
                    profileData?.role || 
                    'user';
       } else if (data.auth) {
@@ -216,6 +219,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileData = data.profile;
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
+                   userData.user_metadata?.userType ||
+                   userData.user_metadata?.user_type || 
+                   userData.user_type ||
                    profileData?.role || 
                    'user';
       } else if (data.session && data.data?.user) {
@@ -224,6 +230,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileData = data.profile || data.server?.profile;
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
+                   userData.user_metadata?.userType ||
+                   userData.user_metadata?.user_type || 
+                   userData.user_type ||
                    profileData?.role || 
                    'user';
       }
@@ -343,9 +352,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.user) {
         userData = data.user;
         profileData = data.profile;
-        // Role could be in different places depending on response format
+        // Standardized role detection approach
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
+                   userData.user_metadata?.userType ||
+                   userData.user_metadata?.user_type || 
+                   userData.user_type ||
                    'user';
       } else if (data.auth) {
         // Alternative format
@@ -353,6 +365,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileData = data.profile;
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
+                   userData.user_metadata?.userType ||
+                   userData.user_metadata?.user_type || 
+                   userData.user_type ||
                    'user';
       } else if (data.session && data.data?.user) {
         // Direct Supabase response format
@@ -360,6 +375,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileData = data.profile || data.serverData?.profile;
         roleValue = userData.user_metadata?.role || 
                    userData.role || 
+                   userData.user_metadata?.userType ||
+                   userData.user_metadata?.user_type || 
+                   userData.user_type ||
                    profileData?.role || 
                    'user';
       }
@@ -597,13 +615,17 @@ export function useAuth() {
       return null;
     }
     
+    // Standardized role detection approach
     // Priority order for determining user type:
     // 1. Explicit userType property
     // 2. role property 
-    // 3. user_metadata.role
+    // 3. user_metadata.role or user_metadata.userType
     const determinedType = context.user.userType || 
            context.user.role || 
            (context.user.user_metadata && context.user.user_metadata.role) || 
+           (context.user.user_metadata && context.user.user_metadata.userType) ||
+           (context.user.user_metadata && context.user.user_metadata.user_type) ||
+           context.user.user_type ||
            null;
            
     console.log('[useAuth] Determined userType:', determinedType);

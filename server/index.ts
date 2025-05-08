@@ -10,35 +10,24 @@ import http from 'http';
 import path from 'path';
 import morgan from 'morgan';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import net from 'net';
 import fs from 'fs';
-import { router, configureWebSocket } from './routes';
+import { configureWebSocket, registerRoutes } from './routes';
 import { setupVite, serveStatic } from './vite';
-
-// Import each route module
-import authRoutes from './routes/authRoutes';
-import profileRoutes from './routes/profileRoutes';
-import healthRoutes from './routes/healthRoutes';
-import subscriptionRoutes from './routes/subscriptionRoutes';
-import webhookRoutes from './routes/webhookRoutes';
-import configRoutes from './routes/configRoutes';
-
-// Load environment variables from .env files
-dotenv.config();
-
-// Determine environment
-const isDev = process.env.NODE_ENV !== 'production';
-console.log(`Starting server in ${isDev ? 'development' : 'production'} mode`);
+import config from './config/environment';
+import { closeConnections } from './lib/unifiedSupabase';
 
 // Initialize Express app
 const app = express();
 
 // Start with the requested port, but don't bind yet - we'll find an available port
 const DEFAULT_PORT = 3000;
-let PORT = parseInt(process.env.PORT || process.env.REPLIT_PORT || DEFAULT_PORT.toString(), 10);
+let PORT = config.PORT || DEFAULT_PORT;
+
+// Log startup information
+console.log(`Starting server in ${config.isDevelopment ? 'development' : 'production'} mode`);
 
 // Set up middleware
 app.use(cors({
@@ -48,16 +37,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(morgan('dev'));
+app.use(morgan(config.isDevelopment ? 'dev' : 'common'));
 
 // Configure session management
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'contested-app-secret',
+    secret: config.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: config.isProduction,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   })
@@ -72,14 +61,8 @@ const server = http.createServer(app);
 // Configure WebSocket server
 const wss = configureWebSocket(server);
 
-// API Routes - register these FIRST to ensure they take priority
-app.use('/health', healthRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/subscription', subscriptionRoutes);
-app.use('/api/webhook', webhookRoutes);
-app.use('/api/config', configRoutes);
-app.use('/api', router);
+// Register all API routes
+registerRoutes(app);
 
 // Check if a port is in use
 async function isPortInUse(port: number): Promise<boolean> {
@@ -135,7 +118,7 @@ async function startServer() {
     
     // Set up frontend depending on environment
     // In development mode, use Vite dev server
-    if (isDev) {
+    if (config.isDevelopment) {
       console.log('Setting up Vite development server for frontend');
       await setupVite(app, server);
     } 
@@ -146,8 +129,8 @@ async function startServer() {
     }
     
     // Start listening (bind to all interfaces for remote access)
-    server.listen(PORT, '0.0.0.0', () => {
-      const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
+    server.listen(PORT, config.HOST, () => {
+      const serverUrl = config.SERVER_URL || `http://localhost:${PORT}`;
       const wsProtocol = serverUrl.startsWith('https') ? 'wss://' : 'ws://';
       const wsUrl = serverUrl.replace(/^https?:\/\//, wsProtocol);
       
@@ -156,7 +139,7 @@ async function startServer() {
       console.log(`🩺 Health check at ${serverUrl}/health`);
       console.log(`🧵 WebSocket server running at ${wsUrl}/ws`);
       
-      if (isDev) {
+      if (config.isDevelopment) {
         console.log(`💻 Development server: ${serverUrl}`);
       } else {
         console.log(`🚀 Production server: ${serverUrl}`);
@@ -172,8 +155,24 @@ async function startServer() {
 startServer();
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully');
+  
+  // Close WebSocket server if available
+  if (wss) {
+    wss.close();
+    console.log('WebSocket server closed');
+  }
+  
+  // Close all database connections
+  try {
+    await closeConnections();
+    console.log('Database connections closed');
+  } catch (error) {
+    console.error('Error closing database connections:', error);
+  }
+  
+  // Close HTTP server
   server.close(() => {
     console.log('HTTP server closed');
     process.exit(0);
@@ -184,6 +183,12 @@ process.on('SIGTERM', () => {
     console.error('Forced shutdown after timeout');
     process.exit(1);
   }, 10000);
+});
+
+// Also handle SIGINT (Ctrl+C)
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  process.emit('SIGTERM');
 });
 
 export default server;

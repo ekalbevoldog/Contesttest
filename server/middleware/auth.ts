@@ -23,7 +23,14 @@ declare global {
     interface User {
       id: string | number;
       role?: string;
+      userType?: string;
+      user_type?: string;
       email?: string;
+      user_metadata?: {
+        role?: string;
+        userType?: string;
+        user_type?: string;
+      };
       [key: string]: any;
     }
     
@@ -39,16 +46,8 @@ export const requireAuth = async (
   res: Response,
   next: NextFunction
 ) => {
-  // Check if the user is authenticated via express-session (safely checking each property)
-  try {
-    if (req.session && req.session.passport && req.session.passport.user) {
-      req.user = req.session.passport.user;
-      return next();
-    }
-  } catch (sessionError) {
-    console.error('Error accessing session:', sessionError);
-    // Continue to JWT auth as fallback
-  }
+  // Modern JWT-based authentication only - no session fallbacks
+  // We only use the Supabase JWT authentication for consistency
   
   // Otherwise check for supabase JWT
   const authHeader = req.headers.authorization;
@@ -56,29 +55,14 @@ export const requireAuth = async (
   // Debug - log authorization header
   console.log('[Auth Middleware] Authorization header:', authHeader ? 'Present' : 'Missing');
   
-  // First try getting token from Authorization header
+  // Get token strictly from Authorization header only
   let token = null;
   
-  if (authHeader) {
-    // Handle both "Bearer <token>" and raw token formats
-    if (authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    } else {
-      // Try using the header value directly
-      token = authHeader;
-    }
-  }
-  
-  // If no token found yet, check if it's in a cookie
-  if (!token && req.cookies && req.cookies.supabaseToken) {
-    token = req.cookies.supabaseToken;
-    console.log('[Auth Middleware] Found token in cookies');
-  }
-  
-  // If no token found yet, check query string (for testing only)
-  if (!token && req.query && req.query.token) {
-    token = req.query.token as string;
-    console.log('[Auth Middleware] Found token in query string');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else {
+    console.log('[Auth Middleware] Authorization header missing or invalid format');
+    return res.status(401).json({ error: 'Unauthorized - Invalid authorization header format' });
   }
   
   if (!token) {
@@ -103,10 +87,12 @@ export const requireAuth = async (
     
     console.log('[Auth] Token verified for user:', data.user.id, '(' + data.user.email + ')');
     
-    // Extract user role from metadata or direct property
+    // Extract user role using standardized approach
     const role = data.user.user_metadata?.role || 
                 data.user.role || 
-                data.user.user_metadata?.user_type ||
+                data.user.user_metadata?.userType ||
+                data.user.user_metadata?.user_type || 
+                (data.user as any).user_type ||
                 'user';
     
     // Get user details from database
@@ -117,50 +103,62 @@ export const requireAuth = async (
       .single();
       
     if (userError) {
-      // Only log the error, don't fail - try alternative lookup method
-      console.log('User data lookup error with id:', userError);
+      // Create a standard user object from auth data - no alternative lookup methods
+      console.log('User data lookup by ID failed:', userError);
       
-      // Try looking up by email instead
-      const { data: userByEmail, error: emailError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', data.user.email)
-        .single();
-        
-      if (emailError || !userByEmail) {
-        console.error('User not found by email either:', emailError || 'No results');
-        
-        // Instead of failing, create a basic user object from the token data
-        req.user = {
-          id: data.user.id,
-          email: data.user.email,
-          role: role,
-          created_at: new Date().toISOString()
-        };
-      } else {
-        // Found user by email
-        req.user = userByEmail;
-      }
-    } else if (!userData) {
-      console.warn('No user data found for id:', data.user.id);
-      
-      // Create a basic user object from the token data
+      // Create a basic user object with standardized role fields
       req.user = {
         id: data.user.id,
         email: data.user.email,
         role: role,
-        created_at: new Date().toISOString()
+        userType: role,
+        created_at: new Date().toISOString(),
+        user_metadata: {
+          role: data.user.user_metadata?.role,
+          userType: data.user.user_metadata?.userType,
+          user_type: data.user.user_metadata?.user_type
+        }
+      };
+    } else if (!userData) {
+      console.warn('No user data found for id:', data.user.id);
+      
+      // Create a basic user object with standardized role fields
+      req.user = {
+        id: data.user.id,
+        email: data.user.email,
+        role: role,
+        userType: role,
+        created_at: new Date().toISOString(),
+        user_metadata: {
+          role: data.user.user_metadata?.role,
+          userType: data.user.user_metadata?.userType,
+          user_type: data.user.user_metadata?.user_type
+        }
       };
     } else {
       // We found the user record
       req.user = userData;
     }
     
-    // Ensure user object is properly defined
+    // Ensure user object is properly defined with standardized role fields
     if (req.user) {
-      // Ensure role is set
+      // Ensure role is set using standardized approach
       if (!req.user.role && role) {
         req.user.role = role;
+      }
+      
+      // Ensure userType is set
+      if (!req.user.userType && req.user.role) {
+        req.user.userType = req.user.role;
+      }
+      
+      // Ensure user_metadata exists
+      if (!req.user.user_metadata) {
+        req.user.user_metadata = {
+          role: data.user.user_metadata?.role,
+          userType: data.user.user_metadata?.userType,
+          user_type: data.user.user_metadata?.user_type
+        };
       }
       
       // Log success

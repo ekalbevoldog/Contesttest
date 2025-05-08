@@ -10,15 +10,38 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { getDb, sql, handleDatabaseError } from './lib/unifiedSupabase';
 import healthRoutes from './routes/healthRoutes';
+import authRoutes from './routes/authRoutes';
 import { jsonWithRawBody } from './middleware/rawBodyParser';
 import config from './config/environment';
 
 // Import API routes
-// Note: We use require() for JS files to avoid TypeScript declaration errors
-const campaignLaunchRoutes = require('./api/campaigns/launch.js');
+// Use ESM import for all modules
+import campaignLaunchRoutes from './api/campaigns/launch.js';
 
 // Create main router
 export const router = Router();
+
+/**
+ * Register all API routes with the Express application
+ * @param app Express application instance
+ * @returns The configured application
+ */
+export function registerRoutes(app: any): any {
+  // Register all route modules
+  app.use('/health', healthRoutes);
+  app.use('/', authRoutes); // Auth routes need to be registered at root level
+  app.use('/api/campaigns/launch', authMiddleware, campaignLaunchRoutes);
+  app.use('/api', router);
+  
+  // Log all registered routes for debugging
+  console.log('Registered routes:');
+  console.log('- Auth routes (POST /api/auth/login, POST /api/auth/register, etc.)');
+  console.log('- Health routes (/health/*)');
+  console.log('- Campaign routes (/api/campaigns/launch/*)');
+  console.log('- API routes (/api/*)');
+  
+  return app;
+}
 
 // Define interface for Express Request with user property
 declare global {
@@ -28,7 +51,13 @@ declare global {
         id: string;
         token: string;
         role: string;
+        userType?: string;
         email: string;
+        user_metadata?: {
+          role?: string;
+          userType?: string;
+          user_type?: string;
+        };
       };
     }
   }
@@ -84,16 +113,14 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     // Query Supabase to validate the token and get user info
     // This assumes auth.users table from Supabase is accessible
     try {
-      // First, verify the token is valid by checking against auth.users
-      // This is a simplified approach - in a production app you would:
-      // 1. Use Supabase's admin APIs to verify the token
-      // 2. OR use proper JWT verification with the right secret
+      // Verify the token by checking against auth.users
       const userQuery = sql`
         SELECT 
           id, 
           email, 
           raw_user_meta_data->>'role' as role,
-          raw_user_meta_data->>'userType' as user_type
+          raw_user_meta_data->>'userType' as user_type,
+          raw_user_meta_data->>'user_type' as legacy_user_type
         FROM auth.users 
         WHERE id = (SELECT sub FROM auth.jwt_claim_validate($1))
       `;
@@ -110,13 +137,23 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
       
       const userData = userResult[0];
       
-      // Assign user data to request for use in route handlers
+      // Determine effective role using standardized approach
+      const effectiveRole = userData.role || userData.user_type || userData.legacy_user_type || 'user';
+      
+      // Assign user data to request for use in route handlers with standardized role detection
       req.user = { 
         id: userData.id,
         token,
-        // Use consistent role resolution that mirrors the client-side logic
-        role: userData.role || userData.user_type || 'user',
-        email: userData.email
+        // Standardized role using the same detection logic as client-side
+        role: effectiveRole,
+        userType: effectiveRole,
+        email: userData.email,
+        // Include the raw metadata values for complete information
+        user_metadata: {
+          role: userData.role,
+          userType: userData.user_type,
+          user_type: userData.legacy_user_type
+        }
       };
       
       console.log('Auth Middleware: Authentication successful for user', {
@@ -127,40 +164,9 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
       next();
     } catch (dbError) {
       console.error('Auth Middleware: Database error during token verification', dbError);
-      
-      // Fall back to simplified validation if DB query fails
-      console.log('Auth Middleware: Using fallback token validation');
-      
-      // Basic token presence verification (not secure, but prevents total failure)
-      if (token && token.length > 20) {
-        // Extract user ID from token if possible (JWT format: header.payload.signature)
-        let userId = 'unknown';
-        try {
-          // Try to extract the payload
-          const payloadBase64 = token.split('.')[1];
-          if (payloadBase64) {
-            const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString());
-            userId = payload.sub || 'unknown';
-          }
-        } catch (e) {
-          console.error('Auth Middleware: Error parsing token payload', e);
-        }
-        
-        req.user = { 
-          id: userId,
-          token,
-          role: 'user',
-          email: 'user@example.com'
-        };
-        
-        console.log('Auth Middleware: Fallback authentication accepted with limited permissions');
-        return next();
-      }
-      
-      // If even fallback fails, return error
       return res.status(401).json({ 
         error: 'Token verification failed',
-        message: 'Authentication system error, please try again'
+        message: 'Authentication error, please try again'
       });
     }
   } catch (error) {
@@ -318,8 +324,8 @@ export function configureWebSocket(server: http.Server) {
       connectionId
     });
     
-    // Handle incoming messages
-    ws.on('message', (message: string) => {
+    // Handle incoming messages - use async handler for DB operations
+    ws.on('message', async (message: string) => {
       const connection = connections.get(ws);
       if (!connection) return;
       
@@ -338,29 +344,64 @@ export function configureWebSocket(server: http.Server) {
             // Authenticate the connection with a JWT token
             if (data.token) {
               try {
-                // Extract user ID from token if possible (JWT format: header.payload.signature)
-                const payloadBase64 = data.token.split('.')[1];
-                if (payloadBase64) {
-                  const payload = JSON.parse(Buffer.from(payloadBase64, 'base64').toString());
-                  const userId = payload.sub;
+                // Use the same robust authentication as the auth middleware
+                // Use prepared SQL with parameter binding
+                const verifyResult = await sql`
+                  SELECT sub FROM auth.jwt_claim_validate(${data.token})
+                `.execute();
+                
+                if (verifyResult && verifyResult.length > 0) {
+                  const userId = verifyResult[0].sub;
                   
-                  if (userId) {
-                    // Update connection with user ID and mark as authenticated
-                    connection.userId = userId;
-                    connection.authenticated = true;
-                    
-                    console.log(`WebSocket connection ${connectionId} authenticated for user ${userId}`);
-                    
-                    // Respond with success
-                    sendMessage(ws, {
-                      type: 'auth_success',
-                      userId
-                    });
-                    return;
+                  // Get additional user info with standardized role extraction
+                  const userResult = await sql`
+                    SELECT 
+                      email, 
+                      raw_user_meta_data->>'role' as role,
+                      raw_user_meta_data->>'userType' as user_type,
+                      raw_user_meta_data->>'user_type' as legacy_user_type
+                    FROM auth.users 
+                    WHERE id = ${userId}
+                  `.execute();
+                  
+                  // Properly type the user info
+                  interface UserInfo {
+                    email?: string;
+                    role?: string;
+                    user_type?: string;
+                    legacy_user_type?: string;
+                    [key: string]: any;
                   }
+                  
+                  const userInfo: UserInfo = userResult[0] || {};
+                  
+                  // Update connection with user ID and mark as authenticated
+                  connection.userId = userId;
+                  connection.authenticated = true;
+                  
+                  console.log(`WebSocket connection ${connectionId} authenticated for user ${userId}`);
+                  
+                  // Determine effective role using standardized approach
+                  const effectiveRole = userInfo.role || userInfo.user_type || userInfo.legacy_user_type;
+                  
+                  // Respond with success and standardized user info
+                  sendMessage(ws, {
+                    type: 'auth_success',
+                    userId,
+                    email: userInfo.email,
+                    role: effectiveRole,
+                    // Include all role fields for client-side consistency
+                    userType: effectiveRole,
+                    user_metadata: {
+                      role: userInfo.role,
+                      userType: userInfo.user_type,
+                      user_type: userInfo.legacy_user_type
+                    }
+                  });
+                  return;
                 }
               } catch (e) {
-                console.error(`Auth error for connection ${connectionId}:`, e);
+                console.error(`WebSocket auth error for connection ${connectionId}:`, e);
               }
             }
             

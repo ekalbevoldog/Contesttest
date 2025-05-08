@@ -104,11 +104,20 @@ export class SessionService {
   async getConversationHistory(
     sessionId: string
   ): Promise<{ id: number; sessionId: string; role: string; content: string; createdAt: Date }[]> {
-    const result = await db.query(
-      "SELECT id, session_id, role, content, created_at FROM messages WHERE session_id = $1 ORDER BY created_at DESC",
-      [sessionId]
-    );
-    return result.rows.map((row: any) => ({
+    // Use the postgres client to execute the query instead of directly calling query on the SupabaseClient
+    const { data: result, error } = await db
+      .from('messages')
+      .select('id, session_id, role, content, created_at')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      console.error('Error fetching conversation history:', error);
+      return [];
+    }
+    
+    // Supabase query result is already an array, no need to access .rows
+    return (result || []).map((row: any) => ({
       id: row.id,
       sessionId: row.session_id,
       role: row.role,
