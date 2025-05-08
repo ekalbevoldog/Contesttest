@@ -13,14 +13,22 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import { registerRoutes, configureWebSocket } from './routes'; // Import from consolidated routes
+import router, { configureWebSocket } from './routes';
+
+// Import each route module
+import authRoutes from './routes/authRoutes';
+import profileRoutes from './routes/profileRoutes';
+import healthRoutes from './routes/healthRoutes';
+import subscriptionRoutes from './routes/subscriptionRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 
 // Load environment variables
 dotenv.config();
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Always use environment PORT or fallback to 5000
+const PORT = process.env.PORT || process.env.REPLIT_PORT || 5000;
 
 // Set up middleware
 app.use(cors());
@@ -42,8 +50,15 @@ app.use(
   })
 );
 
-// Register all routes through the centralized route registry
-registerRoutes(app);
+// Register all route modules with consistent paths
+app.use('/health', healthRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/webhook', webhookRoutes);
+
+// Use main router for other routes
+app.use('/', router);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
@@ -71,12 +86,16 @@ server.on('error', (error: Error) => {
   process.exit(1);
 });
 
-// Start listening (parse port as number to avoid TypeScript error)
-server.listen(parseInt(String(PORT), 10), () => {
+// Start listening (bind to all interfaces for remote access)
+server.listen(parseInt(String(PORT), 10), '0.0.0.0', () => {
+  const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
+  const wsProtocol = serverUrl.startsWith('https') ? 'wss://' : 'ws://';
+  const wsUrl = serverUrl.replace(/^https?:\/\//, wsProtocol);
+  
   console.log(`⚡ Server running on port ${PORT}`);
-  console.log(`🌎 API available at http://localhost:${PORT}/api/status`);
-  console.log(`🩺 Health check at http://localhost:${PORT}/health`);
-  console.log(`🧵 WebSocket server running at ws://localhost:${PORT}/ws`);
+  console.log(`🌎 API available at ${serverUrl}/api/status`);
+  console.log(`🩺 Health check at ${serverUrl}/health`);
+  console.log(`🧵 WebSocket server running at ${wsUrl}/ws`);
 });
 
 // Graceful shutdown

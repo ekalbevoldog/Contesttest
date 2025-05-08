@@ -14,7 +14,7 @@ cleanup_processes() {
   echo -e "${YELLOW}🧹 Cleaning up existing server processes...${NC}"
   
   # First, terminate any existing server processes
-  local server_processes=("tsx server/index.ts" "node.*server/index.ts" "node server.js" "node --require.*server/index.ts")
+  local server_processes=("tsx server/index.ts" "node.*server/index.ts" "node server.js" "node server.cjs" "node --require.*server/index.ts")
   
   for pattern in "${server_processes[@]}"; do
     pkill -f "$pattern" > /dev/null 2>&1 || true
@@ -73,7 +73,7 @@ if [[ "$NODE_ENV" == "production" ]]; then
 else
   # Development mode with hot reloading
   echo -e "${CYAN}${BOLD}🔄 Starting development server with hot reloading${NC}"
-  SERVER_CMD="PORT=$PORT npx tsx server/index.ts"
+  SERVER_CMD="PORT=$PORT node start-server.js"
   LOG_FILE="logs/dev-server.log"
 fi
 

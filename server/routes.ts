@@ -8,7 +8,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { getDb } from './dbSetup';
+import { getDb, sql } from './dbSetup';
 import healthRoutes from './routes/healthRoutes';
 import { jsonWithRawBody } from './middleware/rawBodyParser';
 import dotenv from 'dotenv';
@@ -86,13 +86,26 @@ router.get('/api/profile', authMiddleware, (req: Request, res: Response) => {
 // Example endpoint that uses database
 router.get('/api/data', async (req: Request, res: Response) => {
   try {
+    // Get database connection
     const db = getDb();
-    // Example query - replace with actual schema tables
-    const result = await db.query.users.findMany();
-    res.json({ data: result });
+    
+    // Execute a simple SQL query to test database connectivity
+    const query = sql`SELECT NOW() as time`;
+    const result = await query.execute();
+    
+    // Return the result
+    res.json({ 
+      data: result, 
+      timestamp: new Date().toISOString(),
+      status: 'success'
+    });
   } catch (error) {
     console.error('Database error:', error);
-    res.status(500).json({ error: 'Database error' });
+    res.status(500).json({ 
+      error: 'Database error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -163,7 +176,12 @@ export function configureWebSocket(server: http.Server) {
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: string; token: string };
+      user?: {
+        id: string;
+        token: string;
+        role: string;
+        email: string;
+      };
     }
   }
 }

@@ -81,6 +81,10 @@ export interface IStorage {
   updateUser(userId: string, userData: Partial<User>): Promise<User | undefined>;
   updateStripeCustomerId(userId: string, customerId: string): Promise<User>;
   updateUserStripeInfo(userId: string, data: { customerId: string, subscriptionId: string }): Promise<User>;
+  // Subscription-related operations
+  updateUserSubscription(userId: string, data: any): Promise<User>;
+  createSubscriptionHistory(data: any): Promise<any>;
+  getUserByStripeSubscriptionId(subscriptionId: string): Promise<any>;
   // Password-related operations (separate from user table)
   getPasswordHash(userId: string): Promise<string | null>;
   storePasswordHash(userId: string, passwordHash: string): Promise<void>;

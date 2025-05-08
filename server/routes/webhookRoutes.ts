@@ -1,7 +1,6 @@
 import { Request, Response, Router } from "express";
 import Stripe from "stripe";
-import { buffer } from "micro";
-// NEED TO EDIT AND REVIEW
+import { buffer } from "../utils/buffer";
 import * as stripeService from "../services/stripeService";
 import { storage } from "../storage";
 

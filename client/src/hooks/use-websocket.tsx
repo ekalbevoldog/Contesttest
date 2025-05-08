@@ -6,8 +6,17 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { websocketClient, WebSocketMessage } from '../lib/websocket-client';
+import websocket from '../lib/websocket-client';
 import { v4 as uuidv4 } from 'uuid';
+
+// Define WebSocketMessage type
+export interface WebSocketMessage {
+  type: string;
+  data?: any;
+  sessionId?: string;
+  timestamp?: string;
+  [key: string]: any;
+}
 
 // Connection status enum for better type safety
 export enum ConnectionStatus {
@@ -91,16 +100,31 @@ export function useWebSocket(
       }
       
       // Connect to the WebSocket server
-      await websocketClient.connect(sessionId);
-      setConnectionStatus(ConnectionStatus.CONNECTED);
+      websocket.connect();
       
-      // Set up message listener
-      const removeListener = websocketClient.on('message', (data: WebSocketMessage) => {
-        setLastMessage(data);
+      // Wait a short time for connection establishment
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Setup message handler
+      websocket.onMessage((data: any) => {
+        setLastMessage({
+          type: data.type || 'message',
+          data: data,
+          sessionId: sessionId,
+          timestamp: data.timestamp || new Date().toISOString()
+        });
       });
       
-      // Track for cleanup
-      listenersRef.current.push(removeListener);
+      // Setup connect handler
+      websocket.onConnect(() => {
+        setConnectionStatus(ConnectionStatus.CONNECTED);
+      });
+      
+      // Setup disconnect handler
+      websocket.onDisconnect(() => {
+        setConnectionStatus(ConnectionStatus.DISCONNECTED);
+      });
+      
     } catch (err) {
       console.error('Failed to connect to WebSocket:', err);
       setConnectionStatus(ConnectionStatus.DISCONNECTED);
@@ -109,11 +133,10 @@ export function useWebSocket(
   
   // Disconnect from the WebSocket server
   const disconnect = useCallback(() => {
-    websocketClient.disconnect();
+    websocket.disconnect();
     setConnectionStatus(ConnectionStatus.DISCONNECTED);
     
-    // Clean up listeners
-    listenersRef.current.forEach(removeListener => removeListener());
+    // Clean up listeners (note: our implementation doesn't need this, but keeping for API compatibility)
     listenersRef.current = [];
   }, []);
   
@@ -122,10 +145,11 @@ export function useWebSocket(
     // Include sessionId if not provided in message
     const messageWithSession = {
       ...message,
-      sessionId: message.sessionId || sessionId
+      sessionId: message.sessionId || sessionId,
+      timestamp: message.timestamp || new Date().toISOString()
     };
     
-    return websocketClient.send(messageWithSession);
+    return websocket.send(messageWithSession);
   }, [sessionId]);
   
   // Auto-connect on mount if enabled
@@ -144,7 +168,7 @@ export function useWebSocket(
   useEffect(() => {
     // Helper to update status based on client state
     const updateStatus = () => {
-      const isConnected = websocketClient.isConnected();
+      const isConnected = websocket.isActive();
       setConnectionStatus(
         isConnected ? ConnectionStatus.CONNECTED : ConnectionStatus.DISCONNECTED
       );

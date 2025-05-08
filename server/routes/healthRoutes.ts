@@ -9,11 +9,13 @@ import { Router } from 'express';
 import os from 'os';
 import { WebSocket } from 'ws';
 
-// Import database connection if needed
+// Import database connection functions
 let dbConnection: any;
+let checkDbConnection: any;
 try {
-  const { getDb } = require('../dbSetup');
+  const { getDb, checkDbConnection: checkDb } = require('../dbSetup');
   dbConnection = getDb;
+  checkDbConnection = checkDb;
 } catch (error) {
   console.log('No database setup found, health check will not include database status');
 }
@@ -75,13 +77,15 @@ healthRoutes.get('/detailed', async (req, res) => {
     // Add database status if available
     if (dbConnection) {
       try {
-        // Test database connection
-        const db = dbConnection();
-        const result = await db.query('SELECT NOW()');
+        // Test database connection using our checkDbConnection utility
+        const { status, timestamp, error } = await checkDbConnection();
         health.database = {
-          status: 'connected',
-          timestamp: result.rows[0].now
+          status,
+          timestamp: timestamp || new Date().toISOString()
         };
+        if (error) {
+          health.database.error = error;
+        }
       } catch (err) {
         const error = err as Error;
         health.database = {

@@ -13,55 +13,92 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Type for connection pool
-interface ConnectionPool {
-  client: ReturnType<typeof postgres>;
-  db: ReturnType<typeof drizzle>;
-  isConnected: boolean;
-}
+// Client instance that will be reused
+let pgClient: ReturnType<typeof postgres> | null = null;
 
-// Create a singleton connection pool
-let connectionPool: ConnectionPool | null = null;
+// Database instance that will be reused
+let dbInstance: any = null;
 
 /**
- * Get database connection with proper connection pooling
- * @returns Database connection from pool
+ * SQL template tag for creating parameterized queries
  */
-export function getDb() {
-  if (connectionPool && connectionPool.isConnected) {
-    return connectionPool.db;
-  }
+export function sql(strings: TemplateStringsArray, ...values: any[]) {
+  const text = strings.reduce((result, str, i) => {
+    return result + '$' + i + str;
+  }).replace('$0', '');
+  
+  return {
+    text,
+    values,
+    /**
+     * Execute this SQL query directly
+     */
+    execute: async () => {
+      const client = getPgClient();
+      const result = await client.unsafe(text, ...values);
+      return result;
+    }
+  };
+}
 
-  // Validate DATABASE_URL
+/**
+ * Get the raw postgres client
+ * This provides direct access to perform raw SQL queries
+ */
+function getPgClient() {
+  if (pgClient) {
+    return pgClient;
+  }
+  
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error('DATABASE_URL environment variable is required');
   }
+  
+  pgClient = postgres(databaseUrl, {
+    max: 10,
+    idle_timeout: 20,
+    connect_timeout: 10,
+    ssl: databaseUrl.includes('localhost') ? false : 'require',
+    prepare: false // For better Supabase compatibility
+  });
+  
+  return pgClient;
+}
 
+/**
+ * Get the database instance with Drizzle ORM
+ * @returns The database instance with extended functionality
+ */
+export function getDb() {
+  if (dbInstance) {
+    return dbInstance;
+  }
+  
   try {
-    // Create connection
-    const client = postgres(databaseUrl, {
-      max: 10, // Maximum number of connections
-      idle_timeout: 20, // Max idle time in seconds
-      connect_timeout: 10, // Connect timeout in seconds
-      prepare: false, // For better Supabase compatibility
-    });
-
-    // Create drizzle instance
+    // Get the PostgreSQL client
+    const client = getPgClient();
+    
+    // Create a new Drizzle ORM instance
     const db = drizzle(client, { schema });
-
-    // Update connection pool
-    connectionPool = {
-      client,
-      db,
-      isConnected: true
+    
+    // Create an enhanced DB instance with execute method for raw SQL
+    dbInstance = {
+      ...db,
+      execute: async (query: ReturnType<typeof sql>) => {
+        return await query.execute();
+      },
+      query: {
+        // Add placeholder query namespace to satisfy TypeScript
+        // This will be populated by Drizzle with actual table queries
+        ...db.query
+      }
     };
-
+    
     console.log('✅ Database connection established');
-    return connectionPool.db;
+    return dbInstance;
   } catch (error) {
     console.error('❌ Database connection error:', error);
-    connectionPool = null;
     throw error;
   }
 }
@@ -72,8 +109,8 @@ export function getDb() {
  */
 export async function checkDbConnection() {
   try {
-    const db = getDb();
-    const result = await db.execute(sql`SELECT NOW()`);
+    const client = getPgClient();
+    const result = await client.unsafe('SELECT NOW() as now');
     return {
       status: 'connected',
       timestamp: result[0]?.now || new Date().toISOString(),
@@ -87,19 +124,18 @@ export async function checkDbConnection() {
 }
 
 /**
- * Close database connection (useful for graceful shutdown)
+ * Close database connection
+ * Call this during application shutdown
  */
 export async function closeDbConnection() {
-  if (connectionPool && connectionPool.client) {
+  if (pgClient) {
     try {
-      await connectionPool.client.end();
-      connectionPool.isConnected = false;
+      await pgClient.end();
+      pgClient = null;
+      dbInstance = null;
       console.log('✅ Database connection closed');
     } catch (error) {
       console.error('❌ Error closing database connection:', error);
     }
   }
 }
-
-// Create SQL helper for raw queries
-export const sql = postgres.sql;
