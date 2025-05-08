@@ -1,1 +1,3467 @@
-
+[
+  {
+    "object_type": "SCHEMA",
+    "name": "auth",
+    "parent_name": null,
+    "definition": "CREATE SCHEMA IF NOT EXISTS auth;",
+    "sort_order": 0
+  },
+  {
+    "object_type": "SCHEMA",
+    "name": "public",
+    "parent_name": null,
+    "definition": "CREATE SCHEMA IF NOT EXISTS public;",
+    "sort_order": 0
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.audit_log_entries",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.audit_log_entries ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.flow_state",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.flow_state ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.identities",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.identities ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.instances",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.instances ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.mfa_amr_claims",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.mfa_amr_claims ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.mfa_challenges",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.mfa_challenges ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.mfa_factors",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.mfa_factors ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.one_time_tokens",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.one_time_tokens ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.refresh_tokens",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.refresh_tokens ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.saml_providers",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.saml_providers ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.saml_relay_states",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.saml_relay_states ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.schema_migrations",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.schema_migrations ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.sessions",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.sessions ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.sso_domains",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.sso_domains ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.sso_providers",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.sso_providers ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "auth.users",
+    "parent_name": "auth",
+    "definition": "CREATE TABLE auth.users ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.athlete_profiles",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.athlete_profiles ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.athlete_social_accounts",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.athlete_social_accounts ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.athlete_sports",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.athlete_sports ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.athlete_types",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.athlete_types ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.athletes",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.athletes ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.business_profiles",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.business_profiles ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.businesses",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.businesses ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.compliance_officers",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.compliance_officers ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.compliance_requests",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.compliance_requests ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.deal_types",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.deal_types ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.governing_bodies",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.governing_bodies ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.industries",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.industries ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.match_scores",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.match_scores ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.onboarding_progress",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.onboarding_progress ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.session",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.session ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.sessions",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.sessions ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.sports",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.sports ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.subscription_history",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.subscription_history ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "TABLE",
+    "name": "public.users",
+    "parent_name": "public",
+    "definition": "CREATE TABLE public.users ();",
+    "sort_order": 2
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.audit_log_entries.created_at",
+    "parent_name": "auth.audit_log_entries",
+    "definition": "ALTER TABLE auth.audit_log_entries ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.audit_log_entries.id",
+    "parent_name": "auth.audit_log_entries",
+    "definition": "ALTER TABLE auth.audit_log_entries ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.audit_log_entries.instance_id",
+    "parent_name": "auth.audit_log_entries",
+    "definition": "ALTER TABLE auth.audit_log_entries ADD COLUMN instance_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.audit_log_entries.ip_address",
+    "parent_name": "auth.audit_log_entries",
+    "definition": "ALTER TABLE auth.audit_log_entries ADD COLUMN ip_address character varying(64) NOT NULL DEFAULT ''::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.audit_log_entries.payload",
+    "parent_name": "auth.audit_log_entries",
+    "definition": "ALTER TABLE auth.audit_log_entries ADD COLUMN payload json;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.auth_code",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN auth_code text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.auth_code_issued_at",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN auth_code_issued_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.authentication_method",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN authentication_method text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.code_challenge",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN code_challenge text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.code_challenge_method",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN code_challenge_method USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.created_at",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.id",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.provider_access_token",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN provider_access_token text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.provider_refresh_token",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN provider_refresh_token text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.provider_type",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN provider_type text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.updated_at",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.flow_state.user_id",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD COLUMN user_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.created_at",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.email",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN email text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.id",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN id uuid NOT NULL DEFAULT gen_random_uuid();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.identity_data",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN identity_data jsonb NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.last_sign_in_at",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN last_sign_in_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.provider",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN provider text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.provider_id",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN provider_id text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.updated_at",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.identities.user_id",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD COLUMN user_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.instances.created_at",
+    "parent_name": "auth.instances",
+    "definition": "ALTER TABLE auth.instances ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.instances.id",
+    "parent_name": "auth.instances",
+    "definition": "ALTER TABLE auth.instances ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.instances.raw_base_config",
+    "parent_name": "auth.instances",
+    "definition": "ALTER TABLE auth.instances ADD COLUMN raw_base_config text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.instances.updated_at",
+    "parent_name": "auth.instances",
+    "definition": "ALTER TABLE auth.instances ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.instances.uuid",
+    "parent_name": "auth.instances",
+    "definition": "ALTER TABLE auth.instances ADD COLUMN uuid uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_amr_claims.authentication_method",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD COLUMN authentication_method text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_amr_claims.created_at",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD COLUMN created_at timestamp with time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_amr_claims.id",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_amr_claims.session_id",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD COLUMN session_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_amr_claims.updated_at",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD COLUMN updated_at timestamp with time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_challenges.created_at",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD COLUMN created_at timestamp with time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_challenges.factor_id",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD COLUMN factor_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_challenges.id",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_challenges.ip_address",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD COLUMN ip_address inet NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_challenges.otp_code",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD COLUMN otp_code text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_challenges.verified_at",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD COLUMN verified_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_challenges.web_authn_session_data",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD COLUMN web_authn_session_data jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.created_at",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN created_at timestamp with time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.factor_type",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN factor_type USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.friendly_name",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN friendly_name text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.id",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.last_challenged_at",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN last_challenged_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.phone",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN phone text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.secret",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN secret text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.status",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN status USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.updated_at",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN updated_at timestamp with time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.user_id",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN user_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.web_authn_aaguid",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN web_authn_aaguid uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.mfa_factors.web_authn_credential",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD COLUMN web_authn_credential jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.one_time_tokens.created_at",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD COLUMN created_at timestamp without time zone NOT NULL DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.one_time_tokens.id",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.one_time_tokens.relates_to",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD COLUMN relates_to text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.one_time_tokens.token_hash",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD COLUMN token_hash text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.one_time_tokens.token_type",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD COLUMN token_type USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.one_time_tokens.updated_at",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD COLUMN updated_at timestamp without time zone NOT NULL DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.one_time_tokens.user_id",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD COLUMN user_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.created_at",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.id",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN id bigint(64,0) NOT NULL DEFAULT nextval('auth.refresh_tokens_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.instance_id",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN instance_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.parent",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN parent character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.revoked",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN revoked boolean;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.session_id",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN session_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.token",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN token character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.updated_at",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.refresh_tokens.user_id",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD COLUMN user_id character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.attribute_mapping",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN attribute_mapping jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.created_at",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.entity_id",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN entity_id text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.id",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.metadata_url",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN metadata_url text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.metadata_xml",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN metadata_xml text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.name_id_format",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN name_id_format text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.sso_provider_id",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN sso_provider_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_providers.updated_at",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.created_at",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.flow_state_id",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN flow_state_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.for_email",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN for_email text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.id",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.redirect_to",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN redirect_to text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.request_id",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN request_id text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.sso_provider_id",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN sso_provider_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.saml_relay_states.updated_at",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.schema_migrations.version",
+    "parent_name": "auth.schema_migrations",
+    "definition": "ALTER TABLE auth.schema_migrations ADD COLUMN version character varying(255) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.aal",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN aal USER-DEFINED;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.created_at",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.factor_id",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN factor_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.id",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.ip",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN ip inet;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.not_after",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN not_after timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.refreshed_at",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN refreshed_at timestamp without time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.tag",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN tag text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.updated_at",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.user_agent",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN user_agent text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sessions.user_id",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD COLUMN user_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_domains.created_at",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_domains.domain",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD COLUMN domain text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_domains.id",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_domains.sso_provider_id",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD COLUMN sso_provider_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_domains.updated_at",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_providers.created_at",
+    "parent_name": "auth.sso_providers",
+    "definition": "ALTER TABLE auth.sso_providers ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_providers.id",
+    "parent_name": "auth.sso_providers",
+    "definition": "ALTER TABLE auth.sso_providers ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_providers.resource_id",
+    "parent_name": "auth.sso_providers",
+    "definition": "ALTER TABLE auth.sso_providers ADD COLUMN resource_id text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.sso_providers.updated_at",
+    "parent_name": "auth.sso_providers",
+    "definition": "ALTER TABLE auth.sso_providers ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.aud",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN aud character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.banned_until",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN banned_until timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.confirmation_sent_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN confirmation_sent_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.confirmation_token",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN confirmation_token character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.confirmed_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN confirmed_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.created_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN created_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.deleted_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN deleted_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.email",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN email character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.email_change",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN email_change character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.email_change_confirm_status",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN email_change_confirm_status smallint(16,0) DEFAULT 0;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.email_change_sent_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN email_change_sent_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.email_change_token_current",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN email_change_token_current character varying(255) DEFAULT ''::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.email_change_token_new",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN email_change_token_new character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.email_confirmed_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN email_confirmed_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.encrypted_password",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN encrypted_password character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.id",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.instance_id",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN instance_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.invited_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN invited_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.is_anonymous",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN is_anonymous boolean NOT NULL DEFAULT false;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.is_sso_user",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN is_sso_user boolean NOT NULL DEFAULT false;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.is_super_admin",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN is_super_admin boolean;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.last_sign_in_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN last_sign_in_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.phone",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN phone text DEFAULT NULL::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.phone_change",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN phone_change text DEFAULT ''::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.phone_change_sent_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN phone_change_sent_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.phone_change_token",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN phone_change_token character varying(255) DEFAULT ''::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.phone_confirmed_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN phone_confirmed_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.raw_app_meta_data",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN raw_app_meta_data jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.raw_user_meta_data",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN raw_user_meta_data jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.reauthentication_sent_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN reauthentication_sent_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.reauthentication_token",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN reauthentication_token character varying(255) DEFAULT ''::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.recovery_sent_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN recovery_sent_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.recovery_token",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN recovery_token character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.role",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN role character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "auth.users.updated_at",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD COLUMN updated_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.academic_honors",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN academic_honors text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.availability_timeframe",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN availability_timeframe text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.average_engagement_rate",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN average_engagement_rate real(24);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.bio",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN bio text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.birthdate",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN birthdate date;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.causes",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN causes jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.compensation_goals",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN compensation_goals text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.content_style",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN content_style text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.content_types",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN content_types jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.created_at",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN created_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.division",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN division text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.email",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN email text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.follower_count",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN follower_count integer(32,0) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.full_name",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN full_name text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.gender",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN gender text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.gpa",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN gpa real(24);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.graduation_year",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN graduation_year integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.id",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.location",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN location text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.major",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN major text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.minimum_compensation",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN minimum_compensation text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.name",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.personal_values",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN personal_values jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.phone",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN phone text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.position",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN position text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.preferences",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN preferences jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.preferred_product_categories",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN preferred_product_categories jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.previous_brand_deals",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN previous_brand_deals jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.profile_image",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN profile_image text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.school",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN school text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.session_id",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN session_id text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.social_handles",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN social_handles jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.sport",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN sport text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.sport_achievements",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN sport_achievements text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.stats",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN stats jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_profiles.updated_at",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD COLUMN updated_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_social_accounts.athlete_id",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD COLUMN athlete_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_social_accounts.engagement_rate",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD COLUMN engagement_rate numeric(5,2);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_social_accounts.followers_count",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD COLUMN followers_count integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_social_accounts.handle",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD COLUMN handle text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_social_accounts.id",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD COLUMN id uuid NOT NULL DEFAULT gen_random_uuid();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_social_accounts.platform",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD COLUMN platform USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_social_accounts.url",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD COLUMN url text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_sports.athlete_id",
+    "parent_name": "public.athlete_sports",
+    "definition": "ALTER TABLE public.athlete_sports ADD COLUMN athlete_id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_sports.is_primary",
+    "parent_name": "public.athlete_sports",
+    "definition": "ALTER TABLE public.athlete_sports ADD COLUMN is_primary boolean DEFAULT false;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_sports.position",
+    "parent_name": "public.athlete_sports",
+    "definition": "ALTER TABLE public.athlete_sports ADD COLUMN position text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_sports.sport_id",
+    "parent_name": "public.athlete_sports",
+    "definition": "ALTER TABLE public.athlete_sports ADD COLUMN sport_id integer(32,0) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_types.id",
+    "parent_name": "public.athlete_types",
+    "definition": "ALTER TABLE public.athlete_types ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('athlete_types_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athlete_types.name",
+    "parent_name": "public.athlete_types",
+    "definition": "ALTER TABLE public.athlete_types ADD COLUMN name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.athlete_type_id",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN athlete_type_id integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.bio",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN bio text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.compliance_contact_email",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN compliance_contact_email text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.date_of_birth",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN date_of_birth date NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.eligibility_expires_on",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN eligibility_expires_on date;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.full_name",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN full_name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.gender",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN gender USER-DEFINED;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.governing_body_id",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN governing_body_id integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.graduation_year",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN graduation_year integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.id",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.position",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN position text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.primary_sport_id",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN primary_sport_id integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.school",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN school text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.school_division",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN school_division text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.athletes.zip_code",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD COLUMN zip_code text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.bio",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN bio text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.budget",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN budget text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.budgetmax",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN budgetmax integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.budgetmin",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN budgetmin integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.business_type",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN business_type text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.company",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN company text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.company_size",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN company_size ARRAY;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.created_at",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN created_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.email",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN email text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.full_name",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN full_name text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.haspreviouspartnerships",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN haspreviouspartnerships boolean;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.id",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.industry",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN industry text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.location",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN location text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.name",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.phone",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN phone text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.position",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN position text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.product_type",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN product_type text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.profile_image",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN profile_image text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.session_id",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN session_id text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.updated_at",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN updated_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.business_profiles.zipCode",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD COLUMN zipCode text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.businesses.company_name",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD COLUMN company_name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.businesses.company_type",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD COLUMN company_type USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.businesses.description",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD COLUMN description text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.businesses.id",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.businesses.industry_id",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD COLUMN industry_id integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.businesses.website_url",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD COLUMN website_url text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.businesses.zip_code",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD COLUMN zip_code text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_officers.id",
+    "parent_name": "public.compliance_officers",
+    "definition": "ALTER TABLE public.compliance_officers ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_officers.organization_name",
+    "parent_name": "public.compliance_officers",
+    "definition": "ALTER TABLE public.compliance_officers ADD COLUMN organization_name text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_officers.phone",
+    "parent_name": "public.compliance_officers",
+    "definition": "ALTER TABLE public.compliance_officers ADD COLUMN phone text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_requests.compliance_officer_id",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD COLUMN compliance_officer_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_requests.id",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('compliance_requests_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_requests.match_id",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD COLUMN match_id integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_requests.notes",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD COLUMN notes text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_requests.requested_at",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD COLUMN requested_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_requests.reviewed_at",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD COLUMN reviewed_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.compliance_requests.status",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD COLUMN status USER-DEFINED DEFAULT 'pending'::compliance_status;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.deal_types.description",
+    "parent_name": "public.deal_types",
+    "definition": "ALTER TABLE public.deal_types ADD COLUMN description text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.deal_types.id",
+    "parent_name": "public.deal_types",
+    "definition": "ALTER TABLE public.deal_types ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('deal_types_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.deal_types.name",
+    "parent_name": "public.deal_types",
+    "definition": "ALTER TABLE public.deal_types ADD COLUMN name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.governing_bodies.id",
+    "parent_name": "public.governing_bodies",
+    "definition": "ALTER TABLE public.governing_bodies ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('governing_bodies_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.governing_bodies.name",
+    "parent_name": "public.governing_bodies",
+    "definition": "ALTER TABLE public.governing_bodies ADD COLUMN name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.industries.id",
+    "parent_name": "public.industries",
+    "definition": "ALTER TABLE public.industries ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('industries_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.industries.name",
+    "parent_name": "public.industries",
+    "definition": "ALTER TABLE public.industries ADD COLUMN name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.match_scores.athlete_id",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD COLUMN athlete_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.match_scores.business_id",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD COLUMN business_id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.match_scores.created_at",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD COLUMN created_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.match_scores.explanation",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD COLUMN explanation jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.match_scores.id",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('match_scores_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.match_scores.score",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD COLUMN score numeric(4,3);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.onboarding_progress.current_step",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD COLUMN current_step text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.onboarding_progress.flow_type",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD COLUMN flow_type USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.onboarding_progress.id",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD COLUMN id uuid NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.onboarding_progress.is_complete",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD COLUMN is_complete boolean DEFAULT false;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.onboarding_progress.progress_json",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD COLUMN progress_json jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.onboarding_progress.updated_at",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD COLUMN updated_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.session.expire",
+    "parent_name": "public.session",
+    "definition": "ALTER TABLE public.session ADD COLUMN expire timestamp without time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.session.sess",
+    "parent_name": "public.session",
+    "definition": "ALTER TABLE public.session ADD COLUMN sess json NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.session.sid",
+    "parent_name": "public.session",
+    "definition": "ALTER TABLE public.session ADD COLUMN sid character varying NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.athlete_id",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN athlete_id integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.business_id",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN business_id integer(32,0);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.created_at",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN created_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.data",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN data jsonb;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.id",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('sessions_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.last_login",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN last_login timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.profile_completed",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN profile_completed boolean DEFAULT false;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.session_id",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN session_id text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.updated_at",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN updated_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sessions.user_type",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD COLUMN user_type text;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sports.id",
+    "parent_name": "public.sports",
+    "definition": "ALTER TABLE public.sports ADD COLUMN id integer(32,0) NOT NULL DEFAULT nextval('sports_id_seq'::regclass);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.sports.name",
+    "parent_name": "public.sports",
+    "definition": "ALTER TABLE public.sports ADD COLUMN name text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.Id",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN Id uuid;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.amount",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN amount integer(32,0) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.cancel_at_period_end",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN cancel_at_period_end boolean DEFAULT false;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.canceled_at",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN canceled_at timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.created_at",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN created_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.currency",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN currency character varying(3) NOT NULL DEFAULT 'USD'::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.current_period_end",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN current_period_end timestamp with time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.current_period_start",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN current_period_start timestamp with time zone NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.interval",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN interval character varying(20) NOT NULL DEFAULT 'month'::character varying;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.plan_id",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN plan_id character varying(50) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.price_id",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN price_id character varying(255) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.status",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN status character varying(50) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.stripe_subscription_id",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN stripe_subscription_id character varying(255) NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.subscription_history.updated_at",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD COLUMN updated_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.created_at",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN created_at timestamp with time zone DEFAULT now();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.email",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN email text NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.id",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN id uuid NOT NULL DEFAULT gen_random_uuid();",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.last_login",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN last_login timestamp with time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.role",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN role USER-DEFINED NOT NULL;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.stripe_customer_id",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN stripe_customer_id character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.stripe_subscription_id",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN stripe_subscription_id character varying(255);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.subscription_current_period_end",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN subscription_current_period_end timestamp without time zone;",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.subscription_plan",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN subscription_plan character varying(50);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "COLUMN",
+    "name": "public.users.subscription_status",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD COLUMN subscription_status character varying(50);",
+    "sort_order": 3
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.audit_log_entries.audit_log_entries_pkey",
+    "parent_name": "auth.audit_log_entries",
+    "definition": "ALTER TABLE auth.audit_log_entries ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.flow_state.flow_state_pkey",
+    "parent_name": "auth.flow_state",
+    "definition": "ALTER TABLE auth.flow_state ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.identities.identities_pkey",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.instances.instances_pkey",
+    "parent_name": "auth.instances",
+    "definition": "ALTER TABLE auth.instances ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.mfa_amr_claims.amr_id_pk",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.mfa_challenges.mfa_challenges_pkey",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.mfa_factors.mfa_factors_pkey",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.one_time_tokens.one_time_tokens_pkey",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.refresh_tokens.refresh_tokens_pkey",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.saml_providers.saml_providers_pkey",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.saml_relay_states.saml_relay_states_pkey",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.schema_migrations.schema_migrations_pkey",
+    "parent_name": "auth.schema_migrations",
+    "definition": "ALTER TABLE auth.schema_migrations ADD PRIMARY KEY (version);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.sessions.sessions_pkey",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.sso_domains.sso_domains_pkey",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.sso_providers.sso_providers_pkey",
+    "parent_name": "auth.sso_providers",
+    "definition": "ALTER TABLE auth.sso_providers ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "auth.users.users_pkey",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.athlete_profiles.athlete_profiles_pkey",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.athlete_social_accounts.athlete_social_accounts_pkey",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.athlete_sports.athlete_sports_pkey",
+    "parent_name": "public.athlete_sports",
+    "definition": "ALTER TABLE public.athlete_sports ADD PRIMARY KEY (athlete_id, sport_id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.athlete_types.athlete_types_pkey",
+    "parent_name": "public.athlete_types",
+    "definition": "ALTER TABLE public.athlete_types ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.athletes.athletes_pkey",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.business_profiles.business_profiles_pkey",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.businesses.businesses_pkey",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.compliance_officers.compliance_officers_pkey",
+    "parent_name": "public.compliance_officers",
+    "definition": "ALTER TABLE public.compliance_officers ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.compliance_requests.compliance_requests_pkey",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.deal_types.deal_types_pkey",
+    "parent_name": "public.deal_types",
+    "definition": "ALTER TABLE public.deal_types ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.governing_bodies.governing_bodies_pkey",
+    "parent_name": "public.governing_bodies",
+    "definition": "ALTER TABLE public.governing_bodies ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.industries.industries_pkey",
+    "parent_name": "public.industries",
+    "definition": "ALTER TABLE public.industries ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.match_scores.match_scores_pkey",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.onboarding_progress.onboarding_progress_pkey",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.session.session_pkey",
+    "parent_name": "public.session",
+    "definition": "ALTER TABLE public.session ADD PRIMARY KEY (sid);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.sessions.sessions_pkey",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.sports.sports_pkey",
+    "parent_name": "public.sports",
+    "definition": "ALTER TABLE public.sports ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "PRIMARY KEY",
+    "name": "public.users.users_pkey",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD PRIMARY KEY (id);",
+    "sort_order": 4
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.identities.identities_user_id_fkey",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.mfa_amr_claims.mfa_amr_claims_session_id_fkey",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD FOREIGN KEY (session_id) REFERENCES auth.sessions(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.mfa_challenges.mfa_challenges_auth_factor_id_fkey",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "ALTER TABLE auth.mfa_challenges ADD FOREIGN KEY (factor_id) REFERENCES auth.mfa_factors(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.mfa_factors.mfa_factors_user_id_fkey",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.one_time_tokens.one_time_tokens_user_id_fkey",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.refresh_tokens.refresh_tokens_session_id_fkey",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD FOREIGN KEY (session_id) REFERENCES auth.sessions(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.saml_providers.saml_providers_sso_provider_id_fkey",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.saml_relay_states.saml_relay_states_flow_state_id_fkey",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD FOREIGN KEY (flow_state_id) REFERENCES auth.flow_state(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.saml_relay_states.saml_relay_states_sso_provider_id_fkey",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.sessions.sessions_user_id_fkey",
+    "parent_name": "auth.sessions",
+    "definition": "ALTER TABLE auth.sessions ADD FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "auth.sso_domains.sso_domains_sso_provider_id_fkey",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD FOREIGN KEY (sso_provider_id) REFERENCES auth.sso_providers(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.athlete_social_accounts.athlete_social_accounts_athlete_",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "ALTER TABLE public.athlete_social_accounts ADD FOREIGN KEY (athlete_id) REFERENCES athletes(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.athlete_sports.athlete_sports_athlete_id_fkey",
+    "parent_name": "public.athlete_sports",
+    "definition": "ALTER TABLE public.athlete_sports ADD FOREIGN KEY (athlete_id) REFERENCES athletes(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.athlete_sports.athlete_sports_sport_id_fkey",
+    "parent_name": "public.athlete_sports",
+    "definition": "ALTER TABLE public.athlete_sports ADD FOREIGN KEY (sport_id) REFERENCES sports(id);",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.athletes.athletes_athlete_type_id_fkey",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD FOREIGN KEY (athlete_type_id) REFERENCES athlete_types(id);",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.athletes.athletes_governing_body_id_fkey",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD FOREIGN KEY (governing_body_id) REFERENCES governing_bodies(id);",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.athletes.athletes_id_fkey",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.athletes.athletes_primary_sport_id_fkey",
+    "parent_name": "public.athletes",
+    "definition": "ALTER TABLE public.athletes ADD FOREIGN KEY (primary_sport_id) REFERENCES sports(id);",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.business_profiles.business_profiles_id_fkey",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD FOREIGN KEY (id) REFERENCES users(id) ON UPDATE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.business_profiles.business_profiles_user_fk",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD FOREIGN KEY (id) REFERENCES users(id) ON UPDATE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.businesses.businesses_industry_id_fkey",
+    "parent_name": "public.businesses",
+    "definition": "ALTER TABLE public.businesses ADD FOREIGN KEY (industry_id) REFERENCES industries(id);",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.compliance_requests.compliance_requests_compliance_offic",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD FOREIGN KEY (compliance_officer_id) REFERENCES compliance_officers(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.compliance_requests.compliance_requests_match_id_fkey",
+    "parent_name": "public.compliance_requests",
+    "definition": "ALTER TABLE public.compliance_requests ADD FOREIGN KEY (match_id) REFERENCES match_scores(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.match_scores.match_scores_athlete_id_fkey",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD FOREIGN KEY (athlete_id) REFERENCES athletes(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.match_scores.match_scores_business_id_fkey",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE;",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.onboarding_progress.onboarding_progress_user_fk",
+    "parent_name": "public.onboarding_progress",
+    "definition": "ALTER TABLE public.onboarding_progress ADD FOREIGN KEY (id) REFERENCES users(id);",
+    "sort_order": 5
+  },
+  {
+    "object_type": "FOREIGN KEY",
+    "name": "public.subscription_history.subscription_history_Id_fkey",
+    "parent_name": "public.subscription_history",
+    "definition": "ALTER TABLE public.subscription_history ADD FOREIGN KEY (\"Id\") REFERENCES users(id);",
+    "sort_order": 5
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "auth.identities.identities_provider_id_provider_unique",
+    "parent_name": "auth.identities",
+    "definition": "ALTER TABLE auth.identities ADD UNIQUE (provider_id, provider);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "auth.mfa_amr_claims.mfa_amr_claims_session_id_authentication_me",
+    "parent_name": "auth.mfa_amr_claims",
+    "definition": "ALTER TABLE auth.mfa_amr_claims ADD UNIQUE (session_id, authentication_method);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "auth.mfa_factors.mfa_factors_last_challenged_at_key",
+    "parent_name": "auth.mfa_factors",
+    "definition": "ALTER TABLE auth.mfa_factors ADD UNIQUE (last_challenged_at);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "auth.refresh_tokens.refresh_tokens_token_unique",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "ALTER TABLE auth.refresh_tokens ADD UNIQUE (token);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "auth.saml_providers.saml_providers_entity_id_key",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD UNIQUE (entity_id);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "auth.users.users_phone_key",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD UNIQUE (phone);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.athlete_profiles.athlete_profiles_session_id_key",
+    "parent_name": "public.athlete_profiles",
+    "definition": "ALTER TABLE public.athlete_profiles ADD UNIQUE (session_id);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.athlete_types.athlete_types_name_key",
+    "parent_name": "public.athlete_types",
+    "definition": "ALTER TABLE public.athlete_types ADD UNIQUE (name);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.business_profiles.business_profiles_session_id_key",
+    "parent_name": "public.business_profiles",
+    "definition": "ALTER TABLE public.business_profiles ADD UNIQUE (session_id);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.deal_types.deal_types_name_key",
+    "parent_name": "public.deal_types",
+    "definition": "ALTER TABLE public.deal_types ADD UNIQUE (name);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.governing_bodies.governing_bodies_name_key",
+    "parent_name": "public.governing_bodies",
+    "definition": "ALTER TABLE public.governing_bodies ADD UNIQUE (name);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.industries.industries_name_key",
+    "parent_name": "public.industries",
+    "definition": "ALTER TABLE public.industries ADD UNIQUE (name);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.sessions.sessions_session_id_key",
+    "parent_name": "public.sessions",
+    "definition": "ALTER TABLE public.sessions ADD UNIQUE (session_id);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.sports.sports_name_key",
+    "parent_name": "public.sports",
+    "definition": "ALTER TABLE public.sports ADD UNIQUE (name);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "UNIQUE CONSTRAINT",
+    "name": "public.users.users_email_key",
+    "parent_name": "public.users",
+    "definition": "ALTER TABLE public.users ADD UNIQUE (email);",
+    "sort_order": 6
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.one_time_tokens.one_time_tokens_token_hash_check",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "ALTER TABLE auth.one_time_tokens ADD CHECK ((char_length(token_hash) > 0));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.saml_providers.entity_id not empty",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD CHECK ((char_length(entity_id) > 0));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.saml_providers.metadata_url not empty",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD CHECK (((metadata_url = NULL::text) OR (char_length(metadata_url) > 0)));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.saml_providers.metadata_xml not empty",
+    "parent_name": "auth.saml_providers",
+    "definition": "ALTER TABLE auth.saml_providers ADD CHECK ((char_length(metadata_xml) > 0));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.saml_relay_states.request_id not empty",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "ALTER TABLE auth.saml_relay_states ADD CHECK ((char_length(request_id) > 0));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.sso_domains.domain not empty",
+    "parent_name": "auth.sso_domains",
+    "definition": "ALTER TABLE auth.sso_domains ADD CHECK ((char_length(domain) > 0));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.sso_providers.resource_id not empty",
+    "parent_name": "auth.sso_providers",
+    "definition": "ALTER TABLE auth.sso_providers ADD CHECK (((resource_id = NULL::text) OR (char_length(resource_id) > 0)));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "auth.users.users_email_change_confirm_status_check",
+    "parent_name": "auth.users",
+    "definition": "ALTER TABLE auth.users ADD CHECK (((email_change_confirm_status >= 0) AND (email_change_confirm_status <= 2)));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "CHECK CONSTRAINT",
+    "name": "public.match_scores.match_scores_score_check",
+    "parent_name": "public.match_scores",
+    "definition": "ALTER TABLE public.match_scores ADD CHECK (((score >= (0)::numeric) AND (score <= (1)::numeric)));",
+    "sort_order": 7
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.audit_log_entries.audit_logs_instance_id_idx",
+    "parent_name": "auth.audit_log_entries",
+    "definition": "CREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.flow_state.flow_state_created_at_idx",
+    "parent_name": "auth.flow_state",
+    "definition": "CREATE INDEX flow_state_created_at_idx ON auth.flow_state USING btree (created_at DESC);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.flow_state.idx_auth_code",
+    "parent_name": "auth.flow_state",
+    "definition": "CREATE INDEX idx_auth_code ON auth.flow_state USING btree (auth_code);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.flow_state.idx_user_id_auth_method",
+    "parent_name": "auth.flow_state",
+    "definition": "CREATE INDEX idx_user_id_auth_method ON auth.flow_state USING btree (user_id, authentication_method);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.identities.identities_email_idx",
+    "parent_name": "auth.identities",
+    "definition": "CREATE INDEX identities_email_idx ON auth.identities USING btree (email text_pattern_ops);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.identities.identities_user_id_idx",
+    "parent_name": "auth.identities",
+    "definition": "CREATE INDEX identities_user_id_idx ON auth.identities USING btree (user_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.mfa_challenges.mfa_challenge_created_at_idx",
+    "parent_name": "auth.mfa_challenges",
+    "definition": "CREATE INDEX mfa_challenge_created_at_idx ON auth.mfa_challenges USING btree (created_at DESC);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.mfa_factors.factor_id_created_at_idx",
+    "parent_name": "auth.mfa_factors",
+    "definition": "CREATE INDEX factor_id_created_at_idx ON auth.mfa_factors USING btree (user_id, created_at);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.mfa_factors.mfa_factors_user_friendly_name_unique",
+    "parent_name": "auth.mfa_factors",
+    "definition": "CREATE UNIQUE INDEX mfa_factors_user_friendly_name_unique ON auth.mfa_factors USING btree (friendly_name, user_id) WHERE (TRIM(BOTH FROM friendly_name) <> ''::text);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.mfa_factors.mfa_factors_user_id_idx",
+    "parent_name": "auth.mfa_factors",
+    "definition": "CREATE INDEX mfa_factors_user_id_idx ON auth.mfa_factors USING btree (user_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.mfa_factors.unique_phone_factor_per_user",
+    "parent_name": "auth.mfa_factors",
+    "definition": "CREATE UNIQUE INDEX unique_phone_factor_per_user ON auth.mfa_factors USING btree (user_id, phone);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.one_time_tokens.one_time_tokens_relates_to_hash_idx",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "CREATE INDEX one_time_tokens_relates_to_hash_idx ON auth.one_time_tokens USING hash (relates_to);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.one_time_tokens.one_time_tokens_token_hash_hash_idx",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "CREATE INDEX one_time_tokens_token_hash_hash_idx ON auth.one_time_tokens USING hash (token_hash);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.one_time_tokens.one_time_tokens_user_id_token_type_key",
+    "parent_name": "auth.one_time_tokens",
+    "definition": "CREATE UNIQUE INDEX one_time_tokens_user_id_token_type_key ON auth.one_time_tokens USING btree (user_id, token_type);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.refresh_tokens.refresh_tokens_instance_id_idx",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "CREATE INDEX refresh_tokens_instance_id_idx ON auth.refresh_tokens USING btree (instance_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.refresh_tokens.refresh_tokens_instance_id_user_id_idx",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "CREATE INDEX refresh_tokens_instance_id_user_id_idx ON auth.refresh_tokens USING btree (instance_id, user_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.refresh_tokens.refresh_tokens_parent_idx",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "CREATE INDEX refresh_tokens_parent_idx ON auth.refresh_tokens USING btree (parent);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.refresh_tokens.refresh_tokens_session_id_revoked_idx",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "CREATE INDEX refresh_tokens_session_id_revoked_idx ON auth.refresh_tokens USING btree (session_id, revoked);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.refresh_tokens.refresh_tokens_updated_at_idx",
+    "parent_name": "auth.refresh_tokens",
+    "definition": "CREATE INDEX refresh_tokens_updated_at_idx ON auth.refresh_tokens USING btree (updated_at DESC);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.saml_providers.saml_providers_sso_provider_id_idx",
+    "parent_name": "auth.saml_providers",
+    "definition": "CREATE INDEX saml_providers_sso_provider_id_idx ON auth.saml_providers USING btree (sso_provider_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.saml_relay_states.saml_relay_states_created_at_idx",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "CREATE INDEX saml_relay_states_created_at_idx ON auth.saml_relay_states USING btree (created_at DESC);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.saml_relay_states.saml_relay_states_for_email_idx",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "CREATE INDEX saml_relay_states_for_email_idx ON auth.saml_relay_states USING btree (for_email);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.saml_relay_states.saml_relay_states_sso_provider_id_idx",
+    "parent_name": "auth.saml_relay_states",
+    "definition": "CREATE INDEX saml_relay_states_sso_provider_id_idx ON auth.saml_relay_states USING btree (sso_provider_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.sessions.sessions_not_after_idx",
+    "parent_name": "auth.sessions",
+    "definition": "CREATE INDEX sessions_not_after_idx ON auth.sessions USING btree (not_after DESC);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.sessions.sessions_user_id_idx",
+    "parent_name": "auth.sessions",
+    "definition": "CREATE INDEX sessions_user_id_idx ON auth.sessions USING btree (user_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.sessions.user_id_created_at_idx",
+    "parent_name": "auth.sessions",
+    "definition": "CREATE INDEX user_id_created_at_idx ON auth.sessions USING btree (user_id, created_at);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.sso_domains.sso_domains_domain_idx",
+    "parent_name": "auth.sso_domains",
+    "definition": "CREATE UNIQUE INDEX sso_domains_domain_idx ON auth.sso_domains USING btree (lower(domain));",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.sso_domains.sso_domains_sso_provider_id_idx",
+    "parent_name": "auth.sso_domains",
+    "definition": "CREATE INDEX sso_domains_sso_provider_id_idx ON auth.sso_domains USING btree (sso_provider_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.sso_providers.sso_providers_resource_id_idx",
+    "parent_name": "auth.sso_providers",
+    "definition": "CREATE UNIQUE INDEX sso_providers_resource_id_idx ON auth.sso_providers USING btree (lower(resource_id));",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.confirmation_token_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE UNIQUE INDEX confirmation_token_idx ON auth.users USING btree (confirmation_token) WHERE ((confirmation_token)::text !~ '^[0-9 ]*$'::text);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.email_change_token_current_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE UNIQUE INDEX email_change_token_current_idx ON auth.users USING btree (email_change_token_current) WHERE ((email_change_token_current)::text !~ '^[0-9 ]*$'::text);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.email_change_token_new_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE UNIQUE INDEX email_change_token_new_idx ON auth.users USING btree (email_change_token_new) WHERE ((email_change_token_new)::text !~ '^[0-9 ]*$'::text);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.reauthentication_token_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE UNIQUE INDEX reauthentication_token_idx ON auth.users USING btree (reauthentication_token) WHERE ((reauthentication_token)::text !~ '^[0-9 ]*$'::text);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.recovery_token_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE UNIQUE INDEX recovery_token_idx ON auth.users USING btree (recovery_token) WHERE ((recovery_token)::text !~ '^[0-9 ]*$'::text);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.users_email_partial_key",
+    "parent_name": "auth.users",
+    "definition": "CREATE UNIQUE INDEX users_email_partial_key ON auth.users USING btree (email) WHERE (is_sso_user = false);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.users_instance_id_email_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id, lower((email)::text));",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.users_instance_id_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "auth.users.users_is_anonymous_idx",
+    "parent_name": "auth.users",
+    "definition": "CREATE INDEX users_is_anonymous_idx ON auth.users USING btree (is_anonymous);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.athlete_profiles.idx_athlete_profiles_user_id",
+    "parent_name": "public.athlete_profiles",
+    "definition": "CREATE INDEX idx_athlete_profiles_user_id ON public.athlete_profiles USING btree (id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.athlete_social_accounts.idx_athlete_social_platform",
+    "parent_name": "public.athlete_social_accounts",
+    "definition": "CREATE INDEX idx_athlete_social_platform ON public.athlete_social_accounts USING btree (platform);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.business_profiles.idx_business_profiles_user_id",
+    "parent_name": "public.business_profiles",
+    "definition": "CREATE INDEX idx_business_profiles_user_id ON public.business_profiles USING btree (id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.match_scores.idx_match_scores_lookup",
+    "parent_name": "public.match_scores",
+    "definition": "CREATE INDEX idx_match_scores_lookup ON public.match_scores USING btree (athlete_id, business_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.session.IDX_session_expire",
+    "parent_name": "public.session",
+    "definition": "CREATE INDEX \"IDX_session_expire\" ON public.session USING btree (expire);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.sessions.sessions_session_id_idx",
+    "parent_name": "public.sessions",
+    "definition": "CREATE INDEX sessions_session_id_idx ON public.sessions USING btree (session_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.subscription_history.idx_subscription_history_subscripti",
+    "parent_name": "public.subscription_history",
+    "definition": "CREATE INDEX idx_subscription_history_subscription_id ON public.subscription_history USING btree (stripe_subscription_id);",
+    "sort_order": 8
+  },
+  {
+    "object_type": "INDEX",
+    "name": "public.subscription_history.idx_subscription_history_user_id",
+    "parent_name": "public.subscription_history",
+    "definition": "CREATE INDEX idx_subscription_history_user_id ON public.subscription_history USING btree (\"Id\");",
+    "sort_order": 8
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "auth.email()",
+    "parent_name": "auth",
+    "definition": "CREATE OR REPLACE FUNCTION auth.email()\n RETURNS text\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.email', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'email')\n  )::text\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "auth.jwt()",
+    "parent_name": "auth",
+    "definition": "CREATE OR REPLACE FUNCTION auth.jwt()\n RETURNS jsonb\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n    coalesce(\n        nullif(current_setting('request.jwt.claim', true), ''),\n        nullif(current_setting('request.jwt.claims', true), '')\n    )::jsonb\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "auth.role()",
+    "parent_name": "auth",
+    "definition": "CREATE OR REPLACE FUNCTION auth.role()\n RETURNS text\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.role', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')\n  )::text\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "auth.uid()",
+    "parent_name": "auth",
+    "definition": "CREATE OR REPLACE FUNCTION auth.uid()\n RETURNS uuid\n LANGUAGE sql\n STABLE\nAS $function$\n  select \n  coalesce(\n    nullif(current_setting('request.jwt.claim.sub', true), ''),\n    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')\n  )::uuid\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "public.copy_auth_id_if_business()",
+    "parent_name": "public",
+    "definition": "CREATE OR REPLACE FUNCTION public.copy_auth_id_if_business()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    user_role text;\nBEGIN\n    -- Get the role of the user based on the user_id in business_profiles\n    SELECT role INTO user_role FROM public.users WHERE id = NEW.id;\n\n    -- Check if the role is 'business'\n    IF user_role = 'business' THEN\n        NEW.auth_id := (SELECT auth_id FROM public.users WHERE id = NEW.id);\n    ELSE\n        NEW.auth_id := NULL; -- Set to NULL if the role is not 'business'\n    END IF;\n\n    RETURN NEW;\nEND;\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "public.create_user_row()",
+    "parent_name": "public",
+    "definition": "CREATE OR REPLACE FUNCTION public.create_user_row()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n  INSERT INTO public.users (id, email, role, created_at)\n  VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'role', NOW())\n  ON CONFLICT (id) DO NOTHING;\n  RETURN NEW;\nEND$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "public.exec_sql(sql text)",
+    "parent_name": "public",
+    "definition": "CREATE OR REPLACE FUNCTION public.exec_sql(sql text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n  EXECUTE sql;\nEND;\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "public.get_profile_type(user_id uuid)",
+    "parent_name": "public",
+    "definition": "CREATE OR REPLACE FUNCTION public.get_profile_type(user_id uuid)\n RETURNS text\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  profile_type text;\n  user_role text;\n  business_profile_exists boolean;\n  athlete_profile_exists boolean;\nBEGIN\n  -- Get the user's role\n  SELECT role INTO user_role FROM users WHERE id = user_id;\n  \n  -- Check if business profile exists\n  SELECT EXISTS (\n    SELECT 1 FROM business_profiles WHERE user_id = $1\n  ) INTO business_profile_exists;\n  \n  -- Check if athlete profile exists\n  SELECT EXISTS (\n    SELECT 1 FROM athlete_profiles WHERE user_id = $1\n  ) INTO athlete_profile_exists;\n  \n  -- Determine profile type based on role and existing profiles\n  IF user_role = 'business' AND business_profile_exists THEN\n    profile_type := 'business';\n  ELSIF user_role = 'athlete' AND athlete_profile_exists THEN\n    profile_type := 'athlete';\n  ELSIF user_role = 'compliance' THEN\n    profile_type := 'compliance';\n  ELSIF user_role = 'admin' THEN\n    profile_type := 'admin';\n  ELSE\n    profile_type := null;\n  END IF;\n  \n  RETURN profile_type;\nEND;\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "FUNCTION",
+    "name": "public.get_user_profile_type()",
+    "parent_name": "public",
+    "definition": "CREATE OR REPLACE FUNCTION public.get_user_profile_type()\n RETURNS text\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n  profile_type text;\nBEGIN\n  -- Get the profile type for the authenticated user\n  SELECT get_profile_type(auth.uid()) INTO profile_type;\n  RETURN profile_type;\nEND;\n$function$\n",
+    "sort_order": 9
+  },
+  {
+    "object_type": "TRIGGER",
+    "name": "auth.users.on_auth_insert",
+    "parent_name": "auth.users",
+    "definition": "CREATE TRIGGER on_auth_insert AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION create_user_row();",
+    "sort_order": 10
+  },
+  {
+    "object_type": "TRIGGER",
+    "name": "public.business_profiles.set_auth_id",
+    "parent_name": "public.business_profiles",
+    "definition": "CREATE TRIGGER set_auth_id BEFORE INSERT ON public.business_profiles FOR EACH ROW EXECUTE FUNCTION copy_auth_id_if_business();",
+    "sort_order": 10
+  },
+  {
+    "object_type": "TYPE",
+    "name": "auth.aal_level",
+    "parent_name": "auth",
+    "definition": "CREATE TYPE auth.aal_level AS ENUM ('aal1', 'aal2', 'aal3');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "auth.code_challenge_method",
+    "parent_name": "auth",
+    "definition": "CREATE TYPE auth.code_challenge_method AS ENUM ('s256', 'plain');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "auth.factor_status",
+    "parent_name": "auth",
+    "definition": "CREATE TYPE auth.factor_status AS ENUM ('unverified', 'verified');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "auth.factor_type",
+    "parent_name": "auth",
+    "definition": "CREATE TYPE auth.factor_type AS ENUM ('totp', 'webauthn', 'phone');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "auth.one_time_token_type",
+    "parent_name": "auth",
+    "definition": "CREATE TYPE auth.one_time_token_type AS ENUM ('confirmation_token', 'reauthentication_token', 'recovery_token', 'email_change_token_new', 'email_change_token_current', 'phone_change_token');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "public.company_type",
+    "parent_name": "public",
+    "definition": "CREATE TYPE public.company_type AS ENUM ('product', 'service', 'hybrid');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "public.compliance_status",
+    "parent_name": "public",
+    "definition": "CREATE TYPE public.compliance_status AS ENUM ('pending', 'approved', 'rejected', 'needs_revision');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "public.gender_type",
+    "parent_name": "public",
+    "definition": "CREATE TYPE public.gender_type AS ENUM ('male', 'female', 'nonbinary', 'prefer_not_to_say', 'other');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "public.onboarding_flow",
+    "parent_name": "public",
+    "definition": "CREATE TYPE public.onboarding_flow AS ENUM ('athlete', 'business');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "public.social_platform",
+    "parent_name": "public",
+    "definition": "CREATE TYPE public.social_platform AS ENUM ('instagram', 'twitter', 'tiktok', 'youtube', 'twitch', 'facebook', 'threads', 'snapchat');",
+    "sort_order": 13
+  },
+  {
+    "object_type": "TYPE",
+    "name": "public.user_role",
+    "parent_name": "public",
+    "definition": "CREATE TYPE public.user_role AS ENUM ('athlete', 'business', 'compliance_officer', 'admin');",
+    "sort_order": 13
+  }
+]
