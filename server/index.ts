@@ -7,10 +7,15 @@
 // ---------- server/index.ts ----------
 import express, { Express, Request, Response, NextFunction } from 'express';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import cors from 'cors';
+
+// ES modules fix for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Local helpers
 import { registerRoutes } from './routes';
@@ -55,7 +60,7 @@ app.use('/api', (_req, res) => {
 
 // ---------- Static asset serving ----------
 // In dev we rely on Vite dev server (client script); in production we serve the built files.
-const staticRoot = path.join(__dirname, '..', 'client', 'dist');
+const staticRoot = path.join(__dirname, '..', 'dist', 'public');
 app.use(express.static(staticRoot));
 app.get('*', (_req: Request, res: Response) => {
   res.sendFile(path.join(staticRoot, 'index.html'));
