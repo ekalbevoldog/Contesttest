@@ -1,56 +1,43 @@
-/** 05/08/2025 - 14:16 CST
+/** 05/08/2025 - 1455 CST
  * Authentication Service
  * 
- * Provides a unified interface for all authentication operations.
- * Handles user registration, login, token verification, and session management.
+ * Handles user authentication, registration, and token management.
+ * Interfaces with Supabase Auth services.
  */
 
 import { supabase, supabaseAdmin } from '../lib/supabase';
+import { ensureBusinessProfile } from './ensureBusinessProfile';
 import config from '../config/environment';
-import { v4 as uuidv4 } from 'uuid';
 
-// Types for authentication
-export interface AuthResult {
-  success: boolean;
-  user?: UserInfo;
-  session?: SessionInfo;
-  error?: string;
-  needsProfile?: boolean;
-  redirectTo?: string;
-}
-
-export interface UserInfo {
-  id: string;
-  email: string;
-  role: string;
-  firstName?: string;
-  lastName?: string;
-  [key: string]: any;
-}
-
-export interface SessionInfo {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number;
-}
-
-export interface LoginCredentials {
+// Interface for login credentials
+interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export interface RegistrationData {
+// Interface for registration data
+interface RegistrationData {
   email: string;
   password: string;
   firstName: string;
-  lastName: string;
+  lastName?: string;
   role: string;
-  [key: string]: any; // Additional fields specific to user type
 }
 
+// Interface for auth result
+interface AuthResult {
+  success: boolean;
+  user?: any;
+  session?: any;
+  needsProfile?: boolean;
+  redirectTo?: string;
+  error?: string;
+}
+
+// Main authentication service class
 class AuthService {
   /**
-   * User login with email and password
+   * Log in a user with email and password
    */
   async login(credentials: LoginCredentials): Promise<AuthResult> {
     try {
@@ -64,56 +51,78 @@ class AuthService {
         };
       }
 
-      // Authenticate with Supabase
+      // Attempt login with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error || !data.user || !data.session) {
+      if (error) {
+        console.error('Login error:', error);
         return { 
           success: false, 
-          error: error?.message || 'Invalid credentials' 
+          error: error.message || 'Invalid credentials' 
         };
       }
 
-      // Get user info including role
-      const role = this.determineUserRole(data.user);
+      if (!data.session || !data.user) {
+        return { 
+          success: false, 
+          error: 'Authentication failed' 
+        };
+      }
 
-      // Update last login time
-      await this.updateLastLogin(data.user.id);
+      // Determine if user needs to complete profile
+      const needsProfile = await this.checkIfProfileNeeded(data.user);
 
-      // Get user profile status
-      const { needsProfile, redirectTo } = await this.checkProfileStatus(data.user.id, role);
+      // Determine redirect URL based on role and profile status
+      let redirectTo = '/dashboard';
 
-      // Format user data to return
-      const userInfo: UserInfo = {
-        id: data.user.id,
-        email: data.user.email || email,
-        role: role,
-        firstName: data.user.user_metadata?.first_name || data.user.user_metadata?.firstName,
-        lastName: data.user.user_metadata?.last_name || data.user.user_metadata?.lastName
-      };
+      if (needsProfile) {
+        redirectTo = '/onboarding';
+      } else {
+        // Different dashboard based on role
+        const role = data.user.user_metadata?.role?.toLowerCase() ||
+                     data.user.user_metadata?.userType?.toLowerCase() ||
+                     'user';
 
-      // Format session data
-      const sessionInfo: SessionInfo = {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-        expires_at: data.session.expires_at || (Math.floor(Date.now() / 1000) + 3600)
-      };
+        if (role === 'athlete') {
+          redirectTo = '/athlete/dashboard';
+        } else if (role === 'business') {
+          redirectTo = '/business/dashboard';
+        } else if (role === 'compliance') {
+          redirectTo = '/compliance/dashboard';
+        } else if (role === 'admin') {
+          redirectTo = '/admin/dashboard';
+        }
+      }
 
+      // Create placeholder business profile if needed
+      if (data.user.user_metadata?.role === 'business') {
+        await ensureBusinessProfile(data.user.id, 'business');
+      }
+
+      // Return success with user data, session, and navigation info
       return {
         success: true,
-        user: userInfo,
-        session: sessionInfo,
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          role: data.user.user_metadata?.role || 'user'
+        },
+        session: {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_at: data.session.expires_at
+        },
         needsProfile,
         redirectTo
       };
     } catch (error: any) {
-      console.error('Login error:', error);
-      return {
-        success: false,
-        error: error.message || 'Login failed'
+      console.error('Login exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Login failed' 
       };
     }
   }
@@ -121,226 +130,81 @@ class AuthService {
   /**
    * Register a new user
    */
-  async register(registrationData: RegistrationData): Promise<AuthResult> {
+  async register(data: RegistrationData): Promise<AuthResult> {
     try {
-      const { email, password, firstName, lastName, role, ...additionalData } = registrationData;
+      const { email, password, firstName, lastName, role } = data;
 
-      // Validate required fields
-      if (!email || !password || !firstName || !lastName || !role) {
+      // Validate input
+      if (!email || !password || !firstName || !role) {
         return { 
           success: false, 
           error: 'Required fields missing' 
         };
       }
 
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id, email')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (existingUser) {
-        return { 
-          success: false, 
-          error: 'User with this email already exists' 
+      // Check password strength
+      if (password.length < 8) {
+        return {
+          success: false,
+          error: 'Password must be at least 8 characters long'
         };
       }
 
-      // Register with Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
+      // Attempt registration with Supabase
+      const { data: authData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             first_name: firstName,
-            last_name: lastName,
+            last_name: lastName || '',
             role: role,
-            ...additionalData
+            full_name: `${firstName} ${lastName || ''}`.trim()
           }
         }
       });
 
-      if (error || !data.user) {
+      if (error) {
+        console.error('Registration error:', error);
         return { 
           success: false, 
-          error: error?.message || 'Registration failed' 
+          error: error.message || 'Registration failed' 
         };
       }
 
-      // Create record in users table
-      await this.createUserRecord(data.user.id, {
-        email,
-        firstName,
-        lastName,
-        role,
-        ...additionalData
-      });
-
-      // Create initial profile based on user type
-      if (role === 'athlete') {
-        await this.createInitialAthleteProfile(data.user.id, {
-          email,
-          firstName,
-          lastName,
-          ...additionalData
-        });
-      } else if (role === 'business') {
-        await this.createInitialBusinessProfile(data.user.id, {
-          email,
-          firstName,
-          lastName,
-          ...additionalData
-        });
-      }
-
-      // Format user data to return
-      const userInfo: UserInfo = {
-        id: data.user.id,
-        email: data.user.email || email,
-        role: role,
-        firstName: firstName,
-        lastName: lastName
-      };
-
-      // Format session data if available
-      let sessionInfo = undefined;
-      if (data.session) {
-        sessionInfo = {
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-          expires_at: data.session.expires_at || (Math.floor(Date.now() / 1000) + 3600)
+      if (!authData.user) {
+        return { 
+          success: false, 
+          error: 'User creation failed' 
         };
       }
 
+      // Create placeholder business profile if role is business
+      if (role === 'business' && authData.user.id) {
+        await ensureBusinessProfile(authData.user.id, role);
+      }
+
+      // Return success with user data and session if available
       return {
         success: true,
-        user: userInfo,
-        session: sessionInfo,
+        user: {
+          id: authData.user.id,
+          email: authData.user.email,
+          role: role
+        },
+        session: authData.session ? {
+          access_token: authData.session.access_token,
+          refresh_token: authData.session.refresh_token,
+          expires_at: authData.session.expires_at
+        } : undefined,
         needsProfile: true,
         redirectTo: '/onboarding'
       };
     } catch (error: any) {
-      console.error('Registration error:', error);
-      return {
-        success: false,
-        error: error.message || 'Registration failed'
-      };
-    }
-  }
-
-  /**
-   * Verify a token and get user information
-   */
-  async verifyToken(token: string): Promise<AuthResult> {
-    try {
-      if (!token) {
-        return { 
-          success: false, 
-          error: 'No token provided' 
-        };
-      }
-
-      const { data, error } = await supabase.auth.getUser(token);
-
-      if (error || !data.user) {
-        return { 
-          success: false, 
-          error: error?.message || 'Invalid token' 
-        };
-      }
-
-      // Get user information including role
-      const role = this.determineUserRole(data.user);
-
-      // Get user record from users table
-      const { data: userRecord } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .maybeSingle();
-
-      // Get profile information
-      const { needsProfile, redirectTo } = await this.checkProfileStatus(data.user.id, role);
-
-      // Format user data to return
-      const userInfo: UserInfo = {
-        id: data.user.id,
-        email: data.user.email || '',
-        role: role,
-        firstName: data.user.user_metadata?.first_name || data.user.user_metadata?.firstName,
-        lastName: data.user.user_metadata?.last_name || data.user.user_metadata?.lastName,
-        // Include additional user fields from database if available
-        ...(userRecord || {})
-      };
-
-      return {
-        success: true,
-        user: userInfo,
-        needsProfile,
-        redirectTo
-      };
-    } catch (error: any) {
-      console.error('Token verification error:', error);
-      return {
-        success: false,
-        error: error.message || 'Token verification failed'
-      };
-    }
-  }
-
-  /**
-   * Refresh an authentication token
-   */
-  async refreshToken(refreshToken: string): Promise<AuthResult> {
-    try {
-      if (!refreshToken) {
-        return { 
-          success: false, 
-          error: 'No refresh token provided' 
-        };
-      }
-
-      const { data, error } = await supabase.auth.refreshSession({
-        refresh_token: refreshToken
-      });
-
-      if (error || !data.user || !data.session) {
-        return { 
-          success: false, 
-          error: error?.message || 'Invalid refresh token' 
-        };
-      }
-
-      // Get user info including role
-      const role = this.determineUserRole(data.user);
-
-      // Format user data to return
-      const userInfo: UserInfo = {
-        id: data.user.id,
-        email: data.user.email || '',
-        role: role,
-        firstName: data.user.user_metadata?.first_name || data.user.user_metadata?.firstName,
-        lastName: data.user.user_metadata?.last_name || data.user.user_metadata?.lastName
-      };
-
-      // Format session data
-      const sessionInfo: SessionInfo = {
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-        expires_at: data.session.expires_at || (Math.floor(Date.now() / 1000) + 3600)
-      };
-
-      return {
-        success: true,
-        user: userInfo,
-        session: sessionInfo
-      };
-    } catch (error: any) {
-      console.error('Token refresh error:', error);
-      return {
-        success: false,
-        error: error.message || 'Token refresh failed'
+      console.error('Registration exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Registration failed' 
       };
     }
   }
@@ -353,125 +217,232 @@ class AuthService {
       const { error } = await supabase.auth.signOut();
 
       if (error) {
+        console.error('Logout error:', error);
         return { 
           success: false, 
-          error: error.message 
+          error: error.message || 'Logout failed' 
+        };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Logout exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Logout failed' 
+      };
+    }
+  }
+
+  /**
+   * Verify a token and get user info
+   */
+  async verifyToken(token: string): Promise<AuthResult> {
+    try {
+      // Verify token with Supabase
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+
+      if (error || !user) {
+        return { 
+          success: false, 
+          error: error?.message || 'Invalid token' 
+        };
+      }
+
+      // Get additional user data from the database
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      // Determine effective role
+      const effectiveRole = userData?.role || 
+        user.user_metadata?.role || 
+        user.user_metadata?.userType || 
+        'user';
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: effectiveRole
+        }
+      };
+    } catch (error: any) {
+      console.error('Token verification exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Token verification failed' 
+      };
+    }
+  }
+
+  /**
+   * Refresh an access token using a refresh token
+   */
+  async refreshToken(refreshToken: string): Promise<AuthResult> {
+    try {
+      const { data, error } = await supabase.auth.refreshSession({
+        refresh_token: refreshToken
+      });
+
+      if (error || !data.session) {
+        return { 
+          success: false, 
+          error: error?.message || 'Invalid refresh token' 
         };
       }
 
       return {
-        success: true
+        success: true,
+        user: {
+          id: data.user?.id,
+          email: data.user?.email,
+          role: data.user?.user_metadata?.role || 'user'
+        },
+        session: {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_at: data.session.expires_at
+        }
       };
     } catch (error: any) {
-      console.error('Logout error:', error);
-      return {
-        success: false,
-        error: error.message || 'Logout failed'
+      console.error('Token refresh exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Token refresh failed' 
       };
     }
   }
 
   /**
-   * Update a user's profile
+   * Update user information
    */
-  async updateUser(userId: string, userData: Partial<UserInfo>): Promise<AuthResult> {
+  async updateUser(userId: string, userData: any): Promise<AuthResult> {
     try {
-      // Update user metadata in Auth
-      const { firstName, lastName, email, ...otherData } = userData;
-
-      const authUpdateData: any = {};
-      const userMetadata: any = {};
-
-      if (email) authUpdateData.email = email;
-      if (firstName) userMetadata.first_name = firstName;
-      if (lastName) userMetadata.last_name = lastName;
-
-      // Only update auth if we have data to update
-      if (Object.keys(authUpdateData).length > 0 || Object.keys(userMetadata).length > 0) {
-        const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
-          userId,
-          {
-            ...authUpdateData,
-            user_metadata: userMetadata
-          }
-        );
-
-        if (authError) {
-          console.error('Error updating auth user:', authError);
-        }
+      // Don't allow role changes through this method
+      if (userData.role) {
+        delete userData.role;
       }
 
-      // Update user record in database
-      const updateData: any = {};
-      if (email) updateData.email = email;
-      if (firstName) updateData.first_name = firstName;
-      if (lastName) updateData.last_name = lastName;
+      // Update user metadata if provided
+      if (Object.keys(userData).length > 0) {
+        const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
+          userId,
+          { user_metadata: userData }
+        );
 
-      // Add other fields to update
-      Object.keys(otherData).forEach(key => {
-        // Convert camelCase to snake_case for database
-        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        updateData[snakeKey] = (otherData as any)[key];
-      });
-
-      // Only update if we have data
-      if (Object.keys(updateData).length > 0) {
-        const { error: dbError } = await supabase
-          .from('users')
-          .update(updateData)
-          .eq('id', userId);
-
-        if (dbError) {
+        if (metadataError) {
+          console.error('Error updating user metadata:', metadataError);
           return { 
             success: false, 
-            error: dbError.message || 'Failed to update user' 
+            error: metadataError.message || 'Failed to update user metadata' 
           };
         }
       }
 
-      // Get updated user
-      const { data: updatedUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Update database record if needed
+      if (userData.email || userData.firstName || userData.lastName) {
+        const dbUpdates: any = {};
+
+        if (userData.email) dbUpdates.email = userData.email;
+        if (userData.firstName || userData.lastName) {
+          const firstName = userData.firstName;
+          const lastName = userData.lastName;
+          if (firstName && lastName) {
+            dbUpdates.full_name = `${firstName} ${lastName}`.trim();
+          } else if (firstName) {
+            dbUpdates.full_name = firstName;
+          } else if (lastName) {
+            // Get current first name
+            const { data: currentUser } = await supabase
+              .from('users')
+              .select('full_name')
+              .eq('id', userId)
+              .single();
+
+            const currentName = currentUser?.full_name || '';
+            const firstName = currentName.split(' ')[0] || '';
+            dbUpdates.full_name = `${firstName} ${lastName}`.trim();
+          }
+        }
+
+        if (Object.keys(dbUpdates).length > 0) {
+          const { error: dbError } = await supabase
+            .from('users')
+            .update(dbUpdates)
+            .eq('id', userId);
+
+          if (dbError) {
+            console.error('Error updating user in database:', dbError);
+            // Continue anyway, as metadata update succeeded
+          }
+        }
+      }
+
+      // Get updated user data
+      const { data: { user }, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(
+        userId
+      );
+
+      if (getUserError || !user) {
+        return { 
+          success: true, 
+          user: { id: userId, ...userData }
+        };
+      }
 
       return {
         success: true,
-        user: this.formatUserData(updatedUser)
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.user_metadata?.role || 'user',
+          ...user.user_metadata
+        }
       };
     } catch (error: any) {
-      console.error('User update error:', error);
-      return {
-        success: false,
-        error: error.message || 'User update failed'
+      console.error('Update user exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to update user' 
       };
     }
   }
 
   /**
-   * Change a user's password
+   * Change user password
    */
-  async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<AuthResult> {
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<AuthResult> {
     try {
-      // First verify the old password by signing in
-      const { data: userData } = await supabase
-        .from('users')
-        .select('email')
-        .eq('id', userId)
-        .single();
+      // First verify the current password
+      const { data: userData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(
+        userId
+      );
 
-      if (!userData || !userData.email) {
+      if (getUserError || !userData.user) {
         return { 
           success: false, 
           error: 'User not found' 
         };
       }
 
-      // Verify old password
+      // Get user's email
+      const email = userData.user.email;
+
+      if (!email) {
+        return { 
+          success: false, 
+          error: 'User email not found' 
+        };
+      }
+
+      // Verify current password by attempting to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData.email,
-        password: oldPassword
+        email,
+        password: currentPassword
       });
 
       if (signInError) {
@@ -481,10 +452,11 @@ class AuthService {
         };
       }
 
-      // Update password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      });
+      // Update to new password
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        userId,
+        { password: newPassword }
+      );
 
       if (updateError) {
         return { 
@@ -493,212 +465,96 @@ class AuthService {
         };
       }
 
-      return {
-        success: true
-      };
+      return { success: true };
     } catch (error: any) {
-      console.error('Password change error:', error);
-      return {
-        success: false,
-        error: error.message || 'Password change failed'
+      console.error('Change password exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to change password' 
       };
     }
   }
 
   /**
-   * Send a password reset email
+   * Request password reset email
    */
   async resetPassword(email: string): Promise<AuthResult> {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${config.SERVER_URL}/reset-password`
+        redirectTo: `${config.SERVER_URL || ''}/reset-password`
       });
 
       if (error) {
+        console.error('Password reset error:', error);
         return { 
           success: false, 
-          error: error.message 
+          error: error.message || 'Failed to send password reset email' 
         };
       }
 
-      return {
-        success: true
-      };
+      return { success: true };
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      return {
-        success: false,
-        error: error.message || 'Password reset failed'
+      console.error('Password reset exception:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to send password reset email' 
       };
     }
   }
 
-  // Helper methods
-
   /**
-   * Determine user role from user data
+   * Check if user needs to complete their profile
    */
-  private determineUserRole(user: any): string {
-    // Try different locations where role might be stored
-    return user.user_metadata?.role || 
-           user.role || 
-           user.user_metadata?.userType ||
-           user.user_metadata?.user_type || 
-           'user';
-  }
-
-  /**
-   * Update last login time
-   */
-  private async updateLastLogin(userId: string): Promise<void> {
+  private async checkIfProfileNeeded(user: any): Promise<boolean> {
     try {
-      await supabase
-        .from('users')
-        .upsert({
-          id: userId,
-          last_login: new Date().toISOString()
-        }, { onConflict: 'id' });
-    } catch (error) {
-      console.error('Error updating last login:', error);
-    }
-  }
+      const role = user.user_metadata?.role?.toLowerCase() ||
+                  user.user_metadata?.userType?.toLowerCase() ||
+                  'user';
 
-  /**
-   * Check if a user has completed their profile
-   */
-  private async checkProfileStatus(userId: string, role: string): Promise<{ needsProfile: boolean, redirectTo?: string }> {
-    try {
-      // Check if user has a profile based on their role
-      if (role === 'athlete') {
-        const { data } = await supabase
-          .from('athlete_profiles')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle();
+      // First check if onboarding_progress table has this user marked as complete
+      const { data: progressData } = await supabase
+        .from('onboarding_progress')
+        .select('is_complete')
+        .eq('id', user.id)
+        .maybeSingle();
 
-        if (!data) {
-          return { needsProfile: true, redirectTo: '/onboarding/athlete' };
-        }
-      } else if (role === 'business') {
-        const { data } = await supabase
-          .from('business_profiles')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (!data) {
-          return { needsProfile: true, redirectTo: '/onboarding/business' };
-        }
+      if (progressData?.is_complete) {
+        return false; // Profile is complete
       }
 
-      return { needsProfile: false };
+      // Check if user has a profile based on their role
+      if (role === 'athlete') {
+        const { data: athleteData, error: athleteError } = await supabase
+          .from('athlete_profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!athleteError && athleteData) {
+          return false; // Has athlete profile
+        }
+      } else if (role === 'business') {
+        const { data: businessData, error: businessError } = await supabase
+          .from('business_profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!businessError && businessData) {
+          return false; // Has business profile
+        }
+      } else if (role === 'compliance' || role === 'admin') {
+        return false; // Compliance and admin users don't need additional profiles
+      }
+
+      return true; // Profile needed
     } catch (error) {
       console.error('Error checking profile status:', error);
-      return { needsProfile: false };
+      return true; // Assume profile is needed on error
     }
-  }
-
-  /**
-   * Create a user record in the database
-   */
-  private async createUserRecord(userId: string, userData: any): Promise<void> {
-    try {
-      const { firstName, lastName, email, role, ...additionalData } = userData;
-
-      // Map camelCase to snake_case
-      const dbData: any = {
-        id: userId,
-        email: email,
-        role: role,
-        first_name: firstName,
-        last_name: lastName,
-        created_at: new Date().toISOString(),
-        last_login: new Date().toISOString()
-      };
-
-      // Add additional fields
-      Object.keys(additionalData).forEach(key => {
-        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        dbData[snakeKey] = additionalData[key];
-      });
-
-      await supabase
-        .from('users')
-        .upsert(dbData, { onConflict: 'id' });
-    } catch (error) {
-      console.error('Error creating user record:', error);
-    }
-  }
-
-  /**
-   * Create an initial athlete profile
-   */
-  private async createInitialAthleteProfile(userId: string, userData: any): Promise<void> {
-    try {
-      const { firstName, lastName, email } = userData;
-
-      await supabase
-        .from('athlete_profiles')
-        .upsert({
-          id: userId,
-          name: `${firstName} ${lastName}`,
-          email: email,
-          session_id: uuidv4(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
-    } catch (error) {
-      console.error('Error creating initial athlete profile:', error);
-    }
-  }
-
-  /**
-   * Create an initial business profile
-   */
-  private async createInitialBusinessProfile(userId: string, userData: any): Promise<void> {
-    try {
-      const { firstName, lastName, email } = userData;
-
-      await supabase
-        .from('business_profiles')
-        .upsert({
-          id: userId,
-          name: userData.businessName || `${firstName} ${lastName}'s Business`,
-          email: email,
-          session_id: uuidv4(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
-    } catch (error) {
-      console.error('Error creating initial business profile:', error);
-    }
-  }
-
-  /**
-   * Format user data from database to standard format
-   */
-  private formatUserData(dbUser: any): UserInfo {
-    if (!dbUser) return {} as UserInfo;
-
-    return {
-      id: dbUser.id,
-      email: dbUser.email,
-      role: dbUser.role,
-      firstName: dbUser.first_name,
-      lastName: dbUser.last_name,
-      // Add other fields from database
-      ...Object.keys(dbUser).reduce((acc: any, key) => {
-        // Convert snake_case to camelCase
-        if (!['id', 'email', 'role', 'first_name', 'last_name'].includes(key)) {
-          const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-          acc[camelKey] = dbUser[key];
-        }
-        return acc;
-      }, {})
-    };
   }
 }
 
-// Create and export singleton instance
+// Export singleton instance
 export const authService = new AuthService();
 export default authService;

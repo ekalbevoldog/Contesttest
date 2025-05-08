@@ -1,157 +1,198 @@
-/** 05/08/2025 - 1423cst
+/** 05/08/2025 - 13:33 CST
  * Authentication Middleware
  * 
- * Provides middleware functions for authenticating requests and enforcing
- * role-based access control.
+ * Provides middleware for protecting routes that require authentication.
+ * Verifies JWT tokens and attaches user information to the request.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { authService } from '../services/authService';
-
-// Extend Express Request type to include user property
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email?: string;
-        role: string;
-        firstName?: string;
-        lastName?: string;
-        [key: string]: any;
-      };
-    }
-  }
-}
+import { supabase } from '../lib/supabase';
+import { AppError } from './error';
 
 /**
- * Middleware to check if a request is authenticated
+ * Middleware to require authentication
  * 
- * This middleware verifies the JWT token in the Authorization header
- * and attaches the user object to the request if valid.
+ * Verifies the Authorization header contains a valid JWT token
+ * and attaches the user object to the request.
  */
-export const requireAuth = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get the authorization header
+    // Get token from Authorization header
     const authHeader = req.headers.authorization;
 
-    // Check if authorization header exists and has the correct format
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: 'Authentication required' 
-      });
+    if (!authHeader) {
+      throw new AppError('Authentication required', 401, 'UNAUTHORIZED');
     }
 
-    // Extract the token
-    const token = authHeader.split(' ')[1];
+    // Extract the token from the header (format: "Bearer <token>")
+    const token = authHeader.startsWith('Bearer ') 
+      ? authHeader.substring(7) 
+      : authHeader;
 
-    // Verify the token and get user info
-    const result = await authService.verifyToken(token);
-
-    // If token verification fails, return 401
-    if (!result.success || !result.user) {
-      return res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: result.error || 'Invalid authentication token' 
-      });
+    if (!token) {
+      throw new AppError('Invalid authorization format', 401, 'UNAUTHORIZED');
     }
 
-    // Attach user to request
-    req.user = result.user;
+    // Verify the token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    // Continue to the next middleware or route handler
+    if (error || !user) {
+      throw new AppError('Invalid or expired token', 401, 'UNAUTHORIZED');
+    }
+
+    // Get additional user data from the database
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, email, role, metadata')
+      .eq('id', user.id)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      // We can still proceed with basic auth user data
+    }
+
+    // Determine effective role
+    const effectiveRole = userData?.role || 
+      user.user_metadata?.role || 
+      user.user_metadata?.userType || 
+      'user';
+
+    // Attach user info to request
+    req.user = {
+      id: user.id,
+      email: user.email || '',
+      role: effectiveRole,
+      token: token,
+      userType: effectiveRole,
+      user_metadata: {
+        role: user.user_metadata?.role,
+        userType: user.user_metadata?.userType,
+        user_type: user.user_metadata?.user_type
+      }
+    };
+
     next();
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: {
+          code: error.code,
+          message: error.message
+        }
+      });
+    }
+
     console.error('Auth middleware error:', error);
-    return res.status(500).json({ 
-      error: 'Internal Server Error', 
-      message: 'Authentication failed due to server error' 
+    return res.status(401).json({ 
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Authentication failed'
+      }
     });
   }
 };
 
 /**
- * Middleware to check if a user has a specific role
+ * Middleware to optionally authenticate
  * 
- * This middleware must be used after requireAuth.
- * 
- * @param roles - Single role or array of roles that are allowed to access the route
+ * Similar to requireAuth but doesn't error if no token is present.
+ * Useful for routes that can work with or without authentication.
  */
-export const requireRole = (roles: string | string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Ensure the user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: 'Authentication required' 
-      });
-    }
-
-    // Convert single role to array
-    const allowedRoles = Array.isArray(roles) ? roles : [roles];
-
-    // Check if the user's role is in the allowed roles
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ 
-        error: 'Forbidden', 
-        message: `Access denied. Required role: ${allowedRoles.join(' or ')}` 
-      });
-    }
-
-    // User has required role, continue
-    next();
-  };
-};
-
-/**
- * Middleware to check if profile is completed
- * 
- * This middleware must be used after requireAuth.
- * It redirects to onboarding if profile is not completed.
- */
-export const requireCompleteProfile = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Ensure the user is authenticated
-    if (!req.user) {
-      return res.status(401).json({ 
-        error: 'Unauthorized', 
-        message: 'Authentication required' 
-      });
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+
+    // If no token, continue without authentication
+    if (!authHeader) {
+      return next();
     }
 
-    // Check if profile is completed based on role
-    const { needsProfile, redirectTo } = await authService.checkProfileStatus(
-      req.user.id, 
-      req.user.role
-    );
+    // Extract the token from the header
+    const token = authHeader.startsWith('Bearer ') 
+      ? authHeader.substring(7) 
+      : authHeader;
 
-    if (needsProfile) {
-      return res.status(403).json({ 
-        error: 'Incomplete Profile', 
-        message: 'Please complete your profile first',
-        redirectTo: redirectTo || '/onboarding'
-      });
+    if (!token) {
+      return next();
     }
 
-    // Profile is complete, continue
+    // Verify the token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    // If invalid token, continue without authentication
+    if (error || !user) {
+      return next();
+    }
+
+    // Get additional user data
+    const { data: userData } = await supabase
+      .from('users')
+      .select('id, email, role, metadata')
+      .eq('id', user.id)
+      .single();
+
+    // Determine effective role
+    const effectiveRole = userData?.role || 
+      user.user_metadata?.role || 
+      user.user_metadata?.userType || 
+      'user';
+
+    // Attach user info to request
+    req.user = {
+      id: user.id,
+      email: user.email || '',
+      role: effectiveRole,
+      token: token,
+      userType: effectiveRole,
+      user_metadata: {
+        role: user.user_metadata?.role,
+        userType: user.user_metadata?.userType,
+        user_type: user.user_metadata?.user_type
+      }
+    };
+
     next();
-  } catch (error: any) {
-    console.error('Profile check middleware error:', error);
+  } catch (error) {
+    // For optional auth, just continue without user
     next();
   }
 };
 
+/**
+ * Middleware to require a specific role
+ * 
+ * Must be used after requireAuth
+ */
+export const requireRole = (roles: string | string[]) => {
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required'
+        }
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Insufficient permissions'
+        }
+      });
+    }
+
+    next();
+  };
+};
+
 export default {
   requireAuth,
-  requireRole,
-  requireCompleteProfile
+  optionalAuth,
+  requireRole
 };
