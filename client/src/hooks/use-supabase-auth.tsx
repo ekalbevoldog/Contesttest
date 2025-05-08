@@ -80,10 +80,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       await logoutUser();
       console.log('[Auth] Signed out successfully');
 
-      // Add a slight delay before navigation to ensure cleanup completes
+      // Use setTimeout to ensure cleanup completes before navigation
       setTimeout(() => {
-        // Force a hard navigation to reset React state completely
-        window.location.href = '/';
+        // Use the router navigation to maintain SPA experience
+        navigate('/');
       }, 150);
 
       toast({

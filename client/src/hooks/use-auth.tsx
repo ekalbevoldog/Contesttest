@@ -274,24 +274,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: `Welcome back!`,
       });
 
-      // Redirect based on user role - handle custom redirect if present in response
+      // Redirect based on user role with consistent routing
       if (data.redirectTo) {
         console.log('[Auth Provider] Login mutation: Using custom redirect path:', data.redirectTo);
+        // Use the router for navigation consistently
         setLocation(data.redirectTo);
       } else {
         console.log('[Auth Provider] Login mutation: Using role-based redirect for role:', roleValue);
-        // Standard role-based redirects
+        
+        // Enhanced role-based redirects with more descriptive logging
+        let redirectPath = '/';
+        
         if (roleValue === 'athlete') {
-          setLocation('/athlete/dashboard');
+          redirectPath = '/athlete/dashboard';
         } else if (roleValue === 'business') {
-          setLocation('/business/dashboard');
+          redirectPath = '/business/dashboard';
         } else if (roleValue === 'compliance') {
-          setLocation('/compliance/dashboard');
+          redirectPath = '/compliance/dashboard';
         } else if (roleValue === 'admin') {
-          setLocation('/admin/dashboard');
-        } else {
-          setLocation('/');
+          redirectPath = '/admin/dashboard';
         }
+        
+        console.log(`[Auth Provider] Login mutation: Redirecting to ${redirectPath} for ${roleValue} role`);
+        setLocation(redirectPath);
       }
 
       // Dispatch custom login event
@@ -410,27 +415,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       window.dispatchEvent(registrationEvent);
 
-      // Redirect to onboarding or dashboard based on response
+      // Enhanced redirect logic with consistent routing for registration
       if (data.redirectTo) {
         console.log('[Auth Provider] Register mutation: Using custom redirect path:', data.redirectTo);
         setLocation(data.redirectTo);
       } else if (data.needsProfile) {
         console.log('[Auth Provider] Register mutation: User needs profile, redirecting to onboarding');
-        setLocation('/onboarding');
+        
+        // Role-specific onboarding paths for better user experience
+        if (roleValue === 'athlete') {
+          console.log('[Auth Provider] Register mutation: Redirecting to athlete-specific onboarding');
+          setLocation('/athlete-onboarding');
+        } else if (roleValue === 'business') {
+          console.log('[Auth Provider] Register mutation: Redirecting to business-specific onboarding');
+          setLocation('/business-onboarding');
+        } else {
+          console.log('[Auth Provider] Register mutation: Redirecting to general onboarding');
+          setLocation('/onboarding');
+        }
       } else {
         console.log('[Auth Provider] Register mutation: Using role-based redirect for role:', roleValue);
-        // Redirect based on user role
+        
+        // Consolidated redirect logic that matches the login and protected route logic
+        let redirectPath = '/';
+        
         if (roleValue === 'athlete') {
-          setLocation('/athlete/dashboard');
+          redirectPath = '/athlete/dashboard';
         } else if (roleValue === 'business') {
-          setLocation('/business/dashboard');
+          redirectPath = '/business/dashboard';
         } else if (roleValue === 'compliance') {
-          setLocation('/compliance/dashboard');
+          redirectPath = '/compliance/dashboard';
         } else if (roleValue === 'admin') {
-          setLocation('/admin/dashboard');
-        } else {
-          setLocation('/');
+          redirectPath = '/admin/dashboard';
         }
+        
+        console.log(`[Auth Provider] Register mutation: Redirecting to ${redirectPath} for ${roleValue} role`);
+        setLocation(redirectPath);
       }
     },
     onError: (error: Error) => {
