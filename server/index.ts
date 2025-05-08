@@ -80,15 +80,6 @@ app.listen(PORT, '0.0.0.0', () =>
 // ---------- END server/index.ts ----------
 
 
-// ---------- server/routes.ts ----------
-import { Express } from 'express';
-import authRoutes from './routes/authRoutes';
-import apiRoutes from './routes/apiRoutes';
-// import webhookRoutes from './routes/webhooks'; // Uncomment when implemented
-
-export function registerRoutes(app: Express) {
-  app.use('/api/auth', authRoutes);
-  app.use('/api', apiRoutes);
-  // app.use('/api/webhooks', webhookRoutes);
-}
-// ---------- END server/routes.ts ----------
+// NOTE: This is a legacy comment. The actual routes logic is in server/routes.ts
+// The server/routes.ts file is imported above and used on line 49
+// ---------- END server/index.ts ----------
