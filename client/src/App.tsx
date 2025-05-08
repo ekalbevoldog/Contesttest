@@ -8,8 +8,10 @@ import { SupabaseAuthProvider } from "./hooks/use-supabase-auth";
 import { AuthProvider, useAuth } from "./hooks/use-auth";
 import { UnifiedProtectedRoute, ProfileRequiredRoute as UnifiedProfileRequiredRoute, RoleProtectedRoute } from "./lib/unified-protected-route";
 import { useToast } from "./hooks/use-toast";
+import { WebSocketProvider } from "./contexts/WebSocketProvider";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import { WebSocketStatus } from "./components/WebSocketStatus";
 import Home from "./pages/Home";
 import Onboarding from "./pages/Onboarding";
 import AuthPage from "./pages/auth-page";
@@ -73,7 +75,11 @@ function Router() {
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/auth" component={AuthPage} />
-            <Route path="/sign-in">{() => { window.location.href = "/auth"; return null; }}</Route>
+            <Route path="/sign-in">{() => { 
+              const [, navigate] = useLocation();
+              useEffect(() => { navigate("/auth"); }, [navigate]);
+              return <LoadingFallback />;
+            }}</Route>
             <Route path="/onboarding" component={Onboarding} />
             <UnifiedProtectedRoute path="/onboarding" component={Onboarding} />
             <RoleProtectedRoute path="/athlete-onboarding" component={Onboarding} requiredRole="athlete" />
@@ -140,8 +146,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <SupabaseAuthProvider>
         <AuthProvider>
-          <Router />
-          <Toaster />
+          <WebSocketProvider>
+            <Router />
+            <div className="fixed bottom-4 right-4 z-50">
+              <WebSocketStatus showDebug={false} />
+            </div>
+            <Toaster />
+          </WebSocketProvider>
         </AuthProvider>
       </SupabaseAuthProvider>
     </QueryClientProvider>
