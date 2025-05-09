@@ -1,6 +1,6 @@
 {
   "Start application": {
-    "command": "npm run dev",
+    "command": "node start-dev.js",
     "isDefault": true,
     "continuable": false
   }
