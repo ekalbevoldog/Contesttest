@@ -60,7 +60,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     // Get additional user data from the database
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, email, role, metadata')
+      .select('id, email, role')
       .eq('id', user.id)
       .single();
 
@@ -155,7 +155,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     try {
       const { data: userData } = await supabase
         .from('users')
-        .select('id, email, role, metadata')
+        .select('id, email, role')
         .eq('id', user.id)
         .single();
       

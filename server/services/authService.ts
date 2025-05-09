@@ -19,8 +19,9 @@ interface LoginCredentials {
 interface RegistrationData {
   email: string;
   password: string;
-  firstName: string;
+  firstName?: string;  // Optional now, as 'name' can also be provided
   lastName?: string;
+  name?: string;      // For backward compatibility with Onboarding form
   role: string;
 }
 
@@ -379,10 +380,13 @@ class AuthService {
    */
   async register(data: RegistrationData): Promise<AuthResult> {
     try {
-      const { email, password, firstName, lastName, role } = data;
+      const { email, password, firstName, lastName, name, role } = data;
+      
+      // Support both firstName and name fields for backward compatibility
+      const effectiveFirstName = firstName || name;
 
       // Validate input
-      if (!email || !password || !firstName || !role) {
+      if (!email || !password || !effectiveFirstName || !role) {
         return { 
           success: false, 
           error: 'Required fields missing' 
@@ -403,10 +407,10 @@ class AuthService {
         password,
         options: {
           data: {
-            first_name: firstName,
+            first_name: effectiveFirstName,
             last_name: lastName || '',
             role: role,
-            full_name: `${firstName} ${lastName || ''}`.trim()
+            full_name: `${effectiveFirstName} ${lastName || ''}`.trim()
           }
         }
       });

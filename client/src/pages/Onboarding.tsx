@@ -953,7 +953,9 @@ export default function Onboarding() {
         const userData = {
           email: formData.email,
           password: formData.password,
-          fullName: formData.name,
+          firstName: formData.name, // Changed from fullName to firstName to match server expectation
+          lastName: formData.name.split(' ').slice(1).join(' ') || '', // Add lastName from split if available
+          fullName: formData.name, // Keep this for backward compatibility
           role: formData.userType
         };
         console.log("Registering via /api/auth/register");

@@ -29,6 +29,9 @@ export interface AthleteProfile {
   content_style?: string;
   compensation_goals?: string;
   profile_image?: string;
+  created_at?: string;
+  updated_at: string;
+  session_id?: string;
   [key: string]: any;
 }
 
@@ -49,6 +52,9 @@ export interface BusinessProfile {
   budget_min?: number;
   budget_max?: number;
   profile_image?: string;
+  created_at?: string;
+  updated_at: string;
+  session_id?: string;
   [key: string]: any;
 }
 
@@ -152,7 +158,7 @@ class ProfileService {
       const sessionId = profileData.session_id || uuidv4();
 
       // Format data for database insert
-      const dbProfile = {
+      const dbProfile: any = {
         id: userId,
         session_id: sessionId,
         ...profileData,
@@ -203,7 +209,7 @@ class ProfileService {
       const sessionId = profileData.session_id || uuidv4();
 
       // Format data for database insert
-      const dbProfile = {
+      const dbProfile: any = {
         id: userId,
         session_id: sessionId,
         ...profileData,
@@ -250,20 +256,56 @@ class ProfileService {
    */
   async uploadProfileImage(userId: string, userType: string, file: Buffer, filename: string): Promise<{ success: boolean, url?: string, error?: string }> {
     try {
+      console.log(`Uploading profile image for user ${userId} of type ${userType}`);
+      
       // Create the storage key for this user's profile image
       const fileExt = filename.split('.').pop() || 'jpg';
       const storageKey = `profile_images/${userId}/${Date.now()}.${fileExt}`;
+      
+      // First, check if the 'media' bucket exists, and create it if not
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const mediaBucket = buckets?.find(bucket => bucket.name === 'media');
+      
+      if (!mediaBucket) {
+        console.log("Media bucket not found, creating it...");
+        try {
+          const { data, error } = await supabase.storage.createBucket('media', {
+            public: true, // Make it publicly accessible
+            fileSizeLimit: 5 * 1024 * 1024 // 5MB limit
+          });
+          
+          if (error) {
+            console.error("Failed to create media bucket:", error);
+            return { 
+              success: false, 
+              error: "Failed to create storage bucket: " + error.message 
+            };
+          }
+          
+          console.log("Successfully created media bucket");
+        } catch (error) {
+          const bucketError = error as any;
+          console.error("Exception creating media bucket:", bucketError);
+          return { 
+            success: false, 
+            error: "Error creating storage bucket: " + (bucketError.message || String(bucketError)) 
+          };
+        }
+      }
 
       // Upload to Supabase storage
+      console.log(`Uploading file to ${storageKey}`);
       const { error: uploadError } = await supabase.storage
         .from('media')
         .upload(storageKey, file, { upsert: true });
 
       if (uploadError) {
+        console.error("File upload error:", uploadError);
         throw uploadError;
       }
 
       // Get the public URL
+      console.log("Getting public URL for uploaded file");
       const { data: urlData } = supabase.storage
         .from('media')
         .getPublicUrl(storageKey);

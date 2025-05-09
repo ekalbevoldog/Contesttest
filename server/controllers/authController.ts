@@ -66,9 +66,15 @@ class AuthController {
 
       // Validate required fields
       if (!registrationData.email || !registrationData.password || 
-          !registrationData.firstName || !registrationData.role) {
+          (!registrationData.firstName && !registrationData.name) || !registrationData.role) {
         console.log('[Auth Controller] Registration validation failed: Missing required fields');
         return res.status(400).json({ error: 'Required fields missing' });
+      }
+      
+      // For backward compatibility, if firstName isn't provided but name is, use name as firstName
+      if (!registrationData.firstName && registrationData.name) {
+        registrationData.firstName = registrationData.name;
+        console.log('[Auth Controller] Used name field for firstName:', registrationData.firstName);
       }
 
       console.log(`[Auth Controller] Attempting registration for email: ${registrationData.email}, role: ${registrationData.role}`);
