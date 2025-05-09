@@ -1,0 +1,40 @@
+[req-aiigu749] GET /src/hooks/use-query-params.ts - Request received
+GET /src/hooks/use-query-params.ts 304 0.269 ms - -
+[req-a5etutvq] GET /src/components/animations/AnimatedFormField.tsx - Request received
+GET /src/components/animations/AnimatedFormField.tsx 304 0.518 ms - -
+[req-746dp6ek] GET /src/components/AthleteProfileForm.tsx - Request received
+GET /src/components/AthleteProfileForm.tsx 304 0.309 ms - -
+[req-8m8bqa6b] GET /src/components/BusinessProfileForm.tsx - Request received
+GET /src/components/BusinessProfileForm.tsx 304 0.283 ms - -
+[req-6adbbhal] GET /src/components/ui/progress.tsx - Request received
+GET /src/components/ui/progress.tsx 304 0.286 ms - -
+[req-ec1e765a] GET /src/components/CompactMatchResults.tsx - Request received
+GET /src/components/CompactMatchResults.tsx 304 0.220 ms - -
+[req-16byj1jt] GET /src/components/ProfileLinkEditor.tsx - Request received
+GET /src/components/ProfileLinkEditor.tsx 304 0.586 ms - -
+[req-cpg9ppl0] GET /src/lib/logger.ts - Request received
+GET /src/lib/logger.ts 304 0.234 ms - -
+[req-sqitbbz8] GET /src/components/ui/select.tsx - Request received
+GET /src/components/ui/select.tsx 304 0.391 ms - -
+[req-t6pipydl] GET /src/components/animations/ValidationFeedback.tsx - Request received
+GET /src/components/animations/ValidationFeedback.tsx 304 0.265 ms - -
+[req-pyaw1jjo] GET /src/components/ui/switch.tsx - Request received
+GET /src/components/ui/switch.tsx 304 0.431 ms - -
+[req-nk1mdh8r] GET /src/components/ui/tooltip.tsx - Request received
+GET /src/components/ui/tooltip.tsx 304 0.378 ms - -
+[req-90qpk4ar] GET /api/config/supabase - Request received
+[req-90qpk4ar] GET /supabase - Response: 200 (0ms)
+GET /api/config/supabase 200 0.775 ms - 278
+[req-avewvhv6] GET /api/config/supabase - Request received
+[req-avewvhv6] GET /supabase - Response: 200 (0ms)
+GET /api/config/supabase 200 0.741 ms - 278
+GET /health 200 0.363 ms - 54
+[req-7cxcp0xp] GET /fonts/Clofie-Light.woff2 - Request received
+GET /fonts/Clofie-Light.woff2 200 2.950 ms - -
+[req-i7nll1hu] GET /fonts/Clofie-Light.woff - Request received
+GET /fonts/Clofie-Light.woff 200 3.311 ms - -
+[req-a4099od5] GET /contested-logo.png - Request received
+GET /contested-logo.png 304 0.586 ms - -
+WebSocket connection established: conn_3
+WebSocket connection closed: conn_3
+WebSocket connection established: conn_4
