@@ -1,0 +1,11 @@
+{
+  "watch": [
+    "server",
+    "shared"
+  ],
+  "ext": "ts,js,json",
+  "exec": "npx tsx server/index.ts",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

@@ -24,7 +24,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import Subscribe from "./pages/Subscribe";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
-import WebSocketTest from "./pages/WebSocketTest";
 import { Loader2 } from "lucide-react";
 
 // Wizard Pages

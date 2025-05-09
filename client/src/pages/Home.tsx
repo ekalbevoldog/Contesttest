@@ -9,10 +9,52 @@ import { Parallax } from "@/components/animations/Parallax";
 import { AnimatedGradient } from "@/components/animations/AnimatedGradient";
 import { StaggerContainer, StaggerItem } from "@/components/animations/StaggerContainer";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { useWebSocketContext } from "@/contexts/WebSocketProvider";
 
 export default function Home() {
   const [showChat, setShowChat] = useState(false);
   const { user } = useSupabaseAuth();
+  const webSocket = useWebSocketContext();
+  
+  // Connect to WebSocket and subscribe to relevant channels
+  useEffect(() => {
+    // Connect if not already connected
+    if (!webSocket.isConnected) {
+      webSocket.connect();
+    }
+    
+    // Subscribe to channels when connection is authenticated
+    if (webSocket.isAuthenticated) {
+      // Subscribe to global updates channel
+      webSocket.subscribe('global');
+      
+      // Subscribe to user-specific channel if logged in
+      if (user?.id) {
+        webSocket.subscribe(`user:${user.id}`);
+      }
+    }
+    
+    // Process any incoming messages invisibly
+    const messageHandler = (event: CustomEvent) => {
+      const message = event.detail;
+      console.log('WebSocket message received:', message);
+    };
+    
+    // Listen for custom WebSocket message events
+    window.addEventListener('ws-message', messageHandler as EventListener);
+    
+    // Cleanup function
+    return () => {
+      // Unsubscribe from channels
+      webSocket.unsubscribe('global');
+      if (user?.id) {
+        webSocket.unsubscribe(`user:${user.id}`);
+      }
+      
+      // Remove event listener
+      window.removeEventListener('ws-message', messageHandler as EventListener);
+    };
+  }, [webSocket.isConnected, webSocket.isAuthenticated, user?.id]);
   
   // Listen for the custom event to toggle the AI assistant
   useEffect(() => {
@@ -228,61 +270,26 @@ export default function Home() {
             <StaggerItem className="glass-card p-8 relative">
               <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-[#FFBF0D] flex items-center justify-center text-black font-bold text-xl">2</div>
               <h3 className="text-xl font-bold mb-3 text-white mt-4">Instant Match Score</h3>
-              <p className="text-gray-300">We rank the top 50 fits for you using 224+ data inputs.</p>
+              <p className="text-gray-300">Our algorithm calculates fit scores based on your history, audience, and brand requirements.</p>
             </StaggerItem>
             
             <StaggerItem className="glass-card p-8 relative">
               <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-[#FFBF0D] flex items-center justify-center text-black font-bold text-xl">3</div>
-              <h3 className="text-xl font-bold mb-3 text-white mt-4">One‑Click Contracts</h3>
-              <p className="text-gray-300">Digitally sign lawyer‑vetted agreements.</p>
+              <h3 className="text-xl font-bold mb-3 text-white mt-4">Direct Contracts</h3>
+              <p className="text-gray-300">Accept campaigns with one click—each with clear deliverables and transparent payment terms.</p>
             </StaggerItem>
             
             <StaggerItem className="glass-card p-8 relative">
               <div className="absolute -top-4 -left-4 w-12 h-12 rounded-full bg-[#FFBF0D] flex items-center justify-center text-black font-bold text-xl">4</div>
-              <h3 className="text-xl font-bold mb-3 text-white mt-4">Track & Get Paid</h3>
-              <p className="text-gray-300">Real‑time KPI dashboards tie every view, click, and sale to dollars earned.</p>
+              <h3 className="text-xl font-bold mb-3 text-white mt-4">Instant Payments</h3>
+              <p className="text-gray-300">Get paid within 48 hours of content approval—no invoicing or nagging required.</p>
             </StaggerItem>
           </StaggerContainer>
         </div>
       </section>
       
-      {/* Social Proof Section */}
-      <section className="py-20 bg-black relative overflow-hidden">
-        <AnimatedGradient 
-          className="absolute inset-0" 
-          colors={['hsl(45, 100%, 50%, 0.08)', 'hsl(235, 100%, 50%, 0.05)', 'hsl(345, 90%, 55%, 0.05)']} 
-          blur={120}
-          duration={20}
-        />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto">
-            <motion.div 
-              className="glass-card p-10 text-center"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              viewport={{ once: true }}
-              whileHover={{ boxShadow: "0 15px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 191, 13, 0.4)" }}
-            >
-              <p className="text-2xl mb-8 italic text-gray-100">
-                "Contested turned my 5K IG followers into $4,200 in brand income—no agent required."
-              </p>
-              <p className="font-bold text-[#FFBF0D]">— Jordan K., NCAA D‑II Soccer</p>
-              
-              <div className="mt-12 pt-8 border-t border-gray-800">
-                <p className="text-sm uppercase tracking-wider text-gray-400 mb-6">Trusted by</p>
-                <div className="flex flex-wrap justify-center gap-8 opacity-70">
-                  <div className="w-20 h-12 bg-white/10 rounded flex items-center justify-center">CPG</div>
-                  <div className="w-20 h-12 bg-white/10 rounded flex items-center justify-center">E-Sports</div>
-                  <div className="w-20 h-12 bg-white/10 rounded flex items-center justify-center">Startups</div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-      
+      {/* WebSocket connection is handled invisibly in the background */}
+
       {/* Closing Banner */}
       <section className="py-20 bg-gradient-to-br from-black to-zinc-900 relative overflow-hidden">
         <AnimatedGradient 

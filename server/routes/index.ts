@@ -22,6 +22,7 @@ import configRoutes from './configRoutes';
 import offerRoutes from './offerRoutes';
 import bundleRoutes from './bundleRoutes';
 import publicRoutes from './Routes-public';
+import wsTestRoutes from './wsTestRoutes';
 
 // Import middleware
 import { requireAuth } from '../middleware/auth';
@@ -48,6 +49,7 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/config', configRoutes);
   app.use('/api/offer', offerRoutes);
   app.use('/api/bundle', bundleRoutes);
+  app.use('/api/ws-test', wsTestRoutes);
   app.use('/health', healthRoutes);
   app.use('/', publicRoutes);
 
