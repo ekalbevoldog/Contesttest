@@ -57,6 +57,14 @@ class AuthService {
       console.log('[Auth Service] Getting user from token');
       
       // Validate token with Supabase
+      if (!supabaseAdmin) {
+        console.error('[Auth Service] Supabase admin client not initialized');
+        return {
+          success: false,
+          error: 'Supabase admin client not initialized'
+        };
+      }
+      
       const { data, error } = await supabaseAdmin.auth.getUser(token);
       
       if (error || !data.user) {
@@ -69,10 +77,11 @@ class AuthService {
       
       // Get user's role and other metadata
       const user = data.user;
+      // Handle various possible locations for role information
       const role = user.user_metadata?.role || 
-                 user.role || 
+                 (user as any).role || 
                  user.user_metadata?.userType ||
-                 user.user_type || 
+                 (user as any).user_type || 
                  'user';
       
       // Try to get user profile data
@@ -458,6 +467,14 @@ class AuthService {
 
       // Update user metadata if provided
       if (Object.keys(userData).length > 0) {
+        if (!supabaseAdmin) {
+          console.error('[Auth Service] Supabase admin client not initialized');
+          return {
+            success: false,
+            error: 'Supabase admin client not initialized'
+          };
+        }
+        
         const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
           userId,
           { user_metadata: userData }
@@ -512,6 +529,14 @@ class AuthService {
       }
 
       // Get updated user data
+      if (!supabaseAdmin) {
+        console.error('[Auth Service] Supabase admin client not initialized');
+        return {
+          success: true, 
+          user: { id: userId, ...userData }
+        };
+      }
+      
       const { data: { user }, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(
         userId
       );
@@ -547,6 +572,14 @@ class AuthService {
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<AuthResult> {
     try {
       // First verify the current password
+      if (!supabaseAdmin) {
+        console.error('[Auth Service] Supabase admin client not initialized');
+        return {
+          success: false,
+          error: 'Supabase admin client not initialized'
+        };
+      }
+      
       const { data: userData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(
         userId
       );
@@ -582,6 +615,15 @@ class AuthService {
       }
 
       // Update to new password
+      // We've already checked for supabaseAdmin above, but TypeScript needs this check again
+      if (!supabaseAdmin) {
+        console.error('[Auth Service] Supabase admin client not initialized');
+        return {
+          success: false,
+          error: 'Supabase admin client not initialized'
+        };
+      }
+      
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         userId,
         { password: newPassword }

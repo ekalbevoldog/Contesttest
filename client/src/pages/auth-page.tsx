@@ -276,9 +276,23 @@ export default function AuthPage() {
         role: values.role
       }, {
         onSuccess: (data) => {
-          const regUser = data?.user;
+          console.log('[AuthPage] Registration successful, response keys:', Object.keys(data || {}));
           
-          console.log('[AuthPage] Registration successful, directing to dashboard');
+          // Check if authentication was successful
+          if (!data?.authenticated) {
+            console.error('[AuthPage] Registration response indicates not authenticated');
+            toast({
+              title: "Registration error",
+              description: "Account created but authentication failed. Please try logging in.",
+              variant: "destructive",
+            });
+            // Switch to login tab
+            setActiveTab('login');
+            return;
+          }
+          
+          // Get user information from response
+          const user = data?.user;
           
           // Store the user role in localStorage for persistence
           localStorage.setItem('userRole', values.role);
@@ -288,18 +302,24 @@ export default function AuthPage() {
             description: "Your account has been created. Welcome!",
           });
           
-          // Redirect based on role
-          if (values.role === 'athlete') {
-            navigate('/athlete/dashboard');
-          } else if (values.role === 'business') {
-            navigate('/business/dashboard');
-          } else if (values.role === 'compliance') {
-            navigate('/compliance/dashboard');
-          } else if (values.role === 'admin') {
-            navigate('/admin/dashboard');
+          // Determine where to redirect - use provided redirect URL if available
+          if (data.redirectTo) {
+            console.log('[AuthPage] Using provided redirectTo:', data.redirectTo);
+            navigate(data.redirectTo);
           } else {
-            // Fallback
-            navigate('/profile');
+            // Redirect based on role
+            if (values.role === 'athlete') {
+              navigate('/athlete/dashboard');
+            } else if (values.role === 'business') {
+              navigate('/business/dashboard');
+            } else if (values.role === 'compliance') {
+              navigate('/compliance/dashboard');
+            } else if (values.role === 'admin') {
+              navigate('/admin/dashboard');
+            } else {
+              // Fallback
+              navigate('/profile');
+            }
           }
         },
         onError: (error) => {
