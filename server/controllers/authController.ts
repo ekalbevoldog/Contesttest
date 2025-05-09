@@ -8,14 +8,8 @@
 import { Request, Response } from 'express';
 import { authService } from '../services/authService';
 
-// Extend Express Request type to include user property
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-    [key: string]: any;
-  };
-}
+// Use Express.Request which already has our user property defined in auth.ts
+type AuthenticatedRequest = Request;
 
 class AuthController {
   /**
@@ -152,12 +146,17 @@ class AuthController {
               console.log('[Auth Controller] Retrieved user from token');
               return res.status(200).json({ 
                 user: userResult.user,
-                profile: userResult.profile || null 
+                profile: userResult.profile || null,
+                authenticated: true
               });
+            } else {
+              console.log('[Auth Controller] Token validation failed or no user found');
             }
           } catch (tokenError) {
             console.error('[Auth Controller] Error validating token:', tokenError);
           }
+        } else {
+          console.log('[Auth Controller] No authorization token provided');
         }
         
         // For the /user endpoint with optionalAuth, return empty data instead of 401
@@ -176,6 +175,8 @@ class AuthController {
       // Try to fetch extended profile information
       try {
         const userProfile = await authService.getUserProfile(req.user.id);
+        console.log('[Auth Controller] Profile retrieved successfully:', !!userProfile);
+        
         return res.status(200).json({ 
           user: req.user,
           profile: userProfile || null,
@@ -191,7 +192,13 @@ class AuthController {
       }
     } catch (error: any) {
       console.error('[Auth Controller] Get current user error:', error);
-      return res.status(500).json({ error: error.message || 'Error retrieving user' });
+      // Return a proper response even on error
+      return res.status(200).json({ 
+        user: null, 
+        authenticated: false,
+        error: error.message || 'Error retrieving user',
+        errorCode: 'SERVER_ERROR'
+      });
     }
   }
 

@@ -71,7 +71,10 @@ router.post('/reset-password', authController.resetPassword.bind(authController)
 
 // Add an alias for '/me' endpoint as '/user' to match client expectations
 // Using optionalAuth allows the endpoint to work for both authenticated and unauthenticated users
-router.get('/user', optionalAuth, authController.getCurrentUser.bind(authController));
+router.get('/user', optionalAuth, (req, res) => {
+  console.log('[Auth Routes] /user endpoint accessed with authorization:', !!req.headers.authorization);
+  return authController.getCurrentUser(req, res);
+});
 
 // Protected routes - require authentication
 router.get('/me', requireAuth, authController.getCurrentUser.bind(authController));
