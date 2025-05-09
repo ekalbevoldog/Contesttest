@@ -288,7 +288,78 @@ export default function Home() {
         </div>
       </section>
       
-      {/* WebSocket connection is handled invisibly in the background */}
+      {/* WebSocket and Authentication Status Display - visible only in development mode */}
+      {process.env.NODE_ENV === 'development' && (
+        <section className="py-8 bg-black relative overflow-hidden border-t border-gray-800">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <h3 className="text-xl font-bold mb-4">Development Status</h3>
+              
+              <div className="glass-card p-4 mb-6">
+                <h4 className="text-lg font-semibold mb-2">Connection Status</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-400">WebSocket:</p>
+                    <p className="flex items-center">
+                      <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                        webSocket.isConnected ? 'bg-green-500' : 'bg-red-500'
+                      }`}></span>
+                      {webSocket.status}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400">Auth Status:</p>
+                    <p className="flex items-center">
+                      <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                        user ? 'bg-green-500' : 'bg-yellow-500'
+                      }`}></span>
+                      {user ? 'Authenticated' : 'Not Authenticated'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <Button 
+                  onClick={() => webSocket.connect()}
+                  disabled={webSocket.isConnected}
+                  variant="outline"
+                  size="sm"
+                >
+                  Connect WebSocket
+                </Button>
+                
+                <Link href="/auth">
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                  >
+                    {user ? 'Account' : 'Sign In'}
+                  </Button>
+                </Link>
+                
+                {user && (
+                  <Button 
+                    onClick={() => {
+                      // Trigger logout - this would normally be handled by the auth provider
+                      fetch('/api/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                      }).then(() => {
+                        window.location.href = '/';
+                      });
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Sign Out
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Closing Banner */}
       <section className="py-20 bg-gradient-to-br from-black to-zinc-900 relative overflow-hidden">

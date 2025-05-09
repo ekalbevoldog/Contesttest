@@ -135,6 +135,56 @@ export function registerRoutes(app: Express): Express {
     });
   });
 
+  // Route configuration check endpoint
+  app.get('/api/route-check', (req, res) => {
+    console.log('[Route Check] Route configuration check requested');
+    
+    try {
+      // Summary of main API routes
+      const mainRoutes = [
+        { path: '/api/auth/*', description: 'Authentication endpoints (login, register, etc.)' },
+        { path: '/api/profile/*', description: 'User profile management' },
+        { path: '/api/campaign/*', description: 'Campaign management' },
+        { path: '/api/match/*', description: 'Athlete-campaign matching' },
+        { path: '/api/subscription/*', description: 'Subscription management' },
+        { path: '/api/webhook/*', description: 'External service webhooks' },
+        { path: '/api/config/*', description: 'Application configuration' },
+        { path: '/api/offer/*', description: 'Offer management' },
+        { path: '/api/bundle/*', description: 'Bundle management' },
+        { path: '/api/status', description: 'API health check' },
+        { path: '/api/route-check', description: 'This endpoint - route configuration' },
+        { path: '/api/protected', description: 'Protected test endpoint' },
+        { path: '/health', description: 'Server health check' },
+        { path: '/api/ws-test', description: 'WebSocket test endpoints' },
+        { path: '/auth', description: 'Frontend authentication page' },
+        { path: '/sign-in', description: 'Frontend sign-in redirect' },
+        { path: '/', description: 'Frontend application root' }
+      ];
+      
+      // Add test pages separately
+      const testPageRoutes = [
+        { path: '/auth-test.html', description: 'Authentication test page' },
+        { path: '/simple.html', description: 'Simple test page' },
+        { path: '/websocket-test.html', description: 'WebSocket test page' },
+        { path: '/test.html', description: 'General test page' },
+        { path: '/test/websocket', description: 'WebSocket test API' }
+      ];
+      
+      console.log('[Route Check] Reporting on main application routes');
+      res.json({
+        message: 'Route configuration check',
+        timestamp: new Date().toISOString(),
+        mainRoutesCount: mainRoutes.length,
+        testRoutesCount: testPageRoutes.length,
+        apiRoutes: mainRoutes,
+        testPages: testPageRoutes
+      });
+    } catch (error) {
+      console.error('[Route Check] Error getting routes:', error);
+      res.status(500).json({ error: 'Failed to check routes configuration' });
+    }
+  });
+
   // Protected test endpoint
   app.get('/api/protected', requireAuth, (req: Request, res: Response) => {
     res.json({ 

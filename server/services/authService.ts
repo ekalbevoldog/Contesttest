@@ -28,14 +28,143 @@ interface RegistrationData {
 interface AuthResult {
   success: boolean;
   user?: any;
+  profile?: ProfileData | null;
   session?: any;
   needsProfile?: boolean;
   redirectTo?: string;
   error?: string;
 }
 
+// Interface for profile data
+interface ProfileData {
+  id: string | number;
+  userId?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  bio?: string;
+  role?: string;
+  [key: string]: any;
+}
+
 // Main authentication service class
 class AuthService {
+  /**
+   * Get user from an authorization token
+   */
+  async getUserFromToken(token: string): Promise<AuthResult> {
+    try {
+      console.log('[Auth Service] Getting user from token');
+      
+      // Validate token with Supabase
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      
+      if (error || !data.user) {
+        console.error('[Auth Service] Token validation error:', error?.message);
+        return {
+          success: false,
+          error: error?.message || 'Invalid token'
+        };
+      }
+      
+      // Get user's role and other metadata
+      const user = data.user;
+      const role = user.user_metadata?.role || 
+                 user.role || 
+                 user.user_metadata?.userType ||
+                 user.user_type || 
+                 'user';
+      
+      // Try to get user profile data
+      let profile = null;
+      try {
+        profile = await this.getUserProfile(user.id);
+      } catch (profileError) {
+        console.warn('[Auth Service] Could not fetch profile for token user:', profileError);
+      }
+      
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: role,
+          ...user.user_metadata
+        },
+        profile: profile
+      };
+    } catch (error: any) {
+      console.error('[Auth Service] Error getting user from token:', error);
+      return {
+        success: false,
+        error: error.message || 'Error validating token'
+      };
+    }
+  }
+
+  /**
+   * Get user profile data by user ID
+   */
+  async getUserProfile(userId: string): Promise<ProfileData | null> {
+    try {
+      console.log(`[Auth Service] Getting profile for user: ${userId}`);
+      
+      // First try athlete profile
+      const { data: athleteData, error: athleteError } = await supabase
+        .from('athlete_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (athleteData) {
+        console.log('[Auth Service] Found athlete profile');
+        return {
+          ...athleteData,
+          profileType: 'athlete',
+          id: athleteData.id
+        };
+      }
+      
+      // Try business profile
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (businessData) {
+        console.log('[Auth Service] Found business profile');
+        return {
+          ...businessData,
+          profileType: 'business',
+          id: businessData.id
+        };
+      }
+      
+      // Try compliance officer profile
+      const { data: complianceData, error: complianceError } = await supabase
+        .from('compliance_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (complianceData) {
+        console.log('[Auth Service] Found compliance profile');
+        return {
+          ...complianceData,
+          profileType: 'compliance',
+          id: complianceData.id
+        };
+      }
+      
+      // If no profile found
+      console.log('[Auth Service] No profile found for user');
+      return null;
+    } catch (error: any) {
+      console.error('[Auth Service] Error getting user profile:', error);
+      throw new Error(`Failed to get user profile: ${error.message}`);
+    }
+  }
   /**
    * Log in a user with email and password
    */

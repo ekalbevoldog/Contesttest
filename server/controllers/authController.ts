@@ -130,14 +130,57 @@ class AuthController {
    */
   async getCurrentUser(req: AuthenticatedRequest, res: Response) {
     try {
-      // User should be attached to request by auth middleware
+      console.log('[Auth Controller] Get current user request received');
+      
+      // Extract authorization token from header if present
+      const authHeader = req.headers.authorization;
+      let token = null;
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Remove 'Bearer ' prefix
+        console.log('[Auth Controller] Authorization token found in header');
+      }
+      
+      // Check if we have a user from auth middleware
       if (!req.user) {
+        // If we have a token but no user, we might need to validate the token manually
+        if (token) {
+          console.log('[Auth Controller] No user in request but token found, attempting to fetch user');
+          try {
+            const userResult = await authService.getUserFromToken(token);
+            if (userResult && userResult.success && userResult.user) {
+              console.log('[Auth Controller] Retrieved user from token');
+              return res.status(200).json({ 
+                user: userResult.user,
+                profile: userResult.profile || null 
+              });
+            }
+          } catch (tokenError) {
+            console.error('[Auth Controller] Error validating token:', tokenError);
+          }
+        }
+        
+        console.log('[Auth Controller] No authenticated user found');
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      return res.status(200).json({ user: req.user });
+      // If we have a user, return it along with extended profile if available
+      console.log(`[Auth Controller] Returning user data for user ID: ${req.user.id}`);
+      
+      // Try to fetch extended profile information
+      try {
+        const userProfile = await authService.getUserProfile(req.user.id);
+        return res.status(200).json({ 
+          user: req.user,
+          profile: userProfile || null
+        });
+      } catch (profileError) {
+        console.warn('[Auth Controller] Could not fetch profile:', profileError);
+        // Fall back to just returning the user
+        return res.status(200).json({ user: req.user });
+      }
     } catch (error: any) {
-      console.error('Get current user error:', error);
+      console.error('[Auth Controller] Get current user error:', error);
       return res.status(500).json({ error: error.message || 'Error retrieving user' });
     }
   }
