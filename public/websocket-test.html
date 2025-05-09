@@ -1,265 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebSocket Connection Test</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #111;
-      color: #eee;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    h1 {
-      color: #FFBF0D;
-      margin-bottom: 30px;
-    }
-    .card {
-      background-color: #222;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      border: 1px solid #333;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    }
-    .status {
-      padding: 10px 15px;
-      border-radius: 4px;
-      font-weight: bold;
-      display: inline-block;
-      margin-bottom: 10px;
-    }
-    .connected {
-      background-color: #285739;
-      color: #83f8bc;
-    }
-    .disconnected {
-      background-color: #6b1a1a;
-      color: #ff9f9f;
-    }
-    .connecting {
-      background-color: #5c4c10;
-      color: #ffe07d;
-    }
-    #messageLog {
-      height: 300px;
-      overflow-y: auto;
-      padding: 10px;
-      background-color: #333;
-      border-radius: 4px;
-      margin-top: 10px;
-      border: 1px solid #444;
-      font-family: monospace;
-    }
-    .log-item {
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #444;
-    }
-    .log-received {
-      color: #83f8bc;
-    }
-    .log-sent {
-      color: #ffe07d;
-    }
-    .log-error {
-      color: #ff9f9f;
-    }
-    .log-system {
-      color: #9f9fff;
-    }
-    button {
-      background-color: #FFBF0D;
-      color: #000;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-right: 10px;
-      margin-bottom: 10px;
-    }
-    button:hover {
-      background-color: #ffcc33;
-    }
-    .controls {
-      margin: 20px 0;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #connection-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .connecting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .message-container {
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .received {
+            background-color: #e9ecef;
+        }
+        .sent {
+            background-color: #d1ecf1;
+            text-align: right;
+        }
+        input, button {
+            padding: 10px;
+            margin-right: 10px;
+        }
+        input {
+            width: 70%;
+        }
+        button {
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <h1>WebSocket Connection Test</h1>
-  
-  <div class="card">
-    <h2>Connection Status</h2>
-    <div id="connectionStatus" class="status disconnected">Disconnected</div>
-    <div class="controls">
-      <button id="connectBtn">Connect</button>
-      <button id="disconnectBtn" disabled>Disconnect</button>
+    <h1>WebSocket Test</h1>
+    
+    <div id="connection-status" class="disconnected">Disconnected</div>
+    
+    <div>
+        <button id="connect-btn">Connect</button>
+        <button id="disconnect-btn" disabled>Disconnect</button>
+        <button id="auth-btn" disabled>Authenticate</button>
     </div>
-  </div>
-  
-  <div class="card">
-    <h2>Test Messages</h2>
-    <div class="controls">
-      <button id="pingBtn" disabled>Send Ping</button>
-      <button id="globalMsgBtn" disabled>Send Global Message</button>
-      <button id="subscribeBtn" disabled>Subscribe to Channel</button>
+    
+    <h2>Messages</h2>
+    <div id="messages" class="message-container"></div>
+    
+    <div>
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send-btn" disabled>Send</button>
     </div>
-  </div>
-  
-  <div class="card">
-    <h2>Message Log</h2>
-    <div id="messageLog"></div>
-  </div>
+    
+    <h2>Subscription</h2>
+    <div>
+        <input type="text" id="channel-input" placeholder="Channel name (e.g., global)">
+        <button id="subscribe-btn" disabled>Subscribe</button>
+        <button id="unsubscribe-btn" disabled>Unsubscribe</button>
+    </div>
 
-  <script>
-    // DOM Elements
-    const statusElement = document.getElementById('connectionStatus');
-    const messageLog = document.getElementById('messageLog');
-    const connectBtn = document.getElementById('connectBtn');
-    const disconnectBtn = document.getElementById('disconnectBtn');
-    const pingBtn = document.getElementById('pingBtn');
-    const globalMsgBtn = document.getElementById('globalMsgBtn');
-    const subscribeBtn = document.getElementById('subscribeBtn');
-    
-    // WebSocket instance
-    let socket = null;
-    
-    // Log function
-    function log(message, type = 'system') {
-      const logItem = document.createElement('div');
-      logItem.className = `log-item log-${type}`;
-      logItem.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-      messageLog.appendChild(logItem);
-      messageLog.scrollTop = messageLog.scrollHeight;
-    }
-    
-    // Connect to WebSocket server
-    function connect() {
-      try {
-        // Get host from current URL
-        const host = window.location.host;
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${host}/ws`;
+    <script>
+        // DOM Elements
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const authBtn = document.getElementById('auth-btn');
+        const sendBtn = document.getElementById('send-btn');
+        const subscribeBtn = document.getElementById('subscribe-btn');
+        const unsubscribeBtn = document.getElementById('unsubscribe-btn');
+        const messageInput = document.getElementById('message-input');
+        const channelInput = document.getElementById('channel-input');
+        const messagesContainer = document.getElementById('messages');
+        const connectionStatus = document.getElementById('connection-status');
+
+        // WebSocket connection
+        let socket = null;
+        let authenticated = false;
+        const subscriptions = new Set();
         
-        log(`Connecting to ${wsUrl}...`);
-        statusElement.textContent = 'Connecting...';
-        statusElement.className = 'status connecting';
+        // Update connection status display
+        function updateStatus(status) {
+            connectionStatus.className = status;
+            connectionStatus.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            // Update button states
+            connectBtn.disabled = status === 'connected' || status === 'connecting';
+            disconnectBtn.disabled = status === 'disconnected';
+            authBtn.disabled = status === 'disconnected' || authenticated;
+            sendBtn.disabled = status === 'disconnected' || !authenticated;
+            subscribeBtn.disabled = status === 'disconnected' || !authenticated;
+            unsubscribeBtn.disabled = status === 'disconnected' || !authenticated;
+        }
         
-        socket = new WebSocket(wsUrl);
+        // Add message to the messages container
+        function addMessage(message, type = 'received') {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${type}`;
+            
+            if (typeof message === 'object') {
+                messageElement.textContent = JSON.stringify(message, null, 2);
+            } else {
+                messageElement.textContent = message;
+            }
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
         
-        // Connection opened
-        socket.addEventListener('open', (event) => {
-          log('Connection established successfully', 'system');
-          statusElement.textContent = 'Connected';
-          statusElement.className = 'status connected';
-          
-          // Enable/disable buttons
-          connectBtn.disabled = true;
-          disconnectBtn.disabled = false;
-          pingBtn.disabled = false;
-          globalMsgBtn.disabled = false;
-          subscribeBtn.disabled = false;
+        // Connect to WebSocket server
+        function connect() {
+            updateStatus('connecting');
+            
+            // Use the current origin for WebSocket connection
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const port = 5001; // Use the port from your server configuration
+            const wsUrl = `${protocol}//${window.location.hostname}:${port}/ws`;
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = () => {
+                updateStatus('connected');
+                addMessage('Connected to WebSocket server');
+            };
+            
+            socket.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    
+                    // Handle authentication response
+                    if (message.type === 'auth_success') {
+                        authenticated = true;
+                        updateStatus('connected');
+                        addMessage('Authentication successful', 'received');
+                    } else if (message.type === 'auth_error') {
+                        authenticated = false;
+                        addMessage(`Authentication failed: ${message.error}`, 'received');
+                    } else if (message.type === 'subscribed') {
+                        subscriptions.add(message.channel);
+                        addMessage(`Subscribed to channel: ${message.channel}`, 'received');
+                    } else if (message.type === 'unsubscribed') {
+                        subscriptions.delete(message.channel);
+                        addMessage(`Unsubscribed from channel: ${message.channel}`, 'received');
+                    }
+                    
+                    addMessage(message, 'received');
+                } catch (error) {
+                    addMessage(`Failed to parse message: ${error.message}`, 'received');
+                }
+            };
+            
+            socket.onclose = () => {
+                updateStatus('disconnected');
+                authenticated = false;
+                addMessage('Disconnected from WebSocket server');
+                socket = null;
+            };
+            
+            socket.onerror = (error) => {
+                addMessage(`WebSocket error: ${error.message}`, 'received');
+                updateStatus('disconnected');
+            };
+        }
+        
+        // Disconnect from WebSocket server
+        function disconnect() {
+            if (socket) {
+                socket.close();
+                socket = null;
+                authenticated = false;
+                updateStatus('disconnected');
+            }
+        }
+        
+        // Send message to WebSocket server
+        function sendMessage(message) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(message));
+                addMessage(message, 'sent');
+            }
+        }
+        
+        // Event listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        
+        // Authenticate
+        authBtn.addEventListener('click', () => {
+            // Get a test token (this would normally come from your authentication system)
+            const testToken = 'test-token';
+            sendMessage({ type: 'authenticate', token: testToken });
         });
         
-        // Listen for messages
-        socket.addEventListener('message', (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            log(`Received: ${JSON.stringify(data, null, 2)}`, 'received');
-          } catch (error) {
-            log(`Received raw message: ${event.data}`, 'received');
-          }
+        // Send message
+        sendBtn.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message && socket) {
+                sendMessage({ 
+                    type: 'message',
+                    channel: 'global',
+                    content: message 
+                });
+                messageInput.value = '';
+            }
         });
         
-        // Connection closed
-        socket.addEventListener('close', (event) => {
-          log(`Connection closed: ${event.code} ${event.reason}`, 'system');
-          statusElement.textContent = 'Disconnected';
-          statusElement.className = 'status disconnected';
-          
-          // Reset button states
-          connectBtn.disabled = false;
-          disconnectBtn.disabled = true;
-          pingBtn.disabled = true;
-          globalMsgBtn.disabled = true;
-          subscribeBtn.disabled = true;
+        // Enter key to send message
+        messageInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendBtn.click();
+            }
         });
         
-        // Connection error
-        socket.addEventListener('error', (error) => {
-          log(`WebSocket error: ${error}`, 'error');
-          statusElement.textContent = 'Error';
-          statusElement.className = 'status disconnected';
+        // Subscribe to channel
+        subscribeBtn.addEventListener('click', () => {
+            const channel = channelInput.value.trim();
+            if (channel && socket) {
+                sendMessage({ 
+                    type: 'subscribe',
+                    channel 
+                });
+            }
         });
-      } catch (error) {
-        log(`Error creating WebSocket: ${error}`, 'error');
-      }
-    }
-    
-    // Disconnect from WebSocket server
-    function disconnect() {
-      if (socket) {
-        log('Disconnecting...', 'system');
-        socket.close();
-      }
-    }
-    
-    // Send a ping message
-    function sendPing() {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        const message = { type: 'ping' };
-        socket.send(JSON.stringify(message));
-        log(`Sent: ${JSON.stringify(message)}`, 'sent');
-      } else {
-        log('Cannot send ping - WebSocket not connected', 'error');
-      }
-    }
-    
-    // Send a global message
-    function sendGlobalMessage() {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        const message = {
-          type: 'message',
-          channel: 'global',
-          content: 'Test message from browser client',
-          persist: false
-        };
-        socket.send(JSON.stringify(message));
-        log(`Sent: ${JSON.stringify(message)}`, 'sent');
-      } else {
-        log('Cannot send message - WebSocket not connected', 'error');
-      }
-    }
-    
-    // Subscribe to a channel
-    function subscribeToChannel() {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        const channel = 'test-channel';
-        const message = {
-          type: 'subscribe',
-          channel
-        };
-        socket.send(JSON.stringify(message));
-        log(`Sent: ${JSON.stringify(message)}`, 'sent');
-      } else {
-        log('Cannot subscribe - WebSocket not connected', 'error');
-      }
-    }
-    
-    // Add event listeners to buttons
-    connectBtn.addEventListener('click', connect);
-    disconnectBtn.addEventListener('click', disconnect);
-    pingBtn.addEventListener('click', sendPing);
-    globalMsgBtn.addEventListener('click', sendGlobalMessage);
-    subscribeBtn.addEventListener('click', subscribeToChannel);
-    
-    // Initial connection status
-    log('Page loaded. Click "Connect" to establish WebSocket connection.');
-  </script>
+        
+        // Unsubscribe from channel
+        unsubscribeBtn.addEventListener('click', () => {
+            const channel = channelInput.value.trim();
+            if (channel && socket) {
+                sendMessage({ 
+                    type: 'unsubscribe',
+                    channel 
+                });
+            }
+        });
+        
+        // Initial status update
+        updateStatus('disconnected');
+    </script>
 </body>
 </html>

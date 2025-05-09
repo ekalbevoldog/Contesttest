@@ -55,7 +55,7 @@ function startDevelopment() {
   log('\n📡 Starting server...', colors.yellow);
   const server = spawn('npx', ['tsx', 'server/index.ts'], {
     stdio: 'inherit',
-    env: { ...process.env, PORT: process.env.PORT || '5000' }
+    env: { ...process.env, PORT: process.env.PORT || '5001' }
   });
   
   // Handle server process events
