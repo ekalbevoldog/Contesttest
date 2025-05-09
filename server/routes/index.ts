@@ -21,7 +21,8 @@ import webhookRoutes from './webhookRoutes';
 import configRoutes from './configRoutes';
 import offerRoutes from './offerRoutes';
 import bundleRoutes from './bundleRoutes';
-import publicRoutes from './Routes-public';
+// Import routes for serving static files
+import publicRoutes from './publicRoutes';
 import wsTestRoutes from './wsTestRoutes';
 
 // Import middleware

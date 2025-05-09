@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct Test Page</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #111;
+      color: #eee;
+      margin: 0;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    
+    h1 {
+      color: #FFBF0D;
+      margin-bottom: 20px;
+    }
+    
+    p {
+      max-width: 600px;
+      margin: 0 auto 20px;
+      line-height: 1.6;
+    }
+    
+    .success {
+      color: #4CAF50;
+      font-weight: bold;
+      font-size: 24px;
+      margin: 40px 0;
+      padding: 20px;
+      background-color: rgba(74, 175, 80, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(74, 175, 80, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <h1>Direct Test Page</h1>
+  
+  <div class="success">
+    ✅ If you can see this page, static file serving is working!
+  </div>
+  
+  <p>This is a direct test HTML file that doesn't rely on the React application. It confirms that the Express server is correctly serving static files from the public directory.</p>
+  
+  <p><a href="/" style="color: #FFBF0D;">Return to Home</a></p>
+  
+  <script>
+    // Simple script to verify JavaScript execution
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('Direct test page loaded successfully');
+    });
+  </script>
+</body>
+</html>

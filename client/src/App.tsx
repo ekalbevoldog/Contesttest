@@ -11,7 +11,7 @@ import { useToast } from "./hooks/use-toast";
 import { WebSocketProvider } from "./contexts/WebSocketProvider";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { WebSocketStatus } from "./components/WebSocketStatus";
+// WebSocketStatus component removed for cleaner UI
 import Home from "./pages/Home";
 import Onboarding from "./pages/Onboarding";
 import AuthPage from "./pages/auth-page";
@@ -105,7 +105,7 @@ function Router() {
             <Route path="/subscribe" component={Subscribe} />
             <Route path="/subscription/success" component={SubscriptionSuccess} />
             <UnifiedProtectedRoute path="/account/subscription" component={Subscribe} />
-            <Route path="/websocket-test" component={WebSocketTest} />
+            {/* WebSocket test route removed as it's no longer needed */}
             <Route component={Home} />
           </Switch>
         </Suspense>
@@ -122,7 +122,7 @@ function App() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('/api/health-check');
+        const response = await fetch('/health');
         if (response.ok) {
           const data = await response.json();
           if (data.supabase?.status === 'error') {
@@ -147,9 +147,7 @@ function App() {
         <AuthProvider>
           <WebSocketProvider>
             <Router />
-            <div className="fixed bottom-4 right-4 z-50">
-              <WebSocketStatus showDebug={false} />
-            </div>
+            {/* WebSocket connection is maintained invisibly */}
             <Toaster />
           </WebSocketProvider>
         </AuthProvider>

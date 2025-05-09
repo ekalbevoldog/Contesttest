@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #111;
+      color: #eee;
+    }
+    h1 {
+      color: #FFBF0D;
+    }
+    pre {
+      background-color: #222;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .success {
+      color: #4CAF50;
+    }
+    .error {
+      color: #F44336;
+    }
+    button {
+      background-color: #FFBF0D;
+      color: black;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    button:hover {
+      background-color: #E6AC00;
+    }
+  </style>
+</head>
+<body>
+  <h1>Server Connection Test</h1>
+  
+  <button id="checkHealth">Check Health Endpoint</button>
+  <button id="checkApi">Check API Status</button>
+  <button id="testWebSocket">Test WebSocket</button>
+  
+  <h2>Results:</h2>
+  <pre id="results">Click a button to run tests...</pre>
+  
+  <script>
+    const resultsElement = document.getElementById('results');
+    
+    function logResult(message, isSuccess = true) {
+      const className = isSuccess ? 'success' : 'error';
+      resultsElement.innerHTML += `<span class="${className}">${message}</span>\n`;
+    }
+    
+    async function checkHealth() {
+      resultsElement.innerHTML = 'Checking health endpoint...\n';
+      try {
+        const response = await fetch('/health');
+        if (response.ok) {
+          const data = await response.json();
+          logResult('✅ Health endpoint success!');
+          logResult(`Status: ${JSON.stringify(data, null, 2)}`);
+        } else {
+          logResult(`❌ Health endpoint error: ${response.status} ${response.statusText}`, false);
+        }
+      } catch (error) {
+        logResult(`❌ Health endpoint error: ${error.message}`, false);
+      }
+    }
+    
+    async function checkApi() {
+      resultsElement.innerHTML = 'Checking API status...\n';
+      try {
+        const response = await fetch('/api/status');
+        if (response.ok) {
+          const data = await response.json();
+          logResult('✅ API status success!');
+          logResult(`Status: ${JSON.stringify(data, null, 2)}`);
+        } else {
+          logResult(`❌ API status error: ${response.status} ${response.statusText}`, false);
+        }
+      } catch (error) {
+        logResult(`❌ API status error: ${error.message}`, false);
+      }
+    }
+    
+    function testWebSocket() {
+      resultsElement.innerHTML = 'Testing WebSocket connection...\n';
+      
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      logResult(`Connecting to ${wsUrl}...`);
+      
+      const socket = new WebSocket(wsUrl);
+      
+      socket.addEventListener('open', () => {
+        logResult('✅ WebSocket connection established!');
+        
+        // Send a ping
+        const pingMessage = JSON.stringify({ type: 'ping' });
+        socket.send(pingMessage);
+        logResult(`Sent: ${pingMessage}`);
+        
+        // Close after 5 seconds
+        setTimeout(() => {
+          logResult('Closing connection after test');
+          socket.close();
+        }, 5000);
+      });
+      
+      socket.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          logResult(`Received: ${JSON.stringify(data, null, 2)}`);
+        } catch (error) {
+          logResult(`Received raw message: ${event.data}`);
+        }
+      });
+      
+      socket.addEventListener('close', (event) => {
+        logResult(`WebSocket closed: ${event.code} ${event.reason || ''}`);
+      });
+      
+      socket.addEventListener('error', (error) => {
+        logResult(`❌ WebSocket error: ${error}`, false);
+      });
+    }
+    
+    // Add event listeners
+    document.getElementById('checkHealth').addEventListener('click', checkHealth);
+    document.getElementById('checkApi').addEventListener('click', checkApi);
+    document.getElementById('testWebSocket').addEventListener('click', testWebSocket);
+  </script>
+</body>
+</html>
