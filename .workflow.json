@@ -1,7 +1,18 @@
 {
-  "Start application": {
-    "command": "node start-dev.js",
-    "isDefault": true,
-    "continuable": false
-  }
+  "runCommands": [
+    {
+      "name": "Start application",
+      "command": "node start-dev.js",
+      "restartOn": {
+        "fileChange": {
+          "include": [
+            "server/**/*.ts",
+            "client/src/**/*.{ts,tsx}",
+            "shared/**/*.ts"
+          ],
+          "exclude": []
+        }
+      }
+    }
+  ]
 }
