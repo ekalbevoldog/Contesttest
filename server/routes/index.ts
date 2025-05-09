@@ -99,8 +99,12 @@ export function registerRoutes(app: Express): Express {
   // Serve our auth test page
   app.use('/auth-test.html', (req, res, next) => {
     if (req.path === '/') {
-      const publicDir = path.resolve(__dirname, '../../../public');
+      // Use import.meta.url for ESM compatibility
+      const currentFilePath = new URL(import.meta.url).pathname;
+      const currentDir = path.dirname(currentFilePath);
+      const publicDir = path.resolve(currentDir, '../../../public');
       const testFilePath = path.join(publicDir, 'auth-test.html');
+      
       if (fs.existsSync(testFilePath)) {
         console.log('Serving auth-test.html from', testFilePath);
         return res.sendFile(testFilePath);
