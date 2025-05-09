@@ -43,7 +43,9 @@ router.get('/check-endpoints', (req, res) => {
       { path: '/register', methods: 'POST', description: 'User registration' },
       { path: '/logout', methods: 'POST', description: 'User logout' },
       { path: '/refresh-token', methods: 'POST', description: 'Refresh auth token' },
+      { path: '/refresh-session', methods: 'POST', description: 'Refresh session (alias for refresh-token)' },
       { path: '/reset-password', methods: 'POST', description: 'Request password reset' },
+      { path: '/user', methods: 'GET', description: 'Get current user (optionally protected)' },
       { path: '/me', methods: 'GET', description: 'Get current user (protected)' },
       { path: '/me', methods: 'PUT', description: 'Update user details (protected)' },
       { path: '/change-password', methods: 'POST', description: 'Change password (protected)' }
@@ -67,6 +69,7 @@ router.post('/login', authController.login.bind(authController));
 router.post('/register', authController.register.bind(authController));
 router.post('/logout', authController.logout.bind(authController));
 router.post('/refresh-token', authController.refreshToken.bind(authController));
+router.post('/refresh-session', authController.refreshToken.bind(authController)); // Alias for refresh-token for client compatibility
 router.post('/reset-password', authController.resetPassword.bind(authController));
 
 // Add an alias for '/me' endpoint as '/user' to match client expectations

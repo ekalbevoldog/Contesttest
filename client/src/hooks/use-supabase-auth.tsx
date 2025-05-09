@@ -154,89 +154,201 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
   // Function to refresh the session with the server
   const refreshSession = useCallback(async () => {
-    if (!session || !user) {
-      console.log('[Auth] No session to refresh');
-      return;
-    }
-
     try {
       console.log('[Auth] Refreshing session');
-
-      // Get the current session from Supabase
+      
+      // First try to get current session through Supabase
       const { data, error } = await supabase.auth.getSession();
-
-      if (error || !data.session) {
-        console.error('[Auth] Error getting current session for refresh:', error);
-
-        // Try to recover session from localStorage if Supabase session is missing
+      let currentSession = data?.session;
+      let accessToken = currentSession?.access_token;
+      let refreshToken = currentSession?.refresh_token;
+      
+      // If no session in Supabase, try to recover from storage
+      if (error || !currentSession) {
+        console.log('[Auth] No active Supabase session, attempting recovery');
+        
+        // Try to recover session from localStorage
         const recoveryResult = await recoverSession();
+        
         if (recoveryResult) {
           console.log('[Auth] Successfully recovered session from storage');
-
-          // Now try to get the session again after recovery
+          
+          // Get the recovered session
           const { data: recoveredData } = await supabase.auth.getSession();
           if (recoveredData?.session) {
-            // Refresh with recovered session
-            await fetch('/api/auth/refresh-session', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${recoveredData.session.access_token}`,
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include'
-            });
-
-            console.log('[Auth] Refreshed with recovered session');
+            currentSession = recoveredData.session;
+            accessToken = currentSession.access_token;
+            refreshToken = currentSession.refresh_token;
+            console.log('[Auth] Using recovered session for refresh');
+          }
+        } else {
+          // If still no session, try to get tokens from localStorage
+          const storedSessionStr = localStorage.getItem('supabase-auth');
+          if (storedSessionStr) {
+            try {
+              const storedSession = JSON.parse(storedSessionStr);
+              if (storedSession.access_token) {
+                accessToken = storedSession.access_token;
+                refreshToken = storedSession.refresh_token;
+                console.log('[Auth] Using stored tokens for refresh');
+              }
+            } catch (parseError) {
+              console.error('[Auth] Error parsing stored session:', parseError);
+            }
+          }
+          
+          // Check for contested-auth as well (backup storage)
+          if (!accessToken) {
+            const contestedAuthStr = localStorage.getItem('contested-auth');
+            if (contestedAuthStr) {
+              try {
+                const contestedAuth = JSON.parse(contestedAuthStr);
+                if (contestedAuth.session?.access_token) {
+                  accessToken = contestedAuth.session.access_token;
+                  refreshToken = contestedAuth.session.refresh_token;
+                  console.log('[Auth] Using contested-auth tokens for refresh');
+                }
+              } catch (parseError) {
+                console.error('[Auth] Error parsing contested-auth:', parseError);
+              }
+            }
           }
         }
+      }
+      
+      // If we don't have an access token after all attempts, we can't refresh
+      if (!accessToken) {
+        console.log('[Auth] No access token available for refresh, recovery failed');
         return;
       }
-
+      
+      // Call server refresh endpoint with our token
+      console.log('[Auth] Calling server refresh endpoint');
+      let refreshSuccessful = false;
+      let userData = null;
+      
       try {
-        console.log('[Auth] Calling server refresh endpoint');
-        // Call our refresh endpoint
+        // First try with authorization header (modern approach)
         const response = await fetch('/api/auth/refresh-session', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${data.session.access_token}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           },
-          credentials: 'include'
+          credentials: 'include' // Important: send cookies along
         });
-
+        
         if (response.ok) {
-          console.log('[Auth] Session successfully refreshed with server');
-
-          // Get latest user data
-          const userData = await getCurrentUser();
-
-          // Persist the refreshed session using our utility
-          if (data.session) {
-            persistSession(data.session, userData);
-            console.log('[Auth] Persisted refreshed session data');
+          console.log('[Auth] Session successfully refreshed with server (header method)');
+          const refreshData = await response.json();
+          
+          // If we got updated session data back, use it
+          if (refreshData.session?.access_token) {
+            currentSession = refreshData.session;
+            accessToken = currentSession.access_token;
+            refreshToken = currentSession.refresh_token;
+            
+            // Update session in Supabase client
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+            
+            // Update user data if included
+            if (refreshData.user) {
+              userData = refreshData.user;
+            }
+            
+            refreshSuccessful = true;
           }
         } else {
-          const responseText = await response.text();
-          console.error('[Auth] Failed to refresh session with server:', response.status, responseText);
-
-          // Use our persistence utility as a fallback
-          if (data.session) {
-            persistSession(data.session, user);
-            console.log('[Auth] Used persistent storage utility for fallback');
+          console.log('[Auth] Authorization header refresh failed, trying with refresh token in body');
+          
+          // If header approach fails, try with refresh token in body
+          if (refreshToken) {
+            const refreshResponse = await fetch('/api/auth/refresh-token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ 
+                refreshToken: refreshToken,
+                useCookies: true
+              }),
+              credentials: 'include'
+            });
+            
+            if (refreshResponse.ok) {
+              console.log('[Auth] Refresh token approach succeeded');
+              const refreshData = await refreshResponse.json();
+              
+              // Update session in Supabase client if we got a new one
+              if (refreshData.session?.access_token) {
+                currentSession = refreshData.session;
+                accessToken = currentSession.access_token;
+                refreshToken = currentSession.refresh_token;
+                
+                // Update session in Supabase client
+                await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken
+                });
+                
+                // Update user data if included
+                if (refreshData.user) {
+                  userData = refreshData.user;
+                }
+                
+                refreshSuccessful = true;
+              }
+            } else {
+              console.error('[Auth] Both refresh approaches failed');
+            }
           }
         }
       } catch (fetchError) {
         console.error('[Auth] Error calling refresh endpoint:', fetchError);
-
-        // Use our persistence utility as a fallback for fetch errors
-        if (data.session) {
-          persistSession(data.session, user);
-          console.log('[Auth] Used persistent storage utility after fetch error');
+      }
+      
+      // If we haven't got user data yet but refresh was successful, fetch it
+      if (refreshSuccessful && !userData && accessToken) {
+        try {
+          const userResponse = await fetch('/api/auth/user', {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          
+          if (userResponse.ok) {
+            const userResult = await userResponse.json();
+            if (userResult.user) {
+              userData = userResult.user;
+            }
+          }
+        } catch (userError) {
+          console.error('[Auth] Error fetching user after refresh:', userError);
         }
+      }
+      
+      // Final step: update state and persistence
+      if (refreshSuccessful) {
+        // Update state
+        setSession(currentSession);
+        if (userData) {
+          setUser(userData);
+        }
+        
+        // Persist the refreshed session
+        persistSession(currentSession, userData || user);
+        console.log('[Auth] Session refresh completed and persisted');
+      } else if (currentSession) {
+        // Even if server refresh failed, persist what we have to prevent future auth failures
+        persistSession(currentSession, user);
+        console.log('[Auth] Used persistent storage utility for fallback');
       }
     } catch (error) {
       console.error('[Auth] Error during session refresh:', error);
-
+      
       // Try to recover session from localStorage as a last resort
       try {
         const recoveryResult = await recoverSession();
@@ -247,7 +359,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
         console.error('[Auth] Recovery attempt failed:', recoveryError);
       }
     }
-  }, [session, user]);
+  }, [session, user, setSession, setUser]);
 
   // Enhanced session refresh mechanism that also handles session recovery
   useEffect(() => {

@@ -1,6 +1,6 @@
 
 // #!/usr/bin/env tsx
-import { runCompleteMigration } from '.server/runCompleteMigration.js ;
+import { runCompleteMigration } from './runCompleteMigration.js';
 
 // Run the migration
 console.log('Running complete database migration...');

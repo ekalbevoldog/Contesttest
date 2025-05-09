@@ -247,26 +247,83 @@ class AuthController {
 
   /**
    * Refresh authentication token
+   * Supports both refresh-token and refresh-session endpoints
    */
   async refreshToken(req: Request, res: Response) {
     try {
-      const { refreshToken } = req.body;
-
+      console.log('[Auth Controller] Refresh token/session request received');
+      
+      // Check for refresh token in body (traditional method)
+      let refreshToken = req.body.refreshToken;
+      let accessToken = null;
+      
+      // If no refresh token in body, check for authorization header (session refresh method)
       if (!refreshToken) {
+        console.log('[Auth Controller] No refresh token in body, checking authorization header');
+        const authHeader = req.headers.authorization;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          accessToken = authHeader.substring(7);
+          console.log('[Auth Controller] Found access token in authorization header');
+          
+          // Try to get the user details from this access token
+          try {
+            const userResult = await authService.getUserFromToken(accessToken);
+            if (userResult.success && userResult.user) {
+              console.log('[Auth Controller] Access token is valid, refreshing session');
+              
+              // Set auth cookies with existing token since it's still valid
+              if (req.body.useCookies) {
+                res.cookie('auth-token', accessToken, {
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === 'production',
+                  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+                });
+                res.cookie('auth-status', 'authenticated', {
+                  secure: process.env.NODE_ENV === 'production',
+                  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+                });
+              }
+              
+              // Return the user and create a session object for client
+              return res.status(200).json({
+                user: userResult.user,
+                session: {
+                  access_token: accessToken,
+                  user: userResult.user
+                }
+              });
+            }
+          } catch (tokenError) {
+            console.error('[Auth Controller] Error validating access token:', tokenError);
+            // Continue with refresh token flow
+          }
+        }
+        
+        // If we reach here, we couldn't use the authorization header or it was invalid
         return res.status(400).json({ error: 'Refresh token is required' });
       }
 
+      console.log('[Auth Controller] Attempting to refresh token');
+      
       // Attempt to refresh token
       const result = await authService.refreshToken(refreshToken);
 
       if (!result.success) {
+        console.error('[Auth Controller] Token refresh failed:', result.error);
         return res.status(401).json({ error: result.error || 'Invalid refresh token' });
       }
 
+      console.log('[Auth Controller] Token refresh successful');
+      
       // Set new auth cookies if using cookie authentication
       if (req.body.useCookies && result.session) {
         res.cookie('auth-token', result.session.access_token, {
           httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+        res.cookie('auth-status', 'authenticated', {
           secure: process.env.NODE_ENV === 'production',
           maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
@@ -278,7 +335,7 @@ class AuthController {
         session: result.session
       });
     } catch (error: any) {
-      console.error('Token refresh error:', error);
+      console.error('[Auth Controller] Token refresh error:', error);
       return res.status(500).json({ error: error.message || 'Token refresh failed' });
     }
   }

@@ -77,30 +77,72 @@ class AuthService {
       
       // Get user's role and other metadata
       const user = data.user;
-      // Handle various possible locations for role information
-      const role = user.user_metadata?.role || 
-                 (user as any).role || 
-                 user.user_metadata?.userType ||
-                 (user as any).user_type || 
-                 'user';
       
-      // Try to get user profile data
+      // Handle various possible locations for role information with defensive programming
+      let role = 'user'; // Default role
+      
+      if (user.user_metadata) {
+        if (user.user_metadata.role) {
+          role = user.user_metadata.role;
+        } else if (user.user_metadata.userType) {
+          role = user.user_metadata.userType;
+        }
+      }
+      
+      // Fallback to role or user_type if directly on user object (older structure)
+      if (role === 'user' && (user as any).role) {
+        role = (user as any).role;
+      } else if (role === 'user' && (user as any).user_type) {
+        role = (user as any).user_type;
+      }
+      
+      console.log(`[Auth Service] User role resolved as: ${role}`);
+      
+      // Try to get user profile data based on role
       let profile = null;
+      let profileCompleted = false;
+      
       try {
-        profile = await this.getUserProfile(user.id);
+        profile = await this.getUserProfile(user.id, role);
+        
+        // Check if profile is considered complete
+        if (profile) {
+          if (role === 'athlete' && profile.firstName && profile.sport) {
+            profileCompleted = true;
+          } else if (role === 'business' && profile.businessName && profile.industry) {
+            profileCompleted = true;
+          } else if (profile.firstName || profile.name || profile.businessName) {
+            // Basic profile completion for other roles
+            profileCompleted = true;
+          }
+        }
       } catch (profileError) {
         console.warn('[Auth Service] Could not fetch profile for token user:', profileError);
       }
       
+      // Construct the full user object with metadata
+      const userResponse = {
+        id: user.id,
+        email: user.email || '',
+        role: role,
+        profileCompleted: profileCompleted,
+        // Safely include all user metadata with null checks
+        ...(user.user_metadata ? user.user_metadata : {}),
+        // Include createdAt from app_metadata if available
+        createdAt: user.app_metadata?.created_at || user.created_at || null
+      };
+      
+      // Log success
+      console.log('[Auth Service] Successfully retrieved and processed user from token');
+      
       return {
         success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          role: role,
-          ...user.user_metadata
-        },
-        profile: profile
+        user: userResponse,
+        profile: profile,
+        session: {
+          access_token: token,
+          user: userResponse
+        }
       };
     } catch (error: any) {
       console.error('[Auth Service] Error getting user from token:', error);
@@ -112,13 +154,79 @@ class AuthService {
   }
 
   /**
-   * Get user profile data by user ID
+   * Get user profile data by user ID and optional role
    */
-  async getUserProfile(userId: string): Promise<ProfileData | null> {
+  async getUserProfile(userId: string, role?: string): Promise<ProfileData | null> {
     try {
-      console.log(`[Auth Service] Getting profile for user: ${userId}`);
+      console.log(`[Auth Service] Getting profile for user: ${userId}, role: ${role || 'unspecified'}`);
       
-      // First try athlete profile
+      // If role is specified, only query that profile type
+      if (role === 'athlete') {
+        const { data: athleteData, error: athleteError } = await supabase
+          .from('athlete_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (athleteData) {
+          console.log('[Auth Service] Found athlete profile');
+          return {
+            ...athleteData,
+            profileType: 'athlete',
+            id: athleteData.id
+          };
+        }
+        
+        // If we have a role but no profile, return null early
+        console.log('[Auth Service] No athlete profile found for athlete user');
+        return null;
+      }
+      
+      if (role === 'business') {
+        const { data: businessData, error: businessError } = await supabase
+          .from('business_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (businessData) {
+          console.log('[Auth Service] Found business profile');
+          return {
+            ...businessData,
+            profileType: 'business',
+            id: businessData.id
+          };
+        }
+        
+        // If we have a role but no profile, return null early
+        console.log('[Auth Service] No business profile found for business user');
+        return null;
+      }
+      
+      if (role === 'compliance' || role === 'compliance_officer') {
+        const { data: complianceData, error: complianceError } = await supabase
+          .from('compliance_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (complianceData) {
+          console.log('[Auth Service] Found compliance profile');
+          return {
+            ...complianceData,
+            profileType: 'compliance',
+            id: complianceData.id
+          };
+        }
+        
+        // If we have a role but no profile, return null early
+        console.log('[Auth Service] No compliance profile found for compliance user');
+        return null;
+      }
+      
+      // If role is not specified or not one of the above, try all profiles in sequence
+      
+      // Try athlete profile
       const { data: athleteData, error: athleteError } = await supabase
         .from('athlete_profiles')
         .select('*')
@@ -211,7 +319,8 @@ class AuthService {
       }
 
       // Determine if user needs to complete profile
-      const needsProfile = await this.checkIfProfileNeeded(data.user);
+      const role = data.user.user_metadata?.role || data.user.user_metadata?.userType || 'user';
+      const needsProfile = await this.checkIfProfileNeeded(data.user, role.toString());
 
       // Determine redirect URL based on role and profile status
       let redirectTo = '/dashboard';
@@ -675,12 +784,15 @@ class AuthService {
 
   /**
    * Check if user needs to complete their profile
+   * @param user The user object
+   * @param providedRole Optional role string, to avoid re-computing it
    */
-  private async checkIfProfileNeeded(user: any): Promise<boolean> {
+  private async checkIfProfileNeeded(user: any, providedRole?: string): Promise<boolean> {
     try {
-      const role = user.user_metadata?.role?.toLowerCase() ||
-                  user.user_metadata?.userType?.toLowerCase() ||
-                  'user';
+      const role = providedRole?.toLowerCase() || 
+                   user.user_metadata?.role?.toLowerCase() ||
+                   user.user_metadata?.userType?.toLowerCase() ||
+                   'user';
 
       // First check if onboarding_progress table has this user marked as complete
       const { data: progressData } = await supabase
