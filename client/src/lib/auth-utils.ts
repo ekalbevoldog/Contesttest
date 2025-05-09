@@ -97,7 +97,7 @@ export async function loginWithEmail(email: string, password: string) {
         
         // If Supabase succeeded but API failed, we can still proceed with 
         // limited functionality using just the Supabase user data
-        if (supabaseSuccess) {
+        if (supabaseSuccess && supabaseData?.user) {
           console.log('[Auth Utils] Using Supabase data as fallback after API failure');
           const userData = supabaseData.user;
           const role = userData.user_metadata?.role || 
@@ -110,7 +110,7 @@ export async function loginWithEmail(email: string, password: string) {
               id: userData.id,
               email: userData.email || '',
               role: role,
-              ...userData.user_metadata
+              ...(userData.user_metadata || {})
             },
             session: supabaseData.session,
             authenticated: true
@@ -125,12 +125,14 @@ export async function loginWithEmail(email: string, password: string) {
       
       // If Supabase succeeded but API call threw an exception, 
       // fall back to Supabase-only user data
-      if (supabaseSuccess) {
+      if (supabaseSuccess && supabaseData?.user) {
         console.log('[Auth Utils] Falling back to Supabase-only login due to API error');
         const userData = supabaseData.user;
-        const role = userData.user_metadata?.role || 
-                    userData.user_metadata?.userType || 
-                    userData.user_metadata?.user_type || 
+        // Use nullish coalescing to handle potential null user_metadata
+        const metadata = userData.user_metadata || {};
+        const role = metadata.role || 
+                    metadata.userType || 
+                    metadata.user_type || 
                     'user';
                     
         finalUserData = {
@@ -138,14 +140,17 @@ export async function loginWithEmail(email: string, password: string) {
             id: userData.id,
             email: userData.email || '',
             role: role,
-            ...userData.user_metadata
+            ...metadata
           },
           session: supabaseData.session,
           authenticated: true
         };
       } else {
         // Both authentication methods failed
-        throw new Error(apiError.message || 'Login failed');
+        const errorMessage = apiError instanceof Error 
+          ? apiError.message 
+          : 'Login failed';
+        throw new Error(errorMessage);
       }
     }
 
@@ -288,9 +293,11 @@ export async function registerWithEmail(email: string, password: string, fullNam
         if (supabaseSuccess && supabaseData?.user) {
           console.log('[Auth Utils] Using Supabase data as fallback after API failure');
           const userData = supabaseData.user;
-          const role = userData.user_metadata?.role || 
-                      userData.user_metadata?.userType || 
-                      userData.user_metadata?.user_type || 
+          // Use nullish coalescing to handle potential null user_metadata
+          const metadata = userData.user_metadata || {};
+          const role = metadata.role || 
+                      metadata.userType || 
+                      metadata.user_type || 
                       'user';
                       
           finalUserData = {
@@ -298,7 +305,7 @@ export async function registerWithEmail(email: string, password: string, fullNam
               id: userData.id,
               email: userData.email || '',
               role: role,
-              ...(userData.user_metadata || {})
+              ...metadata
             },
             session: supabaseData.session,
             authenticated: true,
@@ -317,9 +324,11 @@ export async function registerWithEmail(email: string, password: string, fullNam
       if (supabaseSuccess && supabaseData?.user) {
         console.log('[Auth Utils] Falling back to Supabase-only registration due to API error');
         const userData = supabaseData.user;
-        const role = userData.user_metadata?.role || 
-                    userData.user_metadata?.userType || 
-                    userData.user_metadata?.user_type || 
+        // Use nullish coalescing to handle potential null user_metadata
+        const metadata = userData.user_metadata || {};
+        const role = metadata.role || 
+                    metadata.userType || 
+                    metadata.user_type || 
                     'user';
                     
         finalUserData = {
@@ -327,7 +336,7 @@ export async function registerWithEmail(email: string, password: string, fullNam
             id: userData.id,
             email: userData.email || '',
             role: role,
-            ...(userData.user_metadata || {})
+            ...metadata
           },
           session: supabaseData.session,
           authenticated: true,
@@ -487,8 +496,10 @@ export async function getCurrentUser() {
         
         if (userData?.user) {
           const user = userData.user;
-          const role = user.user_metadata?.role || 
-                      user.user_metadata?.userType || 
+          // Use nullish coalescing to handle potential null user_metadata
+          const metadata = user.user_metadata || {};
+          const role = metadata.role || 
+                      metadata.userType || 
                       'user';
                       
           const fallbackUserData = {
@@ -496,7 +507,7 @@ export async function getCurrentUser() {
               id: user.id,
               email: user.email || '',
               role: role,
-              user_metadata: user.user_metadata || {}
+              user_metadata: metadata
             },
             authenticated: true
           };
