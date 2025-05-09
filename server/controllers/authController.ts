@@ -160,8 +160,14 @@ class AuthController {
           }
         }
         
-        console.log('[Auth Controller] No authenticated user found');
-        return res.status(401).json({ error: 'Not authenticated' });
+        // For the /user endpoint with optionalAuth, return empty data instead of 401
+        // This allows the auth page to load without authentication errors
+        console.log('[Auth Controller] No authenticated user found, returning empty data');
+        return res.status(200).json({ 
+          user: null,
+          authenticated: false,
+          message: 'No authenticated user'
+        });
       }
 
       // If we have a user, return it along with extended profile if available
@@ -172,12 +178,16 @@ class AuthController {
         const userProfile = await authService.getUserProfile(req.user.id);
         return res.status(200).json({ 
           user: req.user,
-          profile: userProfile || null
+          profile: userProfile || null,
+          authenticated: true
         });
       } catch (profileError) {
         console.warn('[Auth Controller] Could not fetch profile:', profileError);
         // Fall back to just returning the user
-        return res.status(200).json({ user: req.user });
+        return res.status(200).json({ 
+          user: req.user,
+          authenticated: true
+        });
       }
     } catch (error: any) {
       console.error('[Auth Controller] Get current user error:', error);

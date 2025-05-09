@@ -270,6 +270,23 @@ export async function getCurrentUser() {
   try {
     console.log('[Auth Utils] getCurrentUser called');
     
+    // Check local storage first for recent cached data (less than 5 min old)
+    const cachedData = localStorage.getItem('contestedUserData');
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        const isCacheValid = parsedData.timestamp && 
+                          (Date.now() - parsedData.timestamp < 5 * 60 * 1000);
+        
+        if (isCacheValid) {
+          console.log('[Auth Utils] Using cached user data');
+          return parsedData;
+        }
+      } catch (err) {
+        console.warn('[Auth Utils] Error parsing cached user data:', err);
+      }
+    }
+    
     // First try to get user from Supabase directly
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
@@ -285,37 +302,69 @@ export async function getCurrentUser() {
 
     // If we have a session, fetch the full user profile from our API
     console.log('[Auth Utils] Session found, fetching user data from API');
-    const response = await fetch('/api/auth/user', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${sessionData.session.access_token}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.log('[Auth Utils] User not authenticated (401)');
-        return null;
+    try {
+      const response = await fetch('/api/auth/user', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${sessionData.session.access_token}`,
+        },
+      });
+  
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('[Auth Utils] User not authenticated (401)');
+          return null;
+        }
+        console.error('[Auth Utils] API error:', response.status, response.statusText);
+        // Don't throw - continue with Supabase user data as fallback
+      } else {
+        const userData = await response.json();
+        console.log('[Auth Utils] User data received with keys:', Object.keys(userData));
+        
+        // Debug logs to help diagnose the structure
+        if (userData.user) {
+          console.log('[Auth Utils] User object found with keys:', Object.keys(userData.user));
+        }
+        
+        if (userData.profile) {
+          console.log('[Auth Utils] Profile object found with keys:', Object.keys(userData.profile));
+        }
+        
+        // Cache the response data for faster access
+        localStorage.setItem('contestedUserData', JSON.stringify({
+          ...userData,
+          timestamp: Date.now()
+        }));
+        
+        return userData;
       }
-      console.error('[Auth Utils] API error:', response.status, response.statusText);
-      throw new Error('Failed to get user profile');
-    }
-
-    const userData = await response.json();
-    console.log('[Auth Utils] User data received with keys:', Object.keys(userData));
-    
-    // Debug logs to help diagnose the structure
-    if (userData.user) {
-      console.log('[Auth Utils] User object found with keys:', Object.keys(userData.user));
+    } catch (apiError) {
+      console.error('[Auth Utils] Error fetching from API:', apiError);
+      // Continue with Supabase user data as fallback
     }
     
-    if (userData.profile) {
-      console.log('[Auth Utils] Profile object found with keys:', Object.keys(userData.profile));
+    // Fallback to using just the Supabase user data
+    if (sessionData?.user) {
+      console.log('[Auth Utils] Using Supabase user data as fallback');
+      const role = sessionData.user.user_metadata?.role || 
+                  sessionData.user.user_metadata?.userType || 
+                  'user';
+                  
+      const fallbackUserData = {
+        user: {
+          id: sessionData.user.id,
+          email: sessionData.user.email,
+          role: role,
+          ...sessionData.user.user_metadata
+        }
+      };
+      
+      return fallbackUserData;
     }
     
-    return userData;
+    return null;
   } catch (error) {
-    console.error('Error getting current user:', error);
+    console.error('[Auth Utils] Error getting current user:', error);
     return null;
   }
 }

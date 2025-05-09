@@ -7,7 +7,7 @@
 
 import express from 'express';
 import { authController } from '../controllers/authController';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, optionalAuth } from '../middleware/auth';
 
 // Create a router
 const router = express.Router();
@@ -70,7 +70,8 @@ router.post('/refresh-token', authController.refreshToken.bind(authController));
 router.post('/reset-password', authController.resetPassword.bind(authController));
 
 // Add an alias for '/me' endpoint as '/user' to match client expectations
-router.get('/user', requireAuth, authController.getCurrentUser.bind(authController));
+// Using optionalAuth allows the endpoint to work for both authenticated and unauthenticated users
+router.get('/user', optionalAuth, authController.getCurrentUser.bind(authController));
 
 // Protected routes - require authentication
 router.get('/me', requireAuth, authController.getCurrentUser.bind(authController));
