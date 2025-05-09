@@ -196,571 +196,221 @@ export const registerUser = async (userData: {
   role: 'athlete' | 'business' | 'compliance' | 'admin';
 }) => {
   try {
-    console.log('[Client] Registering new user via server endpoint');
-    // Use our server endpoint for registration first
+    console.log('[Auth] Registering new user via server endpoint');
+    
+    // Call server registration endpoint
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(userData),
-      credentials: 'include', // Important: include cookies in the request
+      credentials: 'include',
     });
 
-    // Safely handle the response - check content type before parsing as JSON
-    let responseData;
+    // Handle response based on content type
     const contentType = response.headers.get('content-type');
-
-    console.log('[Client] Registration response status:', response.status, response.statusText);
-    console.log('[Client] Registration response content-type:', contentType);
-
+    
+    // Parse JSON response if available
     if (contentType && contentType.includes('application/json')) {
-      try {
-        responseData = await response.json();
-        console.log('[Client] Registration response parsed as JSON successfully');
-      } catch (jsonError) {
-        console.error('[Client] Error parsing JSON response:', jsonError);
-        const textResponse = await response.text();
-        console.error('[Client] Response text:', textResponse.substring(0, 150) + '...');
-
-        // Return a proper error object instead of throwing
+      const responseData = await response.json();
+      
+      // Handle error responses
+      if (!response.ok) {
+        const errorMessage = responseData.message || responseData.error || 'Registration failed';
+        return { error: errorMessage };
+      }
+      
+      // Special case: Account already exists but credentials are valid
+      if (response.status === 200 && responseData.user) {
         return {
-          error: 'Server returned invalid JSON. Please try again later.'
+          message: 'Account exists, logging in',
+          user: responseData.user,
+          session: responseData.session
         };
       }
+      
+      console.log('[Auth] Registration successful');
+      
+      // Store session data if available
+      if (responseData.session) {
+        localStorage.setItem('auth-status', 'authenticated');
+        localStorage.setItem('supabase-auth', JSON.stringify({
+          ...responseData.session,
+          timestamp: Date.now()
+        }));
+      }
+      
+      // Store user data if available
+      if (responseData.user) {
+        localStorage.setItem('contestedUserData', JSON.stringify({
+          ...responseData.user,
+          timestamp: Date.now()
+        }));
+      }
+      
+      return responseData;
     } else {
-      // Handle HTML or other non-JSON responses
-      try {
-        const textResponse = await response.text();
-        console.error('[Client] Received non-JSON response:', textResponse.substring(0, 150) + '...');
-
-        // Check if it's the common DOCTYPE HTML error
-        if (textResponse.includes('<!DOCTYPE')) {
-          return {
-            error: 'Server communication error. Please try again later.'
-          };
-        }
-
-        // Return a proper error object instead of throwing
-        return {
-          error: 'Server returned an invalid response format. Please try again later.'
-        };
-      } catch (textError) {
-        console.error('[Client] Error reading response text:', textError);
-        return {
-          error: 'Unable to process server response. Please try again later.'
-        };
-      }
-    }
-
-    // Special case: If status is 200 but not 201, it means user exists but credentials are valid
-    // - This is a case where the server found an existing account with matching credentials 
-    if (response.status === 200 && responseData.user) {
-      console.log('[Client] Account already exists but credentials are valid - treating as successful login');
-      return {
-        message: 'Account exists, logging in',
-        user: responseData.user
+      // Handle non-JSON responses as errors
+      return { 
+        error: `Registration failed: Server returned invalid response format (${response.status} ${response.statusText})`
       };
     }
-
-    // Handle error responses
-    if (!response.ok) {
-      console.error('[Client] Registration failed:', responseData);
-
-      // Enhanced error message if server provides one
-      const errorMessage = responseData.message || 
-                          (typeof responseData === 'string' ? responseData : 'Registration failed') ||
-                          response.statusText;
-
-      throw new Error(errorMessage);
-    }
-
-    console.log('[Client] Registration successful with server endpoint');
-
-    // If server registration was successful but didn't return a session,
-    // also register directly with Supabase to ensure a proper session
-    if (!responseData.session) {
-      try {
-        console.log('[Client] No session from server, registering directly with Supabase');
-        const { data, error } = await supabase.auth.signUp({
-          email: userData.email,
-          password: userData.password,
-          options: {
-            data: {
-              full_name: userData.fullName,
-              user_type: userData.role
-            }
-          }
-        });
-
-        if (error) {
-          console.warn('[Client] Supabase direct registration failed, but server registration successful:', error);
-          // Not fatal, continue with server registration data
-        } else {
-          console.log('[Client] Supabase direct registration successful, merging data');
-          // Merge the data from both sources
-          return {
-            ...responseData,
-            supabaseData: data
-          };
-        }
-      } catch (supabaseError) {
-        console.warn('[Client] Error during Supabase direct registration, but server registration successful:', supabaseError);
-        // Not fatal, continue with server registration data
-      }
-    }
-
-    return responseData;
-  } catch (serverError) {
-    console.error('[Client] Server registration failed, trying direct Supabase registration:', serverError);
-
-    // If server registration fails, try direct Supabase Auth
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            full_name: userData.fullName,
-            user_type: userData.role
-          }
-        }
-      });
-
-      if (error) {
-        console.error('[Client] Supabase direct registration also failed:', error);
-        throw error;
-      }
-
-      console.log('[Client] Supabase direct registration successful');
-
-      // When using Supabase direct registration, also create a user record in our database
-      try {
-        console.log('[Client] Creating user record in database after Supabase registration');
-        // We got a Supabase user but need to create a record in our database
-        if (data?.user) {
-          const response = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${data.session?.access_token || ''}`,
-            },
-            body: JSON.stringify({
-              ...userData,
-              auth_id: data.user.id // Link to Supabase Auth user
-            }),
-            credentials: 'include',
-          });
-
-          if (response.ok) {
-            console.log('[Client] Successfully created user record in database');
-            const serverData = await response.json();
-
-            return {
-              ...data,
-              serverData
-            };
-          } else {
-            console.warn('[Client] Failed to create user record in database, but Supabase registration successful');
-          }
-        }
-      } catch (dbError) {
-        console.warn('[Client] Error creating user record in database, but Supabase registration successful:', dbError);
-      }
-
-      return {
-        message: 'Registration successful with Supabase',
-        user: data.user,
-        session: data.session
-      };
-    } catch (supabaseError) {
-      console.error('[Client] Both server and Supabase registration failed:', supabaseError);
-      throw supabaseError;
-    }
+  } catch (error) {
+    console.error('[Auth] Registration error:', error);
+    return { 
+      error: 'An unexpected error occurred during registration. Please try again.' 
+    };
   }
 };
 
 export const getCurrentUser = async () => {
   try {
-    // First check local storage for recent cached user data
-    if (typeof window !== 'undefined') {
+    // Check local storage first for recent cached data (less than 5 min old)
+    const cachedData = localStorage.getItem('contestedUserData');
+    if (cachedData) {
       try {
-        const cachedUserData = localStorage.getItem('contestedUserData');
-        if (cachedUserData) {
-          const parsedData = JSON.parse(cachedUserData);
-          // Only use cached data if it's recent (less than 5 minutes old)
-          const isCacheValid = parsedData.timestamp && 
-                              (Date.now() - parsedData.timestamp < 5 * 60 * 1000);
-
-          if (isCacheValid) {
-            console.log('[Client] Using recent cached user data from localStorage');
-            return parsedData;
-          } else {
-            console.log('[Client] Cached user data exists but expired, will refresh');
-          }
+        const parsedData = JSON.parse(cachedData);
+        const isCacheValid = parsedData.timestamp && 
+                           (Date.now() - parsedData.timestamp < 5 * 60 * 1000);
+        
+        if (isCacheValid) {
+          console.log('[Auth] Using cached user data');
+          return parsedData;
         }
-      } catch (cacheError) {
-        console.warn('[Client] Error accessing cached user data:', cacheError);
-        // Continue with normal flow if cache access fails
+      } catch (err) {
+        console.warn('[Auth] Error parsing cached user data:', err);
       }
     }
-
-    // Check if we have a session in Supabase
-    const { data: sessionData } = await supabase.auth.getSession();
-
-    if (!sessionData.session) {
-      console.log('[Client] No active session found in Supabase');
-      return null;
-    }
-
-    console.log('[Client] Active session found, fetching user data from server');
-    // Try server endpoint for complete profile data
-    const response = await fetch('/api/auth/user', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${sessionData.session?.access_token || ''}`,
-      },
-      credentials: 'include', // Important: include cookies in the request
-    });
-
-    if (!response.ok) {
-      // If server endpoint fails with auth error, return null (not authenticated)
-      if (response.status === 401) {
-        console.log('[Client] Server returned 401, user not authenticated');
-        return null;
-      }
-
-      // For other errors, we'll try the direct Supabase approach
-      try {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorJson = await response.json();
-          console.error('[Client] Server user fetch failed (JSON):', errorJson);
-          throw new Error(errorJson.error || errorJson.message || 'Failed to fetch user data');
-        } else {
-          const errorText = await response.text();
-          console.error('[Client] Server user fetch failed (text):', errorText.substring(0, 150) + '...');
-          throw new Error('Failed to fetch user data. Please try again later.');
-        }
-      } catch (parseError) {
-        console.error('[Client] Error parsing user fetch error response:', parseError);
-        throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}`);
-      }
-    }
-
-    // Safely parse the successful response
-    let userData;
+    
+    // Try to get user data from server first
+    console.log('[Auth] Fetching user data from server');
     try {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        userData = await response.json();
-      } else {
-        const textResponse = await response.text();
-        console.error('[Client] Received non-JSON user response:', textResponse.substring(0, 150) + '...');
-        throw new Error('Server returned an invalid response format. Please try again later.');
-      }
-    } catch (jsonError) {
-      console.error('[Client] Error parsing user response:', jsonError);
-      throw new Error('Failed to process user data response. Please try again later.');
-    }
-    console.log('[Client] Successfully retrieved user data from server:', userData?.email);
-
-    // Cache the data for next time
-    if (typeof window !== 'undefined' && userData) {
-      try {
+      const response = await fetch('/api/auth/user', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        
+        // Cache the data
         localStorage.setItem('contestedUserData', JSON.stringify({
           ...userData,
           timestamp: Date.now()
         }));
-        console.log('[Client] Updated user data cache in localStorage');
-      } catch (cacheError) {
-        console.warn('[Client] Failed to cache user data:', cacheError);
-        // Non-critical error, continue
+        
+        return userData;
       }
-    }
-
-    return userData;
-  } catch (serverError) {
-    console.error('[Client] Server user fetch failed, falling back to direct Supabase auth:', serverError);
-
-    // Try getting user data from localStorage as fallback
-    if (typeof window !== 'undefined') {
-      try {
-        const cachedUserData = localStorage.getItem('contestedUserData');
-        if (cachedUserData) {
-          const parsedData = JSON.parse(cachedUserData);
-          console.log('[Client] Using cached user data as fallback after server error');
-          return parsedData;
-        }
-      } catch (cacheError) {
-        console.warn('[Client] Error accessing cached user data during fallback:', cacheError);
+      
+      // If 401, user is not authenticated
+      if (response.status === 401) {
+        console.log('[Auth] User not authenticated');
+        return null;
       }
+    } catch (error) {
+      console.error('[Auth] Error fetching user from server:', error);
     }
-
-    // Final fallback to direct Supabase Auth
+    
+    // Fall back to Supabase auth
+    console.log('[Auth] Falling back to Supabase auth');
     const { data, error } = await supabase.auth.getUser();
-
+    
     if (error) {
-      if (error.status === 401) {
-        console.log('[Client] Supabase returned 401, user not authenticated');
-        return null; // Not authenticated
-      }
-      console.error('[Client] Supabase getUser error:', error);
-      throw new Error(error.message);
+      console.error('[Auth] Supabase auth error:', error);
+      return null;
     }
-
+    
     if (data.user) {
-      console.log('[Client] Successfully retrieved user from Supabase:', data.user.email);
-
-      // Try to enhance the basic user data with additional profile data
+      // Try to get additional profile data
       try {
-        // Check if we can find a user profile for this auth user
         const { data: profileData } = await supabase
           .from('users')
           .select('*')
           .eq('auth_id', data.user.id)
           .maybeSingle();
-
+          
         if (profileData) {
-          console.log('[Client] Found matching profile record for Supabase user');
-          // Cache the combined data for next time
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem('contestedUserData', JSON.stringify({
-                ...data.user,
-                profile: profileData,
-                timestamp: Date.now()
-              }));
-              console.log('[Client] Cached enhanced user data in localStorage');
-            } catch (cacheError) {
-              console.warn('[Client] Failed to cache enhanced user data:', cacheError);
-            }
-          }
-
-          return {
+          const enhancedUser = {
             ...data.user,
             profile: profileData
           };
+          
+          // Cache the enhanced data
+          localStorage.setItem('contestedUserData', JSON.stringify({
+            ...enhancedUser,
+            timestamp: Date.now()
+          }));
+          
+          return enhancedUser;
         }
       } catch (profileError) {
-        console.warn('[Client] Error fetching additional profile data:', profileError);
-        // Not critical, return the basic user data
+        console.warn('[Auth] Error fetching profile data:', profileError);
       }
+      
+      return data.user;
     }
-
-    return data.user;
+    
+    return null;
+  } catch (error) {
+    console.error('[Auth] Error in getCurrentUser:', error);
+    return null;
   }
 };
 
 export const logoutUser = async () => {
   try {
-    console.log('[Client] Logging out user - initiating complete cleanup');
-
-    // Import clearAuthData function to avoid circular dependencies
-    const { clearAuthData } = await import('./simple-auth');
-
-    // Clear simple auth data first
-    console.log('[Client] Clearing simple auth data');
-    clearAuthData();
-
-    // Import session persistence utilities
-    const { clearSessionData } = await import('./session-persistence');
-    clearSessionData();
-    console.log('[Client] Cleared session persistence data');
-
-    // Get session first to include in logout request
-    let token = '';
+    console.log('[Auth] Logging out user');
+    
+    // Call server logout endpoint
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      token = sessionData?.session?.access_token || '';
-    } catch (e) {
-      console.warn('[Client] Error getting session for logout:', e);
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      console.log('[Auth] Server logout successful');
+    } catch (error) {
+      console.warn('[Auth] Server logout error:', error);
     }
-
-    // Call server logout endpoint first with retry logic
-    console.log('[Client] Logging out from server endpoint');
-    let serverLogoutSuccess = false;
-
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const response = await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cache-Control': 'no-cache',
-          },
-          credentials: 'include', // Important: include cookies in the request
-        });
-
-        if (response.ok) {
-          console.log('[Client] Server logout successful');
-          serverLogoutSuccess = true;
-          break;
-        } else {
-          console.warn(`[Client] Server logout attempt ${attempt + 1} failed:`, response.status);
-        }
-      } catch (fetchError) {
-        console.warn(`[Client] Server logout endpoint error on attempt ${attempt + 1}:`, fetchError);
-      }
-
-      // Wait briefly before retry
-      if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 300));
-    }
-
-    if (!serverLogoutSuccess) {
-      console.warn('[Client] All server logout attempts failed, continuing with client-side logout');
-    }
-
-    // Perform client-side logout with Supabase - try both methods for maximum reliability
-    console.log('[Client] Signing out from Supabase Auth');
-
-    // First try standard signOut with catch for each step
-    try {
-      await supabase.auth.signOut();
-      console.log('[Client] Supabase Auth signOut successful');
-    } catch (supabaseError) {
-      console.warn('[Client] Supabase Auth signOut error:', supabaseError);
-    }
-
-    // Also try with scope:global as fallback to ensure all sessions are cleared
+    
+    // Sign out from Supabase
     try {
       await supabase.auth.signOut({ scope: 'global' });
-      console.log('[Client] Supabase global signOut successful');
-    } catch (globalError) {
-      console.warn('[Client] Global signOut failed:', globalError);
+      console.log('[Auth] Supabase sign out successful');
+    } catch (error) {
+      console.warn('[Auth] Supabase sign out error:', error);
     }
-
-    // Clear ALL auth cookies with multiple domains and paths for thoroughness
-    console.log('[Client] Clearing auth cookies extensively');
-    const authCookieNames = [
-      'auth-status', 'supabase-auth', 'sb-access-token', 'sb-refresh-token', 
-      'contested-auth', 'sb-refresh-token', 'sb-auth-token', 'sb:token',
-      'supabase.auth.token', 'supabase-auth-token'
+    
+    // Clear local storage auth data
+    const authKeys = [
+      'contestedUserData', 
+      'auth-status', 
+      'supabase-auth'
     ];
-
-    // Clear cookies with various path and domain combinations
-    const paths = ['/', '/api', '/auth', '/client', ''];
-
-    document.cookie.split(';').forEach(cookie => {
-      const trimmedCookie = cookie.trim();
-      const equalsPos = trimmedCookie.indexOf('=');
-
-      if (equalsPos > 0) {
-        const name = trimmedCookie.substring(0, equalsPos);
-
-        // Clear all cookies that might be auth-related
-        if (authCookieNames.includes(name) || name.includes('auth') || name.includes('token') || name.includes('session')) {
-          console.log(`[Client] Clearing cookie: ${name}`);
-
-          // Try multiple path combinations to ensure cookie is cleared
-          paths.forEach(path => {
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path};`;
-            document.cookie = `${name}=; max-age=0; path=${path};`;
-          });
-        }
+    
+    authKeys.forEach(key => {
+      try {
+        localStorage.removeItem(key);
+      } catch (e) {
+        console.warn(`[Auth] Error removing ${key}:`, e);
       }
     });
-
-    // Clear ALL localStorage items that might contain auth data
-    if (typeof window !== 'undefined') {
-      console.log('[Client] Clearing ALL localStorage auth data');
-
-      // Known auth-related keys - expanded list
-      const authKeys = [
-        'supabase-auth', 'contested-auth', 'contestedUserData', 'auth-status',
-        'sb-access-token', 'sb-refresh-token', 'sb:token', 'authUser',
-        'supabase.auth.token', 'sb-auth', 'sb-provider-token'
-      ];
-
-      // Remove specific keys
-      authKeys.forEach(key => {
-        try {
-          localStorage.removeItem(key);
-          console.log(`[Client] Removed localStorage item: ${key}`);
-        } catch (e) {
-          console.warn(`[Client] Error removing ${key}:`, e);
-        }
-      });
-
-      // Scan for any supabase or auth-related keys that might have been missed
-      try {
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (
-            key.includes('supabase') || 
-            key.includes('auth') || 
-            key.includes('token') || 
-            key.includes('session') || 
-            key.includes('user') ||
-            key.includes('sb-')
-          )) {
-            keysToRemove.push(key);
-          }
-        }
-
-        // Remove keys separately to avoid index shifting issues
-        keysToRemove.forEach(key => {
-          console.log(`[Client] Removing additional auth-related key: ${key}`);
-          localStorage.removeItem(key);
-        });
-      } catch (scanError) {
-        console.warn('[Client] Error scanning localStorage:', scanError);
-      }
-    }
-
-    // Clear sessionStorage too for completeness
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      console.log('[Client] Clearing sessionStorage');
-      try {
-        sessionStorage.clear();
-      } catch (e) {
-        console.warn('[Client] Error clearing sessionStorage:', e);
-      }
-    }
-
-    console.log('[Client] Logout complete with thorough cleanup');
-
-    // Force page reload to clear any in-memory state - use a deliberate delay
-    setTimeout(() => {
-      console.log('[Client] Redirecting to home page');
-      window.location.href = '/?logout=complete&t=' + Date.now();
-    }, 200);
-
+    
+    // Redirect to home page after logout
+    window.location.href = '/?logout=complete';
     return true;
   } catch (error) {
-    console.error('[Client] Logout error:', error);
-
-    // Aggressive fallback - guaranteed to work
-    console.log('[Client] Executing aggressive logout fallback');
-
+    console.error('[Auth] Logout error:', error);
+    
+    // Fallback cleanup
     try {
-      // Last-resort cleanup
-      if (typeof window !== 'undefined') {
-        // Try one more Supabase signout
-        try { supabase.auth.signOut({ scope: 'global' }); } catch (e) {}
-
-        // Clear storage completely
-        try { localStorage.clear(); } catch (e) {}
-        try { sessionStorage.clear(); } catch (e) {}
-
-        // Clear all cookies
-        document.cookie.split(';').forEach(cookie => {
-          const name = cookie.trim().split('=')[0];
-          try {
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-            document.cookie = `${name}=; max-age=0; path=/;`;
-          } catch (e) {}
-        });
-
-        // Force reload to root with cache-busting parameter
-        window.location.href = '/?fresh=' + Date.now();
-      }
-    } catch (finalError) {
-      // Ultimate fallback - just reload
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.href = '/';
+    } catch (e) {
+      window.location.reload();
     }
-
+    
     return false;
   }
 };
@@ -904,94 +554,5 @@ export const testSupabaseConnection = async () => {
   }
 };
 
-export const logout = async (): Promise<boolean> => {
-  try {
-    console.log('[Client] Starting complete logout process...');
-
-    // First, get current session for authorization header
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData?.session?.access_token;
-
-    // Clear Supabase auth state
-    const { error } = await supabase.auth.signOut({ scope: 'global' });
-
-    if (error) {
-      console.error('[Client] Supabase logout error:', error);
-      // Continue with other cleanup even if Supabase fails
-    } else {
-      console.log('[Client] Supabase auth signOut successful');
-    }
-
-    // Clear auth cookies by calling server endpoint with auth header if available
-    try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers
-      });
-
-      if (!response.ok) {
-        console.warn('[Client] Server logout response:', response.status, await response.text());
-      } else {
-        console.log('[Client] Server logout successful');
-      }
-    } catch (serverError) {
-      console.error('[Client] Error calling server logout:', serverError);
-    }
-
-    // Aggressively clear ALL localStorage and sessionStorage auth items
-    if (typeof window !== 'undefined') {
-      console.log('[Client] Clearing all authentication data from storage');
-
-      // Clear all cookies related to auth
-      document.cookie.split(';').forEach(cookie => {
-        const name = cookie.split('=')[0].trim();
-        if (name.includes('auth') || name.includes('supabase') || name.includes('sb-')) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-          console.log(`[Client] Cleared cookie: ${name}`);
-        }
-      });
-
-      // Clear localStorage
-      const authKeys = [
-        'supabase.auth.token',
-        'supabase-auth',
-        'sb-access-token',
-        'sb-refresh-token',
-        'auth-status',
-        'contested-auth',
-        'contested-auth-code-verifier'
-      ];
-
-      authKeys.forEach(key => {
-        try {
-          localStorage.removeItem(key);
-          console.log(`[Client] Removed localStorage item: ${key}`);
-        } catch (e) {
-          console.warn(`[Client] Error removing ${key}:`, e);
-        }
-      });
-
-      // Clear sessionStorage
-      try {
-        sessionStorage.clear();
-        console.log('[Client] Cleared sessionStorage');
-      } catch (e) {
-        console.warn('[Client] Error clearing sessionStorage:', e);
-      }
-    }
-
-    console.log('[Client] Logout complete');
-    return true;
-  } catch (error) {
-    console.error('[Client] Logout error:', error);
-    return false;
-  }
-};
+// The alternate logout method has been removed to avoid duplication
+// Use the logoutUser method above for all logout operations

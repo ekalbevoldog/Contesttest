@@ -15,3 +15,9 @@ externalPort = 80
 [[ports]]
 localPort = 8080
 externalPort = 80
+
+[runners."Start application"]
+command = ["npm", "run", "dev"]
+isDefault = true
+runOnStart = true
+persistent = true

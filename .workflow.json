@@ -1,18 +1,7 @@
 {
-  "workflows": [
-    {
-      "name": "Dev",
-      "command": "./start-dev.sh",
-      "restart": true,
-      "restartOn": {
-        "files": [
-          "server/**/*.ts",
-          "client/src/**/*.tsx",
-          "client/src/**/*.ts",
-          "shared/**/*.ts",
-          "public/**/*.html"
-        ]
-      }
-    }
-  ]
+  "Start application": {
+    "command": "npm run dev",
+    "isDefault": true,
+    "continuable": false
+  }
 }
