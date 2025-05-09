@@ -13,6 +13,22 @@
           "exclude": []
         }
       }
+    },
+    {
+      "name": "Auth Test Server",
+      "command": "NODE_ENV=development DEBUG=true PORT=5001 node start-dev.js",
+      "restartOn": {
+        "fileChange": {
+          "include": [
+            "server/**/*.ts",
+            "server/middleware/auth.ts",
+            "server/controllers/authController.ts",
+            "server/routes/authRoutes.ts",
+            "start-dev.js"
+          ],
+          "exclude": []
+        }
+      }
     }
   ]
 }

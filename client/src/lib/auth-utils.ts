@@ -295,77 +295,97 @@ export async function getCurrentUser() {
       return null;
     }
 
-    if (!sessionData?.session) {
-      console.log('[Auth Utils] No active session found');
-      return null;
-    }
-
-    // If we have a session, fetch the full user profile from our API
-    console.log('[Auth Utils] Session found, fetching user data from API');
-    try {
-      const response = await fetch('/api/auth/user', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${sessionData.session.access_token}`,
-        },
-      });
-  
-      if (!response.ok) {
-        if (response.status === 401) {
-          console.log('[Auth Utils] User not authenticated (401)');
-          return null;
-        }
-        console.error('[Auth Utils] API error:', response.status, response.statusText);
-        // Don't throw - continue with Supabase user data as fallback
-      } else {
-        const userData = await response.json();
-        console.log('[Auth Utils] User data received with keys:', Object.keys(userData));
-        
-        // Debug logs to help diagnose the structure
-        if (userData.user) {
-          console.log('[Auth Utils] User object found with keys:', Object.keys(userData.user));
-        }
-        
-        if (userData.profile) {
-          console.log('[Auth Utils] Profile object found with keys:', Object.keys(userData.profile));
-        }
-        
-        // Cache the response data for faster access
-        localStorage.setItem('contestedUserData', JSON.stringify({
-          ...userData,
-          timestamp: Date.now()
-        }));
-        
-        return userData;
-      }
-    } catch (apiError) {
-      console.error('[Auth Utils] Error fetching from API:', apiError);
-      // Continue with Supabase user data as fallback
-    }
+    // Regardless of whether we have a session, always try the API endpoint
+    // It may use different forms of authentication (session cookies, etc.)
+    console.log('[Auth Utils] Fetching user data from API, session available:', !!sessionData?.session);
     
-    // Fallback to using just the Supabase user data
-    if (sessionData?.user) {
-      console.log('[Auth Utils] Using Supabase user data as fallback');
-      const role = sessionData.user.user_metadata?.role || 
-                  sessionData.user.user_metadata?.userType || 
-                  'user';
-                  
-      const fallbackUserData = {
-        user: {
-          id: sessionData.user.id,
-          email: sessionData.user.email,
-          role: role,
-          ...sessionData.user.user_metadata
-        }
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
       };
       
-      return fallbackUserData;
+      // Add auth token if we have it
+      if (sessionData?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${sessionData.session.access_token}`;
+      }
+      
+      const response = await fetch('/api/auth/user', {
+        method: 'GET',
+        headers,
+        credentials: 'include' // Send cookies along with the request
+      });
+  
+      console.log('[Auth Utils] API response status:', response.status);
+      
+      const userData = await response.json();
+      console.log('[Auth Utils] User data received with keys:', Object.keys(userData));
+      
+      // Our enhanced auth endpoint will now return user: null instead of error
+      // on unauthenticated requests, so we can check this directly
+      if (!userData.authenticated) {
+        console.log('[Auth Utils] User not authenticated according to API response');
+        
+        // If the API says we're not authenticated but we have a Supabase session,
+        // this could indicate an auth state mismatch
+        if (sessionData?.session) {
+          console.warn('[Auth Utils] Auth state mismatch: Supabase has session but API says unauthenticated');
+        }
+        
+        // Return the response data to allow proper handling
+        return userData;
+      }
+      
+      // Debug logs to help diagnose the structure
+      if (userData.user) {
+        console.log('[Auth Utils] User object found with keys:', Object.keys(userData.user));
+      }
+      
+      if (userData.profile) {
+        console.log('[Auth Utils] Profile object found with keys:', Object.keys(userData.profile));
+      }
+      
+      // Cache the response data for faster access
+      localStorage.setItem('contestedUserData', JSON.stringify({
+        ...userData,
+        timestamp: Date.now()
+      }));
+      
+      return userData;
+    } catch (apiError) {
+      console.error('[Auth Utils] Error fetching from API:', apiError);
+      
+      // If API call fails but we have a Supabase session, use that as fallback
+      if (sessionData?.session) {
+        console.log('[Auth Utils] Falling back to Supabase user data after API error');
+        
+        // Get user data from Supabase session
+        const { data: userData } = await supabase.auth.getUser();
+        
+        if (userData?.user) {
+          const user = userData.user;
+          const role = user.user_metadata?.role || 
+                      user.user_metadata?.userType || 
+                      'user';
+                      
+          const fallbackUserData = {
+            user: {
+              id: user.id,
+              email: user.email || '',
+              role: role,
+              user_metadata: user.user_metadata || {}
+            },
+            authenticated: true
+          };
+          
+          return fallbackUserData;
+        }
+      }
     }
     
-    return null;
+    return { user: null, authenticated: false };
   } catch (error) {
     console.error('[Auth Utils] Error getting current user:', error);
-    return null;
+    return { user: null, authenticated: false, error: 'Error retrieving user' };
   }
 }
 
