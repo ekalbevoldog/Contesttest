@@ -1,12 +1,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// Track Supabase connection values - will be set during initialization
-let supabaseUrl = '';
-let supabaseKey = '';
-
 // Declare supabase as a singleton to prevent multiple instances
-// This ensures we only have one Supabase client throughout the application lifecycle
 let _supabaseInstance: SupabaseClient | null = null;
+
+// Track initialization state
+let isInitialized = false;
 
 // Create a function to get the Supabase client - singleton pattern
 export const getSupabase = () => {
@@ -25,10 +23,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
   }
 });
 
-// Track initialization state
-let isInitialized = false;
-
-// Custom storage implementation that handles serialization and adds debugging
+// Custom storage implementation with logging
 const customStorage = {
   getItem: (key: string): string | null => {
     try {
@@ -61,16 +56,15 @@ const customStorage = {
 // Function to initialize the Supabase client with config from our server
 export async function initializeSupabase(): Promise<boolean> {
   // If already initialized, just return true
-  if (isInitialized && supabase) {
-    console.log('[Client] Supabase already initialized.');
+  if (isInitialized && _supabaseInstance) {
+    console.log('[Supabase] Already initialized');
     return true;
   }
 
   try {
-    console.log('[Client] Fetching Supabase configuration from server...');
+    console.log('[Supabase] Fetching configuration from server...');
 
-    // Get configuration from server with proper error handling
-    let config;
+    // Get configuration from server
     const response = await fetch('/api/config/supabase', {
       method: 'GET',
       headers: {
@@ -80,66 +74,46 @@ export async function initializeSupabase(): Promise<boolean> {
     });
 
     if (!response.ok) {
-      console.error(`Supabase config response not OK: ${response.status}`);
       throw new Error(`Failed to fetch Supabase configuration: ${response.statusText}`);
     }
     
-    config = await response.json();
+    const config = await response.json();
 
-    // Validate configuration - no fallbacks, require proper config
+    // Validate configuration
     if (!config || !config.url || !config.key) {
-      console.error('Invalid Supabase configuration received from server');
       throw new Error('Invalid Supabase configuration: Missing URL or API key');
     }
 
-    supabaseUrl = config.url;
-    supabaseKey = config.key;
+    console.log(`[Supabase] Configuration received successfully`);
 
-    console.log(`[Client] Supabase URL available: ${!!supabaseUrl}`);
-    console.log(`[Client] Supabase URL prefix: ${supabaseUrl ? `${supabaseUrl.substring(0, 10)}...` : 'missing'}`);
-    console.log(`[Client] Supabase Key available: ${!!supabaseKey}`);
-
-    // Create only ONE instance of the Supabase client WITHOUT real-time configuration
-    // This is the key fix for the "Multiple GoTrueClient instances" warning
-    if (!_supabaseInstance) {
-      console.log('[Client] Creating new Supabase client instance');
-      _supabaseInstance = createClient(supabaseUrl, supabaseKey, {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          // Explicitly tell Supabase to use the browser's localStorage
-          storage: customStorage,
-          storageKey: 'contested-auth'
-        },
-        // Explicitly disable realtime to prevent WebSocket connection attempts
-        realtime: {
-          params: {
-            eventsPerSecond: 0
-          }
-        },
-        global: {
-          headers: {
-            'X-Client-Info': 'nil-connect' // Identify our app to Supabase
-          }
+    // Create the Supabase client instance
+    _supabaseInstance = createClient(config.url, config.key, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        storage: customStorage,
+        storageKey: 'contested-auth'
+      },
+      // Disable realtime to prevent WebSocket connection issues
+      realtime: {
+        params: {
+          eventsPerSecond: 0
         }
-      });
-    }
+      }
+    });
 
-    console.log('[Client] Supabase initialized with realtime DISABLED');
-
-    // Test the connection
-    const { error } = await supabase.from('users').select('count').limit(1);
+    // Verify the connection works
+    const { error } = await _supabaseInstance.from('users').select('count').limit(1);
     if (error) {
-      console.error('[Client] Could not connect to Supabase:', error);
+      console.error('[Supabase] Connection test failed:', error);
       throw new Error(`Supabase connection failed: ${error.message}`);
     }
 
-    console.log('[Client] Supabase initialized successfully');
+    console.log('[Supabase] Initialized successfully');
     isInitialized = true;
     return true;
   } catch (error) {
-    console.error('[Client] Error initializing Supabase:', error);
-    // Re-throw the error to propagate it to the caller for proper error handling
+    console.error('[Supabase] Initialization error:', error);
     throw error;
   }
 }
@@ -150,162 +124,68 @@ export const loginUser = async (credentials: {
   password: string;
 }) => {
   try {
-    // Import simple-auth here to avoid circular dependencies
-    const { storeAuthData } = await import('./simple-auth');
-
-    // Use server-first approach to ensure complete synchronization
-    console.log('[Client] Attempting to login via server endpoint...');
+    console.log('[Auth] Attempting login via server endpoint');
+    
+    // Call the server login endpoint
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(credentials),
-      credentials: 'include', // Important: include cookies in the request
+      credentials: 'include', // Include cookies in the request
     });
 
-    // Log the response status for debugging
-    console.log(`[Client] Login response status: ${response.status} ${response.statusText}`);
-    console.log('[Client] Response headers:', response.headers);
-
+    // Handle error responses
     if (!response.ok) {
-      // Safely handle error responses that might be HTML instead of text
-      try {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorJson = await response.json();
-          console.error('[Client] Login failed (JSON):', errorJson);
-          return { error: errorJson.error || errorJson.message || 'Login failed' };
-        } else {
-          const errorText = await response.text();
-          console.error('[Client] Login failed (text):', errorText.substring(0, 150) + '...');
-          return { error: 'Login failed. Please try again later.' };
-        }
-      } catch (parseError) {
-        console.error('[Client] Error parsing login error response:', parseError);
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        return { error: errorData.error || errorData.message || 'Login failed' };
+      } else {
         return { error: `Login failed: ${response.status} ${response.statusText}` };
       }
     }
 
-    // Safely parse the successful response
-    let loginData;
-    try {
-      const contentType = response.headers.get('content-type');
-      console.log('[Client] Response content-type:', contentType);
+    // Parse the successful response
+    const loginData = await response.json();
+    console.log('[Auth] Server login successful');
 
-      if (contentType && contentType.includes('application/json')) {
-        loginData = await response.json();
-        console.log('[Client] Parsed JSON login response successfully');
-      } else {
-        const textResponse = await response.text();
-        console.error('[Client] Received non-JSON login response:', textResponse.substring(0, 150) + '...');
-        return { error: 'Server returned an invalid response format. Please try again later.' };
-      }
-    } catch (jsonError) {
-      console.error('[Client] Error parsing login response:', jsonError);
-      return { error: 'Failed to process login response. Please try again later.' };
-    }
-    console.log('[Client] Server login successful');
-
-    // Simple auth: Store the token and user data for persistence
-    if (loginData.session?.access_token && loginData.user) {
-      storeAuthData(loginData.session.access_token, loginData.user);
-      console.log('[Client] Stored auth data using simple-auth');
+    // Store authentication data in localStorage
+    if (loginData.user) {
+      localStorage.setItem('contestedUserData', JSON.stringify({
+        ...loginData.user,
+        timestamp: Date.now()
+      }));
     }
 
-    // Store both user and profile data in localStorage for persistence
-    if (typeof window !== 'undefined') {
-      // Store user profile data for quick access
-      if (loginData.user) {
-        localStorage.setItem('contestedUserData', JSON.stringify({
-          ...loginData.user,
-          timestamp: Date.now()
-        }));
-        console.log('[Client] Stored user data in localStorage');
-      }
-
-      // Store session data for persistence
-      if (loginData.session) {
-        // Store auth status separately to help check logged-in status quickly
-        localStorage.setItem('auth-status', 'authenticated');
-
-        // Store full session data
-        localStorage.setItem('supabase-auth', JSON.stringify({
-          ...loginData.session,
-          timestamp: Date.now()
-        }));
-        console.log('[Client] Stored session data in localStorage');
-      }
+    // Store session data if available
+    if (loginData.session) {
+      localStorage.setItem('auth-status', 'authenticated');
+      localStorage.setItem('supabase-auth', JSON.stringify({
+        ...loginData.session,
+        timestamp: Date.now()
+      }));
     }
 
-    // Ensure Supabase auth state is synchronized
-    if (loginData.session && loginData.session.access_token) {
-      console.log('[Client] Setting session in Supabase from server login response');
+    // Sync with Supabase auth state if session token is available
+    if (loginData.session?.access_token) {
       try {
-        // Store the session received from server to Supabase's internal storage
         await supabase.auth.setSession({
           access_token: loginData.session.access_token,
           refresh_token: loginData.session.refresh_token
         });
-        console.log('[Client] Supabase session successfully set');
-      } catch (sessionError) {
-        console.error('[Client] Error setting Supabase session:', sessionError);
-
-        // If setting session fails, try the direct sign-in approach as fallback
-        try {
-          console.log('[Client] Falling back to direct Supabase auth...');
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.email,
-            password: credentials.password
-          });
-
-          if (error) {
-            console.warn('[Client] Direct Supabase auth fallback failed:', error);
-          } else {
-            console.log('[Client] Direct Supabase auth fallback successful');
-            // Return combined data
-            return {
-              ...loginData,
-              supabaseData: data
-            };
-          }
-        } catch (signInError) {
-          console.error('[Client] Error in direct Supabase auth fallback:', signInError);
-          // Not critical, still proceed with server data
-        }
-      }
-    } else {
-      console.warn('[Client] No session token received from server, trying direct Supabase auth');
-
-      try {
-        // Use direct Supabase auth as a fallback
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password
-        });
-
-        if (error) {
-          console.warn('[Client] Direct Supabase auth failed:', error);
-          // Not critical if we already have server user data
-        } else {
-          console.log('[Client] Direct Supabase auth successful');
-
-          // Merge with login data
-          return {
-            ...loginData,
-            supabaseData: data
-          };
-        }
-      } catch (directAuthError) {
-        console.error('[Client] Error in direct Supabase auth:', directAuthError);
-        // Not critical, still proceed with server data
+        console.log('[Auth] Supabase session synchronized');
+      } catch (error) {
+        console.error('[Auth] Error syncing Supabase session:', error);
       }
     }
 
     return loginData;
   } catch (error) {
-    console.error('[Client] Login error:', error);
-    throw error;
+    console.error('[Auth] Login error:', error);
+    return { error: 'An unexpected error occurred during login. Please try again.' };
   }
 };
 
