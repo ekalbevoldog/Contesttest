@@ -1,8 +1,8 @@
 {
   "workflows": [
     {
-      "name": "Start App",
-      "command": "bash start.sh",
+      "name": "Dev",
+      "command": "./start-dev.sh",
       "restart": true,
       "restartOn": {
         "files": [
