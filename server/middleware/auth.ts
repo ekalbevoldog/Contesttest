@@ -76,6 +76,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       'user';
 
     // Attach user info to request
+    const metadata = user.user_metadata || {};
     req.user = {
       id: user.id,
       email: user.email || '',
@@ -83,9 +84,9 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       token: token,
       userType: effectiveRole,
       user_metadata: {
-        role: user.user_metadata?.role,
-        userType: user.user_metadata?.userType,
-        user_type: user.user_metadata?.user_type
+        role: metadata.role,
+        userType: metadata.userType,
+        user_type: metadata.user_type
       }
     };
 
@@ -169,6 +170,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
         'user';
 
       // Attach user info to request
+      const metadata = user.user_metadata || {};
       req.user = {
         id: user.id,
         email: user.email || '',
@@ -176,22 +178,23 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
         token: token,
         userType: effectiveRole,
         user_metadata: {
-          role: user.user_metadata?.role,
-          userType: user.user_metadata?.userType,
-          user_type: user.user_metadata?.user_type
+          role: metadata.role,
+          userType: metadata.userType,
+          user_type: metadata.user_type
         }
       };
     } catch (userDataError) {
       console.warn('[Auth Middleware] Error getting additional user data:', userDataError);
       
       // Set basic user info even if we couldn't get additional data
+      const metadata = user.user_metadata || {};
       req.user = {
         id: user.id,
         email: user.email || '',
-        role: user.user_metadata?.role || 'user',
+        role: metadata.role || 'user',
         token: token,
-        userType: user.user_metadata?.userType || 'user',
-        user_metadata: user.user_metadata || {}
+        userType: metadata.userType || 'user',
+        user_metadata: metadata
       };
     }
 
