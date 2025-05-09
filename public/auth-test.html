@@ -3,228 +3,382 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Authentication Routes Test</title>
+  <title>Auth API Test</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
     }
     h1 {
-      color: #333;
-      border-bottom: 1px solid #ddd;
+      color: #2d3748;
+      border-bottom: 1px solid #eaeaea;
       padding-bottom: 10px;
     }
-    section {
+    .test-section {
       margin-bottom: 30px;
-      border: 1px solid #ddd;
       padding: 15px;
+      border: 1px solid #eaeaea;
       border-radius: 5px;
+    }
+    .test-section h2 {
+      margin-top: 0;
+      font-size: 1.2em;
     }
     button {
-      background-color: #4CAF50;
+      background-color: #4299e1;
       color: white;
       border: none;
-      padding: 10px 15px;
-      text-align: center;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 16px;
-      margin: 4px 2px;
+      padding: 8px 15px;
+      border-radius: 4px;
       cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background-color: #3182ce;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
       border-radius: 4px;
     }
-    pre {
-      background-color: #f5f5f5;
+    .result {
+      margin-top: 15px;
       padding: 10px;
-      border-radius: 5px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      min-height: 100px;
+      white-space: pre-wrap;
       overflow-x: auto;
     }
-    .error {
-      color: red;
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 5px;
     }
-    input, select {
-      padding: 8px;
-      margin: 5px 0;
-      display: block;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      width: 100%;
-      max-width: 300px;
+    .status-connected {
+      background-color: #48bb78;
     }
-    label {
-      margin-top: 10px;
-      display: block;
-      font-weight: bold;
+    .status-disconnected {
+      background-color: #f56565;
     }
   </style>
 </head>
 <body>
-  <h1>Authentication Routes Test</h1>
+  <h1>Authentication API Test Tool</h1>
   
-  <section>
-    <h2>API Routes Test</h2>
-    
-    <div>
-      <h3>1. API Health Check</h3>
-      <button id="healthCheck">Test API Health</button>
-      <pre id="healthResult">Results will appear here...</pre>
-    </div>
+  <div class="test-section">
+    <h2>Server Status</h2>
+    <button id="check-health">Check Server Health</button>
+    <button id="check-api-status">Check API Status</button>
+    <div id="server-status-result" class="result"></div>
+  </div>
 
-    <div>
-      <h3>2. Test API Login</h3>
-      <form id="loginForm">
-        <label for="loginEmail">Email:</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com" value="test@example.com">
-        
-        <label for="loginPassword">Password:</label>
-        <input type="password" id="loginPassword" placeholder="Password" value="testpassword">
-        
-        <button type="submit">Try Login</button>
-      </form>
-      <pre id="loginResult">Results will appear here...</pre>
-    </div>
+  <div class="test-section">
+    <h2>Register</h2>
+    <input id="register-email" type="email" placeholder="Email" value="test@example.com">
+    <input id="register-password" type="password" placeholder="Password" value="password123">
+    <input id="register-first-name" type="text" placeholder="First Name" value="Test">
+    <input id="register-last-name" type="text" placeholder="Last Name" value="User">
+    <select id="register-role">
+      <option value="athlete">Athlete</option>
+      <option value="business">Business</option>
+      <option value="compliance">Compliance</option>
+    </select>
+    <button id="register-button">Register</button>
+    <div id="register-result" class="result"></div>
+  </div>
 
-    <div>
-      <h3>3. Test API Registration</h3>
-      <form id="registerForm">
-        <label for="regEmail">Email:</label>
-        <input type="email" id="regEmail" placeholder="your@email.com">
-        
-        <label for="regPassword">Password:</label>
-        <input type="password" id="regPassword" placeholder="Password">
-        
-        <label for="regFirstName">First Name:</label>
-        <input type="text" id="regFirstName" placeholder="John">
-        
-        <label for="regLastName">Last Name:</label>
-        <input type="text" id="regLastName" placeholder="Doe">
-        
-        <label for="regRole">Role:</label>
-        <select id="regRole">
-          <option value="athlete">Athlete</option>
-          <option value="business">Business</option>
-          <option value="compliance">Compliance</option>
-          <option value="admin">Admin</option>
-        </select>
-        
-        <button type="submit">Try Registration</button>
-      </form>
-      <pre id="registerResult">Results will appear here...</pre>
-    </div>
-  </section>
+  <div class="test-section">
+    <h2>Login</h2>
+    <input id="login-email" type="email" placeholder="Email" value="test@example.com">
+    <input id="login-password" type="password" placeholder="Password" value="password123">
+    <button id="login-button">Login</button>
+    <div id="login-result" class="result"></div>
+  </div>
 
-  <section>
-    <h2>Frontend Routes Test</h2>
-    
-    <div>
-      <h3>1. Test /auth route</h3>
-      <p>This button will navigate to the /auth route which should display the authentication page</p>
-      <button id="testAuthRoute">Navigate to /auth</button>
-    </div>
+  <div class="test-section">
+    <h2>Get Current User</h2>
+    <button id="get-user-button">Get Current User</button>
+    <div id="user-result" class="result"></div>
+  </div>
 
+  <div class="test-section">
+    <h2>Logout</h2>
+    <button id="logout-button">Logout</button>
+    <div id="logout-result" class="result"></div>
+  </div>
+  
+  <div class="test-section">
+    <h2>WebSocket Test</h2>
     <div>
-      <h3>2. Test /sign-in route</h3>
-      <p>This button will navigate to the /sign-in route which should redirect to /auth</p>
-      <button id="testSignInRoute">Navigate to /sign-in</button>
+      <span>Status: </span>
+      <span id="ws-status-indicator" class="status-indicator status-disconnected"></span>
+      <span id="ws-status-text">Disconnected</span>
     </div>
-  </section>
+    <button id="ws-connect">Connect</button>
+    <button id="ws-disconnect">Disconnect</button>
+    <button id="ws-authenticate">Authenticate</button>
+    <button id="ws-send-message">Send Message</button>
+    <div id="ws-result" class="result"></div>
+  </div>
 
   <script>
-    // Health check
-    document.getElementById('healthCheck').addEventListener('click', async () => {
-      const resultEl = document.getElementById('healthResult');
+    // Store the session data
+    let currentSession = null;
+    let ws = null;
+
+    // Helper to show results
+    function showResult(id, data, isError = false) {
+      const element = document.getElementById(id);
+      if (isError) {
+        element.innerHTML = `<span style="color: red">ERROR: ${JSON.stringify(data, null, 2)}</span>`;
+      } else {
+        element.innerHTML = JSON.stringify(data, null, 2);
+      }
+    }
+
+    // Server status checks
+    document.getElementById('check-health').addEventListener('click', async () => {
       try {
-        resultEl.textContent = 'Checking...';
+        const response = await fetch('/health');
+        const data = await response.json();
+        showResult('server-status-result', data);
+      } catch (error) {
+        showResult('server-status-result', error.message, true);
+      }
+    });
+
+    document.getElementById('check-api-status').addEventListener('click', async () => {
+      try {
         const response = await fetch('/api/status');
         const data = await response.json();
-        resultEl.textContent = JSON.stringify(data, null, 2);
+        showResult('server-status-result', data);
       } catch (error) {
-        resultEl.innerHTML = `<span class="error">${error.message}</span>`;
+        showResult('server-status-result', error.message, true);
       }
     });
 
-    // Login test
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const resultEl = document.getElementById('loginResult');
-      
-      try {
-        resultEl.textContent = 'Submitting...';
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password }),
-          credentials: 'include'
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-          resultEl.textContent = JSON.stringify(data, null, 2);
-        } else {
-          resultEl.innerHTML = `<span class="error">Error: ${data.error || response.statusText}</span>\n${JSON.stringify(data, null, 2)}`;
-        }
-      } catch (error) {
-        resultEl.innerHTML = `<span class="error">${error.message}</span>`;
-      }
-    });
+    // Register
+    document.getElementById('register-button').addEventListener('click', async () => {
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const firstName = document.getElementById('register-first-name').value;
+      const lastName = document.getElementById('register-last-name').value;
+      const role = document.getElementById('register-role').value;
 
-    // Registration test
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const resultEl = document.getElementById('registerResult');
-      
+      if (!email || !password || !firstName || !role) {
+        showResult('register-result', 'All fields are required', true);
+        return;
+      }
+
       try {
-        resultEl.textContent = 'Submitting...';
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        const firstName = document.getElementById('regFirstName').value;
-        const lastName = document.getElementById('regLastName').value;
-        const role = document.getElementById('regRole').value;
-        
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ 
-            email, 
-            password, 
+          body: JSON.stringify({
+            email,
+            password,
             firstName,
             lastName,
-            fullName: `${firstName} ${lastName}`,
-            role 
+            role
           }),
           credentials: 'include'
         });
-        
+
         const data = await response.json();
         
         if (response.ok) {
-          resultEl.textContent = JSON.stringify(data, null, 2);
+          currentSession = data.session;
+          showResult('register-result', data);
         } else {
-          resultEl.innerHTML = `<span class="error">Error: ${data.error || response.statusText}</span>\n${JSON.stringify(data, null, 2)}`;
+          showResult('register-result', data, true);
         }
       } catch (error) {
-        resultEl.innerHTML = `<span class="error">${error.message}</span>`;
+        showResult('register-result', error.message, true);
       }
     });
 
-    // Test frontend routes
-    document.getElementById('testAuthRoute').addEventListener('click', () => {
-      window.location.href = '/auth';
+    // Login
+    document.getElementById('login-button').addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showResult('login-result', 'Email and password are required', true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email,
+            password
+          }),
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          currentSession = data.session;
+          showResult('login-result', data);
+        } else {
+          showResult('login-result', data, true);
+        }
+      } catch (error) {
+        showResult('login-result', error.message, true);
+      }
     });
-    
-    document.getElementById('testSignInRoute').addEventListener('click', () => {
-      window.location.href = '/sign-in';
+
+    // Get current user
+    document.getElementById('get-user-button').addEventListener('click', async () => {
+      try {
+        const headers = {};
+        if (currentSession?.access_token) {
+          headers['Authorization'] = `Bearer ${currentSession.access_token}`;
+        }
+
+        const response = await fetch('/api/auth/user', {
+          headers,
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          showResult('user-result', data);
+        } else {
+          showResult('user-result', data, true);
+        }
+      } catch (error) {
+        showResult('user-result', error.message, true);
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-button').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          currentSession = null;
+          showResult('logout-result', data);
+        } else {
+          showResult('logout-result', data, true);
+        }
+      } catch (error) {
+        showResult('logout-result', error.message, true);
+      }
+    });
+
+    // WebSocket functionality
+    document.getElementById('ws-connect').addEventListener('click', () => {
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        showResult('ws-result', 'WebSocket already connected or connecting');
+        return;
+      }
+
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          document.getElementById('ws-status-indicator').className = 'status-indicator status-connected';
+          document.getElementById('ws-status-text').textContent = 'Connected';
+          showResult('ws-result', 'WebSocket connected');
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'auth_success') {
+              document.getElementById('ws-status-text').textContent = 'Authenticated';
+            }
+            showResult('ws-result', data);
+          } catch (error) {
+            showResult('ws-result', `Received: ${event.data}`);
+          }
+        };
+        
+        ws.onclose = () => {
+          document.getElementById('ws-status-indicator').className = 'status-indicator status-disconnected';
+          document.getElementById('ws-status-text').textContent = 'Disconnected';
+          showResult('ws-result', 'WebSocket disconnected');
+          ws = null;
+        };
+        
+        ws.onerror = (error) => {
+          showResult('ws-result', 'WebSocket error', true);
+        };
+      } catch (error) {
+        showResult('ws-result', error.message, true);
+      }
+    });
+
+    document.getElementById('ws-disconnect').addEventListener('click', () => {
+      if (!ws) {
+        showResult('ws-result', 'WebSocket not connected');
+        return;
+      }
+      
+      ws.close();
+    });
+
+    document.getElementById('ws-authenticate').addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        showResult('ws-result', 'WebSocket not connected');
+        return;
+      }
+      
+      if (!currentSession?.access_token) {
+        showResult('ws-result', 'No authentication token available. Please login first.', true);
+        return;
+      }
+      
+      ws.send(JSON.stringify({
+        type: 'authenticate',
+        token: currentSession.access_token
+      }));
+      
+      showResult('ws-result', 'Sent authentication request');
+    });
+
+    document.getElementById('ws-send-message').addEventListener('click', () => {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        showResult('ws-result', 'WebSocket not connected');
+        return;
+      }
+      
+      ws.send(JSON.stringify({
+        type: 'message',
+        channel: 'global',
+        content: 'Hello from test page!',
+        persist: true
+      }));
+      
+      showResult('ws-result', 'Sent message to global channel');
     });
   </script>
 </body>

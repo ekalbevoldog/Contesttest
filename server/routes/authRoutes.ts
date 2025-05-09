@@ -18,16 +18,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// Add a test endpoint to verify auth routes are working
-router.get('/test', (req, res) => {
-  console.log('[Auth] Test endpoint hit');
-  res.json({ 
-    message: 'Auth routes are working properly',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// More detailed test endpoint for debugging
+// Test endpoint to verify auth routes are working
 router.get('/test', (req, res) => {
   console.log('[Auth] Test endpoint hit from ' + req.ip);
   res.json({ 
