@@ -5,7 +5,7 @@
  * communication is working properly.
  */
 
-const WebSocket = require('ws');
+import WebSocket from 'ws';
 const colors = {
   reset: '\x1b[0m',
   red: '\x1b[31m',

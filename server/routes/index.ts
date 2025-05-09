@@ -63,7 +63,10 @@ export function registerRoutes(app: Express): Express {
   app.use('/simple.html', (req, res, next) => {
     // If the url is exactly "/simple.html", serve it from public
     if (req.path === '/') {
-      const publicDir = path.resolve(__dirname, '../../../public');
+      // Use import.meta.url for ESM compatibility
+      const currentFilePath = new URL(import.meta.url).pathname;
+      const currentDir = path.dirname(currentFilePath);
+      const publicDir = path.resolve(currentDir, '../../../public');
       const testFilePath = path.join(publicDir, 'simple.html');
       if (fs.existsSync(testFilePath)) {
         return res.sendFile(testFilePath);
@@ -75,7 +78,10 @@ export function registerRoutes(app: Express): Express {
   app.use('/websocket-test.html', (req, res, next) => {
     // If the url is exactly "/websocket-test.html", serve it from public
     if (req.path === '/') {
-      const publicDir = path.resolve(__dirname, '../../../public');
+      // Use import.meta.url for ESM compatibility
+      const currentFilePath = new URL(import.meta.url).pathname;
+      const currentDir = path.dirname(currentFilePath);
+      const publicDir = path.resolve(currentDir, '../../../public');
       const testFilePath = path.join(publicDir, 'websocket-test.html');
       if (fs.existsSync(testFilePath)) {
         return res.sendFile(testFilePath);
@@ -87,7 +93,10 @@ export function registerRoutes(app: Express): Express {
   app.use('/test.html', (req, res, next) => {
     // If the url is exactly "/test.html", serve it from public
     if (req.path === '/') {
-      const publicDir = path.resolve(__dirname, '../../../public');
+      // Use import.meta.url for ESM compatibility
+      const currentFilePath = new URL(import.meta.url).pathname;
+      const currentDir = path.dirname(currentFilePath);
+      const publicDir = path.resolve(currentDir, '../../../public');
       const testFilePath = path.join(publicDir, 'test.html');
       if (fs.existsSync(testFilePath)) {
         return res.sendFile(testFilePath);
