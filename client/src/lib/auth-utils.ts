@@ -16,99 +16,150 @@ export async function loginWithEmail(email: string, password: string) {
       password
     });
 
+    // Track authentication attempts
+    let supabaseSuccess = false;
+    let apiSuccess = false;
+    let finalUserData = null;
+
+    // If Supabase login worked, note the success
     if (!supabaseError && supabaseData?.session) {
       console.log('[Auth Utils] Direct Supabase login successful');
+      supabaseSuccess = true;
+    } else {
+      console.log('[Auth Utils] Direct Supabase login failed:', supabaseError?.message);
+    }
 
-      // Now call our API endpoint to sync the user data properly
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseData.session.access_token}`,
-          },
-          body: JSON.stringify({ email, password }),
-          credentials: 'include',
-        });
+    // Always try our API endpoint to ensure server-side session is created
+    // and to get profile data from the database
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
 
-        if (response.ok) {
-          console.log('[Auth Utils] API login sync successful');
-          const apiData = await response.json();
+      // Add bearer token if available from Supabase
+      if (supabaseSuccess && supabaseData?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${supabaseData.session.access_token}`;
+      }
 
-          // Return combined data from both sources
-          return {
-            user: supabaseData.user,
-            session: supabaseData.session,
-            profile: apiData.profile || null,
-            redirectTo: apiData.redirectTo || null,
-            ...apiData
-          };
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ email, password }),
+        credentials: 'include', // Important to include cookies
+      });
+
+      console.log('[Auth Utils] API login response status:', response.status);
+
+      if (response.ok) {
+        console.log('[Auth Utils] API login successful');
+        const apiData = await response.json();
+        apiSuccess = true;
+        finalUserData = apiData;
+
+        // If API call provides a session but we don't have one from Supabase,
+        // synchronize it with Supabase client
+        if (apiData.session && !supabaseSuccess) {
+          console.log('[Auth Utils] Setting Supabase session from API response');
+          try {
+            await supabase.auth.setSession({
+              access_token: apiData.session.access_token,
+              refresh_token: apiData.session.refresh_token
+            });
+            supabaseSuccess = true;
+          } catch (sessionError) {
+            console.error('[Auth Utils] Error setting Supabase session:', sessionError);
+          }
         }
 
-        // Even if API call fails, we still have a successful Supabase login
-        console.log('[Auth Utils] API login sync failed, but Supabase login succeeded');
-        return {
-          user: supabaseData.user,
-          session: supabaseData.session
-        };
-      } catch (apiError) {
-        console.error('[Auth Utils] API login sync error:', apiError);
-        // Non-blocking - return Supabase data anyway
-        return {
-          user: supabaseData.user,
-          session: supabaseData.session
-        };
-      }
-    }
-
-    // If Supabase login failed, try our API endpoint
-    if (supabaseError) {
-      console.log('[Auth Utils] Direct Supabase login failed, trying API endpoint');
-    }
-
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || errorData.message || 'Login failed');
-    }
-
-    const apiData = await response.json();
-    console.log('[Auth Utils] API login successful');
-
-    // If API login succeeded but we don't have a Supabase session, set it
-    if (apiData.session && !supabaseData?.session) {
-      console.log('[Auth Utils] Setting Supabase session from API response');
-      try {
-        await supabase.auth.setSession({
-          access_token: apiData.session.access_token,
-          refresh_token: apiData.session.refresh_token
-        });
-
-        // Also store session data in localStorage as a backup
+        // Cache successful login data
         try {
-          localStorage.setItem('contested-auth', JSON.stringify({
-            session: apiData.session,
-            user: apiData.user || null,
-            timestamp: new Date().toISOString()
+          localStorage.setItem('contestedUserData', JSON.stringify({
+            ...apiData,
+            timestamp: Date.now()
           }));
-          console.log('[Auth Utils] Saved session backup to localStorage');
+          
+          // Also store auth session as a backup
+          if (apiData.session) {
+            localStorage.setItem('contested-auth', JSON.stringify({
+              session: apiData.session,
+              user: apiData.user || null,
+              timestamp: Date.now()
+            }));
+          }
+          console.log('[Auth Utils] Saved session and user data to localStorage');
         } catch (storageError) {
-          console.warn('[Auth Utils] Failed to save session backup to localStorage:', storageError);
+          console.warn('[Auth Utils] Unable to store auth data in localStorage:', storageError);
         }
-      } catch (sessionError) {
-        console.error('[Auth Utils] Failed to set Supabase session:', sessionError);
+      } else {
+        // API login failed, possibly due to server issues or incorrect credentials
+        const errorData = await response.json();
+        console.error('[Auth Utils] API login failed:', errorData);
+        
+        // If Supabase succeeded but API failed, we can still proceed with 
+        // limited functionality using just the Supabase user data
+        if (supabaseSuccess) {
+          console.log('[Auth Utils] Using Supabase data as fallback after API failure');
+          const userData = supabaseData.user;
+          const role = userData.user_metadata?.role || 
+                      userData.user_metadata?.userType || 
+                      userData.user_metadata?.user_type || 
+                      'user';
+                      
+          finalUserData = {
+            user: {
+              id: userData.id,
+              email: userData.email || '',
+              role: role,
+              ...userData.user_metadata
+            },
+            session: supabaseData.session,
+            authenticated: true
+          };
+        } else {
+          // Both authentication methods failed
+          throw new Error(errorData.error || errorData.message || 'Login failed');
+        }
+      }
+    } catch (apiError) {
+      console.error('[Auth Utils] API login error:', apiError);
+      
+      // If Supabase succeeded but API call threw an exception, 
+      // fall back to Supabase-only user data
+      if (supabaseSuccess) {
+        console.log('[Auth Utils] Falling back to Supabase-only login due to API error');
+        const userData = supabaseData.user;
+        const role = userData.user_metadata?.role || 
+                    userData.user_metadata?.userType || 
+                    userData.user_metadata?.user_type || 
+                    'user';
+                    
+        finalUserData = {
+          user: {
+            id: userData.id,
+            email: userData.email || '',
+            role: role,
+            ...userData.user_metadata
+          },
+          session: supabaseData.session,
+          authenticated: true
+        };
+      } else {
+        // Both authentication methods failed
+        throw new Error(apiError.message || 'Login failed');
       }
     }
 
-    return apiData;
+    // If we have authentication from either source, return the data
+    if (finalUserData) {
+      // Ensure standard fields are present in the response
+      return {
+        ...finalUserData,
+        authenticated: true
+      };
+    }
+
+    // If we got here, both auth methods failed
+    throw new Error('Login failed: Unable to authenticate with email and password');
   } catch (error) {
     console.error('[Auth Utils] Login error:', error);
     throw error;
@@ -121,6 +172,11 @@ export async function loginWithEmail(email: string, password: string) {
 export async function registerWithEmail(email: string, password: string, fullName: string, role: string) {
   try {
     console.log('[Auth Utils] Attempting registration with email');
+
+    // Track authentication attempts
+    let supabaseSuccess = false;
+    let apiSuccess = false;
+    let finalUserData = null;
 
     // First try to register directly with Supabase for better session handling
     const { data: supabaseData, error: supabaseError } = await supabase.auth.signUp({
@@ -135,100 +191,168 @@ export async function registerWithEmail(email: string, password: string, fullNam
       }
     });
 
+    // If Supabase registration worked, note the success
     if (!supabaseError && supabaseData?.session) {
       console.log('[Auth Utils] Direct Supabase registration successful');
+      supabaseSuccess = true;
+    } else {
+      console.log('[Auth Utils] Direct Supabase registration failed:', supabaseError?.message);
+    }
 
-      // Now call our API endpoint to create the corresponding database record
-      try {
-        console.log('[Auth Utils] Creating user record in database after Supabase registration');
-        const serverResponse = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseData.session.access_token}`,
-          },
-          body: JSON.stringify({ 
-            email, 
-            password, 
-            fullName, 
-            role,
-            auth_id: supabaseData.user?.id // Include auth ID to link records
-          }),
-          credentials: 'include', // Important: include cookies in the request
-        });
+    // Always try our API endpoint to ensure server-side record creation
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
 
-        if (serverResponse.ok) {
-          console.log('[Auth Utils] Server registration sync successful');
-          const serverData = await serverResponse.json();
+      // Add bearer token if available from Supabase
+      if (supabaseSuccess && supabaseData?.session?.access_token) {
+        headers['Authorization'] = `Bearer ${supabaseData.session.access_token}`;
+      }
 
-          // Return combined data from both sources
-          return {
-            user: supabaseData.user,
-            session: supabaseData.session,
-            profile: serverData.profile || null,
-            redirectTo: serverData.redirectTo || null,
-            needsProfile: serverData.needsProfile || false,
-            serverData
-          };
+      // Prepare request data with proper typing
+      const requestData: {
+        email: string;
+        password: string;
+        fullName: string;
+        role: string;
+        auth_id?: string;
+      } = { 
+        email, 
+        password, 
+        fullName, 
+        role 
+      };
+
+      // If we have a Supabase user ID, include it to link records
+      if (supabaseSuccess && supabaseData?.user?.id) {
+        requestData.auth_id = supabaseData.user.id;
+      }
+
+      console.log('[Auth Utils] Creating user record in database');
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestData),
+        credentials: 'include', // Important: include cookies in the request
+      });
+
+      console.log('[Auth Utils] API registration response status:', response.status);
+
+      if (response.ok) {
+        console.log('[Auth Utils] API registration successful');
+        const apiData = await response.json();
+        apiSuccess = true;
+        finalUserData = apiData;
+
+        // If API call provides a session but we don't have one from Supabase,
+        // synchronize it with Supabase client
+        if (apiData.session && !supabaseSuccess) {
+          console.log('[Auth Utils] Setting Supabase session from API response');
+          try {
+            await supabase.auth.setSession({
+              access_token: apiData.session.access_token,
+              refresh_token: apiData.session.refresh_token
+            });
+            supabaseSuccess = true;
+          } catch (sessionError) {
+            console.error('[Auth Utils] Error setting Supabase session:', sessionError);
+          }
         }
 
-        // Even if API call fails, we still have a successful Supabase registration
-        console.log('[Auth Utils] Server registration sync failed, but Supabase registration succeeded');
-        return {
-          user: supabaseData.user,
+        // Cache successful registration data
+        try {
+          localStorage.setItem('contestedUserData', JSON.stringify({
+            ...apiData,
+            timestamp: Date.now()
+          }));
+          
+          // Also store auth session as a backup
+          if (apiData.session) {
+            localStorage.setItem('contested-auth', JSON.stringify({
+              session: apiData.session,
+              user: apiData.user || null,
+              timestamp: Date.now()
+            }));
+          }
+          console.log('[Auth Utils] Saved session and user data to localStorage');
+        } catch (storageError) {
+          console.warn('[Auth Utils] Unable to store auth data in localStorage:', storageError);
+        }
+      } else {
+        // API registration failed
+        const errorData = await response.json();
+        console.error('[Auth Utils] API registration failed:', errorData);
+        
+        // If Supabase succeeded but API failed, we can still proceed with limited functionality
+        if (supabaseSuccess && supabaseData?.user) {
+          console.log('[Auth Utils] Using Supabase data as fallback after API failure');
+          const userData = supabaseData.user;
+          const role = userData.user_metadata?.role || 
+                      userData.user_metadata?.userType || 
+                      userData.user_metadata?.user_type || 
+                      'user';
+                      
+          finalUserData = {
+            user: {
+              id: userData.id,
+              email: userData.email || '',
+              role: role,
+              ...(userData.user_metadata || {})
+            },
+            session: supabaseData.session,
+            authenticated: true,
+            needsProfile: true // Assume profile needs to be created if server sync failed
+          };
+        } else {
+          // Both registration methods failed
+          throw new Error(errorData.error || errorData.message || 'Registration failed');
+        }
+      }
+    } catch (apiError) {
+      console.error('[Auth Utils] API registration error:', apiError);
+      
+      // If Supabase succeeded but API call threw an exception, 
+      // fall back to Supabase-only user data
+      if (supabaseSuccess && supabaseData?.user) {
+        console.log('[Auth Utils] Falling back to Supabase-only registration due to API error');
+        const userData = supabaseData.user;
+        const role = userData.user_metadata?.role || 
+                    userData.user_metadata?.userType || 
+                    userData.user_metadata?.user_type || 
+                    'user';
+                    
+        finalUserData = {
+          user: {
+            id: userData.id,
+            email: userData.email || '',
+            role: role,
+            ...(userData.user_metadata || {})
+          },
           session: supabaseData.session,
-          // Assume profile needs to be created if server sync failed
-          needsProfile: true
+          authenticated: true,
+          needsProfile: true // Assume profile needs to be created if server sync failed
         };
-      } catch (apiError) {
-        console.error('[Auth Utils] Server registration sync error:', apiError);
-        // Non-blocking error, still return Supabase data
-        return {
-          user: supabaseData.user,
-          session: supabaseData.session,
-          // Assume profile needs to be created if server sync failed
-          needsProfile: true
-        };
+      } else {
+        // Both authentication methods failed
+        const errorMessage = apiError instanceof Error 
+          ? apiError.message 
+          : 'Registration failed';
+        throw new Error(errorMessage);
       }
     }
 
-    // If Supabase registration failed or returned errors, try our server endpoint
-    if (supabaseError) {
-      console.log('[Auth Utils] Direct Supabase registration failed, trying server endpoint:', supabaseError.message);
+    // If we have authentication from either source, return the data
+    if (finalUserData) {
+      // Ensure standard fields are present in the response
+      return {
+        ...finalUserData,
+        authenticated: true
+      };
     }
 
-    console.log('[Auth Utils] Using server endpoint for registration');
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password, fullName, role }),
-      credentials: 'include', // Important: include cookies in the request
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || errorData.message || 'Registration failed');
-    }
-
-    const apiData = await response.json();
-    console.log('[Auth Utils] Server registration successful');
-
-    // If server registration succeeded but we don't have a Supabase session, set it
-    if (apiData.session && !supabaseData?.session) {
-      console.log('[Auth Utils] Setting Supabase session from server response');
-      try {
-        await supabase.auth.setSession({
-          access_token: apiData.session.access_token,
-          refresh_token: apiData.session.refresh_token
-        });
-      } catch (sessionError) {
-        console.error('[Auth Utils] Error setting session:', sessionError);
-      }
-    }
-
-    return apiData;
+    // If we got here, both registration methods failed
+    throw new Error('Registration failed: Unable to create account with email and password');
   } catch (error) {
     console.error('[Auth Utils] Registration error:', error);
     throw error;
