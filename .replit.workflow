@@ -10,15 +10,16 @@
         ]
       }
     },
-    "StartApplication": {
-      "name": "Start application",
+    "AuthTestServer": {
+      "name": "Auth Test Server",
       "command": "node start-dev.js",
       "restartOn": {
         "files": [
           "server/**/*.ts",
           "shared/**/*.ts",
           "client/src/**/*.ts",
-          "client/src/**/*.tsx"
+          "client/src/**/*.tsx",
+          "start-dev.js"
         ]
       },
       "runAtStart": true
