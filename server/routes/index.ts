@@ -95,6 +95,31 @@ export function registerRoutes(app: Express): Express {
     }
     next();
   });
+
+  // Serve our auth test page
+  app.use('/auth-test.html', (req, res, next) => {
+    if (req.path === '/') {
+      const publicDir = path.resolve(__dirname, '../../../public');
+      const testFilePath = path.join(publicDir, 'auth-test.html');
+      if (fs.existsSync(testFilePath)) {
+        console.log('Serving auth-test.html from', testFilePath);
+        return res.sendFile(testFilePath);
+      }
+    }
+    next();
+  });
+  
+  // Add explicit middleware for client-side authentication routes
+  // This ensures they're handled correctly by the frontend router
+  app.use('/sign-in', (req, res, next) => {
+    console.log('Sign-in route accessed, passing to frontend router');
+    next(); // Let Vite handle this route
+  });
+
+  app.use('/auth', (req, res, next) => {
+    console.log('Auth route accessed, passing to frontend router');
+    next(); // Let Vite handle this route
+  });
   
   // DO NOT register public routes here, let Vite handle the React app
   // This ensures proper handling of the root path and client-side routing

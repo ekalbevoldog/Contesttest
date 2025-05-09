@@ -8,19 +8,31 @@
 import { Request, Response } from 'express';
 import { authService } from '../services/authService';
 
+// Extend Express Request type to include user property
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
+    [key: string]: any;
+  };
+}
+
 class AuthController {
   /**
    * Handle user login
    */
   async login(req: Request, res: Response) {
     try {
+      console.log(`[Auth Controller] Login request received from ${req.ip}`);
       const { email, password } = req.body;
 
       // Validate input
       if (!email || !password) {
+        console.log('[Auth Controller] Login validation failed: Missing email or password');
         return res.status(400).json({ error: 'Email and password are required' });
       }
 
+      console.log(`[Auth Controller] Attempting login for email: ${email}`);
       // Attempt login
       const result = await authService.login({ email, password });
 
@@ -55,14 +67,17 @@ class AuthController {
    */
   async register(req: Request, res: Response) {
     try {
+      console.log(`[Auth Controller] Registration request received from ${req.ip}`);
       const registrationData = req.body;
 
       // Validate required fields
       if (!registrationData.email || !registrationData.password || 
           !registrationData.firstName || !registrationData.role) {
+        console.log('[Auth Controller] Registration validation failed: Missing required fields');
         return res.status(400).json({ error: 'Required fields missing' });
       }
 
+      console.log(`[Auth Controller] Attempting registration for email: ${registrationData.email}, role: ${registrationData.role}`);
       // Attempt registration
       const result = await authService.register(registrationData);
 
@@ -113,7 +128,7 @@ class AuthController {
   /**
    * Get current user info
    */
-  async getCurrentUser(req: Request, res: Response) {
+  async getCurrentUser(req: AuthenticatedRequest, res: Response) {
     try {
       // User should be attached to request by auth middleware
       if (!req.user) {
@@ -130,7 +145,7 @@ class AuthController {
   /**
    * Update user information
    */
-  async updateUser(req: Request, res: Response) {
+  async updateUser(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.id;
 
@@ -146,8 +161,11 @@ class AuthController {
       }
 
       // Don't allow role changes through this endpoint
-      if (userData.role && userData.role !== req.user.role) {
-        return res.status(403).json({ error: 'Role cannot be changed' });
+      if (userData.role && req.user) {
+        const userRole = req.user.role;
+        if (userData.role !== userRole) {
+          return res.status(403).json({ error: 'Role cannot be changed' });
+        }
       }
 
       // Update user
@@ -208,7 +226,7 @@ class AuthController {
   /**
    * Change user password
    */
-  async changePassword(req: Request, res: Response) {
+  async changePassword(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = req.user?.id;
 

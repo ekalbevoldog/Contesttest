@@ -12,6 +12,21 @@ import { requireAuth } from '../middleware/auth';
 // Create a router
 const router = express.Router();
 
+// Add request logging middleware for debugging
+router.use((req, res, next) => {
+  console.log(`[Auth] ${req.method} ${req.originalUrl} request received`);
+  next();
+});
+
+// Add a test endpoint to verify auth routes are working
+router.get('/test', (req, res) => {
+  console.log('[Auth] Test endpoint hit');
+  res.json({ 
+    message: 'Auth routes are working properly',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Public routes
 router.post('/login', authController.login.bind(authController));
 router.post('/register', authController.register.bind(authController));

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication Routes Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+    section {
+      margin-bottom: 30px;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .error {
+      color: red;
+    }
+    input, select {
+      padding: 8px;
+      margin: 5px 0;
+      display: block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 300px;
+    }
+    label {
+      margin-top: 10px;
+      display: block;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Authentication Routes Test</h1>
+  
+  <section>
+    <h2>API Routes Test</h2>
+    
+    <div>
+      <h3>1. API Health Check</h3>
+      <button id="healthCheck">Test API Health</button>
+      <pre id="healthResult">Results will appear here...</pre>
+    </div>
+
+    <div>
+      <h3>2. Test API Login</h3>
+      <form id="loginForm">
+        <label for="loginEmail">Email:</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" value="test@example.com">
+        
+        <label for="loginPassword">Password:</label>
+        <input type="password" id="loginPassword" placeholder="Password" value="testpassword">
+        
+        <button type="submit">Try Login</button>
+      </form>
+      <pre id="loginResult">Results will appear here...</pre>
+    </div>
+
+    <div>
+      <h3>3. Test API Registration</h3>
+      <form id="registerForm">
+        <label for="regEmail">Email:</label>
+        <input type="email" id="regEmail" placeholder="your@email.com">
+        
+        <label for="regPassword">Password:</label>
+        <input type="password" id="regPassword" placeholder="Password">
+        
+        <label for="regFirstName">First Name:</label>
+        <input type="text" id="regFirstName" placeholder="John">
+        
+        <label for="regLastName">Last Name:</label>
+        <input type="text" id="regLastName" placeholder="Doe">
+        
+        <label for="regRole">Role:</label>
+        <select id="regRole">
+          <option value="athlete">Athlete</option>
+          <option value="business">Business</option>
+          <option value="compliance">Compliance</option>
+          <option value="admin">Admin</option>
+        </select>
+        
+        <button type="submit">Try Registration</button>
+      </form>
+      <pre id="registerResult">Results will appear here...</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Frontend Routes Test</h2>
+    
+    <div>
+      <h3>1. Test /auth route</h3>
+      <p>This button will navigate to the /auth route which should display the authentication page</p>
+      <button id="testAuthRoute">Navigate to /auth</button>
+    </div>
+
+    <div>
+      <h3>2. Test /sign-in route</h3>
+      <p>This button will navigate to the /sign-in route which should redirect to /auth</p>
+      <button id="testSignInRoute">Navigate to /sign-in</button>
+    </div>
+  </section>
+
+  <script>
+    // Health check
+    document.getElementById('healthCheck').addEventListener('click', async () => {
+      const resultEl = document.getElementById('healthResult');
+      try {
+        resultEl.textContent = 'Checking...';
+        const response = await fetch('/api/status');
+        const data = await response.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        resultEl.innerHTML = `<span class="error">${error.message}</span>`;
+      }
+    });
+
+    // Login test
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const resultEl = document.getElementById('loginResult');
+      
+      try {
+        resultEl.textContent = 'Submitting...';
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        } else {
+          resultEl.innerHTML = `<span class="error">Error: ${data.error || response.statusText}</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        resultEl.innerHTML = `<span class="error">${error.message}</span>`;
+      }
+    });
+
+    // Registration test
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const resultEl = document.getElementById('registerResult');
+      
+      try {
+        resultEl.textContent = 'Submitting...';
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const firstName = document.getElementById('regFirstName').value;
+        const lastName = document.getElementById('regLastName').value;
+        const role = document.getElementById('regRole').value;
+        
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            firstName,
+            lastName,
+            fullName: `${firstName} ${lastName}`,
+            role 
+          }),
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        } else {
+          resultEl.innerHTML = `<span class="error">Error: ${data.error || response.statusText}</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        resultEl.innerHTML = `<span class="error">${error.message}</span>`;
+      }
+    });
+
+    // Test frontend routes
+    document.getElementById('testAuthRoute').addEventListener('click', () => {
+      window.location.href = '/auth';
+    });
+    
+    document.getElementById('testSignInRoute').addEventListener('click', () => {
+      window.location.href = '/sign-in';
+    });
+  </script>
+</body>
+</html>
