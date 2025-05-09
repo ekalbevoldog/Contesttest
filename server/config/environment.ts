@@ -86,7 +86,7 @@ interface Config {
 
 export const config: Config = {
   // Server configuration
-  PORT: parseInt(process.env.PORT || '3001', 10), // Changed from 3000 to 3001
+  PORT: parseInt(process.env.PORT || '5000', 10), // Changed from 3001 to 5000
   HOST: process.env.HOST || '0.0.0.0',
   NODE_ENV: process.env.NODE_ENV || 'development',
   isDevelopment: (process.env.NODE_ENV !== 'production'),

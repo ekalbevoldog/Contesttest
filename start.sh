@@ -1,19 +1,22 @@
 #!/bin/bash
 # Start script for the Contested application
 
-echo "Starting Contested server with proper configuration..."
+echo "Starting Contested server on port 5000..."
 
-# Ensure the script is executable
-chmod +x ./run-server.sh
-
-# Create a necessary link from public to client to ensure proper file serving
-echo "Setting up environment for proper file serving..."
+# Create necessary directories and prepare files
 mkdir -p public
-if [ ! -f public/index.html ]; then
-  echo "Linking client/index.html to public directory for development..."
+mkdir -p client/dist
+
+# Copy client/index.html to public for proper serving
+if [ -f client/index.html ]; then
   cp client/index.html public/index.html
+  echo "✓ Copied client/index.html to public/"
 fi
 
-# Start the server with the correct Supabase configuration
-echo "Launching server via run-server.sh script..."
-./run-server.sh
+# Set environment variables
+export NODE_ENV=development
+export PORT=5000
+
+# Run the server - direct and simple
+echo "Launching server..."
+exec npx tsx server/index.ts

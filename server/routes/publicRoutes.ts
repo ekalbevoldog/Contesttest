@@ -1,7 +1,8 @@
-/** 05/09/2025 - 11:20 CST
+/** 05/09/2025 - 13:45 CST
  * Public Routes for Static Assets
  * 
  * Handles serving static assets and the client-side application.
+ * This file ensures that the React app (Home.tsx) is properly served from the main route.
  */
 
 import express, { Router } from 'express';
@@ -103,34 +104,62 @@ if (staticDir) {
 
 // No simplified HTML fallback - we want to properly load the React app
 
+// Specifically handle test pages that should only be accessible when explicitly requested
+router.get('/test.html', (req, res) => {
+  const publicDir = path.resolve(__dirname, '../../../public');
+  const testFilePath = path.join(publicDir, 'test.html');
+  if (fileExists(testFilePath)) {
+    return res.sendFile(testFilePath);
+  }
+  res.status(404).send('Test page not found');
+});
+
+router.get('/websocket-test.html', (req, res) => {
+  const publicDir = path.resolve(__dirname, '../../../public');
+  const testFilePath = path.join(publicDir, 'websocket-test.html');
+  if (fileExists(testFilePath)) {
+    return res.sendFile(testFilePath);
+  }
+  res.status(404).send('WebSocket test page not found');
+});
+
+router.get('/simple.html', (req, res) => {
+  const publicDir = path.resolve(__dirname, '../../../public');
+  const testFilePath = path.join(publicDir, 'simple.html');
+  if (fileExists(testFilePath)) {
+    return res.sendFile(testFilePath);
+  }
+  res.status(404).send('Simple test page not found');
+});
+
 // Always serve index.html for any route not handled (client-side routing)
 router.get('*', (req, res) => {
+  // Priority for serving:
+  // 1. First check if React client's index.html is available
+  const clientIndexPath = path.resolve(__dirname, '../../../client/index.html');
+  if (fileExists(clientIndexPath)) {
+    console.log(`[routes-public] Serving React app from: ${clientIndexPath}`);
+    return res.sendFile(clientIndexPath);
+  }
+  
+  // 2. If client index.html isn't available, try static files
   if (staticDir) {
-    // First try to send the requested path
+    // If this is a specific file request, try to serve the file
     const requestedPath = path.join(staticDir, req.path);
-    if (fileExists(requestedPath) && !fs.statSync(requestedPath).isDirectory()) {
+    if (req.path !== '/' && fileExists(requestedPath) && !fs.statSync(requestedPath).isDirectory()) {
       return res.sendFile(requestedPath);
     }
     
-    // Then try to serve index.html from the staticDir
+    // 3. For all client routes or the home route, serve static index.html
     const indexPath = path.join(staticDir, 'index.html');
     if (fileExists(indexPath)) {
+      console.log(`[routes-public] Falling back to static index.html: ${indexPath}`);
       return res.sendFile(indexPath);
-    }
-    
-    // Check for our test pages in the public directory
-    const publicDir = path.resolve(__dirname, '../../../public');
-    
-    // Try to match specific test pages from public directory
-    if (req.path === '/test.html' || req.path === '/websocket-test.html' || req.path === '/simple.html') {
-      const testFilePath = path.join(publicDir, req.path);
-      if (fileExists(testFilePath)) {
-        return res.sendFile(testFilePath);
-      }
     }
   }
   
-  // Fallback to 404
+  // Fallback to 404 if nothing can be served
+  console.log(`[routes-public] Cannot serve route: ${req.path}`);
   res.status(404).send('Not found');
 });
 

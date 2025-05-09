@@ -9,7 +9,7 @@ deploymentTarget = "cloudrun"
 run = ["bash", "start.sh"]
 
 [[ports]]
-localPort = 3002
+localPort = 5000
 externalPort = 80
 
 [[ports]]

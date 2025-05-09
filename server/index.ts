@@ -1,8 +1,9 @@
-/** 05/08/2025 - 1334 CST
+/** 05/09/2025 - 1445 CST
  * Server Entry Point
  * 
  * This is the main server initialization that sets up Express, WebSockets,
- * database connections, middleware, API routes, and serves the React frontend.
+ * database connections, middleware, API routes, and serves the React frontend
+ * with Home.tsx as the primary landing page.
  */
 
 import express from 'express';
@@ -62,8 +63,7 @@ const server = http.createServer(app);
 // Configure WebSocket server if enabled
 const wss = configureWebSocketServer(server);
 
-// Register all API routes
-registerRoutes(app);
+// API routes will be registered in startServer to ensure proper order with Vite middleware
 
 // Graceful shutdown handler
 function gracefulShutdown(signal: string) {
@@ -99,7 +99,13 @@ server.on('error', (error: Error) => {
 // Start the server
 async function startServer() {
   try {
+    // Register API routes first so they're available in both development and production
+    // This ensures /api/... endpoints are accessible
+    console.log('Registering API-specific and health check routes');
+    registerRoutes(app);
+    
     // Set up frontend depending on environment
+    // This must be done AFTER API routes to ensure Vite handles frontend routes properly
     if (config.isDevelopment) {
       console.log('Setting up Vite development server for frontend');
       await setupVite(app, server);

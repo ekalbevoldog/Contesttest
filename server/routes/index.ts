@@ -8,6 +8,8 @@
 import { Express, Request, Response } from 'express';
 import { Server } from 'http';
 import { WebSocketServer } from 'ws';
+import path from 'path';
+import fs from 'fs';
 import config from '../config/environment';
 
 // Import route modules
@@ -50,9 +52,53 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/config', configRoutes);
   app.use('/api/offer', offerRoutes);
   app.use('/api/bundle', bundleRoutes);
+  
+  // Register test routes with explicit paths
   app.use('/api/ws-test', wsTestRoutes);
+  app.use('/test/websocket', wsTestRoutes); // Make test routes only accessible via explicit paths
   app.use('/health', healthRoutes);
-  app.use('/', publicRoutes);
+  
+  // Register routes for specific static test pages
+  // These will be used for direct testing and won't interfere with the React app
+  app.use('/simple.html', (req, res, next) => {
+    // If the url is exactly "/simple.html", serve it from public
+    if (req.path === '/') {
+      const publicDir = path.resolve(__dirname, '../../../public');
+      const testFilePath = path.join(publicDir, 'simple.html');
+      if (fs.existsSync(testFilePath)) {
+        return res.sendFile(testFilePath);
+      }
+    }
+    next();
+  });
+  
+  app.use('/websocket-test.html', (req, res, next) => {
+    // If the url is exactly "/websocket-test.html", serve it from public
+    if (req.path === '/') {
+      const publicDir = path.resolve(__dirname, '../../../public');
+      const testFilePath = path.join(publicDir, 'websocket-test.html');
+      if (fs.existsSync(testFilePath)) {
+        return res.sendFile(testFilePath);
+      }
+    }
+    next();
+  });
+  
+  app.use('/test.html', (req, res, next) => {
+    // If the url is exactly "/test.html", serve it from public
+    if (req.path === '/') {
+      const publicDir = path.resolve(__dirname, '../../../public');
+      const testFilePath = path.join(publicDir, 'test.html');
+      if (fs.existsSync(testFilePath)) {
+        return res.sendFile(testFilePath);
+      }
+    }
+    next();
+  });
+  
+  // DO NOT register public routes here, let Vite handle the React app
+  // This ensures proper handling of the root path and client-side routing
+  // app.use('/', publicRoutes);
 
   // API status endpoint
   app.get('/api/status', (req, res) => {

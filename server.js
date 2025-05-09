@@ -18,9 +18,10 @@ try {
 }
 
 // Start the server using tsx
+// Using port 5000 to match the configured port in config
 const server = spawn('npx', ['tsx', 'server/index.ts'], {
   stdio: 'inherit',
-  env: { ...process.env, PORT: '3002' }
+  env: { ...process.env, PORT: '5000' }
 });
 
 // Handle server process events
