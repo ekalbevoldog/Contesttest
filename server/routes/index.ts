@@ -5,7 +5,7 @@
  * Serves as the central router registry.
  */
 
-import { Express } from 'express';
+import { Express, Request, Response } from 'express';
 import { Server } from 'http';
 import { WebSocketServer } from 'ws';
 import config from '../config/environment';
@@ -19,6 +19,9 @@ import matchRoutes from './matchRoutes';
 import subscriptionRoutes from './subscriptionRoutes';
 import webhookRoutes from './webhookRoutes';
 import configRoutes from './configRoutes';
+import offerRoutes from './offerRoutes';
+import bundleRoutes from './bundleRoutes';
+import publicRoutes from './Routes-public';
 
 // Import middleware
 import { requireAuth } from '../middleware/auth';
@@ -43,7 +46,10 @@ export function registerRoutes(app: Express): Express {
   app.use('/api/subscription', subscriptionRoutes);
   app.use('/api/webhook', webhookRoutes);
   app.use('/api/config', configRoutes);
+  app.use('/api/offer', offerRoutes);
+  app.use('/api/bundle', bundleRoutes);
   app.use('/health', healthRoutes);
+  app.use('/', publicRoutes);
 
   // API status endpoint
   app.get('/api/status', (req, res) => {
@@ -56,10 +62,10 @@ export function registerRoutes(app: Express): Express {
   });
 
   // Protected test endpoint
-  app.get('/api/protected', requireAuth, (req, res) => {
+  app.get('/api/protected', requireAuth, (req: Request, res: Response) => {
     res.json({ 
       message: 'This is a protected endpoint',
-      user: req.user
+      user: (req as any).user
     });
   });
 

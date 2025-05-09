@@ -1,0 +1,64 @@
+server/
+│
+├── config/                            # Configuration files
+│   └── environment.ts                 # Environment variables and app configuration
+│
+├── lib/                               # Core libraries and utilities
+│   ├── supabase.ts                    # Unified Supabase client
+│   └── errors.ts                      # Error handling utilities
+│
+├── controllers/                       # Request handlers
+│   ├── authController.ts              # Authentication controller
+│   ├── profileController.ts           # Profile management controller
+│   ├── bundleController.ts            # Bundle management controller
+│   ├── campaignController.ts          # Campaign operations controller
+│   ├── matchController.ts             # Match algorithm controller
+│   ├── offerController.ts             # Offer management controller
+│   └── subscriptionController.ts      # Payment/subscription controller
+│
+├── services/                          # Business logic
+│   ├── authService.ts                 # Authentication service
+│   ├── profileService.ts              # Profile management service
+│   ├── bundleService.ts               # Bundle management service
+│   ├── campaignService.ts             # Campaign operations service
+│   ├── matchService.ts                # Match algorithm service
+│   ├── offerService.ts                # Offer management service
+│   ├── subscriptionService.ts         # Payment/subscription service
+│   └── websocketService.ts            # WebSocket connection service
+│
+├── middleware/                        # Express middleware
+│   ├── auth.ts                        # Authentication middleware
+│   ├── error.ts                       # Error handling middleware
+│   ├── logging.ts                     # Request logging middleware
+│   ├── validation.ts                  # Request validation middleware
+│   └── rawBodyParser.ts               # Raw body parsing middleware
+│
+├── routes/                            # Route definitions
+│   ├── index.ts                       # Route registration
+│   ├── authRoutes.ts                  # Authentication routes
+│   ├── profileRoutes.ts               # Profile routes
+│   ├── bundleRoutes.ts                # Bundle routes
+│   ├── campaignRoutes.ts              # Campaign routes
+│   ├── matchRoutes.ts                 # Match routes
+│   ├── offerRoutes.ts                 # Offer routes
+│   ├── subscriptionRoutes.ts          # Subscription routes
+│   ├── webhookRoutes.ts               # Webhook routes
+│   ├── healthRoutes.ts                # Health check routes
+│   └── configRoutes.ts                # Configuration routes
+│
+├── migrations/                        # Database migrations
+│   ├── 001_initial_schema.sql         # Initial database schema
+│   ├── 002_add_profiles.sql           # Add profile tables
+│   └── 003_add_subscriptions.sql      # Add subscription fields
+│
+├── utils/                             # Helper utilities
+│   ├── validation.ts                  # Input validation helpers
+│   └── format.ts                      # Data formatting helpers
+│
+├── types/                             # TypeScript type definitions
+│   ├── express/                       # Express extensions
+│   │   └── index.d.ts                 # Request/session types
+│   └── models.ts                      # Data model types
+│
+└── index.ts                           # Server entry point
+

@@ -1,13 +1,19 @@
+/**
+ * Supabase Storage Interface
+ * 
+ * This module provides a unified interface for all database operations,
+ * including session management, profile storage, and data retrieval.
+ */
+
 import { 
   InsertSession, InsertAthlete, InsertBusiness, 
   InsertCampaign, InsertMatch, InsertMessage, InsertUser, InsertFeedback, InsertPartnershipOffer,
   Session, Athlete, Business, Campaign, Match, Message, User, Feedback, PartnershipOffer
-} from "@shared/schema.js";
+} from "../shared/schema";
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import session from "express-session";
-import { supabase, supabaseAdmin } from "./supabase.js";
-// NEW — right under your other imports
+import { supabase, supabaseAdmin, getSupabaseAdmin } from "./lib/supabase";
 import connectPgSimple from "connect-pg-simple";
 import { Pool } from "pg";
 
@@ -193,7 +199,8 @@ export class SupabaseStorage {
           // Calculate expiration
           const expire = new Date(Date.now() + (session.cookie.maxAge || 86400000));
           
-          const { error } = await supabaseAdmin.from('session').upsert({
+          const adminClient = supabaseAdmin || getSupabaseAdmin();
+          const { error } = await adminClient.from('session').upsert({
             sid,
             sess: session,
             expire
@@ -213,7 +220,8 @@ export class SupabaseStorage {
       // Destroy a session
       async destroy(sid: string, callback?: (err?: any) => void) {
         try {
-          const { error } = await supabaseAdmin
+          const adminClient = supabaseAdmin || getSupabaseAdmin();
+          const { error } = await adminClient
             .from('session')
             .delete()
             .eq('sid', sid);
@@ -234,7 +242,8 @@ export class SupabaseStorage {
         try {
           const expire = new Date(Date.now() + (session.cookie.maxAge || 86400000));
           
-          const { error } = await supabaseAdmin
+          const adminClient = supabaseAdmin || getSupabaseAdmin();
+          const { error } = await adminClient
             .from('session')
             .update({ expire })
             .eq('sid', sid);
@@ -270,7 +279,8 @@ export class SupabaseStorage {
         
         try {
           // Try to create the table using Supabase RPC (admin access)
-          const { error: createError } = await supabaseAdmin.rpc('exec_sql', { 
+          const adminClient = supabaseAdmin || getSupabaseAdmin();
+          const { error: createError } = await adminClient.rpc('exec_sql', { 
             sql: `
               CREATE TABLE IF NOT EXISTS "session" (
                 "sid" varchar NOT NULL,

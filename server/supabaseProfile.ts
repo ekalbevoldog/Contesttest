@@ -1,6 +1,12 @@
-// services/supabaseProfile.ts
+/**
+ * Supabase Profile Service
+ * 
+ * This module provides functions for managing user profiles in Supabase.
+ * Handles profile creation, retrieval, and synchronization between tables.
+ */
+
 import { Express, Request, Response } from 'express';
-import { supabase, supabaseAdmin } from './supabase.js';
+import { supabase, supabaseAdmin, getSupabaseAdmin } from './lib/supabase';
 
 /**
  * Safely update a user record with profile data, handling potential schema mismatches
@@ -8,7 +14,10 @@ import { supabase, supabaseAdmin } from './supabase.js';
 async function safelyUpdateUserProfile(userId: string, profileId: string | number) {
   console.log(`Attempting to update user ${userId} with profile ${profileId}`);
   try {
-    const { data: columns, error: columnsError } = await supabaseAdmin
+    // Ensure we have supabaseAdmin (if not, get a new instance)
+    const adminClient = supabaseAdmin || getSupabaseAdmin();
+    
+    const { data: columns, error: columnsError } = await adminClient
       .from('users')
       .select('*')
       .limit(1);
@@ -32,7 +41,7 @@ async function safelyUpdateUserProfile(userId: string, profileId: string | numbe
     }
 
     if (Object.keys(updateFields).length > 0) {
-      const { error: updateError } = await supabaseAdmin
+      const { error: updateError } = await adminClient
         .from('users')
         .update(updateFields)
         .eq('id', userId);
@@ -196,8 +205,11 @@ export async function getBusinessByUserId(userId: string) {
  * Mirror a completed staging profile into your main athletes/businesses tables
  */
 async function syncToDomain(userType: string, profile: any) {
+  // Ensure we have supabaseAdmin (if not, get a new instance)
+  const adminClient = supabaseAdmin || getSupabaseAdmin();
+
   if (userType === 'athlete') {
-    await supabaseAdmin
+    await adminClient
       .from('athletes')
       .upsert({
         id:          profile.id,
@@ -214,7 +226,7 @@ async function syncToDomain(userType: string, profile: any) {
       }, { onConflict: 'id' });
   } else if (userType === 'business') {
     // Use the primary key 'id' for businesses instead of 'user_id'
-    await supabaseAdmin
+    await adminClient
       .from('businesses')
       .upsert({
         id:            profile.id, // Use 'id' instead of 'id'
@@ -344,7 +356,10 @@ export function setupProfileEndpoints(app: Express) {
     
     // Perform the upsert with robust error handling
     try {
-      const { data: profile, error } = await supabaseAdmin
+      // Ensure we have supabaseAdmin (if not, get a new instance)
+      const adminClient = supabaseAdmin || getSupabaseAdmin();
+      
+      const { data: profile, error } = await adminClient
         .from(table)
         .upsert(base, { onConflict: 'id' }) // Fixed: use string instead of variable
       .select()

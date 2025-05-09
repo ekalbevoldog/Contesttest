@@ -18,6 +18,8 @@ import { setupVite, serveStatic } from './vite';
 import config from './config/environment';
 import { closeConnections } from './lib/supabase';
 
+import * as netType from 'net';
+
 // Get __dirname in ES module scope
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,20 +108,66 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Start listening
-    server.listen(config.PORT, config.HOST, () => {
-      const serverUrl = config.SERVER_URL || `http://${config.HOST === '0.0.0.0' ? 'localhost' : config.HOST}:${config.PORT}`;
-      const wsProtocol = serverUrl.startsWith('https') ? 'wss://' : 'ws://';
-      const wsUrl = serverUrl.replace(/^https?:\/\//, wsProtocol);
+    // Function to find and use an available port
+    const findAvailablePort = async (startPort: number): Promise<number> => {
+      const net = await import('net');
+      
+      return new Promise((resolve) => {
+        const testServer = net.createServer();
+        testServer.once('error', () => {
+          resolve(findAvailablePort(startPort + 1));
+        });
+        
+        testServer.once('listening', () => {
+          const port = (testServer.address() as netType.AddressInfo).port;
+          testServer.close(() => resolve(port));
+        });
+        
+        testServer.listen(startPort);
+      });
+    };
 
-      console.log(`⚡ Server running on port ${config.PORT}`);
-      console.log(`🌎 API available at ${serverUrl}/api/status`);
-      console.log(`🩺 Health check at ${serverUrl}/health`);
+    // Start listening with port fallback if the port is in use
+    try {
+      server.listen(config.PORT, config.HOST, () => {
+        const actualPort = (server.address() as any)?.port || config.PORT;
+        const serverUrl = config.SERVER_URL || `http://${config.HOST === '0.0.0.0' ? 'localhost' : config.HOST}:${actualPort}`;
+        const wsProtocol = serverUrl.startsWith('https') ? 'wss://' : 'ws://';
+        const wsUrl = serverUrl.replace(/^https?:\/\//, wsProtocol);
 
-      if (wss) {
-        console.log(`🧵 WebSocket server running at ${wsUrl}/ws`);
+        console.log(`⚡ Server running on port ${actualPort}`);
+        console.log(`🌎 API available at ${serverUrl}/api/status`);
+        console.log(`🩺 Health check at ${serverUrl}/health`);
+
+        if (wss) {
+          console.log(`🧵 WebSocket server running at ${wsUrl}/ws`);
+        }
+      });
+    } catch (error) {
+      if ((error as any).code === 'EADDRINUSE') {
+        console.log(`Port ${config.PORT} is already in use, trying to find an alternative port...`);
+        
+        // Find an available port and start again
+        const availablePort = await findAvailablePort(config.PORT + 1);
+        console.log(`Found available port: ${availablePort}`);
+        
+        server.listen(availablePort, config.HOST, () => {
+          const serverUrl = config.SERVER_URL || `http://${config.HOST === '0.0.0.0' ? 'localhost' : config.HOST}:${availablePort}`;
+          const wsProtocol = serverUrl.startsWith('https') ? 'wss://' : 'ws://';
+          const wsUrl = serverUrl.replace(/^https?:\/\//, wsProtocol);
+
+          console.log(`⚡ Server running on port ${availablePort}`);
+          console.log(`🌎 API available at ${serverUrl}/api/status`);
+          console.log(`🩺 Health check at ${serverUrl}/health`);
+
+          if (wss) {
+            console.log(`🧵 WebSocket server running at ${wsUrl}/ws`);
+          }
+        });
+      } else {
+        throw error;
       }
-    });
+    }
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
