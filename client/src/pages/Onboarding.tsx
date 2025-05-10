@@ -953,10 +953,11 @@ export default function Onboarding() {
         const userData = {
           email: formData.email,
           password: formData.password,
-          firstName: formData.name, // Changed from fullName to firstName to match server expectation
+          firstName: formData.name.split(' ')[0], // Get first name
           lastName: formData.name.split(' ').slice(1).join(' ') || '', // Add lastName from split if available
           fullName: formData.name, // Keep this for backward compatibility
-          role: formData.userType
+          role: formData.userType,
+          name: formData.name // Add name field explicitly
         };
         console.log("Registering via /api/auth/register");
         const response = await fetch('/api/auth/register', {
@@ -995,6 +996,7 @@ export default function Onboarding() {
           userType: formData.userType,
           name: formData.name,
           email: formData.email,
+          contactPhone: formData.contactPhone || formData.phone, // Use appropriate phone field
         };
 
         if (formData.userType === "athlete") {
@@ -1026,6 +1028,8 @@ export default function Onboarding() {
             audienceGoals: formData.goalIdentification.join(", "),
             budget: `$${formData.budgetMin} - $${formData.budgetMax}`,
             industry: formData.industry,
+            businessType: formData.businessType, // Add explicit businessType field
+            businessSize: formData.businessSize, // Add explicit businessSize field
             preferences: JSON.stringify({
               accessRestriction: formData.accessRestriction,
               hasPastPartnership: formData.hasPastPartnership,
@@ -1033,9 +1037,9 @@ export default function Onboarding() {
               operatingLocation: formData.operatingLocation,
               companySize: formData.businessSize,
               contactInfo: {
-                name: formData.contactName,
+                name: formData.name || formData.contactName, // Use name if contactName is not available
                 title: formData.contactTitle,
-                email: formData.contactEmail,
+                email: formData.email || formData.contactEmail, // Use email if contactEmail is not available
                 phone: formData.contactPhone
               }
             })
@@ -1044,6 +1048,7 @@ export default function Onboarding() {
 
         // 3️⃣ Create profile record
         console.log("Creating profile via /api/supabase/profile");
+        console.log("Profile data being sent:", profileData);
         const profileResp = await fetch('/api/supabase/profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2797,7 +2802,7 @@ export default function Onboarding() {
                   </motion.div>
                   
                   {/* Contact card preview - shows when fields are filled */}
-                  {formData.name && formData.email && (
+                  {formData.name && formData.email && formData.contactPhone && (
                     <motion.div
                       className="mt-6 p-4 border border-zinc-700 rounded-lg bg-zinc-800/70 backdrop-blur-sm"
                       initial={{ opacity: 0, y: 20 }}
