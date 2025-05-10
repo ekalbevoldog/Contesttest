@@ -226,7 +226,7 @@ interface BusinessFormData {
   goalIdentification: string[];
   
   // Past partnerships
-  hasPastPartnership: boolean | null;
+  haspreviouspartnerships: boolean | null;
   
   // Budget
   budgetMin: number;
@@ -242,7 +242,7 @@ interface BusinessFormData {
   contactName: string;
   contactTitle: string;
   contactEmail: string;
-  contactPhone: string;
+  Phone: string;
   
   // Business size
   businessSize: "sole_proprietor" | "small_team" | "medium" | "enterprise" | "";
@@ -318,7 +318,7 @@ const initialFormData: BusinessFormData = {
   industry: "",
   accessRestriction: "",
   goalIdentification: [],
-  hasPastPartnership: null,
+  haspreviouspartnerships: null,
   budgetMin: 500,
   budgetMax: 5000,
   zipCode: "",
@@ -326,7 +326,7 @@ const initialFormData: BusinessFormData = {
   contactName: "",
   contactTitle: "",
   contactEmail: "",
-  contactPhone: "",
+  Phone: "",
   businessSize: "",
   password: "",
   confirmPassword: "",
@@ -546,8 +546,8 @@ export default function Onboarding() {
         break;
         
       case "past-partnerships":
-        if (formData.hasPastPartnership === null) {
-          newErrors.hasPastPartnership = "Please indicate whether you've partnered with athletes before";
+        if (formData.haspreviouspartnerships === null) {
+          newErrors.haspreviouspartnerships = "Please indicate whether you've partnered with athletes before";
         }
         break;
         
@@ -576,8 +576,8 @@ export default function Onboarding() {
         if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
           newErrors.email = "Please enter a valid email address";
         }
-        if (!formData.contactPhone) {
-          newErrors.contactPhone = "Please enter a contact phone number";
+        if (!formData.Phone) {
+          newErrors.Phone = "Please enter a contact phone number";
         }
         break;
         
@@ -996,8 +996,8 @@ export default function Onboarding() {
           userType: formData.userType,
           name: formData.name,
           email: formData.email,
-          contactPhone: formData.contactPhone || formData.phone, // Use appropriate phone field
-          phone: formData.contactPhone || formData.phone, // Add explicit phone field to match schema
+          Phone: formData.Phone || formData.phone, // Use appropriate phone field
+          phone: formData.Phone || formData.phone, // Add explicit phone field to match schema
         };
 
         if (formData.userType === "athlete") {
@@ -1033,7 +1033,7 @@ export default function Onboarding() {
             businessSize: formData.businessSize, // Add explicit businessSize field
             preferences: JSON.stringify({
               accessRestriction: formData.accessRestriction,
-              hasPastPartnership: formData.hasPastPartnership,
+              haspreviouspartnerships: formData.haspreviouspartnerships,
               zipCode: formData.zipCode,
               operatingLocation: formData.operatingLocation,
               companySize: formData.businessSize,
@@ -1041,7 +1041,7 @@ export default function Onboarding() {
                 name: formData.name || formData.contactName, // Use name if contactName is not available
                 title: formData.contactTitle,
                 email: formData.email || formData.contactEmail, // Use email if contactEmail is not available
-                phone: formData.contactPhone
+                phone: formData.Phone
               }
             })
           });
@@ -2399,8 +2399,8 @@ export default function Onboarding() {
                 
                 <AnimatedSelectionField
                   type="radio"
-                  name="hasPastPartnership"
-                  selectedValues={formData.hasPastPartnership === null ? "" : formData.hasPastPartnership.toString()}
+                  name="haspreviouspartnerships"
+                  selectedValues={formData.haspreviouspartnerships === null ? "" : formData.haspreviouspartnerships.toString()}
                   onChange={(e) => handleRadioChange(e, e.target.value === "true")}
                   options={[
                     {
@@ -2415,8 +2415,8 @@ export default function Onboarding() {
                     }
                   ]}
                   required={true}
-                  errorMessage={errors.hasPastPartnership}
-                  isTouched={!!errors.hasPastPartnership}
+                  errorMessage={errors.haspreviouspartnerships}
+                  isTouched={!!errors.haspreviouspartnerships}
                 />
               </StaggerItem>
             </div>
@@ -2791,19 +2791,19 @@ export default function Onboarding() {
                     
                     <AnimatedFormField
                       type="tel"
-                      name="contactPhone"
-                      value={formData.contactPhone}
+                      name="Phone"
+                      value={formData.Phone}
                       onChange={handleChange}
                       label="Phone Number"
                       placeholder="(555) 555-5555"
                       required={true}
-                      errorMessage={errors.contactPhone}
+                      errorMessage={errors.Phone}
                       icon={<Phone size={18} />}
                     />
                   </motion.div>
                   
                   {/* Contact card preview - shows when fields are filled */}
-                  {formData.name && formData.email && formData.contactPhone && (
+                  {formData.name && formData.email && formData.Phone && (
                     <motion.div
                       className="mt-6 p-4 border border-zinc-700 rounded-lg bg-zinc-800/70 backdrop-blur-sm"
                       initial={{ opacity: 0, y: 20 }}
@@ -2824,10 +2824,10 @@ export default function Onboarding() {
                               <Mail size={14} className="mr-1 text-red-400" />
                               {formData.email}
                             </div>
-                            {formData.contactPhone && (
+                            {formData.Phone && (
                               <div className="flex items-center text-sm text-zinc-300">
                                 <Phone size={14} className="mr-1 text-amber-400" />
-                                {formData.contactPhone}
+                                {formData.Phone}
                               </div>
                             )}
                           </div>

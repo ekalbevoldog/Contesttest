@@ -225,13 +225,13 @@ export const businessSchema = z.object({
   
   // Budget and Compensation
   budget: z.string().optional(),
-  budget_min: z.number().optional(),
-  budget_max: z.number().optional(),
+  budgetmin: z.number().optional(),
+  budgetmax: z.number().optional(),
   compensation_model: z.string().optional(),
   budget_per_athlete: z.string().optional(),
   
   // Previous Experience
-  has_previous_partnerships: z.boolean().optional(),
+  haspreviouspartnerships: z.boolean().optional(),
   previous_influencer_campaigns: z.array(z.any()).optional(),
   campaign_success_metrics: z.record(z.any()).optional(),
   

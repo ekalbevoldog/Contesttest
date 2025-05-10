@@ -46,8 +46,8 @@ export const schemas = {
     title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title cannot exceed 100 characters'),
     description: z.string().min(10, 'Description must be at least 10 characters'),
     deliverables: z.array(z.any()).optional(),
-    budget_min: z.number().optional(),
-    budget_max: z.number().optional(),
+    budgetmin: z.number().optional(),
+    budgetmax: z.number().optional(),
     target_sports: z.array(z.string()).optional()
   }),
 

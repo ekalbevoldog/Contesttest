@@ -35,14 +35,14 @@
   },
   {
     "step": "Past Partnerships",
-    "field": "has_partnered_before",
+    "field": "haspreviouspartnerships",
     "type": "boolean",
     "label": "Have you partnered with athletes before?",
     "required": true
   },
   {
     "step": "Budget Range",
-    "field": ["budget_min", "budget_max"],
+    "field": ["budgetmin", "budgetmax"],
     "type": "slider_float",
     "min_value": 0,
     "max_value": 100000,
@@ -62,7 +62,7 @@
       { "name": "contact_title", "type": "text", "required": true },
       { "name": "contact_email", "type": "email", "required": true },
       { "name": "business_size", "type": "dropdown", "options": ["1-10", "11-50", "51-200", "201-500", "500+"], "required": true },
-      { "name": "phone_number", "type": "tel", "required": false },
+      { "name": "phone", "type": "text", "required": false },
       { "name": "password", "type": "password", "required": true }
     ]
   },
