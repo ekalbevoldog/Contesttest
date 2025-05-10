@@ -967,22 +967,25 @@ export default function Onboarding() {
         });
 
         if (!response.ok) {
-          let errorMessage = `Registration failed: ${response.status}`;
-          try {
-            const err = await response.json();
-            errorMessage = err.message || err.error || errorMessage;
-            // Handle weak password specifically
-            if (err.error === 'Password too weak') {
-              setErrors(prev => ({
-                ...prev,
-                password: err.message || 'Please use a stronger password'
-              }));
-              document.getElementById('password')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setCurrentStep('create-password');
-              throw new Error(errorMessage);
-            }
-          } catch {}
-          throw new Error(errorMessage);
+          // Pull the real error object from the body
+          const errPayload = await response.json().catch(() => ({}));
+          // Log everything so you can see details/hint/code from Supabase or Zod
+          console.error('🔥 [/api/auth/register] error payload:', errPayload);
+          // Pick the most descriptive message
+          const message =
+            errPayload.error   ||
+            errPayload.message ||
+            `Registration failed: ${response.status}`;
+          // Optional: handle specific errors here
+          if (errPayload.error === 'Password too weak') {
+            setErrors(prev => ({
+              ...prev,
+              password: errPayload.message || 'Please use a stronger password'
+            }));
+            document.getElementById('password')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setCurrentStep('create-password');
+          }
+          throw new Error(message);
         }
 
         const { user: newUser } = await response.json();

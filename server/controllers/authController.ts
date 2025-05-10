@@ -101,9 +101,19 @@ class AuthController {
         needsProfile: result.needsProfile,
         redirectTo: result.redirectTo
       });
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      return res.status(500).json({ error: error.message || 'Registration failed' });
+  } catch (err: any) {
+      // 1️⃣ Log every property of the error to your server console
+      console.error(
+        '❌ [AuthController.register] error:',
+        JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
+      );
+      // 2️⃣ Send back the full error object to the client
+      return res.status(400).json({
+        error:   err.message,
+        details: err.details,
+        hint:    err.hint,
+        code:    err.code
+      });
     }
   }
 

@@ -416,10 +416,16 @@ class AuthService {
       });
 
       if (error) {
-        console.error('Registration error:', error);
+        console.error(
+          '❌ [AuthService.register] Supabase error:',
+          JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+        );
         return { 
-          success: false, 
-          error: error.message || 'Registration failed' 
+          success: false,
+          error:   error.message,
+          details: (error as any).details,
+          hint:    (error as any).hint,
+          code:    (error as any).code
         };
       }
 
