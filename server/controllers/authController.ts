@@ -102,17 +102,27 @@ class AuthController {
         redirectTo: result.redirectTo
       });
   } catch (err: any) {
-      // 1️⃣ Log every property of the error to your server console
+      // 1️⃣ Log every property of the error to your server console with enhanced details
       console.error(
         '❌ [AuthController.register] error:',
         JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
       );
-      // 2️⃣ Send back the full error object to the client
+      
+      // Log request body (excluding sensitive data)
+      const sanitizedBody = { ...req.body };
+      if (sanitizedBody.password) sanitizedBody.password = '[REDACTED]';
+      console.error('Request body:', JSON.stringify(sanitizedBody, null, 2));
+      
+      // Log Supabase connection status
+      console.error('Is Supabase admin client initialized:', !!authService['supabaseAdmin']);
+      
+      // 2️⃣ Send back the full error object to the client with more context
       return res.status(400).json({
         error:   err.message,
         details: err.details,
         hint:    err.hint,
-        code:    err.code
+        code:    err.code,
+        info:    'Supabase registration error - check server logs for details'
       });
     }
   }
