@@ -997,6 +997,7 @@ export default function Onboarding() {
           name: formData.name,
           email: formData.email,
           contactPhone: formData.contactPhone || formData.phone, // Use appropriate phone field
+          phone: formData.contactPhone || formData.phone, // Add explicit phone field to match schema
         };
 
         if (formData.userType === "athlete") {
