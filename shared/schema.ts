@@ -5,8 +5,8 @@ import { z } from "zod";
 
 // User type definitions
 export const userSchema = z.object({
-  id: z.string(), // Changed to string to match usage throughout the app
-  auth_id: z.string().uuid().optional(), // Supabase auth id reference
+  
+  id: z.string().uuid().optional(), // Supabase auth id reference
   email: z.string().email(),
   username: z.string(),
   password: z.string().optional(), // Add password field for auth purposes
@@ -45,7 +45,7 @@ export const sessionSchema = z.object({
   id: z.number(),
   session_id: z.string(),
   user_id: z.number().optional(),
-  user_type: z.string().optional(),
+  user_type: z.enum().optional(),
   data: z.record(z.any()).optional(),
   profile_completed: z.boolean().default(false),
   last_login: z.date().optional(),
