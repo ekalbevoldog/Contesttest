@@ -439,7 +439,36 @@ class AuthService {
       // 2️⃣ Now update the users table with the enum-typed fields
       const fullName = `${effectiveFirstName} ${lastName || ''}`.trim();
 
-      // Use a raw SQL query to ensure proper casting of the role enum
+      // Update user metadata first - this is safer as it doesn't involve enum type casting
+      if (!supabaseAdmin) {
+        console.error('[Auth Service] Supabase admin client not initialized');
+        return {
+          success: false,
+          error: 'Supabase admin client not initialized'
+        };
+      }
+
+      const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
+        authData.user.id,
+        { 
+          user_metadata: { 
+            role: role,
+            firstName: effectiveFirstName,
+            lastName: lastName || '',
+            fullName: fullName
+          } 
+        }
+      );
+
+      if (metadataError) {
+        console.error('❌ [AuthService.register] Failed to update user metadata:', metadataError);
+        return { 
+          success: false, 
+          error: metadataError.message || 'Failed to update user metadata' 
+        };
+      }
+
+      // Try a raw SQL query with explicit casting for the database update
       const { error: updateError } = await supabase.rpc('update_user_with_role', {
         user_id: authData.user.id,
         user_role: role,
@@ -448,25 +477,20 @@ class AuthService {
         user_full_name: fullName
       });
 
-      // Fallback to direct update if RPC fails (you'll need to add this function to your database)
+      // Fallback to direct update with explicit casting if RPC fails
       if (updateError) {
-        console.error('❌ [AuthService.register] RPC update failed, trying direct update:', updateError);
-        const { error: directUpdateError } = await supabase
-          .from('users')
-          .update({
-            // Cast the role string to the enum type
-            first_name: effectiveFirstName,
-            last_name: lastName || '',
-            full_name: fullName
-          })
-          .eq('id', authData.user.id);
-
-        if (directUpdateError) {
-          console.error('❌ [AuthService.register] Direct update also failed:', directUpdateError);
-          return { 
-            success: false, 
-            error: directUpdateError.message 
-          };
+        console.error('❌ [AuthService.register] RPC update failed, trying direct update with casting:', updateError);
+        
+        // Use raw SQL for the update with explicit casting
+        const { error: rawUpdateError } = await supabase.rpc('update_user_role_only', {
+          user_id: authData.user.id,
+          user_role: role
+        });
+        
+        if (rawUpdateError) {
+          console.error('❌ [AuthService.register] Raw SQL update also failed:', rawUpdateError);
+          // Continue anyway, as metadata was successfully updated
+          console.log('⚠️ [AuthService.register] Proceeding with user metadata only, role not set in database');
         }
       }
 
