@@ -18,6 +18,7 @@ import { registerRoutes, configureWebSocketServer } from './routes';
 import { setupVite, serveStatic } from './vite';
 import config from './config/environment';
 import { closeConnections } from './lib/supabase';
+import { setupProfileEndpoints } from './supabaseProfile';
 
 import * as netType from 'net';
 
