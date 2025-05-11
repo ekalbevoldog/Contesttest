@@ -468,30 +468,39 @@ class AuthService {
         };
       }
 
-      // Try a raw SQL query with explicit casting for the database update
-      const { error: updateError } = await supabase.rpc('update_user_with_role', {
-        user_id: authData.user.id,
-        user_role: role,
-        user_first_name: effectiveFirstName,
-        user_last_name: lastName || '',
-        user_full_name: fullName
-      });
-
-      // Fallback to direct update with explicit casting if RPC fails
-      if (updateError) {
-        console.error('❌ [AuthService.register] RPC update failed, trying direct update with casting:', updateError);
+      // Try the new safer role update function that handles enum casting properly
+      try {
+        console.log(`[AuthService.register] Updating user role to "${role}" with safe casting`);
         
-        // Use raw SQL for the update with explicit casting
-        const { error: rawUpdateError } = await supabase.rpc('update_user_role_only', {
-          user_id: authData.user.id,
-          user_role: role
+        const { error: safeUpdateError } = await supabase.rpc('update_user_role_safely', {
+          id: authData.user.id,
+          user_role_str: role
         });
         
-        if (rawUpdateError) {
-          console.error('❌ [AuthService.register] Raw SQL update also failed:', rawUpdateError);
-          // Continue anyway, as metadata was successfully updated
-          console.log('⚠️ [AuthService.register] Proceeding with user metadata only, role not set in database');
+        if (safeUpdateError) {
+          console.error('❌ [AuthService.register] Safe role update failed:', safeUpdateError);
+          
+          // Fallback to the regular update with role casting
+          console.log('⚠️ [AuthService.register] Trying fallback with update_user_with_role');
+          
+          const { error: fallbackError } = await supabase.rpc('update_user_with_role', {
+            id: authData.user.id,
+            user_role: role,
+            user_first_name: effectiveFirstName,
+            user_last_name: lastName || '',
+            user_full_name: fullName
+          });
+          
+          if (fallbackError) {
+            console.error('❌ [AuthService.register] All role update methods failed:', fallbackError);
+            console.log('⚠️ [AuthService.register] Proceeding with user metadata only');
+          }
+        } else {
+          console.log('✅ [AuthService.register] User role updated successfully in database');
         }
+      } catch (roleUpdateError) {
+        console.error('❌ [AuthService.register] Exception during role update:', roleUpdateError);
+        console.log('⚠️ [AuthService.register] Proceeding with user metadata only, role not set in database');
       }
 
       // Create placeholder business profile if role is business
