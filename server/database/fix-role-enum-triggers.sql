@@ -1,3 +1,4 @@
+
 -- Fix role enum casting issues in triggers and RLS policies
 -- This ensures that TEXT role values are properly cast to user_role enum type
 

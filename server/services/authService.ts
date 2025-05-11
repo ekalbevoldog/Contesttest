@@ -489,15 +489,29 @@ class AuthService {
         if (safeUpdateError) {
           console.error('❌ [AuthService.register] Safe role update failed:', safeUpdateError);
           
-          // Try a direct update with explicit casting as fallback
-          console.log('⚠️ [AuthService.register] Trying direct update with explicit casting');
+          // Try a role-specific explicit casting approach as fallback
+          console.log('⚠️ [AuthService.register] Trying role-specific casting approach');
+          
+          // Different SQL based on role to ensure proper casting
+          let roleSql;
+          if (role === 'athlete') {
+            roleSql = "'athlete'::user_role";
+          } else if (role === 'business') {
+            roleSql = "'business'::user_role";
+          } else if (role === 'admin') {
+            roleSql = "'admin'::user_role";
+          } else if (role === 'compliance') {
+            roleSql = "'compliance'::user_role";
+          } else {
+            roleSql = "'user'::user_role";
+          }
           
           // Format the SQL query with explicit casting to the enum type
           const { error: directUpdateError } = await supabase.rpc('exec_sql', {
             sql: `
               UPDATE public.users 
               SET 
-                role = '${role}'::user_role,
+                role = ${roleSql},
                 first_name = '${effectiveFirstName.replace(/'/g, "''")}',
                 last_name = '${(lastName || '').replace(/'/g, "''")}',
                 full_name = '${fullName.replace(/'/g, "''")}'
