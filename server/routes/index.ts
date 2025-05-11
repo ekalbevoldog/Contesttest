@@ -23,7 +23,7 @@ import webhookRoutes from './webhookRoutes';
 import configRoutes from './configRoutes';
 import offerRoutes from './offerRoutes';
 import bundleRoutes from './bundleRoutes';
-import supabaseProfileRoutes from './supabaseProfileRoutes';
+// Supabase profile routes are handled in supabaseProfile.ts
 // Import routes for serving static files
 import publicRoutes from './publicRoutes';
 import wsTestRoutes from './wsTestRoutes';

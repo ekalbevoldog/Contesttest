@@ -1013,38 +1013,65 @@ export default function Onboarding() {
         }
         // ────────────────────────────────────────────────────────────────
 
-        // 2️⃣ Create the business profile
-          const profilePayload = {
-            sessionId,                        // ← the key your table requires
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            industry: formData.industry,
-            business_type: formData.businessType,
-            company_size: formData.businessSize,
-            zipCode: formData.zipCode,
-            product_type: formData.businessType, // Using businessType instead of productType
-            budgetmin: formData.budgetMin,
-            budgetmax: formData.budgetMax,
-            haspreviouspartnerships: formData.haspreviouspartnerships,
-            bio: formData.bio,
-            operatingLocation: formData.operatingLocation,
-            company: formData.contactName,
-            position: formData.contactTitle,
-            full_name: formData.name,
-            profile_image: null
-          };
-          console.log("Creating profile via /api/supabase/profile", profilePayload);
-          const profRes = await fetch('/api/supabase/profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(profilePayload),
-          });
+        // 2️⃣ Create the profile (athlete or business)
+          const profilePayload = formData.userType === 'athlete'
+            ? {
+                session_id: newUser.id, // Use the real user UUID here
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                birthdate: formData.birthdate,
+                gender: formData.gender,
+                bio: formData.bio,
+                school: formData.school,
+                division: formData.division,
+                graduation_year: formData.graduationYear,
+                sport: formData.sport,
+                position: formData.position,
+                sport_achievements: formData.sportAchievements,
+                follower_count: formData.followerCount,
+                content_style: formData.contentStyle,
+                compensation_goals: formData.compensationGoals,
+                profile_image: null
+              }
+            : {
+                session_id: newUser.id, // Use the real user UUID here
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                industry: formData.industry,
+                business_type: formData.businessType,
+                company_size: formData.businessSize,
+                zipCode: formData.zipCode,
+                product_type: formData.businessType,
+                budgetmin: formData.budgetMin,
+                budgetmax: formData.budgetMax,
+                haspreviouspartnerships: formData.haspreviouspartnerships,
+                bio: formData.bio,
+                operatingLocation: formData.operatingLocation,
+                company: formData.contactName,
+                position: formData.contactTitle,
+                full_name: formData.name,
+                profile_image: null
+              };
+              
+          console.log(`Creating ${formData.userType} profile...`, profilePayload);
+          const profRes = await fetch(
+            formData.userType === 'athlete'
+              ? '/api/supabase/athlete-profile'
+              : '/api/supabase/business-profile',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(profilePayload)
+            }
+          );
+          
           if (!profRes.ok) {
             const text = await profRes.text();
             throw new Error(`Profile creation failed: ${text}`);
           }
-          console.log("Profile created successfully");
+          console.log(`${formData.userType} profile created successfully`);
 
         toast({ title: "Success!", description: "Your account has been created." });
 

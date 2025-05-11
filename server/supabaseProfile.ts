@@ -243,12 +243,91 @@ async function syncToDomain(userType: string, profile: any) {
  * Wire up your profile creation and lookup endpoints
  */
 export function setupProfileEndpoints(app: Express) {
-  // Create or update a profile
-  app.post('/api/supabase/profile', async (req: Request, res: Response) => {
+  // Create or update a business profile
+  app.post('/api/supabase/business-profile', async (req: Request, res: Response) => {
     const {
-      userId,
-      userType,
-      sessionId,
+      session_id,
+      name,
+      email,
+      phone,
+      industry,
+      business_type,
+      company_size,
+      zipcode,
+      product_type,
+      budgetmin,
+      budgetmax,
+      haspreviouspartnerships,
+      bio,
+      operatingLocation,
+      company,
+      position,
+      // ... any other business-specific fields
+    } = req.body;
+
+    // session_id may be temp or real UUID
+    if (!session_id || !name) {
+      return res.status(400).json({ error: 'session_id and name are required' });
+    }
+
+    // Build a data object for the business profile
+    const businessData = {
+      session_id,
+      name,
+      email,
+      phone,
+      industry,
+      business_type,
+      company_size,
+      zipcode,
+      product_type,
+      budgetmin,
+      budgetmax,
+      haspreviouspartnerships,
+      bio,
+      operating_location: operatingLocation,
+      company,
+      position,
+      // Add any other fields that were sent
+      ...Object.keys(req.body)
+        .filter(key => !['session_id', 'name', 'email', 'phone', 'industry', 
+                        'business_type', 'company_size', 'zipcode', 'product_type',
+                        'budgetmin', 'budgetmax', 'haspreviouspartnerships', 'bio',
+                        'operatingLocation', 'company', 'position'].includes(key))
+        .reduce((obj, key) => ({ ...obj, [key]: req.body[key] }), {})
+    };
+
+    try {
+      // Ensure we have supabaseAdmin (if not, get a new instance)
+      const adminClient = supabaseAdmin || getSupabaseAdmin();
+      
+      console.log(`Upserting business profile with session_id: ${session_id}`);
+      
+      const { data, error } = await adminClient
+        .from('business_profiles')
+        .upsert(businessData, { onConflict: 'session_id' })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error upserting business profile:', error);
+        return res.status(500).json({ error: error.message });
+      }
+
+      return res.status(200).json({ profile: data });
+    } catch (err) {
+      console.error('Exception upserting business profile:', err);
+      return res.status(500).json({ 
+        error: 'Profile creation failed',
+        message: err instanceof Error ? err.message : 'Unknown error occurred'
+      });
+    }
+  });
+
+  // Create or update an athlete profile
+  app.post('/api/supabase/athlete-profile', async (req: Request, res: Response) => {
+    const {
+      session_id,
       name,
       email,
       phone,
@@ -257,57 +336,24 @@ export function setupProfileEndpoints(app: Express) {
       bio,
       school,
       division,
-      graduationYear,
-      zipcode,
-      industry,
-      business_type,
+      graduation_year,
       sport,
       position,
-      // …add any other fields your form sends…
+      sport_achievements,
+      content_style,
+      compensation_goals,
+      // ... any other athlete-specific fields
     } = req.body;
 
-    // Generate defaults for missing fields
-    const generatedSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-    const generatedUserType = userType || (sport ? 'athlete' : 'business');
-    
-    // Log the situation if fields are missing
-    if (!userId || !userType || !sessionId) {
-      console.warn(`Profile creation with missing fields: userId=${userId}, userType=${userType}, sessionId=${sessionId}`);
-      console.warn('Using generated values where needed');
-    }
-    
-    // Continue with userId if available, otherwise profile creation might still fail
-    // but we won't block it at this validation step
-
-    // First, look up the internal user ID if we have an id
-    let internalUserId = userId;
-    
-    try {
-      // Check if the userId is from Auth (UUID format)
-      if (userId.includes('-') && userId.length > 30) {
-        console.log('Looking up internal user ID for id:', userId);
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle();
-          
-        if (userData?.id) {
-          console.log('Found internal user ID:', userData.id);
-          internalUserId = userData.id;
-        } else if (error) {
-          console.error('Error finding user by id:', error);
-        }
-      }
-    } catch (err) {
-      console.error('Error looking up internal user ID:', err);
+    // session_id may be temp or real UUID
+    if (!session_id || !name) {
+      return res.status(400).json({ error: 'session_id and name are required' });
     }
 
-    // Build a snake_case object for your staging table
-    // Note: for business_profiles, the primary identifier is 'id' not 'user_id'
-    const base: Record<string, any> = {
-      session_id:      generatedSessionId, // Use generated session ID if needed
-      name: name || 'Anonymous User', // Provide fallback for required fields
+    // Build a data object for the athlete profile
+    const athleteData = {
+      session_id,
+      name,
       email,
       phone,
       birthdate,
@@ -315,89 +361,44 @@ export function setupProfileEndpoints(app: Express) {
       bio,
       school,
       division,
-      graduation_year: graduationYear,
-      zipcode,
-      industry,
-      business_type,
+      graduation_year,
       sport,
       position,
+      sport_achievements,
+      content_style,
+      compensation_goals,
+      // Add any other fields that were sent
+      ...Object.keys(req.body)
+        .filter(key => !['session_id', 'name', 'email', 'phone', 'birthdate', 
+                        'gender', 'bio', 'school', 'division', 'graduation_year',
+                        'sport', 'position', 'sport_achievements', 'content_style',
+                        'compensation_goals'].includes(key))
+        .reduce((obj, key) => ({ ...obj, [key]: req.body[key] }), {})
     };
-    
-    // Add correct ID field based on the table
-    if (generatedUserType === 'business') {
-      // For business_profiles, it's 'id' not 'user_id'
-      base.id = internalUserId;
-    } else {
-      // For athlete_profiles, it's still 'user_id'
-      base.id = internalUserId;
-    }
 
-    // Choose the correct staging table
-    const table = generatedUserType === 'athlete'
-      ? 'athlete_profiles'
-      : 'business_profiles';
-
-    // Upsert using proper conflict key based on table
-    const conflictKey = generatedUserType === 'athlete' ? 'id' : 'id';
-    console.log(`Using ${conflictKey} as conflict key for ${table} upsert`);
-    
-    // Double-check that the ID field is present before attempting upsert
-    if (!base[conflictKey]) {
-      console.error(`[CRITICAL] Missing ${conflictKey} field for ${table} upsert. Data:`, base);
-      return res.status(400).json({ 
-        error: "Missing required ID field", 
-        message: "Profile creation failed due to missing ID field",
-        details: "Please contact support with error code: PROFILE-ID-MISSING"
-      });
-    }
-    
-    // Log the full profile data for debugging
-    console.log(`Attempting profile upsert with data:`, JSON.stringify(base, null, 2));
-    
-    // Perform the upsert with robust error handling
     try {
       // Ensure we have supabaseAdmin (if not, get a new instance)
       const adminClient = supabaseAdmin || getSupabaseAdmin();
       
-      const { data: profile, error } = await adminClient
-        .from(table)
-        .upsert(base, { onConflict: 'id' }) // Fixed: use string instead of variable
-      .select()
-      .single();
+      console.log(`Upserting athlete profile with session_id: ${session_id}`);
+      
+      const { data, error } = await adminClient
+        .from('athlete_profiles')
+        .upsert(athleteData, { onConflict: 'session_id' })
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Profile upsert error:', error);
-      return res.status(500).json({ error: error.message });
-    }
-
-    // Mirror into domain tables
-    try {
-      await syncToDomain(generatedUserType, profile);
-    } catch (syncError) {
-      console.error('[CRITICAL] Error syncing profile to domain table:', syncError);
-      // Continue despite sync error - the profile exists in the main table
-    }
-
-    // Mark user as having completed their profile
-    if (userId) {
-      try {
-        await safelyUpdateUserProfile(userId, profile.id);
-      } catch (updateError) {
-        console.error('[WARNING] Error updating user profile status:', updateError);
-        // Continue despite error - this is a non-critical update
+      if (error) {
+        console.error('Error upserting athlete profile:', error);
+        return res.status(500).json({ error: error.message });
       }
-    } else {
-      console.warn('No userId available, skipping profile linkage');
-    }
 
-    return res.status(200).json({ profile });
-    
-    } catch (upsertError) {
-      console.error('[CRITICAL] Unexpected error during profile upsert:', upsertError);
+      return res.status(200).json({ profile: data });
+    } catch (err) {
+      console.error('Exception upserting athlete profile:', err);
       return res.status(500).json({ 
-        error: "Profile creation failed",
-        message: "An unexpected error occurred",
-        details: "Please try again or contact support with error code: PROFILE-UPSERT-FAILED" 
+        error: 'Profile creation failed',
+        message: err instanceof Error ? err.message : 'Unknown error occurred'
       });
     }
   });
@@ -416,5 +417,79 @@ export function setupProfileEndpoints(app: Express) {
     const profile = await getBusinessByUserId(userId);
     if (!profile) return res.status(404).json({ error: 'Business profile not found' });
     return res.status(200).json({ profile });
+  });
+
+  // Migrate athlete profile session_id → real user UUID
+  app.post('/api/supabase/athlete-profile/migrate', async (req, res) => {
+    try {
+      const { sessionId, newId } = req.body;
+      
+      if (!sessionId || !newId) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          message: 'Both sessionId and newId are required' 
+        });
+      }
+
+      console.log(`Migrating athlete profile from session ${sessionId} to user ID ${newId}`);
+      
+      // Ensure we have supabaseAdmin (if not, get a new instance)
+      const adminClient = supabaseAdmin || getSupabaseAdmin();
+      
+      const { error } = await adminClient
+        .from('athlete_profiles')
+        .update({ session_id: newId })
+        .eq('session_id', sessionId);
+      
+      if (error) {
+        console.error('Error migrating athlete profile session ID:', error);
+        return res.status(500).json({ error: error.message });
+      }
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      console.error('Exception in athlete profile migration:', err);
+      return res.status(500).json({ 
+        error: 'Migration failed',
+        message: err instanceof Error ? err.message : 'Unknown error occurred'
+      });
+    }
+  });
+
+  // Migrate business profile session_id → real user UUID
+  app.post('/api/supabase/business-profile/migrate', async (req, res) => {
+    try {
+      const { sessionId, newId } = req.body;
+      
+      if (!sessionId || !newId) {
+        return res.status(400).json({ 
+          error: 'Missing required parameters',
+          message: 'Both sessionId and newId are required' 
+        });
+      }
+
+      console.log(`Migrating business profile from session ${sessionId} to user ID ${newId}`);
+      
+      // Ensure we have supabaseAdmin (if not, get a new instance)
+      const adminClient = supabaseAdmin || getSupabaseAdmin();
+      
+      const { error } = await adminClient
+        .from('business_profiles')
+        .update({ session_id: newId })
+        .eq('session_id', sessionId);
+      
+      if (error) {
+        console.error('Error migrating business profile session ID:', error);
+        return res.status(500).json({ error: error.message });
+      }
+      
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      console.error('Exception in business profile migration:', err);
+      return res.status(500).json({ 
+        error: 'Migration failed',
+        message: err instanceof Error ? err.message : 'Unknown error occurred'
+      });
+    }
   });
 }
