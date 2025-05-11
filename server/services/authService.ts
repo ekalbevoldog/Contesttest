@@ -401,18 +401,10 @@ class AuthService {
         };
       }
 
-      // Attempt registration with Supabase
+      // 1️⃣ Create the auth user with ONLY email & password - no metadata
       const { data: authData, error } = await supabase.auth.signUp({
         email,
-        password,
-        options: {
-          data: {
-            first_name: effectiveFirstName,
-            last_name: lastName || '',
-            role: role,
-            full_name: `${effectiveFirstName} ${lastName || ''}`.trim()
-          }
-        }
+        password
       });
 
       if (error) {
@@ -433,6 +425,26 @@ class AuthService {
         return { 
           success: false, 
           error: 'User creation failed' 
+        };
+      }
+      
+      // 2️⃣ Now update the users table with the enum-typed fields
+      const fullName = `${effectiveFirstName} ${lastName || ''}`.trim();
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          role,
+          first_name: effectiveFirstName,
+          last_name: lastName || '',
+          full_name: fullName
+        })
+        .eq('id', authData.user.id);
+        
+      if (updateError) {
+        console.error('❌ [AuthService.register] post-signup update error:', updateError);
+        return { 
+          success: false, 
+          error: updateError.message 
         };
       }
 

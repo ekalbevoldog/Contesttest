@@ -1,0 +1,100 @@
+Here’s your permanent fix without touching any database triggers or enums—move all your role, first_name, last_name, and full_name writes out of the signUp() call and into a normal UPDATE public.users that happens after the user is created. That way GoTrue only sees the bare minimum (email & password), and your enum‐typed role column never gets a bad cast.
+
+1. In your AuthService, remove the options.data from signUp and add a follow-up update
+File: server/services/authService.ts
+
+Replace your existing register implementation with:
+
+// server/services/authService.ts
+import { supabase } from '../lib/supabase';
+
+export interface AuthResult {
+  success: boolean;
+  user?: { id: string; email: string };
+  session?: any;
+  error?: string;
+}
+
+export async function register({ 
+  email, 
+  password, 
+  firstName, 
+  lastName, 
+  fullName, 
+  role 
+}: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  role: string; // should match your enum values exactly
+}): Promise<AuthResult> {
+  // 1️⃣ Create the auth user with ONLY email & password
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (signUpError) {
+    console.error('❌ [AuthService.register] signUp error:', signUpError);
+    return { success: false, error: signUpError.message };
+  }
+  const user = signUpData.user!;
+  
+  // 2️⃣ Now update your public.users row with the enum‐typed fields
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({
+      role,         // enum
+      first_name: firstName,
+      last_name:  lastName,
+      full_name:  fullName
+    })
+    .eq('id', user.id);
+
+  if (updateError) {
+    console.error('❌ [AuthService.register] post‐signup update error:', updateError);
+    // Optionally: rollback user, or just report
+    return { success: false, error: updateError.message };
+  }
+
+  return {
+    success: true,
+    user:    { id: user.id, email: user.email! },
+    session: signUpData.session
+  };
+}
+2. Update your AuthController to pass through
+File: server/controllers/authController.ts
+
+Make sure it still calls your authService.register exactly the same, and returns on result.success:
+
+// server/controllers/authController.ts
+import { Request, Response } from 'express';
+import { register as registerUser } from '../services/authService';
+
+class AuthController {
+  async register(req: Request, res: Response) {
+    try {
+      const { email, password, firstName, lastName, fullName, role } = req.body;
+      // …validation…
+      const result = await registerUser({ email, password, firstName, lastName, fullName, role });
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+      return res.status(201).json({ 
+        user: result.user,
+        redirectTo: '/dashboard',
+        needsProfile: true
+      });
+    } catch (err: any) {
+      console.error('[AuthController.register] error:', err);
+      return res.status(500).json({ error: err.message || 'Registration failed' });
+    }
+  }
+}
+export const authController = new AuthController();
+Why this solves your enum error
+Step 1: supabase.auth.signUp() only sees email & password—no rogue role field to miscast.
+Step 2: you explicitly call .update() on users.role (the enum column) with a client‐side string that must match, so Postgres can validate it cleanly. No trigger magic, no prepared statement cast errors.
