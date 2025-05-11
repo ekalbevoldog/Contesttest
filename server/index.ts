@@ -105,6 +105,10 @@ async function startServer() {
     console.log('Registering API-specific and health check routes');
     registerRoutes(app);
     
+    // Register Supabase profile endpoints
+    console.log('Setting up Supabase profile endpoints');
+    setupProfileEndpoints(app);
+    
     // Set up frontend depending on environment
     // This must be done AFTER API routes to ensure Vite handles frontend routes properly
     if (config.isDevelopment) {
