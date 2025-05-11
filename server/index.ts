@@ -18,7 +18,7 @@ import { registerRoutes, configureWebSocketServer } from './routes';
 import { setupVite, serveStatic } from './vite';
 import config from './config/environment';
 import { closeConnections } from './lib/supabase';
-import { setupProfileEndpoints } from './supabaseProfile';
+import { profileService } from './services/profileService';
 
 import * as netType from 'net';
 
@@ -105,9 +105,9 @@ async function startServer() {
     console.log('Registering API-specific and health check routes');
     registerRoutes(app);
     
-    // Register Supabase profile endpoints
-    console.log('Setting up Supabase profile endpoints');
-    setupProfileEndpoints(app);
+    // Register profile endpoints
+    console.log('Setting up profile endpoints');
+    profileService.setupProfileEndpoints(app);
     
     // Set up frontend depending on environment
     // This must be done AFTER API routes to ensure Vite handles frontend routes properly
