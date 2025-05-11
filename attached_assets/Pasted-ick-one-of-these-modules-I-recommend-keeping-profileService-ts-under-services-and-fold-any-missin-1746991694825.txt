@@ -1,0 +1,32 @@
+ick one of these modules (I recommend keeping profileService.ts under /services) and fold any missing bits from supabaseprofile.ts into it. Then:
+
+Remove supabaseprofile.ts from your codebase.
+Search & Replace in your controllers & routes:
+All import { getAthleteByUserId, getBusinessByUserId } from './supabaseprofile' →
+import { profileService } from '../services/profileService';
+Change calls like
+const profile = await getAthleteByUserId(userId);
+to
+
+const { success, profile, error } = await profileService.getAthleteProfile(userId);
+if (!success) throw new Error(error);
+Fold any unique logic from supabaseprofile.ts into profileService.ts:
+The “fallback by looking up users table, then querying athlete_profiles” can go into getAthleteProfile.
+The safelyUpdateUserProfile() helper belongs in profileService.markProfileCompleted() (or a new updateUserProfileStatus() method).
+Update your route definitions to point only at the /controllers/profileController.ts endpoints (which themselves only use profileService).
+Step-by-step
+Delete supabaseprofile.ts.
+Edit /server/controllers/profileController.ts:
+Remove any import from supabaseprofile.ts.
+At the top, ensure you have
+import { profileService } from '../services/profileService';
+In each controller method (getAthleteProfile, getBusinessProfile, etc.), call into profileService rather than the old functions.
+Edit /server/routes/profileRoutes.ts:
+Remove any routes pointing at the old functions (e.g. /supabase/… from supabaseprofile.ts).
+Keep only the routes that call profileController.upsertAthleteProfile, profileController.getAthleteProfile, etc.
+Merge any unique fallback logic:
+If you want that “if not found by id, try again via users table” behavior, copy it into ProfileService.getAthleteProfile() instead of having it scattered in supabaseprofile.ts.
+Test end-to-end:
+Spin up the server, hit your /api/supabase/athlete-profile and /api/supabase/business-profile endpoints and confirm data flows correctly.
+Confirm no duplicate imports or “multiple declarations” errors.
+By collapsing everything into one ProfileService, you’ll eliminate conflicts and have a clear, maintainable profile layer.
