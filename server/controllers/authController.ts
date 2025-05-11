@@ -6,7 +6,8 @@
  */
 
 import { Request, Response } from 'express';
-import { authService } from '../services/authService';
+import authService from '../services/authService';
+import { supabaseAdmin } from '../lib/supabase';
 
 // Use Express.Request which already has our user property defined in auth.ts
 type AuthenticatedRequest = Request;
@@ -76,6 +77,14 @@ class AuthController {
         registrationData.firstName = registrationData.name;
         console.log('[Auth Controller] Used name field for firstName:', registrationData.firstName);
       }
+      
+      // Ensure fullName is set for the service function
+      if (!registrationData.fullName) {
+        const firstName = registrationData.firstName || registrationData.name || '';
+        const lastName = registrationData.lastName || '';
+        registrationData.fullName = `${firstName} ${lastName}`.trim();
+        console.log('[Auth Controller] Generated fullName:', registrationData.fullName);
+      }
 
       console.log(`[Auth Controller] Attempting registration for email: ${registrationData.email}, role: ${registrationData.role}`);
       // Attempt registration
@@ -114,7 +123,7 @@ class AuthController {
       console.error('Request body:', JSON.stringify(sanitizedBody, null, 2));
 
       // Log Supabase connection status
-      console.error('Is Supabase admin client initialized:', !!authService['supabaseAdmin']);
+      console.error('Is Supabase admin client initialized:', !!supabaseAdmin);
 
       // 2️⃣ Send back the full error object to the client with more context
       return res.status(400).json({

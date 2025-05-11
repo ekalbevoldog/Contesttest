@@ -34,6 +34,9 @@ interface AuthResult {
   needsProfile?: boolean;
   redirectTo?: string;
   error?: string;
+  details?: any;
+  hint?: string;
+  code?: string;
 }
 
 // Interface for profile data
@@ -412,13 +415,18 @@ class AuthService {
           '❌ [AuthService.register] Supabase error:',
           JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
         );
-        return { 
+        // Create a clean error object with only the fields defined in AuthResult
+        const errorResult: AuthResult = {
           success: false,
-          error:   error.message,
-          details: (error as any).details,
-          hint:    (error as any).hint,
-          code:    (error as any).code
+          error: error.message
         };
+        
+        // Add any additional error details if available
+        if ((error as any).details) errorResult.details = (error as any).details;
+        if ((error as any).hint) errorResult.hint = (error as any).hint;
+        if ((error as any).code) errorResult.code = (error as any).code;
+        
+        return errorResult;
       }
 
       if (!authData.user) {

@@ -1,0 +1,136 @@
+It turned out that no matter how we shook out the post-signup UPDATE, the real culprit was that the very signUp() call was still passing a role field in the JSON body to GoTrue—so the built-in trigger was trying to write that text into your users.role enum column and blowing up with:
+
+ERROR: column "role" is of type public.user_role but expression is of type text
+To fix this, you must never pass role (or any other metadata) into the initial signUp() payload. Instead, do a two-step approach:
+
+signUp only with email & password
+Immediately follow up with a separate UPDATE public.users to set your enum-typed role (and any of the other “custom” columns)
+1. Update authService.register
+
+Replace your existing register method in server/services/authService.ts with this:
+
+// server/services/authService.ts
+import { supabase } from '../lib/supabase';
+
+export interface AuthResult {
+  success: boolean;
+  user?: { id: string; email: string };
+  session?: any;
+  error?: string;
+}
+
+export async function register({
+  email,
+  password,
+  firstName,
+  lastName,
+  fullName,
+  role
+}: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  role: string;  // must exactly match your public.users.role enum
+}): Promise<AuthResult> {
+  // ─── STEP 1: SIGN UP with *only* email & password ─────────────────────────
+  const {
+    data: signUpData,
+    error: signUpError
+  } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (signUpError) {
+    console.error('❌ [AuthService.register] signUp error:', signUpError);
+    return { success: false, error: signUpError.message };
+  }
+  const user = signUpData.user!;
+
+  // ─── STEP 2: UPDATE ENUM & CUSTOM COLUMNS in public.users ────────────────
+  // This runs under the same service key, so it can write to public.users
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({
+      role,            // matched against your enum type
+      first_name: firstName,
+      last_name:  lastName,
+      full_name:  fullName
+    })
+    .eq('id', user.id);
+
+  if (updateError) {
+    console.error('❌ [AuthService.register] post-signup update error:', updateError);
+    return { success: false, error: updateError.message };
+  }
+
+  return {
+    success: true,
+    user:    { id: user.id, email: user.email! },
+    session: signUpData.session
+  };
+}
+Key points:
+
+signUp() now only ever sends { email, password }—no stray role or other metadata.
+Immediately after, we .update('users') with exactly the enum-typed role and the other custom columns.
+Because that UPDATE runs under your service role (in supabase.ts you used your service_role key), it can write to the protected public.users table.
+2. Confirm your AuthController uses it
+
+In server/controllers/authController.ts, make sure your register method simply calls that service, e.g.:
+
+// server/controllers/authController.ts
+import { Request, Response } from 'express';
+import { register as registerUser } from '../services/authService';
+
+class AuthController {
+  async register(req: Request, res: Response) {
+    try {
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        fullName,
+        role
+      } = req.body;
+
+      const result = await registerUser({
+        email,
+        password,
+        firstName,
+        lastName,
+        fullName,
+        role
+      });
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      return res.status(201).json({
+        user: result.user,
+        redirectTo: '/dashboard',  // or wherever
+        needsProfile: true
+      });
+    } catch (err: any) {
+      console.error('[AuthController.register] error:', err);
+      return res.status(500).json({ error: err.message || 'Registration failed' });
+    }
+  }
+}
+export const authController = new AuthController();
+3. Redeploy & test
+
+Restart your server so these changes take effect.
+Try signing up again via your front-end; watch the logs for two distinct queries:
+A POST /auth/v1/signup with only email & password.
+A subsequent UPDATE public.users SET role=… WHERE id=….
+You should no longer see the enum cast error in Supabase logs.
+Why this finally works
+The GoTrue /signup endpoint now has no metadata to try to shove into your users.role enum column.
+Your separate UPDATE uses a proper parameterized query against the role enum, so Postgres can validate and store it correctly.
+You keep full flexibility to add as many custom columns as you like to public.users, without worrying about what GoTrue will try to insert.
+Let me know once you’ve deployed this and run a fresh signup—your 42804 enum-cast error should be gone!
