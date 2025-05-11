@@ -404,10 +404,15 @@ class AuthService {
         };
       }
 
-      // 1️⃣ Create the auth user with ONLY email & password - no metadata
+      // STEP 1: Create the auth user with ONLY email & password
+      // No metadata is passed in the signUp call to avoid enum issues
       const { data: authData, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          // Empty data object to ensure we're not getting any defaults
+          data: {}
+        }
       });
 
       if (error) {
@@ -436,10 +441,11 @@ class AuthService {
         };
       }
 
-      // 2️⃣ Now update the users table with the enum-typed fields
+      // STEP 2: Update metadata via admin API in a separate step
+      console.log('✅ [AuthService.register] User created successfully, now updating metadata');
+      
       const fullName = `${effectiveFirstName} ${lastName || ''}`.trim();
 
-      // Update user metadata first - this is safer as it doesn't involve enum type casting
       if (!supabaseAdmin) {
         console.error('[Auth Service] Supabase admin client not initialized');
         return {
@@ -448,6 +454,7 @@ class AuthService {
         };
       }
 
+      // Update user metadata with admin API
       const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
         authData.user.id,
         { 
@@ -468,10 +475,12 @@ class AuthService {
         };
       }
 
-      // Try the new safer role update function that handles enum casting properly
+      // STEP 3: Update the role in the users table with explicit casting
+      // This is now a completely separate step from the auth signup
       try {
         console.log(`[AuthService.register] Updating user role to "${role}" with safe casting`);
         
+        // First try with the safe update_user_role_safely function
         const { error: safeUpdateError } = await supabase.rpc('update_user_role_safely', {
           id: authData.user.id,
           user_role_str: role
@@ -480,20 +489,27 @@ class AuthService {
         if (safeUpdateError) {
           console.error('❌ [AuthService.register] Safe role update failed:', safeUpdateError);
           
-          // Fallback to the regular update with role casting
-          console.log('⚠️ [AuthService.register] Trying fallback with update_user_with_role');
+          // Try a direct update with explicit casting as fallback
+          console.log('⚠️ [AuthService.register] Trying direct update with explicit casting');
           
-          const { error: fallbackError } = await supabase.rpc('update_user_with_role', {
-            id: authData.user.id,
-            user_role: role,
-            user_first_name: effectiveFirstName,
-            user_last_name: lastName || '',
-            user_full_name: fullName
+          // Format the SQL query with explicit casting to the enum type
+          const { error: directUpdateError } = await supabase.rpc('exec_sql', {
+            sql: `
+              UPDATE public.users 
+              SET 
+                role = '${role}'::user_role,
+                first_name = '${effectiveFirstName.replace(/'/g, "''")}',
+                last_name = '${(lastName || '').replace(/'/g, "''")}',
+                full_name = '${fullName.replace(/'/g, "''")}'
+              WHERE id = '${authData.user.id}'
+            `
           });
           
-          if (fallbackError) {
-            console.error('❌ [AuthService.register] All role update methods failed:', fallbackError);
+          if (directUpdateError) {
+            console.error('❌ [AuthService.register] Direct update failed:', directUpdateError);
             console.log('⚠️ [AuthService.register] Proceeding with user metadata only');
+          } else {
+            console.log('✅ [AuthService.register] Direct update successful');
           }
         } else {
           console.log('✅ [AuthService.register] User role updated successfully in database');
@@ -503,7 +519,7 @@ class AuthService {
         console.log('⚠️ [AuthService.register] Proceeding with user metadata only, role not set in database');
       }
 
-      // Create placeholder business profile if role is business
+      // STEP 4: Create placeholder business profile if role is business
       if (role === 'business' && authData.user.id) {
         await ensureBusinessProfile(authData.user.id, role);
       }

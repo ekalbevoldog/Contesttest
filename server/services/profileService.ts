@@ -901,6 +901,50 @@ class ProfileService {
         });
       }
     });
+
+    // Unified profile endpoint - determines which profile type to create based on userType
+    app.post('/api/supabase/profile', async (req: Request, res: Response) => {
+      try {
+        const { userType, session_id, ...profileData } = req.body;
+        
+        if (!userType) {
+          return res.status(400).json({ error: 'userType is required' });
+        }
+        
+        if (!session_id) {
+          return res.status(400).json({ error: 'session_id is required' });
+        }
+
+        if (!profileData.name) {
+          return res.status(400).json({ error: 'name is required' });
+        }
+        
+        let result;
+        if (userType.toLowerCase() === 'athlete') {
+          result = await this.upsertAthleteProfile(session_id, profileData);
+        } else if (userType.toLowerCase() === 'business') {
+          result = await this.upsertBusinessProfile(session_id, profileData);
+        } else {
+          return res.status(400).json({ error: 'Invalid userType. Must be "athlete" or "business".' });
+        }
+        
+        if (!result.success) {
+          return res.status(500).json({ error: result.error });
+        }
+        
+        return res.status(200).json({ 
+          success: true,
+          profile: result.profile,
+          message: `${userType} profile created successfully`
+        });
+      } catch (err: any) {
+        console.error('Exception in unified profile endpoint:', err);
+        return res.status(500).json({ 
+          error: 'Profile creation failed',
+          message: err.message || 'Unknown error occurred'
+        });
+      }
+    });
   }
 }
 

@@ -183,16 +183,13 @@ export async function registerWithEmail(email: string, password: string, fullNam
     let apiSuccess = false;
     let finalUserData = null;
 
-    // First try to register directly with Supabase for better session handling
+    // First try to register directly with Supabase - only with email & password
+    // No metadata is sent to avoid enum casting issues
     const { data: supabaseData, error: supabaseError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          full_name: fullName,
-          role: role,
-          user_type: role
-        }
+        data: {} // Empty data object to ensure we're not getting any defaults
       }
     });
 
