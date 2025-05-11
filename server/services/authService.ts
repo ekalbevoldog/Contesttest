@@ -59,7 +59,7 @@ class AuthService {
   async getUserFromToken(token: string): Promise<AuthResult> {
     try {
       console.log('[Auth Service] Getting user from token');
-      
+
       // Validate token with Supabase
       if (!supabaseAdmin) {
         console.error('[Auth Service] Supabase admin client not initialized');
@@ -68,9 +68,9 @@ class AuthService {
           error: 'Supabase admin client not initialized'
         };
       }
-      
+
       const { data, error } = await supabaseAdmin.auth.getUser(token);
-      
+
       if (error || !data.user) {
         console.error('[Auth Service] Token validation error:', error?.message);
         return {
@@ -78,13 +78,13 @@ class AuthService {
           error: error?.message || 'Invalid token'
         };
       }
-      
+
       // Get user's role and other metadata
       const user = data.user;
-      
+
       // Handle various possible locations for role information with defensive programming
       let role = 'user'; // Default role
-      
+
       if (user.user_metadata) {
         if (user.user_metadata.role) {
           role = user.user_metadata.role;
@@ -92,23 +92,23 @@ class AuthService {
           role = user.user_metadata.userType;
         }
       }
-      
+
       // Fallback to role or user_type if directly on user object (older structure)
       if (role === 'user' && (user as any).role) {
         role = (user as any).role;
       } else if (role === 'user' && (user as any).user_type) {
         role = (user as any).user_type;
       }
-      
+
       console.log(`[Auth Service] User role resolved as: ${role}`);
-      
+
       // Try to get user profile data based on role
       let profile = null;
       let profileCompleted = false;
-      
+
       try {
         profile = await this.getUserProfile(user.id, role);
-        
+
         // Check if profile is considered complete
         if (profile) {
           if (role === 'athlete' && profile.firstName && profile.sport) {
@@ -123,7 +123,7 @@ class AuthService {
       } catch (profileError) {
         console.warn('[Auth Service] Could not fetch profile for token user:', profileError);
       }
-      
+
       // Construct the full user object with metadata
       const userResponse = {
         id: user.id,
@@ -135,10 +135,10 @@ class AuthService {
         // Include createdAt from app_metadata if available
         createdAt: user.app_metadata?.created_at || user.created_at || null
       };
-      
+
       // Log success
       console.log('[Auth Service] Successfully retrieved and processed user from token');
-      
+
       return {
         success: true,
         user: userResponse,
@@ -163,7 +163,7 @@ class AuthService {
   async getUserProfile(userId: string, role?: string): Promise<ProfileData | null> {
     try {
       console.log(`[Auth Service] Getting profile for user: ${userId}, role: ${role || 'unspecified'}`);
-      
+
       // If role is specified, only query that profile type
       if (role === 'athlete') {
         const { data: athleteData, error: athleteError } = await supabase
@@ -171,7 +171,7 @@ class AuthService {
           .select('*')
           .eq('user_id', userId)
           .single();
-        
+
         if (athleteData) {
           console.log('[Auth Service] Found athlete profile');
           return {
@@ -180,19 +180,19 @@ class AuthService {
             id: athleteData.id
           };
         }
-        
+
         // If we have a role but no profile, return null early
         console.log('[Auth Service] No athlete profile found for athlete user');
         return null;
       }
-      
+
       if (role === 'business') {
         const { data: businessData, error: businessError } = await supabase
           .from('business_profiles')
           .select('*')
           .eq('user_id', userId)
           .single();
-        
+
         if (businessData) {
           console.log('[Auth Service] Found business profile');
           return {
@@ -201,19 +201,19 @@ class AuthService {
             id: businessData.id
           };
         }
-        
+
         // If we have a role but no profile, return null early
         console.log('[Auth Service] No business profile found for business user');
         return null;
       }
-      
+
       if (role === 'compliance' || role === 'compliance_officer') {
         const { data: complianceData, error: complianceError } = await supabase
           .from('compliance_profiles')
           .select('*')
           .eq('user_id', userId)
           .single();
-        
+
         if (complianceData) {
           console.log('[Auth Service] Found compliance profile');
           return {
@@ -222,21 +222,21 @@ class AuthService {
             id: complianceData.id
           };
         }
-        
+
         // If we have a role but no profile, return null early
         console.log('[Auth Service] No compliance profile found for compliance user');
         return null;
       }
-      
+
       // If role is not specified or not one of the above, try all profiles in sequence
-      
+
       // Try athlete profile
       const { data: athleteData, error: athleteError } = await supabase
         .from('athlete_profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
-      
+
       if (athleteData) {
         console.log('[Auth Service] Found athlete profile');
         return {
@@ -245,14 +245,14 @@ class AuthService {
           id: athleteData.id
         };
       }
-      
+
       // Try business profile
       const { data: businessData, error: businessError } = await supabase
         .from('business_profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
-      
+
       if (businessData) {
         console.log('[Auth Service] Found business profile');
         return {
@@ -261,14 +261,14 @@ class AuthService {
           id: businessData.id
         };
       }
-      
+
       // Try compliance officer profile
       const { data: complianceData, error: complianceError } = await supabase
         .from('compliance_profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
-      
+
       if (complianceData) {
         console.log('[Auth Service] Found compliance profile');
         return {
@@ -277,7 +277,7 @@ class AuthService {
           id: complianceData.id
         };
       }
-      
+
       // If no profile found
       console.log('[Auth Service] No profile found for user');
       return null;
@@ -384,7 +384,7 @@ class AuthService {
   async register(data: RegistrationData): Promise<AuthResult> {
     try {
       const { email, password, firstName, lastName, name, role } = data;
-      
+
       // Support both firstName and name fields for backward compatibility
       const effectiveFirstName = firstName || name;
 
@@ -420,12 +420,12 @@ class AuthService {
           success: false,
           error: error.message
         };
-        
+
         // Add any additional error details if available
         if ((error as any).details) errorResult.details = (error as any).details;
         if ((error as any).hint) errorResult.hint = (error as any).hint;
         if ((error as any).code) errorResult.code = (error as any).code;
-        
+
         return errorResult;
       }
 
@@ -435,25 +435,39 @@ class AuthService {
           error: 'User creation failed' 
         };
       }
-      
+
       // 2️⃣ Now update the users table with the enum-typed fields
       const fullName = `${effectiveFirstName} ${lastName || ''}`.trim();
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          role,
-          first_name: effectiveFirstName,
-          last_name: lastName || '',
-          full_name: fullName
-        })
-        .eq('id', authData.user.id);
-        
+
+      // Use a raw SQL query to ensure proper casting of the role enum
+      const { error: updateError } = await supabase.rpc('update_user_with_role', {
+        user_id: authData.user.id,
+        user_role: role,
+        user_first_name: effectiveFirstName,
+        user_last_name: lastName || '',
+        user_full_name: fullName
+      });
+
+      // Fallback to direct update if RPC fails (you'll need to add this function to your database)
       if (updateError) {
-        console.error('❌ [AuthService.register] post-signup update error:', updateError);
-        return { 
-          success: false, 
-          error: updateError.message 
-        };
+        console.error('❌ [AuthService.register] RPC update failed, trying direct update:', updateError);
+        const { error: directUpdateError } = await supabase
+          .from('users')
+          .update({
+            // Cast the role string to the enum type
+            first_name: effectiveFirstName,
+            last_name: lastName || '',
+            full_name: fullName
+          })
+          .eq('id', authData.user.id);
+
+        if (directUpdateError) {
+          console.error('❌ [AuthService.register] Direct update also failed:', directUpdateError);
+          return { 
+            success: false, 
+            error: directUpdateError.message 
+          };
+        }
       }
 
       // Create placeholder business profile if role is business
@@ -613,7 +627,7 @@ class AuthService {
             error: 'Supabase admin client not initialized'
           };
         }
-        
+
         const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
           userId,
           { user_metadata: userData }
@@ -675,7 +689,7 @@ class AuthService {
           user: { id: userId, ...userData }
         };
       }
-      
+
       const { data: { user }, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(
         userId
       );
@@ -718,7 +732,7 @@ class AuthService {
           error: 'Supabase admin client not initialized'
         };
       }
-      
+
       const { data: userData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(
         userId
       );
@@ -762,7 +776,7 @@ class AuthService {
           error: 'Supabase admin client not initialized'
         };
       }
-      
+
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         userId,
         { password: newPassword }
