@@ -957,7 +957,8 @@ export default function Onboarding() {
           lastName: formData.name.split(' ').slice(1).join(' ') || '', // Add lastName from split if available
           fullName: formData.name, // Keep this for backward compatibility
           role: formData.userType,
-          name: formData.name // Add name field explicitly
+          name: formData.name, // Add name field explicitly
+          sessionId: sessionId || null // Include sessionId in registration request
         };
         console.log("Registering via /api/auth/register");
         const response = await fetch('/api/auth/register', {
@@ -988,10 +989,29 @@ export default function Onboarding() {
           throw new Error(message);
         }
 
-        const { user: newUser, sessionId } = await response.json();
+        const regRes = await response.json();
+        const { user: newUser } = regRes;
         if (!newUser?.id) throw new Error("No user data returned");
 
         console.log("Registration successful:", newUser.id);
+        
+        // ─── SESSION → UUID MIGRATION ───────────────────────────────
+        if (sessionId) {
+          await Promise.resolve( // call the right endpoint for each role
+            formData.userType === 'athlete'
+              ? fetch('/api/supabase/athlete-profile/migrate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId, newId: newUser.id })
+                })
+              : fetch('/api/supabase/business-profile/migrate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId, newId: newUser.id })
+                })
+          );
+        }
+        // ────────────────────────────────────────────────────────────────
 
         // 2️⃣ Create the business profile
           const profilePayload = {
@@ -1003,7 +1023,7 @@ export default function Onboarding() {
             business_type: formData.businessType,
             company_size: formData.businessSize,
             zipCode: formData.zipCode,
-            product_type: formData.productType, // if you have this column
+            product_type: formData.businessType, // Using businessType instead of productType
             budgetmin: formData.budgetMin,
             budgetmax: formData.budgetMax,
             haspreviouspartnerships: formData.haspreviouspartnerships,
