@@ -49,8 +49,8 @@ export interface BusinessProfile {
   values?: string;
   target_schools_sports?: string;
   budget?: string;
-  budget_min?: number;
-  budget_max?: number;
+  budgetmin?: number;
+  budgetmax?: number;
   profile_image?: string;
   created_at?: string;
   updated_at: string;

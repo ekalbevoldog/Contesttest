@@ -988,82 +988,44 @@ export default function Onboarding() {
           throw new Error(message);
         }
 
-        const { user: newUser } = await response.json();
+        const { user: newUser, sessionId } = await response.json();
         if (!newUser?.id) throw new Error("No user data returned");
 
         console.log("Registration successful:", newUser.id);
 
-        // 2️⃣ Build profile payload
-        let profileData: any = {
-          userId: newUser.id,
-          userType: formData.userType,
-          name: formData.name,
-          email: formData.email,
-          Phone: formData.Phone || formData.phone, // Use appropriate phone field
-          phone: formData.Phone || formData.phone, // Add explicit phone field to match schema
-        };
-
-        if (formData.userType === "athlete") {
-          Object.assign(profileData, {
+        // 2️⃣ Create the business profile
+          const profilePayload = {
+            sessionId,                        // ← the key your table requires
+            name: formData.name,
+            email: formData.email,
             phone: formData.phone,
-            birthdate: formData.birthdate,
-            gender: formData.gender,
-            bio: formData.bio,
-            athleteCategory: formData.athleteCategory,
-            school: formData.school,
-            division: formData.division,
-            sport: formData.sport,
-            position: formData.position,
-            socialHandles: JSON.stringify(formData.socialHandles || {}),
-            followerCount: formData.followerCount || 0,
-            averageEngagementRate: formData.averageEngagementRate,
-            contentStyle: formData.contentStyle,
-            contentTypes: JSON.stringify(formData.contentTypes),
-            compensationGoals: formData.compensationGoals,
-            minimumCompensation: formData.minimumCompensation,
-            preferredProductCategories: JSON.stringify(formData.preferredProductCategories),
-            personalValues: JSON.stringify(formData.personalValues),
-            causes: JSON.stringify(formData.causes),
-            eligibilityStatus: "pending"
-          });
-        } else {
-          Object.assign(profileData, {
-            productType: formData.businessType,
-            audienceGoals: formData.goalIdentification.join(", "),
-            budget: `$${formData.budgetMin} - $${formData.budgetMax}`,
             industry: formData.industry,
-            businessType: formData.businessType, // Add explicit businessType field
-            businessSize: formData.businessSize, // Add explicit businessSize field
-            preferences: JSON.stringify({
-              accessRestriction: formData.accessRestriction,
-              haspreviouspartnerships: formData.haspreviouspartnerships,
-              zipCode: formData.zipCode,
-              operatingLocation: formData.operatingLocation,
-              companySize: formData.businessSize,
-              contactInfo: {
-                name: formData.name || formData.contactName, // Use name if contactName is not available
-                title: formData.contactTitle,
-                email: formData.email || formData.contactEmail, // Use email if contactEmail is not available
-                phone: formData.Phone
-              }
-            })
+            business_type: formData.businessType,
+            company_size: formData.businessSize,
+            zipCode: formData.zipCode,
+            product_type: formData.productType, // if you have this column
+            budgetmin: formData.budgetMin,
+            budgetmax: formData.budgetMax,
+            haspreviouspartnerships: formData.haspreviouspartnerships,
+            bio: formData.bio,
+            operatingLocation: formData.operatingLocation,
+            company: formData.contactName,
+            position: formData.contactTitle,
+            full_name: formData.name,
+            profile_image: null
+          };
+          console.log("Creating profile via /api/supabase/profile", profilePayload);
+          const profRes = await fetch('/api/supabase/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(profilePayload),
           });
-        }
+          if (!profRes.ok) {
+            const text = await profRes.text();
+            throw new Error(`Profile creation failed: ${text}`);
+          }
+          console.log("Profile created successfully");
 
-        // 3️⃣ Create profile record
-        console.log("Creating profile via /api/supabase/profile");
-        console.log("Profile data being sent:", profileData);
-        const profileResp = await fetch('/api/supabase/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(profileData),
-        });
-        if (!profileResp.ok) {
-          const text = await profileResp.text();
-          throw new Error(`Profile creation failed: ${text || profileResp.statusText}`);
-        }
-
-        console.log("Profile created successfully");
         toast({ title: "Success!", description: "Your account has been created." });
 
         // 4️⃣ Auto-login & redirect

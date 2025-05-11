@@ -1,4 +1,4 @@
-/** 05/08/2025 - 13:35 CST
+/** 05/10/2025 - 13:35 CST
  * Authentication Controller
  * 
  * Handles HTTP requests related to authentication.
@@ -70,7 +70,7 @@ class AuthController {
         console.log('[Auth Controller] Registration validation failed: Missing required fields');
         return res.status(400).json({ error: 'Required fields missing' });
       }
-      
+
       // For backward compatibility, if firstName isn't provided but name is, use name as firstName
       if (!registrationData.firstName && registrationData.name) {
         registrationData.firstName = registrationData.name;
@@ -94,11 +94,11 @@ class AuthController {
         });
       }
 
-      // Return user and session data
+      // Return user and **sessionId** for next step
       return res.status(201).json({
         user: result.user,
-        session: result.session,
-        needsProfile: result.needsProfile,
+        sessionId: result.session?.access_token, // <- new
+        needsProfile: true, // frontend will know to call profile
         redirectTo: result.redirectTo
       });
   } catch (err: any) {
@@ -107,15 +107,15 @@ class AuthController {
         '❌ [AuthController.register] error:',
         JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
       );
-      
+
       // Log request body (excluding sensitive data)
       const sanitizedBody = { ...req.body };
       if (sanitizedBody.password) sanitizedBody.password = '[REDACTED]';
       console.error('Request body:', JSON.stringify(sanitizedBody, null, 2));
-      
+
       // Log Supabase connection status
       console.error('Is Supabase admin client initialized:', !!authService['supabaseAdmin']);
-      
+
       // 2️⃣ Send back the full error object to the client with more context
       return res.status(400).json({
         error:   err.message,
@@ -151,16 +151,16 @@ class AuthController {
   async getCurrentUser(req: AuthenticatedRequest, res: Response) {
     try {
       console.log('[Auth Controller] Get current user request received');
-      
+
       // Extract authorization token from header if present
       const authHeader = req.headers.authorization;
       let token = null;
-      
+
       if (authHeader && authHeader.startsWith('Bearer ')) {
         token = authHeader.substring(7); // Remove 'Bearer ' prefix
         console.log('[Auth Controller] Authorization token found in header');
       }
-      
+
       // Check if we have a user from auth middleware
       if (!req.user) {
         // If we have a token but no user, we might need to validate the token manually
@@ -184,7 +184,7 @@ class AuthController {
         } else {
           console.log('[Auth Controller] No authorization token provided');
         }
-        
+
         // For the /user endpoint with optionalAuth, return empty data instead of 401
         // This allows the auth page to load without authentication errors
         console.log('[Auth Controller] No authenticated user found, returning empty data');
@@ -197,12 +197,12 @@ class AuthController {
 
       // If we have a user, return it along with extended profile if available
       console.log(`[Auth Controller] Returning user data for user ID: ${req.user.id}`);
-      
+
       // Try to fetch extended profile information
       try {
         const userProfile = await authService.getUserProfile(req.user.id);
         console.log('[Auth Controller] Profile retrieved successfully:', !!userProfile);
-        
+
         return res.status(200).json({ 
           user: req.user,
           profile: userProfile || null,
@@ -278,26 +278,26 @@ class AuthController {
   async refreshToken(req: Request, res: Response) {
     try {
       console.log('[Auth Controller] Refresh token/session request received');
-      
+
       // Check for refresh token in body (traditional method)
       let refreshToken = req.body.refreshToken;
       let accessToken = null;
-      
+
       // If no refresh token in body, check for authorization header (session refresh method)
       if (!refreshToken) {
         console.log('[Auth Controller] No refresh token in body, checking authorization header');
         const authHeader = req.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           accessToken = authHeader.substring(7);
           console.log('[Auth Controller] Found access token in authorization header');
-          
+
           // Try to get the user details from this access token
           try {
             const userResult = await authService.getUserFromToken(accessToken);
             if (userResult.success && userResult.user) {
               console.log('[Auth Controller] Access token is valid, refreshing session');
-              
+
               // Set auth cookies with existing token since it's still valid
               if (req.body.useCookies) {
                 res.cookie('auth-token', accessToken, {
@@ -310,7 +310,7 @@ class AuthController {
                   maxAge: 24 * 60 * 60 * 1000 // 24 hours
                 });
               }
-              
+
               // Return the user and create a session object for client
               return res.status(200).json({
                 user: userResult.user,
@@ -325,13 +325,13 @@ class AuthController {
             // Continue with refresh token flow
           }
         }
-        
+
         // If we reach here, we couldn't use the authorization header or it was invalid
         return res.status(400).json({ error: 'Refresh token is required' });
       }
 
       console.log('[Auth Controller] Attempting to refresh token');
-      
+
       // Attempt to refresh token
       const result = await authService.refreshToken(refreshToken);
 
@@ -341,7 +341,7 @@ class AuthController {
       }
 
       console.log('[Auth Controller] Token refresh successful');
-      
+
       // Set new auth cookies if using cookie authentication
       if (req.body.useCookies && result.session) {
         res.cookie('auth-token', result.session.access_token, {
