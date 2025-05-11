@@ -475,58 +475,83 @@ class AuthService {
         };
       }
 
-      // STEP 3: Update the role in the users table with explicit casting
-      // This is now a completely separate step from the auth signup
+      // STEP 3: Update the role in the users table with multiple fallback strategies
       try {
-        console.log(`[AuthService.register] Updating user role to "${role}" with safe casting`);
+        console.log(`[AuthService.register] Updating user role to "${role}" with multi-strategy approach`);
         
-        // First try with the safe update_user_role_safely function
-        const { error: safeUpdateError } = await supabase.rpc('update_user_role_safely', {
-          id: authData.user.id,
-          user_role_str: role
+        // STRATEGY 1: Use our new set_user_role_direct function which uses CASE statements
+        const { error: directRoleError } = await supabase.rpc('set_user_role_direct', {
+          user_id: authData.user.id,
+          role_value: role,
+          first_name: effectiveFirstName,
+          last_name: lastName || '',
+          full_name: fullName
         });
         
-        if (safeUpdateError) {
-          console.error('❌ [AuthService.register] Safe role update failed:', safeUpdateError);
+        if (directRoleError) {
+          console.error('❌ [AuthService.register] Direct role function failed:', directRoleError);
           
-          // Try a role-specific explicit casting approach as fallback
-          console.log('⚠️ [AuthService.register] Trying role-specific casting approach');
-          
-          // Different SQL based on role to ensure proper casting
-          let roleSql;
-          if (role === 'athlete') {
-            roleSql = "'athlete'::user_role";
-          } else if (role === 'business') {
-            roleSql = "'business'::user_role";
-          } else if (role === 'admin') {
-            roleSql = "'admin'::user_role";
-          } else if (role === 'compliance') {
-            roleSql = "'compliance'::user_role";
-          } else {
-            roleSql = "'user'::user_role";
-          }
-          
-          // Format the SQL query with explicit casting to the enum type
-          const { error: directUpdateError } = await supabase.rpc('exec_sql', {
-            sql: `
-              UPDATE public.users 
-              SET 
-                role = ${roleSql},
-                first_name = '${effectiveFirstName.replace(/'/g, "''")}',
-                last_name = '${(lastName || '').replace(/'/g, "''")}',
-                full_name = '${fullName.replace(/'/g, "''")}'
-              WHERE id = '${authData.user.id}'
-            `
+          // STRATEGY 2: Try the safer update_user_role_safely function
+          console.log('⚠️ [AuthService.register] Trying safe role update function');
+          const { error: safeUpdateError } = await supabase.rpc('update_user_role_safely', {
+            id: authData.user.id,
+            user_role_str: role
           });
           
-          if (directUpdateError) {
-            console.error('❌ [AuthService.register] Direct update failed:', directUpdateError);
-            console.log('⚠️ [AuthService.register] Proceeding with user metadata only');
+          if (safeUpdateError) {
+            console.error('❌ [AuthService.register] Safe role update also failed:', safeUpdateError);
+            
+            // STRATEGY 3: Raw SQL approach with hardcoded values to avoid parameterized query issues
+            console.log('⚠️ [AuthService.register] Attempting raw SQL update as last resort');
+            
+            // Construct a raw SQL query that doesn't rely on parameterized values for the enum
+            let roleClause;
+            switch(role) {
+              case 'athlete': 
+                roleClause = "role = 'athlete'::user_role"; 
+                break;
+              case 'business': 
+                roleClause = "role = 'business'::user_role"; 
+                break;
+              case 'admin': 
+                roleClause = "role = 'admin'::user_role"; 
+                break;
+              case 'compliance': 
+                roleClause = "role = 'compliance'::user_role"; 
+                break;
+              default: 
+                roleClause = "role = 'user'::user_role";
+            }
+            
+            // Escape strings to prevent SQL injection
+            const escapedFirstName = effectiveFirstName.replace(/'/g, "''");
+            const escapedLastName = (lastName || '').replace(/'/g, "''");
+            const escapedFullName = fullName.replace(/'/g, "''");
+            
+            // Execute the raw SQL directly
+            const { error: rawSqlError } = await supabase.rpc('exec_sql', {
+              sql: `
+                UPDATE public.users 
+                SET 
+                  ${roleClause},
+                  first_name = '${escapedFirstName}',
+                  last_name = '${escapedLastName}',
+                  full_name = '${escapedFullName}'
+                WHERE id = '${authData.user.id}'
+              `
+            });
+            
+            if (rawSqlError) {
+              console.error('❌ [AuthService.register] All role update strategies failed:', rawSqlError);
+              console.log('⚠️ [AuthService.register] Proceeding with user metadata only (role in auth but not in users table)');
+            } else {
+              console.log('✅ [AuthService.register] Raw SQL update successful');
+            }
           } else {
-            console.log('✅ [AuthService.register] Direct update successful');
+            console.log('✅ [AuthService.register] Safe role update successful');
           }
         } else {
-          console.log('✅ [AuthService.register] User role updated successfully in database');
+          console.log('✅ [AuthService.register] Direct role function update successful');
         }
       } catch (roleUpdateError) {
         console.error('❌ [AuthService.register] Exception during role update:', roleUpdateError);
