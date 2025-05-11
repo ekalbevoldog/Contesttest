@@ -1,0 +1,170 @@
+apply the exact changes needed so that both business and athlete flows use the same session→UUID migration pattern and properly upsert into their respective tables.
+
+1. Front-end: Onboarding.tsx
+
+Locate your final handleSubmit in client/src/components/Onboarding.tsx.
+Ensure whenever you call /api/auth/register you include sessionId in the JSON body (you already did this for business).
+After you receive { user } from /api/auth/register, add a branch:
+// … after registration …
+const { user: newUser } = await regRes.json();
+
+// ─── SESSION → UUID MIGRATION ───────────────────────────────
+if (sessionId) {
+await Promise.resolve( // call the right endpoint for each role
+ formData.userType === 'athlete'
+   ? fetch('/api/supabase/athlete-profile/migrate', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ sessionId, newId: newUser.id })
+     })
+   : fetch('/api/supabase/business-profile/migrate', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ sessionId, newId: newUser.id })
+     })
+);
+}
+// ────────────────────────────────────────────────────────────────
+// then do your final upsert:
+const profilePayload = formData.userType === 'athlete'
+? { session_id: newUser.id, /* athlete-specific fields / }
+: { session_id: newUser.id, / business-specific fields */ };
+await fetch(
+formData.userType === 'athlete'
+? '/api/supabase/athlete-profile'
+: '/api/supabase/business-profile',
+{
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(profilePayload)
+}
+);
+
+2. Back-end: add “migrate” endpoints
+
+a) Routes
+File: server/routes/profileRoutes.ts
+
+ import { Router } from 'express';
+ import profileController from '../controllers/profileController';
+ const router = Router();
+
+ // existing:
+ router.post('/supabase/business-profile', profileController.upsertBusinessProfile);
+ router.post('/supabase/athlete-profile', profileController.upsertAthleteProfile);
+
++// new migration endpoints:
++router.post('/supabase/business-profile/migrate', profileController.migrateBusinessSession);
++router.post('/supabase/athlete-profile/migrate', profileController.migrateAthleteSession);
+
+ export default router;
+b) Controller
+File: server/controllers/profileController.ts
+
+Add two new methods at the bottom of the class:
+// server/controllers/profileController.ts
+class ProfileController {
+  // … existing methods …
+
+  /** Migrate a business profile session_id → real user UUID */
+  async migrateBusinessSession(req: Request, res: Response) {
+    try {
+      const { sessionId, newId } = req.body as { sessionId: string; newId: string };
+      await profileService.migrateSessionBusinessProfile(sessionId, newId);
+      return res.status(200).json({ success: true });
+    } catch (err: any) {
+      console.error('migrateBusinessSession error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  /** Migrate an athlete profile session_id → real user UUID */
+  async migrateAthleteSession(req: Request, res: Response) {
+    try {
+      const { sessionId, newId } = req.body as { sessionId: string; newId: string };
+      await profileService.migrateSessionAthleteProfile(sessionId, newId);
+      return res.status(200).json({ success: true });
+    } catch (err: any) {
+      console.error('migrateAthleteSession error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+}
+3. Service Layer: profileService.ts
+
+File: server/services/profileService.ts
+
+Add two new migration helpers:
+ export class ProfileService {
+   // … existing methods …
+
++  /** Move business_profiles row from session key → user UUID */
++  async migrateSessionBusinessProfile(oldSession: string, newSession: string) {
++    const { error } = await supabase
++      .from('business_profiles')
++      .update({ session_id: newSession })
++      .eq('session_id', oldSession);
++    if (error) throw error;
++  }
+
++  /** Move athlete_profiles row from session key → user UUID */
++  async migrateSessionAthleteProfile(oldSession: string, newSession: string) {
++    const { error } = await supabase
++      .from('athlete_profiles')
++      .update({ session_id: newSession })
++      .eq('session_id', oldSession);
++    if (error) throw error;
++  }
+ }
+ 
+ export const profileService = new ProfileService();
+4. Athlete upsert: ensure session_id logic exists
+
+File: server/controllers/profileController.ts (within upsertAthleteProfile)
+
+ async upsertAthleteProfile(req: Request, res: Response) {
+   try {
+     const {
+       session_id,
+       name,
+       // … other athlete fields …
+     } = req.body;
+
+     // session_id may be temp or real UUID
+     if (!session_id || !name) {
+       return res.status(400).json({ error: 'session_id and name are required' });
+     }
+
+     await profileService.upsertAthleteProfile({ session_id, name, /*…*/ });
+     return res.status(200).json({ success: true });
+   } catch (err: any) {
+     console.error('upsertAthleteProfile error:', err);
+     return res.status(400).json({ error: err.message });
+   }
+ }
+5. Athlete profile service method
+
+File: server/services/profileService.ts
+
+ export class ProfileService {
+   // … existing …
+
+   /** Upsert athlete profile keyed on session_id */
+   async upsertAthleteProfile(data: {
+     session_id: string;
+     name: string;
+     // … other athlete fields …
+   }) {
+     const { error } = await supabase
+       .from('athlete_profiles')
+       .upsert(data, { onConflict: ['session_id'] });
+     if (error) throw error;
+   }
+ }
+Summary
+Onboarding now passes sessionId into /api/auth/register.
+AuthController.register calls the new /migrate endpoints for business or athlete based on role.
+ProfileController exposes /supabase/*-profile/migrate routes that call profileService.migrateSession*Profile.
+ProfileService has two new helpers to update session_id → user UUID in both tables.
+Athlete upsert works exactly like business, keyed on the same session_id field (now carrying the real UUID).
+That fully integrates athlete profiles into the same session-migration pattern you built for business—every row you created during onboarding is preserved and then tied to the real user ID for all future lookups.
